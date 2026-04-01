@@ -18,14 +18,63 @@ export interface Region {
 
 // Event types
 export type EventStatus = "upcoming" | "active" | "past"
+
+// New event types (Tipo de Culto)
+export type EventType = 
+  | "campana"
+  | "convencion"
+  | "recorrido"
+  | "cultoJuvenil"
+  | "culto"
+  | "visita"
+  | "ensayo"
+  | "actividad"
+  | "estudioBiblico"
+  | "biregional"
+  | "congresoBrilla"
+  | "boda"
+
+// Legacy type color for backwards compatibility
 export type EventTypeColor = "worship" | "tour" | "conference" | "youth"
+
 export type Vestimenta = "uniformeMGR" | "formalCasual" | "informal" | "otro"
+
+// Alimentos section
+export interface AlimentosInfo {
+  enabled: boolean
+  location?: string
+  googleMapsUrl?: string
+  description?: string
+}
+
+// Junta Juvenil section  
+export interface JuntaJuvenilInfo {
+  enabled: boolean
+  location?: string
+  googleMapsUrl?: string
+  description?: string
+}
+
+// Pastor/Joven info
+export interface EventSpeakers {
+  pastorMensaje?: string // Pastor name (from reference or custom)
+  pastorMensajeId?: string // Reference ID if from pastor list
+  jovenPreside?: string
+}
+
+// More info section
+export interface MoreInfoSection {
+  enabled: boolean
+  imageUrl?: string
+}
 
 export interface Event {
   id: string
   title: string
-  type: string
-  typeColor: EventTypeColor
+  eventType: EventType
+  // Legacy field
+  type?: string
+  typeColor?: EventTypeColor
   date: Date
   endDate?: Date // For multi-day events
   time: string
@@ -34,20 +83,25 @@ export interface Event {
   googleMapsUrl?: string
   description?: string
   vestimenta?: Vestimenta
-  vestimentaCustom?: string // Custom text when vestimenta is "otro"
+  vestimentaCustom?: string
   image: string
   status: EventStatus
+  // New optional sections
+  alimentos?: AlimentosInfo
+  juntaJuvenil?: JuntaJuvenilInfo
+  speakers?: EventSpeakers
+  moreInfo?: MoreInfoSection
   // Album features
   googleDriveAlbumUrl?: string
   albumEnabled: boolean
-  // Multi-day event grouping
+  // Multi-day event grouping (legacy)
   isMultiDayEvent?: boolean
   eventGroupId?: string
   // Social links
   facebookPostUrl?: string
   // Registration status
   registrationEnabled?: boolean
-  // Event photos for preview in registration
+  // Event photos for preview in registration (max 6)
   photos?: string[]
 }
 
@@ -59,7 +113,7 @@ export interface Pastor {
   churchNumber?: string
   photo?: string
   googleMapsUrl?: string
-  phone?: string // Optional WhatsApp number
+  phone?: string
 }
 
 // Coros Locales
@@ -69,7 +123,7 @@ export interface Coro {
   photo: string
   googleMapsUrl?: string
   presidentName: string
-  presidentPhone: string // Will be formatted with +52
+  presidentPhone: string
 }
 
 // Directiva members
@@ -80,7 +134,7 @@ export interface DirectivaMember {
   churchName: string
   photo?: string
   googleMapsUrl?: string
-  phone: string // Will be formatted with +52 for WhatsApp
+  phone: string
 }
 
 // Registration form data
@@ -103,15 +157,15 @@ export interface CountdownData {
   hoursRemaining: number
   minutesRemaining: number
   secondsRemaining: number
-  isPostEvent: boolean // true if event has passed but within 3 days
+  isPostEvent: boolean
   daysSinceEvent?: number
 }
 
 // Phone formatting helper type
 export interface PhoneNumber {
-  countryCode: string // Default: +52
+  countryCode: string
   number: string
-  formatted: string // e.g., +52 123 456 7890
+  formatted: string
 }
 
 // Region president info for registration

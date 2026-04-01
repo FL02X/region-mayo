@@ -74,32 +74,28 @@ export function HeroSection({
         </div>
       ))}
 
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background" />
+      {/* Gradient Overlay - Dark at bottom for guaranteed text contrast */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6">
+      {/* Content - Positioned at bottom for optimal contrast */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-end pb-24 px-6">
         <div className="w-full max-w-xs mx-auto text-center">
           {/* Stylized Logo */}
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 text-balance leading-snug italic tracking-wide">
-            <span className="block text-lg sm:text-xl font-light not-italic tracking-normal mb-1 opacity-90">
-              {heroTitle.split(" ").slice(0, 2).join(" ")}
-            </span>
-            <span className="relative">
-              Región Mayo
-              <span className="block text-base sm:text-lg font-light mt-1 not-italic tracking-wide">
-                Calendario
-              </span>
-            </span>
-          </h1>
-          <p className="text-sm sm:text-base text-white/90 mb-8">
+          <p className="text-sm font-medium uppercase tracking-widest text-white/80 mb-2">
             {heroSubtitle}
           </p>
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-white mb-1 italic tracking-wide drop-shadow-lg">
+            Región Mayo
+          </h1>
+          <p className="text-lg text-white/90 font-light mb-8">
+            Calendario
+          </p>
 
+          {/* CTA Button - Coral/Orange for visibility */}
           <Button
             onClick={scrollToCalendar}
             size="lg"
-            className="w-full rounded-full py-5 text-sm font-semibold bg-white text-primary hover:bg-white/90 shadow-lg"
+            className="w-full rounded-xl py-6 text-base font-semibold bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white shadow-lg"
           >
             Explorar Calendario 2026
           </Button>
@@ -108,7 +104,7 @@ export function HeroSection({
 
       {/* Image Indicators */}
       {images.length > 1 && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 flex gap-2">
           {images.map((_, index) => (
             <button
               key={index}
@@ -133,12 +129,10 @@ export function HeroSection({
       {/* Scroll Indicator */}
       <button
         onClick={scrollToCalendar}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 animate-bounce"
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 animate-bounce"
         aria-label="Desplázate hacia abajo"
       >
-        <div className="p-2 rounded-full bg-white/20 backdrop-blur-sm">
-          <ChevronDown className="h-5 w-5 text-white" />
-        </div>
+        <ChevronDown className="h-6 w-6 text-white/70" />
       </button>
     </section>
   )

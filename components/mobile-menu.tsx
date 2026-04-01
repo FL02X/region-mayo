@@ -55,7 +55,7 @@ export function MobileMenu({
               className="rounded-full"
             />
             <div>
-              <SheetTitle className="text-left">Región Mayo</SheetTitle>
+              <SheetTitle className="text-left font-serif italic">Región Mayo</SheetTitle>
               <p className="text-sm text-muted-foreground">Tu Comunidad</p>
             </div>
           </div>
@@ -71,8 +71,8 @@ export function MobileMenu({
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-4 px-6 py-3.5 hover:bg-muted transition-colors"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                  <Icon className="h-5 w-5 text-primary" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+                  <Icon className="h-5 w-5 text-foreground" />
                 </div>
                 <div>
                   <p className="font-medium text-foreground">{item.label}</p>
@@ -85,7 +85,7 @@ export function MobileMenu({
           })}
         </nav>
 
-        {/* Social Links Footer */}
+        {/* Social Links Footer - Monochromatic icons for visual discipline */}
         <div className="absolute bottom-0 left-0 right-0 border-t bg-muted/30 px-6 py-4">
           <p className="text-sm text-muted-foreground mb-3">Síguenos</p>
           <div className="flex gap-3">
@@ -93,19 +93,19 @@ export function MobileMenu({
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 text-white hover:opacity-90 transition-opacity"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
               aria-label="Síguenos en Instagram"
             >
-              <Instagram className="h-5 w-5" />
+              <Instagram className="h-5 w-5 text-foreground" />
             </a>
             <a
               href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1877F2] text-white hover:opacity-90 transition-opacity"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
               aria-label="Síguenos en Facebook"
             >
-              <Facebook className="h-5 w-5" />
+              <Facebook className="h-5 w-5 text-foreground" />
             </a>
           </div>
         </div>
