@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -17,6 +17,12 @@ interface MonthNavigatorProps {
 
 export function MonthNavigator({ selectedMonth, onMonthSelect, eventDates = [] }: MonthNavigatorProps) {
   const [viewYear, setViewYear] = useState(selectedMonth.getFullYear())
+  const [currentDate, setCurrentDate] = useState<Date | null>(null)
+  
+  // Set current date only on client to avoid hydration mismatch
+  useEffect(() => {
+    setCurrentDate(new Date())
+  }, [])
 
   const navigateYear = (direction: "prev" | "next") => {
     setViewYear(prev => direction === "next" ? prev + 1 : prev - 1)
@@ -27,8 +33,8 @@ export function MonthNavigator({ selectedMonth, onMonthSelect, eventDates = [] }
   }
 
   const isCurrentMonth = (monthIndex: number) => {
-    const today = new Date()
-    return today.getMonth() === monthIndex && today.getFullYear() === viewYear
+    if (!currentDate) return false
+    return currentDate.getMonth() === monthIndex && currentDate.getFullYear() === viewYear
   }
 
   const hasEvents = (monthIndex: number) => {

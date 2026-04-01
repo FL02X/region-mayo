@@ -3,7 +3,7 @@
 // This data will be replaced by Sanity CMS
 // ============================================
 
-import type { Region, Event, Pastor, Coro, DirectivaMember, RegionPresident } from "./types"
+import type { Region, Event, Pastor, Coro, DirectivaMember, RegionPresident, SiteSettings } from "./types"
 
 // Region Configuration
 export const regionMayo: Region = {
@@ -35,7 +35,7 @@ export const eventsData: Event[] = [
     address: "Av. Juárez 123, Navojoa, Sonora",
     googleMapsUrl: "https://maps.google.com/?q=Av.+Juárez+123,+Navojoa,+Sonora",
     description: "Únete a nosotros para un tiempo especial de adoración y comunión. Tendremos alabanzas, predicación de la palabra y un momento de oración por las familias.",
-    vestimenta: "formal",
+    vestimenta: "uniformeMGR",
     image: "/images/event-worship.jpg",
     status: "past", // Already happened
     albumEnabled: true,
@@ -73,7 +73,7 @@ export const eventsData: Event[] = [
     location: "Santuario Principal",
     address: "Av. Juárez 123, Navojoa, Sonora",
     description: "Una noche especial dedicada a la alabanza con la participación de varios coros de la región.",
-    vestimenta: "formal",
+    vestimenta: "uniformeMGR",
     image: "/images/event-worship.jpg",
     status: "upcoming",
     albumEnabled: true,
@@ -88,7 +88,7 @@ export const eventsData: Event[] = [
     location: "Salón Comunitario",
     address: "Calle Obregón 45, Navojoa, Sonora",
     description: "Conferencia anual de la Región Mayo con predicadores invitados y talleres para toda la familia.",
-    vestimenta: "formal",
+    vestimenta: "uniformeMGR",
     image: "/images/event-conference.jpg",
     status: "upcoming",
     albumEnabled: true,
@@ -280,3 +280,18 @@ export const availableRegions = [
   "Región Occidente",
   "Región Oriente",
 ]
+
+// Site Settings with Hero Images
+export const siteSettingsData: SiteSettings = {
+  id: "site-settings-mayo",
+  siteName: "Región Mayo Calendario",
+  heroImages: [
+    { url: "/images/hero-choir.jpg", alt: "Coro Región Mayo" },
+    { url: "/images/event-worship.jpg", alt: "Servicio de Adoración" },
+    { url: "/images/event-tour.jpg", alt: "Gira de Fraternidad" },
+    { url: "/images/event-conference.jpg", alt: "Conferencia Regional" },
+    { url: "/images/event-youth.jpg", alt: "Encuentro Juvenil" },
+  ],
+  heroTitle: "Bienvenido a Región Mayo",
+  heroSubtitle: "Vive la Comunidad",
+}

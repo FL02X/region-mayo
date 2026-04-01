@@ -14,6 +14,8 @@ import event from './event'
 import pastor from './pastor'
 import coro from './coro'
 import directiva from './directiva'
+import siteSettings from './siteSettings'
+import registration from './registration'
 
 export const schemaTypes = [
   region,
@@ -21,6 +23,8 @@ export const schemaTypes = [
   pastor,
   coro,
   directiva,
+  siteSettings,
+  registration,
 ]
 
 export default schemaTypes

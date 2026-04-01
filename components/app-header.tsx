@@ -4,6 +4,7 @@ import Image from "next/image"
 import { Instagram, Facebook } from "lucide-react"
 import { MobileMenu } from "@/components/mobile-menu"
 import { DebugTimePicker } from "@/components/debug-time-picker"
+import { Logo } from "@/components/logo"
 
 interface AppHeaderProps {
   instagramUrl?: string
@@ -28,10 +29,7 @@ export function AppHeader({
             loading="eager"
             priority
           />
-          <div>
-            <p className="text-sm font-semibold text-foreground leading-tight">Región Mayo</p>
-            <p className="text-xs text-muted-foreground">Tu Comunidad</p>
-          </div>
+          <Logo variant="small" />
         </div>
 
         {/* Right Side: Debug + Social + Menu */}

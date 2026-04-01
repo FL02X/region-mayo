@@ -64,7 +64,8 @@ export default defineType({
       type: 'string',
       options: {
         list: [
-          { title: 'Formal', value: 'formal' },
+          { title: 'Uniforme MGR', value: 'uniformeMGR' },
+          { title: 'Vestimenta Formal Casual', value: 'formalCasual' },
           { title: 'Informal', value: 'informal' },
           { title: 'Otro', value: 'otro' },
         ],

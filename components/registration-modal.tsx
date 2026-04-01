@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
-import { X, Check, Calendar, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, User } from "lucide-react"
+import { X, Check, Calendar, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, User, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,6 +22,10 @@ interface RegistrationModalProps {
 
 export function RegistrationModal({ event, isOpen, onClose, regionPresident, regions }: RegistrationModalProps) {
   const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [formStartTime, setFormStartTime] = useState<number>(0)
+  const [honeypot, setHoneypot] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -33,6 +37,15 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
     isBaptized: false,
     isCoroMGR: false,
   })
+
+  // Track form start time for bot detection
+  useEffect(() => {
+    if (isOpen) {
+      setFormStartTime(Date.now())
+      setStep(1)
+      setSubmitError(null)
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -54,8 +67,44 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
     }
   }
 
-  const handleSubmit = () => {
-    setStep(4) // Confirmation step
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          region: formData.region,
+          eventId: event.id,
+          isVisiting: formData.isVisiting,
+          needsLodging: formData.needsLodging,
+          needsTransport: formData.needsTransport,
+          attendingAs: formData.attendingAs,
+          isBaptized: formData.isBaptized,
+          isCoroMGR: formData.isCoroMGR,
+          website: honeypot, // Honeypot field
+          _requestTime: formStartTime,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al registrarse")
+      }
+
+      setStep(4) // Confirmation step
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Error al registrarse. Intenta de nuevo.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const addToGoogleCalendar = () => {
@@ -395,22 +444,51 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
           )}
         </div>
 
+        {/* Honeypot field - hidden from users, visible to bots */}
+        <input
+          type="text"
+          name="website"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          className="absolute -left-[9999px] h-0 w-0 opacity-0"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+        />
+
         {/* Footer */}
         {step <= totalSteps && (
-          <div className="sticky bottom-0 bg-background border-t px-5 py-4 flex gap-2">
-            {step > 1 && (
-              <Button variant="outline" onClick={handleBack} className="rounded-xl h-11 px-4">
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Atrás
-              </Button>
+          <div className="sticky bottom-0 bg-background border-t px-5 py-4">
+            {submitError && (
+              <div className="mb-3 p-3 bg-destructive/10 text-destructive text-sm rounded-xl text-center">
+                {submitError}
+              </div>
             )}
-            <Button
-              onClick={step === totalSteps ? handleSubmit : handleNext}
-              className="flex-1 rounded-xl h-11"
-            >
-              {step === totalSteps ? "Confirmar Registro" : "Siguiente"}
-              {step < totalSteps && <ChevronRight className="h-4 w-4 ml-1" />}
-            </Button>
+            <div className="flex gap-2">
+              {step > 1 && (
+                <Button variant="outline" onClick={handleBack} disabled={isSubmitting} className="rounded-xl h-11 px-4">
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Atrás
+                </Button>
+              )}
+              <Button
+                onClick={step === totalSteps ? handleSubmit : handleNext}
+                disabled={isSubmitting}
+                className="flex-1 rounded-xl h-11"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Registrando...
+                  </>
+                ) : (
+                  <>
+                    {step === totalSteps ? "Confirmar Registro" : "Siguiente"}
+                    {step < totalSteps && <ChevronRight className="h-4 w-4 ml-1" />}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
 

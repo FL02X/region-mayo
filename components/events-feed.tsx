@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { Calendar } from "lucide-react"
 import { MonthNavigator } from "./month-navigator"
 import { EventCard } from "./event-card"
@@ -13,6 +13,9 @@ const months = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ]
 
+// Fixed date for SSR to avoid hydration mismatch
+const INITIAL_DATE = new Date(2026, 3, 1) // April 2026
+
 interface EventsFeedProps {
   events: Event[]
   regionPresident: RegionPresident | null
@@ -20,7 +23,13 @@ interface EventsFeedProps {
 }
 
 export function EventsFeed({ events, regionPresident, regions }: EventsFeedProps) {
-  const [selectedMonth, setSelectedMonth] = useState(new Date())
+  const [selectedMonth, setSelectedMonth] = useState(INITIAL_DATE)
+  const [isHydrated, setIsHydrated] = useState(false)
+  
+  // Set actual current date after hydration
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const eventsListRef = useRef<HTMLDivElement>(null)

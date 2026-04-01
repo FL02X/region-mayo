@@ -19,7 +19,7 @@ export interface Region {
 // Event types
 export type EventStatus = "upcoming" | "active" | "past"
 export type EventTypeColor = "worship" | "tour" | "conference" | "youth"
-export type Vestimenta = "formal" | "informal" | "otro"
+export type Vestimenta = "uniformeMGR" | "formalCasual" | "informal" | "otro"
 
 export interface Event {
   id: string
@@ -118,4 +118,33 @@ export interface PhoneNumber {
 export interface RegionPresident {
   fullName: string
   phone: string
+}
+
+// Hero image for carousel
+export interface HeroImage {
+  url: string
+  alt: string
+}
+
+// Site settings with hero images
+export interface SiteSettings {
+  id: string
+  siteName: string
+  heroImages: HeroImage[]
+  heroTitle: string
+  heroSubtitle: string
+}
+
+// Registration data sent to API
+export interface RegistrationSubmission {
+  name: string
+  phone: string
+  region: string
+  eventId: string
+  isVisiting: boolean
+  needsLodging: boolean
+  needsTransport: boolean
+  attendingAs: 'oyente' | 'miembro'
+  isBaptized: boolean
+  isCoroMGR: boolean
 }

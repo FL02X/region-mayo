@@ -29,13 +29,15 @@ const typeLabels = {
 }
 
 const vestimentaLabels: Record<Vestimenta, string> = {
-  formal: "Vestimenta Formal",
+  uniformeMGR: "Uniforme MGR",
+  formalCasual: "Vestimenta Formal Casual",
   informal: "Vestimenta Informal",
   otro: "Vestimenta Especial",
 }
 
 const vestimentaColors: Record<Vestimenta, string> = {
-  formal: "bg-slate-100 text-slate-700 border-slate-200",
+  uniformeMGR: "bg-primary/10 text-primary border-primary/20",
+  formalCasual: "bg-slate-100 text-slate-700 border-slate-200",
   informal: "bg-emerald-50 text-emerald-700 border-emerald-200",
   otro: "bg-amber-50 text-amber-700 border-amber-200",
 }

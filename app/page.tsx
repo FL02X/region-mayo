@@ -1,14 +1,15 @@
 import { AppHeader } from "@/components/app-header"
 import { HeroSection } from "@/components/hero-section"
 import { EventsFeed } from "@/components/events-feed"
-import { getAvailableRegions, getEvents, getRegionConfig, getRegionPresident } from "@/lib/api"
+import { getAvailableRegions, getEvents, getRegionConfig, getRegionPresident, getSiteSettings } from "@/lib/api"
 
 export default async function Home() {
-  const [region, events, regions, regionPresident] = await Promise.all([
+  const [region, events, regions, regionPresident, siteSettings] = await Promise.all([
     getRegionConfig("region-mayo"),
     getEvents("region-mayo"),
     getAvailableRegions(),
     getRegionPresident("region-mayo"),
+    getSiteSettings("region-mayo"),
   ])
 
   return (
@@ -17,7 +18,11 @@ export default async function Home() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <HeroSection />
+      <HeroSection 
+        heroImages={siteSettings?.heroImages}
+        heroTitle={siteSettings?.heroTitle}
+        heroSubtitle={siteSettings?.heroSubtitle}
+      />
       {region ? (
         <EventsFeed events={events} regionPresident={regionPresident} regions={regions} />
       ) : (

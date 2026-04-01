@@ -2,7 +2,7 @@
 // Región Mayo - Sanity CMS API Layer
 // ============================================
 
-import type { Region, Event, Pastor, Coro, DirectivaMember, RegionPresident } from "./types"
+import type { Region, Event, Pastor, Coro, DirectivaMember, RegionPresident, SiteSettings, HeroImage } from "./types"
 import { getSanityClient } from "./sanity/client"
 import { sanityImageUrl, sanityImagesUrls } from "./sanity/image"
 import {
@@ -13,6 +13,7 @@ import {
   directivaData,
   availableRegions,
   regionPresident,
+  siteSettingsData,
 } from "./mock-data"
 
 const SANITY_ENABLED = Boolean(process.env.SANITY_PROJECT_ID && process.env.SANITY_DATASET)
@@ -349,4 +350,54 @@ export async function getRegionPresident(regionSlug: string = "mayo"): Promise<R
   }
 
   return fallback as RegionPresident
+}
+
+// ============================================
+// Site Settings APIs
+// ============================================
+
+function mapHeroImage(raw: any): HeroImage {
+  return {
+    url: raw.image?.asset?.url || "/images/hero-choir.jpg",
+    alt: raw.alt || "Imagen del hero",
+  }
+}
+
+function mapSiteSettings(raw: any): SiteSettings {
+  return {
+    id: raw._id,
+    siteName: raw.siteName || "Región Mayo Calendario",
+    heroImages: (raw.heroImages || []).map(mapHeroImage),
+    heroTitle: raw.heroTitle || "Bienvenido a Región Mayo",
+    heroSubtitle: raw.heroSubtitle || "Vive la Comunidad",
+  }
+}
+
+export async function getSiteSettings(regionSlug: string = "mayo"): Promise<SiteSettings | null> {
+  if (!SANITY_ENABLED) {
+    if (isMayoRegion(regionSlug)) return siteSettingsData
+    return null
+  }
+
+  const client = getSanityClient()
+  const settings = await client.fetch(
+    `*[_type == "siteSettings" && (region->slug.current == $slug || region->name == $slug)][0]{
+      _id,
+      siteName,
+      heroImages[]{
+        image{asset->{url}},
+        alt
+      },
+      heroTitle,
+      heroSubtitle
+    }`,
+    { slug: regionSlug },
+  )
+
+  if (!settings) {
+    // Return default settings if none found
+    return siteSettingsData
+  }
+
+  return mapSiteSettings(settings)
 }
