@@ -15,7 +15,7 @@ const months = [
 
 interface EventsFeedProps {
   events: Event[]
-  regionPresident: RegionPresident
+  regionPresident: RegionPresident | null
   regions: string[]
 }
 

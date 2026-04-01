@@ -16,7 +16,7 @@ interface RegistrationModalProps {
   event: Event
   isOpen: boolean
   onClose: () => void
-  regionPresident: RegionPresident
+  regionPresident: RegionPresident | null
   regions: string[]
 }
 
@@ -434,7 +434,7 @@ function ConfirmationStep({
 }: { 
   onAddToCalendar: () => void
   eventTitle: string
-  regionPresident: RegionPresident
+  regionPresident: RegionPresident | null
 }) {
   const [isContactExpanded, setIsContactExpanded] = useState(false)
 
@@ -454,46 +454,49 @@ function ConfirmationStep({
           Agregar a Google Calendar
         </Button>
 
-        {/* Contact Dropdown - Same style as Coros Locales */}
-        <div className="text-left">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsContactExpanded(!isContactExpanded)}
-            className="w-full justify-between rounded-xl"
-          >
-            <span className="text-sm">Ver información de contacto</span>
-            {isContactExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
+        {regionPresident ? (
+          <div className="text-left">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsContactExpanded(!isContactExpanded)}
+              className="w-full justify-between rounded-xl"
+            >
+              <span className="text-sm">Ver información de contacto</span>
+              {isContactExpanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
 
-          {isContactExpanded && (
-            <div className="mt-2 space-y-3 pt-2 border-t">
-              {/* President Info */}
-              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <User className="h-5 w-5 text-primary" />
+            {isContactExpanded && (
+              <div className="mt-2 space-y-3 pt-2 border-t">
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <User className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{regionPresident.fullName}</p>
+                    <p className="text-xs text-muted-foreground">Presidente Regional</p>
+                  </div>
+                  <WhatsAppIconButton 
+                    phone={regionPresident.phone} 
+                    message={`Hola, me acabo de registrar para ${eventTitle} en el sitio web de Región Mayo.`}
+                  />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{regionPresident.fullName}</p>
-                  <p className="text-xs text-muted-foreground">Presidente Regional</p>
-                </div>
-                <WhatsAppIconButton 
-                  phone={regionPresident.phone} 
-                  message={`Hola, me acabo de registrar para ${eventTitle} en el sitio web de Región Mayo.`}
-                />
+
+                <p className="text-sm text-muted-foreground text-center">
+                  {formatPhoneForDisplay(regionPresident.phone)}
+                </p>
               </div>
-
-              {/* Phone Number Display */}
-              <p className="text-sm text-muted-foreground text-center">
-                {formatPhoneForDisplay(regionPresident.phone)}
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-muted/50 rounded-xl p-3 text-sm text-muted-foreground text-center">
+            Información de contacto no disponible en este momento.
+          </div>
+        )}
       </div>
     </div>
   )

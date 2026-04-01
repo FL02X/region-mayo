@@ -10,18 +10,26 @@ export const metadata: Metadata = {
 
 export default async function DirectorioPage() {
   const [region, pastors] = await Promise.all([
-    getRegionConfig("Región Mayo"),
-    getPastors("Región Mayo"),
+    getRegionConfig("region-mayo"),
+    getPastors("region-mayo"),
   ])
 
   return (
     <main className="min-h-screen bg-background">
       <AppHeader
-        instagramUrl={region.socialLinks.instagram}
-        facebookUrl={region.socialLinks.facebook}
+        instagramUrl={region?.socialLinks.instagram}
+        facebookUrl={region?.socialLinks.facebook}
       />
       <div className="pt-14">
-        <DirectorioContent pastors={pastors} />
+        {region ? (
+          <DirectorioContent pastors={pastors} />
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-lg text-gray-500">
+              No hay información disponible. Por favor, configúrala en Sanity Studio.
+            </p>
+          </div>
+        )}
       </div>
     </main>
   )

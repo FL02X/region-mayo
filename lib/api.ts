@@ -114,10 +114,10 @@ function mapRegion(raw: any, regionSlugFallback: string): Region {
 // Region APIs
 // ============================================
 
-export async function getRegionConfig(regionSlug: string = "mayo"): Promise<Region> {
+export async function getRegionConfig(regionSlug: string = "mayo"): Promise<Region | null> {
   if (!SANITY_ENABLED) {
     if (isMayoRegion(regionSlug)) return regionMayo
-    throw new Error("Sanity is not configured. Set SANITY_PROJECT_ID and SANITY_DATASET.")
+    return null
   }
 
   const client = getSanityClient()
@@ -134,7 +134,7 @@ export async function getRegionConfig(regionSlug: string = "mayo"): Promise<Regi
   )
 
   if (!region) {
-    throw new Error(`No Sanity "region" document found for slug "${regionSlug}"`)
+    return null
   }
   return mapRegion(region, regionSlug)
 }
@@ -309,10 +309,10 @@ export async function getDirectivaMemberById(id: string): Promise<DirectivaMembe
   return directiva.find(member => member.id === id)
 }
 
-export async function getRegionPresident(regionSlug: string = "mayo"): Promise<RegionPresident> {
+export async function getRegionPresident(regionSlug: string = "mayo"): Promise<RegionPresident | null> {
   if (!SANITY_ENABLED) {
     if (isMayoRegion(regionSlug)) return regionPresident
-    throw new Error("Sanity is not configured. Set SANITY_PROJECT_ID and SANITY_DATASET.")
+    return null
   }
 
   const client = getSanityClient()
@@ -345,7 +345,7 @@ export async function getRegionPresident(regionSlug: string = "mayo"): Promise<R
   )
 
   if (!fallback?.fullName || !fallback?.phone) {
-    throw new Error(`No region president/directiva member found for region "${regionSlug}"`)
+    return null
   }
 
   return fallback as RegionPresident
