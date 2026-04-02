@@ -1,0 +1,204 @@
+// ============================================
+// Region Mayo - Core TypeScript Types
+// Ready for Sanity CMS integration
+// ============================================
+
+// Multi-region support
+export interface Region {
+  id: string
+  name: string
+  slug: string
+  socialLinks: {
+    instagram?: string
+    facebook?: string
+  }
+  primaryColor?: string
+  secondaryColor?: string
+}
+
+// Event types
+export type EventStatus = "upcoming" | "active" | "past"
+
+// New event types (Tipo de Culto)
+export type EventType = 
+  | "campana"
+  | "convencion"
+  | "recorrido"
+  | "cultoJuvenil"
+  | "culto"
+  | "visita"
+  | "ensayo"
+  | "actividad"
+  | "estudioBiblico"
+  | "biregional"
+  | "congresoBrilla"
+  | "boda"
+
+// Legacy type color for backwards compatibility
+export type EventTypeColor = "worship" | "tour" | "conference" | "youth"
+
+export type Vestimenta = "uniformeMGR" | "formalCasual" | "informal" | "otro"
+
+// Alimentos section
+export interface AlimentosInfo {
+  enabled: boolean
+  location?: string
+  googleMapsUrl?: string
+  description?: string
+}
+
+// Junta Juvenil section  
+export interface JuntaJuvenilInfo {
+  enabled: boolean
+  location?: string
+  googleMapsUrl?: string
+  description?: string
+}
+
+// Pastor/Joven info
+export interface EventSpeakers {
+  pastorMensaje?: string // Pastor name (from reference or custom)
+  pastorMensajeId?: string // Reference ID if from pastor list
+  jovenPreside?: string
+}
+
+// More info section
+export interface MoreInfoSection {
+  enabled: boolean
+  imageUrl?: string
+}
+
+export interface Event {
+  id: string
+  title: string
+  eventType: EventType
+  // Legacy field
+  type?: string
+  typeColor?: EventTypeColor
+  date: Date
+  endDate?: Date // For multi-day events
+  time: string
+  location: string
+  address: string
+  googleMapsUrl?: string
+  description?: string
+  vestimenta?: Vestimenta
+  vestimentaCustom?: string
+  image: string
+  status: EventStatus
+  // New optional sections
+  alimentos?: AlimentosInfo
+  juntaJuvenil?: JuntaJuvenilInfo
+  speakers?: EventSpeakers
+  moreInfo?: MoreInfoSection
+  // Album features
+  googleDriveAlbumUrl?: string
+  albumEnabled: boolean
+  // Multi-day event grouping (legacy)
+  isMultiDayEvent?: boolean
+  eventGroupId?: string
+  // Social links
+  facebookPostUrl?: string
+  // Registration status
+  registrationEnabled?: boolean
+  // Event photos for preview in registration (max 6)
+  photos?: string[]
+}
+
+// Pastor directory
+export interface Pastor {
+  id: string
+  fullName: string
+  churchName: string
+  churchNumber?: string
+  photo?: string
+  googleMapsUrl?: string
+  phone?: string
+}
+
+// Coros Locales
+export interface Coro {
+  id: string
+  coroName: string
+  photo: string
+  googleMapsUrl?: string
+  presidentName: string
+  presidentPhone: string
+}
+
+// Directiva members
+export interface DirectivaMember {
+  id: string
+  fullName: string
+  role?: string
+  churchName: string
+  photo?: string
+  googleMapsUrl?: string
+  phone: string
+}
+
+// Registration form data
+export interface RegistrationFormData {
+  name: string
+  phone: string
+  region: string
+  isVisiting: boolean
+  needsLodging: boolean
+  needsTransport: boolean
+  attendingAs: "oyente" | "miembro"
+  isBaptized: boolean
+  isCoroMGR: boolean
+}
+
+// Countdown data
+export interface CountdownData {
+  event: Event
+  daysRemaining: number
+  hoursRemaining: number
+  minutesRemaining: number
+  secondsRemaining: number
+  isPostEvent: boolean
+  daysSinceEvent?: number
+}
+
+// Phone formatting helper type
+export interface PhoneNumber {
+  countryCode: string
+  number: string
+  formatted: string
+}
+
+// Region president info for registration
+export interface RegionPresident {
+  fullName: string
+  phone: string
+}
+
+// Hero image for carousel
+export interface HeroImage {
+  url: string
+  alt: string
+}
+
+// Site settings with hero images
+export interface SiteSettings {
+  id: string
+  siteName: string
+  heroImages: HeroImage[]
+  heroTitle: string
+  heroSubtitle: string
+}
+
+// Registration data sent to API
+export interface RegistrationSubmission {
+  name: string
+  phone: string
+  region: string
+  eventId: string
+  isVisiting: boolean
+  needsLodging: boolean
+  needsTransport: boolean
+  attendingAs: 'oyente' | 'miembro'
+  isBaptized: boolean
+  isCoroMGR: boolean
+}
