@@ -10,6 +10,7 @@
  */
 
 import region from './region'
+import templo from './templo'
 import event from './event'
 import pastor from './pastor'
 import coro from './coro'
@@ -19,6 +20,7 @@ import registration from './registration'
 
 export const schemaTypes = [
   region,
+  templo,
   event,
   pastor,
   coro,

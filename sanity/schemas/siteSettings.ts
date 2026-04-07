@@ -62,7 +62,7 @@ export default defineType({
       name: 'heroSubtitle',
       title: 'Subtítulo del Hero',
       type: 'string',
-      initialValue: 'Vive la Comunidad',
+      initialValue: '¡Dios te bendiga!',
     }),
     defineField({
       name: 'region',
