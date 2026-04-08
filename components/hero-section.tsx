@@ -72,6 +72,8 @@ export function HeroSection({
             className="object-cover pointer-events-none select-none"
             priority={index === 0}
             loading={index === 0 ? "eager" : "lazy"}
+            fetchPriority={index === 0 ? "high" : "auto"}
+            quality={75}
             draggable={false}
           />
         </div>

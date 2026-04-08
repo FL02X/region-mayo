@@ -109,9 +109,11 @@ export function AppHeader({
       </header>
 
       {/* DebugTimePicker — fixed bottom-right, dev use only, never occupies header space */}
-      <div className="fixed bottom-4 right-4 z-50 opacity-60 hover:opacity-100 transition-opacity">
-        <DebugTimePicker />
-      </div>
+      {process.env.NODE_ENV === "development" && (
+        <div className="fixed bottom-4 right-4 z-50 opacity-60 hover:opacity-100 transition-opacity">
+          <DebugTimePicker />
+        </div>
+      )}
     </>
   );
 }

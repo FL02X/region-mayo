@@ -409,10 +409,10 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                               src={photo} 
                               alt={`Foto de evento ${index + 1}`} 
                               fill 
-                              className="object-cover transition-transform group-hover:scale-105" 
+                              className="object-cover" 
                             />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                              <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">Ver</span>
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-white text-xs font-medium">Ver</span>
                             </div>
                           </button>
                         ))}

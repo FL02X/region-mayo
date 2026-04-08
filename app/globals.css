@@ -186,4 +186,16 @@
   /* ─── Tap targets: only enforce on interactive elements that are small ─── */
   /* We set individual overrides where needed rather than globally to avoid */
   /* making every anchor/button 44px tall (breaks layout). */
+
+  /* ─── Respect user motion preferences ─── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
