@@ -9,7 +9,7 @@
  * - region: string (NO reference) para rapidez sin joins
  * - ipAddress y userAgent: readOnly, para detectar spam/duplicados
  * 
- * PARTICIONAMIENTO: _partition agrupa registros por año-mes
+ * PARTICIONAMIENTO: partition agrupa registros por año-mes
  * - Facilita queries eficientes en datasets grandes
  * - Permite archivar datos históricos anualmente
  * 
@@ -33,8 +33,8 @@ export default defineType({
   indexes: [
     { name: 'byEvent', keys: [['event']] },
     { name: 'byRegion', keys: [['region']] },
-    { name: 'byPartition', keys: [['_partition']] },
-    { name: 'byEventAndPartition', keys: [['event'], ['_partition']] },
+    { name: 'byPartition', keys: [['partition']] },
+    { name: 'byEventAndPartition', keys: [['event'], ['partition']] },
   ],
   fields: [
     // Basic Info
@@ -141,7 +141,7 @@ export default defineType({
       description: 'Cuándo se creó este registro (inmutable)',
     }),
     defineField({
-      name: '_partition',
+      name: 'partition',
       title: 'Partición (Año-Mes)',
       type: 'string',
       group: 'metadata',
@@ -193,30 +193,6 @@ export default defineType({
     {
       title: 'Registros Recientes',
       name: 'recentDesc',
-      by: [{ field: 'registeredAt', direction: 'desc' }],
-    },
-  ],
-})
-    }),
-  ],
-  preview: {
-    select: {
-      title: 'name',
-      subtitle: 'event.title',
-      date: 'registeredAt',
-    },
-    prepare({ title, subtitle, date }) {
-      const formattedDate = date ? new Date(date).toLocaleDateString('es-MX') : ''
-      return {
-        title: title || 'Sin nombre',
-        subtitle: `${subtitle || 'Sin evento'} - ${formattedDate}`,
-      }
-    },
-  },
-  orderings: [
-    {
-      title: 'Fecha de Registro (Reciente)',
-      name: 'registeredAtDesc',
       by: [{ field: 'registeredAt', direction: 'desc' }],
     },
   ],

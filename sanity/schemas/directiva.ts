@@ -1,21 +1,17 @@
 /**
- * DIRECTIVA - Líderes Administrativos
+ * DIRECTIVA REGIONAL - Líderes Administrativos de la Región
  * 
- * FLEXIBILIDAD MULTILEVEL:
- * - Si templo = vacío → DIRECTIVA REGIONAL
- * - Si templo = lleno → DIRECTIVA LOCAL (de ese templo)
- * 
- * Esto permite escalar a múltiples niveles jerárquicos sin cambiar schema
+ * Documento que representa a los líderes administrativos de la región.
  * 
  * RESTRICCIONES:
  * - region: SIEMPRE obligatoria
- * - templo: OPCIONAL
- *   • Si está vacío: directiva regional que sirve toda la región
- *   • Si está lleno: directiva local del templo
  * - role: ENUM (valores predefinidos para consistencia)
+ * - Si un dato está documentado, se asume que está ACTIVO (no hay campo active)
+ * 
+ * NOTA: La directiva local (presidente, secretaria, etc. de templo específico)
+ * se guarda directamente en el schema de Templo (presidenteJovenes, etc.)
  * 
  * AUDITORÍA: registra quién creó, cuándo, quién modificó, cuándo
- * SOFT DELETE: deletedAt indica si está activa o jubilada
  */
 
 import { defineType, defineField } from 'sanity'
@@ -88,14 +84,6 @@ export default defineType({
       description: 'Región (SIEMPRE obligatoria)',
     }),
     defineField({
-      name: 'templo',
-      title: 'Templo (Opcional)',
-      type: 'reference',
-      to: [{ type: 'templo' }],
-      group: 'basic',
-      description: 'Templo (vacío = directiva regional; lleno = directiva local de ese templo)',
-    }),
-    defineField({
       name: 'photo',
       title: 'Foto',
       type: 'image',
@@ -125,18 +113,10 @@ export default defineType({
       validation: (Rule) => Rule.min(0),
       description: 'Número para ordenar la lista (menor = aparece primero). Ej: 1, 2, 3...',
     }),
-    defineField({
-      name: 'active',
-      title: 'Directiva Activa',
-      type: 'boolean',
-      group: 'metadata',
-      initialValue: true,
-      description: 'Marcar como inactiva si está jubilada o cambió de posición',
-    }),
 
     // Auditoría
     defineField({
-      name: '_audit',
+      name: 'audit',
       title: 'Auditoría',
       type: 'object',
       group: 'metadata',
@@ -190,12 +170,11 @@ export default defineType({
       media: 'photo',
       active: 'active',
     },
-    prepare({ title, role, roleCustom, temploName, regionName, active }) {
+    prepare({ title, role, roleCustom, regionName }) {
       const roleLabel = roleCustom || role
-      const level = temploName ? `Local (${temploName})` : 'Regional'
       return {
         title: title,
-        subtitle: `${roleLabel || '?'} • ${level} • ${regionName || '?'}${!active ? ' [INACTIVO]' : ''}`,
+        subtitle: `${roleLabel || '?'} • Regional • ${regionName || '?'}`,
       }
     },
   },

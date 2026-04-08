@@ -8,6 +8,7 @@
  * - name: obligatorio y único
  * - slug: generado automáticamente, obligatorio
  * - Todos los documentos hijos DEBEN referenciarse a región
+ * - Si la región existe en la base de datos, se asume que está activa
  * 
  * AUDITORÍA: registra quién creó, cuándo, quién modificó, cuándo
  * SOFT DELETE: deletedAt indica si está o no en operación
@@ -20,7 +21,6 @@ export default defineType({
   title: 'Región',
   type: 'document',
   indexes: [
-    { name: 'byActive', keys: [['active']] },
     { name: 'bySlug', keys: [['slug.current']] },
   ],
   fields: [
@@ -88,18 +88,9 @@ export default defineType({
       }).error('Debe ser un color hex válido (#RGB o #RRGGBB)'),
     }),
 
-    // Status
-    defineField({
-      name: 'active',
-      title: 'Región Activa',
-      type: 'boolean',
-      initialValue: true,
-      description: 'Marcar como inactiva si la región ya no opera',
-    }),
-
     // Auditoría
     defineField({
-      name: '_audit',
+      name: 'audit',
       title: 'Auditoría',
       type: 'object',
       description: 'Información de quién creó/modificó este registro',
@@ -145,12 +136,11 @@ export default defineType({
     select: {
       title: 'name',
       subtitle: 'slug.current',
-      active: 'active',
     },
-    prepare({ title, subtitle, active }) {
+    prepare({ title, subtitle }) {
       return {
         title: title,
-        subtitle: `${subtitle}${!active ? ' (INACTIVA)' : ''}`,
+        subtitle: subtitle,
       }
     },
   },

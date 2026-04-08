@@ -324,7 +324,7 @@ export default defineType({
 
     // Auditoría
     defineField({
-      name: '_audit',
+      name: 'audit',
       title: 'Auditoría',
       type: 'object',
       group: 'settings',
@@ -446,14 +446,6 @@ export default defineType({
       title: 'Eventos Recientes',
       name: 'recentDesc',
       by: [{ field: 'date', direction: 'desc' }],
-    },
-  ],
-})
-  orderings: [
-    {
-      title: 'Fecha del Evento',
-      name: 'dateAsc',
-      by: [{ field: 'date', direction: 'asc' }],
     },
   ],
 })

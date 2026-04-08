@@ -2,9 +2,19 @@
 // Región Mayo - Sanity CMS API Layer
 // ============================================
 
-import type { Region, Event, Pastor, Coro, DirectivaMember, RegionPresident, SiteSettings, HeroImage } from "./types"
-import { getSanityClient } from "./sanity/client"
-import { sanityImageUrl, sanityImagesUrls } from "./sanity/image"
+import type {
+  Region,
+  Event,
+  Pastor,
+  Coro,
+  DirectivaMember,
+  RegionPresident,
+  SiteSettings,
+  HeroImage,
+  Templo,
+} from "./types";
+import { getSanityClient } from "./sanity/client";
+import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
 import {
   regionMayo,
   eventsData,
@@ -14,30 +24,33 @@ import {
   availableRegions,
   regionPresident,
   siteSettingsData,
-} from "./mock-data"
+  templosData,
+} from "./mock-data";
 
-const SANITY_ENABLED = Boolean(process.env.SANITY_PROJECT_ID && process.env.SANITY_DATASET)
+const SANITY_ENABLED = Boolean(
+  process.env.SANITY_PROJECT_ID && process.env.SANITY_DATASET,
+);
 
 function isMayoRegion(input: string): boolean {
-  return input === "mayo" || input === "Región Mayo" || input === "region-mayo"
+  return input === "mayo" || input === "Región Mayo" || input === "region-mayo";
 }
 
 function toDate(value: unknown): Date {
-  if (value instanceof Date) return value
-  const date = new Date(String(value))
+  if (value instanceof Date) return value;
+  const date = new Date(String(value));
   if (Number.isNaN(date.getTime())) {
     // Fail loudly: event dates are required and used for filtering.
-    throw new Error(`Invalid date value from Sanity: ${String(value)}`)
+    throw new Error(`Invalid date value from Sanity: ${String(value)}`);
   }
-  return date
+  return date;
 }
 
 function mapEvent(raw: any): Event {
-  const date = toDate(raw.date)
-  const endDate = raw.endDate ? toDate(raw.endDate) : undefined
-  const image = sanityImageUrl(raw.image)
-  const photos = sanityImagesUrls(raw.photos)
-  const typeColor = (raw.typeColor ?? "worship") as Event["typeColor"]
+  const date = toDate(raw.date);
+  const endDate = raw.endDate ? toDate(raw.endDate) : undefined;
+  const image = sanityImageUrl(raw.image);
+  const photos = sanityImagesUrls(raw.photos);
+  const typeColor = (raw.typeColor ?? "worship") as Event["typeColor"];
 
   return {
     id: raw._id,
@@ -62,30 +75,42 @@ function mapEvent(raw: any): Event {
     registrationEnabled: raw.registrationEnabled ?? true,
     photos: photos.length > 0 ? photos : undefined,
     // New optional sections
-    alimentos: raw.alimentosEnabled ? {
-      enabled: true,
-      location: raw.alimentosLocation ?? undefined,
-      googleMapsUrl: raw.alimentosGoogleMapsUrl ?? undefined,
-      description: raw.alimentosDescription ?? undefined,
-    } : undefined,
-    juntaJuvenil: raw.juntaJuvenilEnabled ? {
-      enabled: true,
-      location: raw.juntaJuvenilLocation ?? undefined,
-      googleMapsUrl: raw.juntaJuvenilGoogleMapsUrl ?? undefined,
-      description: raw.juntaJuvenilDescription ?? undefined,
-    } : undefined,
-    speakers: (raw.pastorMensaje || raw.pastorMensajeCustom || raw.jovenPreside) ? {
-      pastorMensaje: (raw.pastorMensaje?.fullName || raw.pastorMensajeCustom) ?? undefined,
-      pastorMensajeId: raw.pastorMensaje?._id ?? undefined,
-      jovenPreside: raw.jovenPreside ?? undefined,
-    } : undefined,
-    moreInfo: raw.moreInfoEnabled && raw.moreInfoImage ? {
-      enabled: true,
-      imageUrl: sanityImageUrl(raw.moreInfoImage) ?? undefined,
-    } : undefined,
+    alimentos: raw.alimentosEnabled
+      ? {
+          enabled: true,
+          location: raw.alimentosLocation ?? undefined,
+          googleMapsUrl: raw.alimentosGoogleMapsUrl ?? undefined,
+          description: raw.alimentosDescription ?? undefined,
+        }
+      : undefined,
+    juntaJuvenil: raw.juntaJuvenilEnabled
+      ? {
+          enabled: true,
+          location: raw.juntaJuvenilLocation ?? undefined,
+          googleMapsUrl: raw.juntaJuvenilGoogleMapsUrl ?? undefined,
+          description: raw.juntaJuvenilDescription ?? undefined,
+        }
+      : undefined,
+    speakers:
+      raw.pastorMensaje || raw.pastorMensajeCustom || raw.jovenPreside
+        ? {
+            pastorMensaje:
+              (raw.pastorMensaje?.fullName || raw.pastorMensajeCustom) ??
+              undefined,
+            pastorMensajeId: raw.pastorMensaje?._id ?? undefined,
+            jovenPreside: raw.jovenPreside ?? undefined,
+          }
+        : undefined,
+    moreInfo:
+      raw.moreInfoEnabled && raw.moreInfoImage
+        ? {
+            enabled: true,
+            imageUrl: sanityImageUrl(raw.moreInfoImage) ?? undefined,
+          }
+        : undefined,
     isMultiDayEvent: raw.isMultiDayEvent ?? undefined,
     eventGroupId: raw.eventGroupId ?? undefined,
-  }
+  };
 }
 
 function mapPastor(raw: any): Pastor {
@@ -97,7 +122,7 @@ function mapPastor(raw: any): Pastor {
     photo: raw.photo ? sanityImageUrl(raw.photo) : undefined,
     googleMapsUrl: raw.googleMapsUrl ?? undefined,
     phone: raw.phone ?? undefined,
-  }
+  };
 }
 
 function mapCoro(raw: any): Coro {
@@ -108,7 +133,7 @@ function mapCoro(raw: any): Coro {
     googleMapsUrl: raw.googleMapsUrl ?? undefined,
     presidentName: raw.presidentName,
     presidentPhone: raw.presidentPhone,
-  }
+  };
 }
 
 function mapDirectivaMember(raw: any): DirectivaMember {
@@ -120,7 +145,7 @@ function mapDirectivaMember(raw: any): DirectivaMember {
     photo: raw.photo ? sanityImageUrl(raw.photo) : undefined,
     googleMapsUrl: raw.googleMapsUrl ?? undefined,
     phone: raw.phone,
-  }
+  };
 }
 
 function mapRegion(raw: any, regionSlugFallback: string): Region {
@@ -131,20 +156,22 @@ function mapRegion(raw: any, regionSlugFallback: string): Region {
     socialLinks: raw.socialLinks ?? {},
     primaryColor: raw.primaryColor ?? undefined,
     secondaryColor: raw.secondaryColor ?? undefined,
-  }
+  };
 }
 
 // ============================================
 // Region APIs
 // ============================================
 
-export async function getRegionConfig(regionSlug: string = "mayo"): Promise<Region | null> {
+export async function getRegionConfig(
+  regionSlug: string = "mayo",
+): Promise<Region | null> {
   if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return regionMayo
-    return null
+    if (isMayoRegion(regionSlug)) return regionMayo;
+    return null;
   }
 
-  const client = getSanityClient()
+  const client = getSanityClient();
   const region = await client.fetch(
     `*[_type == "region" && (slug.current == $slug || name == $slug)][0]{
       _id,
@@ -155,24 +182,24 @@ export async function getRegionConfig(regionSlug: string = "mayo"): Promise<Regi
       secondaryColor
     }`,
     { slug: regionSlug },
-  )
+  );
 
   if (!region) {
-    return null
+    return null;
   }
-  return mapRegion(region, regionSlug)
+  return mapRegion(region, regionSlug);
 }
 
 export async function getAvailableRegions(): Promise<string[]> {
-  if (!SANITY_ENABLED) return availableRegions
+  if (!SANITY_ENABLED) return availableRegions;
 
-  const client = getSanityClient()
+  const client = getSanityClient();
   const regions = await client.fetch(
     `*[_type == "region"] | order(name asc){
       name
     }`,
-  )
-  return (regions ?? []).map((r: any) => r.name).filter(Boolean)
+  );
+  return (regions ?? []).map((r: any) => r.name).filter(Boolean);
 }
 
 // ============================================
@@ -181,11 +208,11 @@ export async function getAvailableRegions(): Promise<string[]> {
 
 export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
   if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return eventsData
-    return []
+    if (isMayoRegion(regionSlug)) return eventsData;
+    return [];
   }
 
-  const client = getSanityClient()
+  const client = getSanityClient();
   const events = await client.fetch(
     `*[_type == "event" && (region->slug.current == $slug || region->name == $slug)]
       | order(date asc){
@@ -226,39 +253,45 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
         moreInfoImage{asset->{url}}
       }`,
     { slug: regionSlug },
-  )
+  );
 
-  return (events ?? []).map(mapEvent)
+  return (events ?? []).map(mapEvent);
 }
 
-export async function getUpcomingEvents(regionSlug: string = "mayo"): Promise<Event[]> {
-  const events = await getEvents(regionSlug)
-  const now = new Date()
-  return events.filter(event => event.date >= now)
+export async function getUpcomingEvents(
+  regionSlug: string = "mayo",
+): Promise<Event[]> {
+  const events = await getEvents(regionSlug);
+  const now = new Date();
+  return events.filter((event) => event.date >= now);
 }
 
-export async function getPastEvents(regionSlug: string = "mayo"): Promise<Event[]> {
-  const events = await getEvents(regionSlug)
-  const now = new Date()
-  return events.filter(event => event.date < now && event.albumEnabled)
+export async function getPastEvents(
+  regionSlug: string = "mayo",
+): Promise<Event[]> {
+  const events = await getEvents(regionSlug);
+  const now = new Date();
+  return events.filter((event) => event.date < now && event.albumEnabled);
 }
 
 export async function getEventById(id: string): Promise<Event | undefined> {
-  const events = await getEvents()
-  return events.find(event => event.id === id)
+  const events = await getEvents();
+  return events.find((event) => event.id === id);
 }
 
 // ============================================
 // Pastors APIs
 // ============================================
 
-export async function getPastors(regionSlug: string = "mayo"): Promise<Pastor[]> {
+export async function getPastors(
+  regionSlug: string = "mayo",
+): Promise<Pastor[]> {
   if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return pastorsData
-    return []
+    if (isMayoRegion(regionSlug)) return pastorsData;
+    return [];
   }
 
-  const client = getSanityClient()
+  const client = getSanityClient();
   const pastors = await client.fetch(
     `*[_type == "pastor" && (region->slug.current == $slug || region->name == $slug)]
       | order(fullName asc){
@@ -271,14 +304,14 @@ export async function getPastors(regionSlug: string = "mayo"): Promise<Pastor[]>
         phone
       }`,
     { slug: regionSlug },
-  )
+  );
 
-  return (pastors ?? []).map(mapPastor)
+  return (pastors ?? []).map(mapPastor);
 }
 
 export async function getPastorById(id: string): Promise<Pastor | undefined> {
-  const pastors = await getPastors()
-  return pastors.find(pastor => pastor.id === id)
+  const pastors = await getPastors();
+  return pastors.find((pastor) => pastor.id === id);
 }
 
 // ============================================
@@ -287,11 +320,11 @@ export async function getPastorById(id: string): Promise<Pastor | undefined> {
 
 export async function getCoros(regionSlug: string = "mayo"): Promise<Coro[]> {
   if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return corosData
-    return []
+    if (isMayoRegion(regionSlug)) return corosData;
+    return [];
   }
 
-  const client = getSanityClient()
+  const client = getSanityClient();
   const coros = await client.fetch(
     `*[_type == "coro" && (region->slug.current == $slug || region->name == $slug)]
       | order(coroName asc){
@@ -303,27 +336,29 @@ export async function getCoros(regionSlug: string = "mayo"): Promise<Coro[]> {
         presidentPhone
       }`,
     { slug: regionSlug },
-  )
+  );
 
-  return (coros ?? []).map(mapCoro)
+  return (coros ?? []).map(mapCoro);
 }
 
 export async function getCoroById(id: string): Promise<Coro | undefined> {
-  const coros = await getCoros()
-  return coros.find(coro => coro.id === id)
+  const coros = await getCoros();
+  return coros.find((coro) => coro.id === id);
 }
 
 // ============================================
 // Directiva APIs
 // ============================================
 
-export async function getDirectiva(regionSlug: string = "mayo"): Promise<DirectivaMember[]> {
+export async function getDirectiva(
+  regionSlug: string = "mayo",
+): Promise<DirectivaMember[]> {
   if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return directivaData
-    return []
+    if (isMayoRegion(regionSlug)) return directivaData;
+    return [];
   }
 
-  const client = getSanityClient()
+  const client = getSanityClient();
   const directiva = await client.fetch(
     `*[_type == "directiva" && (region->slug.current == $slug || region->name == $slug)]
       | order(order asc){
@@ -337,23 +372,27 @@ export async function getDirectiva(regionSlug: string = "mayo"): Promise<Directi
         order
       }`,
     { slug: regionSlug },
-  )
+  );
 
-  return (directiva ?? []).map(mapDirectivaMember)
+  return (directiva ?? []).map(mapDirectivaMember);
 }
 
-export async function getDirectivaMemberById(id: string): Promise<DirectivaMember | undefined> {
-  const directiva = await getDirectiva()
-  return directiva.find(member => member.id === id)
+export async function getDirectivaMemberById(
+  id: string,
+): Promise<DirectivaMember | undefined> {
+  const directiva = await getDirectiva();
+  return directiva.find((member) => member.id === id);
 }
 
-export async function getRegionPresident(regionSlug: string = "mayo"): Promise<RegionPresident | null> {
+export async function getRegionPresident(
+  regionSlug: string = "mayo",
+): Promise<RegionPresident | null> {
   if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return regionPresident
-    return null
+    if (isMayoRegion(regionSlug)) return regionPresident;
+    return null;
   }
 
-  const client = getSanityClient()
+  const client = getSanityClient();
 
   // Preferred: explicit "Presidente Regional" role.
   const president = await client.fetch(
@@ -366,9 +405,10 @@ export async function getRegionPresident(regionSlug: string = "mayo"): Promise<R
       phone
     }`,
     { slug: regionSlug },
-  )
+  );
 
-  if (president?.fullName && president?.phone) return president as RegionPresident
+  if (president?.fullName && president?.phone)
+    return president as RegionPresident;
 
   // Fallback: first directiva member (keeps the UI working for new/blank CMS setups).
   const fallback = await client.fetch(
@@ -380,13 +420,13 @@ export async function getRegionPresident(regionSlug: string = "mayo"): Promise<R
       phone
     }`,
     { slug: regionSlug },
-  )
+  );
 
   if (!fallback?.fullName || !fallback?.phone) {
-    return null
+    return null;
   }
 
-  return fallback as RegionPresident
+  return fallback as RegionPresident;
 }
 
 // ============================================
@@ -397,7 +437,7 @@ function mapHeroImage(raw: any): HeroImage {
   return {
     url: raw.image?.asset?.url || "/images/hero-choir.jpg",
     alt: raw.alt || "Imagen del hero",
-  }
+  };
 }
 
 function mapSiteSettings(raw: any): SiteSettings {
@@ -407,16 +447,18 @@ function mapSiteSettings(raw: any): SiteSettings {
     heroImages: (raw.heroImages || []).map(mapHeroImage),
     heroTitle: raw.heroTitle || "Bienvenido a Región Mayo",
     heroSubtitle: raw.heroSubtitle || "Vive la Comunidad",
-  }
+  };
 }
 
-export async function getSiteSettings(regionSlug: string = "mayo"): Promise<SiteSettings | null> {
+export async function getSiteSettings(
+  regionSlug: string = "mayo",
+): Promise<SiteSettings | null> {
   if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return siteSettingsData
-    return null
+    if (isMayoRegion(regionSlug)) return siteSettingsData;
+    return null;
   }
 
-  const client = getSanityClient()
+  const client = getSanityClient();
   const settings = await client.fetch(
     `*[_type == "siteSettings" && (region->slug.current == $slug || region->name == $slug)][0]{
       _id,
@@ -429,12 +471,100 @@ export async function getSiteSettings(regionSlug: string = "mayo"): Promise<Site
       heroSubtitle
     }`,
     { slug: regionSlug },
-  )
+  );
 
   if (!settings) {
     // Return default settings if none found
-    return siteSettingsData
+    return siteSettingsData;
   }
 
-  return mapSiteSettings(settings)
+  return mapSiteSettings(settings);
+}
+
+// ============================================
+// Templos APIs
+// ============================================
+
+function mapTemploPastor(raw: any): import("./types").TemploPastor {
+  return {
+    id: raw._id,
+    fullName: raw.fullName,
+    phone: raw.phone ?? undefined,
+  };
+}
+
+function mapTemploCoro(raw: any): import("./types").TemploCoro {
+  return {
+    id: raw._id,
+    coroName: raw.coroName,
+    presidentName: raw.presidentName,
+    presidentPhone: raw.presidentPhone,
+  };
+}
+
+function mapTemplo(raw: any): Templo {
+  return {
+    id: raw._id,
+    temploName: raw.temploName,
+    churchNumber: raw.churchNumber,
+    address: raw.address ?? undefined,
+    googleMapsUrl: raw.googleMapsUrl ?? undefined,
+    phone: raw.phone ?? undefined,
+    photo: raw.photo ? sanityImageUrl(raw.photo) : undefined,
+    description: raw.description ?? undefined,
+    presidenteJovenesName: raw.presidenteJovenesName ?? undefined,
+    presidenteJovenesPhone: raw.presidenteJovenesPhone ?? undefined,
+    pastores: (raw.pastores ?? []).map(mapTemploPastor),
+    coros: (raw.coros ?? []).map(mapTemploCoro),
+  };
+}
+
+/**
+ * Fetch all active templos for a region, with their pastores and coros joined.
+ * Uses GROQ reverse references to join pastor and coro documents.
+ * Ordered by churchNumber ascending.
+ */
+export async function getTemplos(
+  regionSlug: string = "mayo",
+): Promise<Templo[]> {
+  if (!SANITY_ENABLED) {
+    if (isMayoRegion(regionSlug)) return templosData;
+    return [];
+  }
+
+  const client = getSanityClient();
+  const templos = await client.fetch(
+    `*[
+      _type == "templo" &&
+      (region->slug.current == $slug || region->name == $slug) &&
+      active == true &&
+      !defined(deletedAt)
+    ] | order(churchNumber asc){
+      _id,
+      temploName,
+      churchNumber,
+      address,
+      googleMapsUrl,
+      phone,
+      photo{asset->{url}},
+      description,
+      presidenteJovenesName,
+      presidenteJovenesPhone,
+      "pastores": *[
+        _type == "pastor" &&
+        templo._ref == ^._id &&
+        active == true &&
+        !defined(deletedAt)
+      ]{_id, fullName, phone},
+      "coros": *[
+        _type == "coro" &&
+        templo._ref == ^._id &&
+        active == true &&
+        !defined(deletedAt)
+      ]{_id, coroName, presidentName, presidentPhone}
+    }`,
+    { slug: regionSlug },
+  );
+
+  return (templos ?? []).map(mapTemplo);
 }

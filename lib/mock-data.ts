@@ -3,7 +3,16 @@
 // This data will be replaced by Sanity CMS
 // ============================================
 
-import type { Region, Event, Pastor, Coro, DirectivaMember, RegionPresident, SiteSettings } from "./types"
+import type {
+  Region,
+  Event,
+  Pastor,
+  Coro,
+  DirectivaMember,
+  RegionPresident,
+  SiteSettings,
+  Templo,
+} from "./types";
 
 // Region Configuration
 export const regionMayo: Region = {
@@ -14,13 +23,13 @@ export const regionMayo: Region = {
     instagram: "https://instagram.com/regionmayo",
     facebook: "https://facebook.com/regionmayo",
   },
-}
+};
 
 // Region President (for registration confirmation)
 export const regionPresident: RegionPresident = {
   fullName: "Hermano Pedro Castillo",
   phone: "6441112233",
-}
+};
 
 // Events Data with new event types
 export const eventsData: Event[] = [
@@ -34,15 +43,23 @@ export const eventsData: Event[] = [
     location: "Santuario Principal",
     address: "Av. Juárez 123, Navojoa, Sonora",
     googleMapsUrl: "https://maps.google.com/?q=Av.+Juárez+123,+Navojoa,+Sonora",
-    description: "Únete a nosotros para un tiempo especial de adoración y comunión. Tendremos alabanzas, predicación de la palabra y un momento de oración por las familias.",
+    description:
+      "Únete a nosotros para un tiempo especial de adoración y comunión. Tendremos alabanzas, predicación de la palabra y un momento de oración por las familias.",
     vestimenta: "uniformeMGR",
     image: "/images/event-worship.jpg",
     status: "past",
     albumEnabled: true,
-    googleDriveAlbumUrl: "https://drive.google.com/drive/folders/worship-march-29",
+    googleDriveAlbumUrl:
+      "https://drive.google.com/drive/folders/worship-march-29",
     facebookPostUrl: "https://facebook.com/regionmayo/posts/123456",
     registrationEnabled: false,
-    photos: ["/images/event-worship.jpg", "/images/event-tour.jpg", "/images/event-conference.jpg", "/images/event-youth.jpg", "/images/hero-choir.jpg"],
+    photos: [
+      "/images/event-worship.jpg",
+      "/images/event-tour.jpg",
+      "/images/event-conference.jpg",
+      "/images/event-youth.jpg",
+      "/images/hero-choir.jpg",
+    ],
     speakers: {
       pastorMensaje: "Pastor Juan Carlos García",
       jovenPreside: "Hermano Miguel Rodríguez",
@@ -58,26 +75,35 @@ export const eventsData: Event[] = [
     time: "8:00 AM",
     location: "Centro de Convenciones",
     address: "Blvd. Hidalgo 500, Hermosillo, Sonora",
-    googleMapsUrl: "https://maps.google.com/?q=Blvd.+Hidalgo+500,+Hermosillo,+Sonora",
-    description: "Gran convención donde nos reuniremos con hermanos de diferentes regiones. Habrá transporte disponible desde Navojoa.",
+    googleMapsUrl:
+      "https://maps.google.com/?q=Blvd.+Hidalgo+500,+Hermosillo,+Sonora",
+    description:
+      "Gran convención donde nos reuniremos con hermanos de diferentes regiones. Habrá transporte disponible desde Navojoa.",
     vestimenta: "uniformeMGR",
     image: "/images/event-tour.jpg",
     status: "upcoming",
     albumEnabled: true,
     googleDriveAlbumUrl: "https://drive.google.com/drive/folders/example",
     registrationEnabled: true,
-    photos: ["/images/event-tour.jpg", "/images/event-conference.jpg", "/images/event-youth.jpg", "/images/hero-choir.jpg"],
+    photos: [
+      "/images/event-tour.jpg",
+      "/images/event-conference.jpg",
+      "/images/event-youth.jpg",
+      "/images/hero-choir.jpg",
+    ],
     alimentos: {
       enabled: true,
       location: "Comedor Principal",
       googleMapsUrl: "https://maps.google.com/?q=Comedor+Principal+Hermosillo",
-      description: "Desayuno: 7:00-8:30 AM\nComida: 1:00-3:00 PM\nCena: 7:00-9:00 PM",
+      description:
+        "Desayuno: 7:00-8:30 AM\nComida: 1:00-3:00 PM\nCena: 7:00-9:00 PM",
     },
     juntaJuvenil: {
       enabled: true,
       location: "Salón Juvenil B",
       googleMapsUrl: "https://maps.google.com/?q=Salon+Juvenil+Hermosillo",
-      description: "Reunión especial para jóvenes después del servicio principal.",
+      description:
+        "Reunión especial para jóvenes después del servicio principal.",
     },
     speakers: {
       pastorMensaje: "Pastor Miguel Ángel López",
@@ -97,7 +123,8 @@ export const eventsData: Event[] = [
     time: "7:00 PM",
     location: "Santuario Principal",
     address: "Av. Juárez 123, Navojoa, Sonora",
-    description: "Una noche especial dedicada a la alabanza con la participación de varios coros de la región.",
+    description:
+      "Una noche especial dedicada a la alabanza con la participación de varios coros de la región.",
     vestimenta: "formalCasual",
     image: "/images/event-youth.jpg",
     status: "upcoming",
@@ -116,7 +143,8 @@ export const eventsData: Event[] = [
     time: "9:00 AM",
     location: "Salón Comunitario",
     address: "Calle Obregón 45, Navojoa, Sonora",
-    description: "Recorrido anual de la Región Mayo visitando varias iglesias de la región.",
+    description:
+      "Recorrido anual de la Región Mayo visitando varias iglesias de la región.",
     vestimenta: "uniformeMGR",
     image: "/images/event-conference.jpg",
     status: "upcoming",
@@ -150,7 +178,8 @@ export const eventsData: Event[] = [
     time: "6:00 AM",
     location: "Rancho El Refugio",
     address: "Carretera Navojoa-Álamos Km 25",
-    description: "Congreso especial para jóvenes con actividades al aire libre, talleres y momentos de adoración.",
+    description:
+      "Congreso especial para jóvenes con actividades al aire libre, talleres y momentos de adoración.",
     vestimenta: "informal",
     image: "/images/event-youth.jpg",
     status: "upcoming",
@@ -163,7 +192,8 @@ export const eventsData: Event[] = [
     juntaJuvenil: {
       enabled: true,
       location: "Área de Fogata",
-      description: "Cada noche tendremos un tiempo especial alrededor de la fogata.",
+      description:
+        "Cada noche tendremos un tiempo especial alrededor de la fogata.",
     },
     moreInfo: {
       enabled: true,
@@ -188,7 +218,7 @@ export const eventsData: Event[] = [
       pastorMensaje: "Pastor Juan Carlos García",
     },
   },
-]
+];
 
 // Pastors Directory
 export const pastorsData: Pastor[] = [
@@ -231,7 +261,7 @@ export const pastorsData: Pastor[] = [
     churchName: "Templo Gracia Divina #06",
     googleMapsUrl: "https://maps.google.com/?q=Templo+Gracia+Divina+Sonora",
   },
-]
+];
 
 // Coros Locales
 export const corosData: Coro[] = [
@@ -267,7 +297,7 @@ export const corosData: Coro[] = [
     presidentName: "Roberto Sánchez",
     presidentPhone: "6444567890",
   },
-]
+];
 
 // Directiva Members
 export const directivaData: DirectivaMember[] = [
@@ -311,7 +341,7 @@ export const directivaData: DirectivaMember[] = [
     googleMapsUrl: "https://maps.google.com/?q=Templo+Gracia+Divina+Sonora",
     phone: "6445556677",
   },
-]
+];
 
 // Available regions for registration dropdown
 export const availableRegions = [
@@ -322,7 +352,7 @@ export const availableRegions = [
   "Región Centro",
   "Región Occidente",
   "Región Oriente",
-]
+];
 
 // Site Settings with Hero Images
 export const siteSettingsData: SiteSettings = {
@@ -337,4 +367,108 @@ export const siteSettingsData: SiteSettings = {
   ],
   heroTitle: "Bienvenido a Región Mayo",
   heroSubtitle: "Vive la Comunidad",
-}
+};
+
+// Templos (Iglesias Locales) — Mock data
+// Includes joined pastores and coros for each templo
+export const templosData: Templo[] = [
+  {
+    id: "t1",
+    temploName: "Templo Central Navojoa",
+    churchNumber: "01",
+    address: "Av. Juárez 123, Navojoa, Sonora",
+    googleMapsUrl: "https://maps.google.com/?q=Templo+Central+Navojoa",
+    phone: "6441234567",
+    photo: "/images/event-worship.jpg",
+    description:
+      "Culto general: Domingos 10:00 AM y 7:00 PM\nEstudio bíblico: Miércoles 7:00 PM\nReunión de jóvenes: Viernes 7:00 PM",
+    presidenteJovenesName: "Hno. Miguel Rodríguez",
+    presidenteJovenesPhone: "6441111222",
+    pastores: [
+      { id: "p1", fullName: "Pastor Juan Carlos García", phone: "6441234567" },
+    ],
+    coros: [
+      {
+        id: "c1",
+        coroName: "Coro MGR Navojoa",
+        presidentName: "María Elena Soto",
+        presidentPhone: "6441234567",
+      },
+    ],
+  },
+  {
+    id: "t2",
+    temploName: "Templo Esperanza",
+    churchNumber: "02",
+    address: "Calle Obregón 45, Navojoa, Sonora",
+    googleMapsUrl: "https://maps.google.com/?q=Templo+Esperanza+Navojoa",
+    phone: "6442345678",
+    description:
+      "Culto general: Domingos 9:00 AM y 6:00 PM\nEstudio bíblico: Jueves 7:00 PM",
+    pastores: [
+      { id: "p2", fullName: "Pastor Miguel Ángel López", phone: "6442345678" },
+    ],
+    coros: [
+      {
+        id: "c2",
+        coroName: "Coro Juvenil Esperanza",
+        presidentName: "Carlos Alberto Vega",
+        presidentPhone: "6442345678",
+      },
+    ],
+  },
+  {
+    id: "t3",
+    temploName: "Templo Fe y Vida",
+    churchNumber: "03",
+    address: "Blvd. Morelos 234, Cd. Obregón, Sonora",
+    googleMapsUrl: "https://maps.google.com/?q=Templo+Fe+y+Vida+Sonora",
+    description:
+      "Culto general: Domingos 11:00 AM\nEstudio bíblico: Lunes 7:30 PM",
+    presidenteJovenesName: "Hna. Ana García",
+    presidenteJovenesPhone: "6443222111",
+    pastores: [{ id: "p3", fullName: "Pastor Roberto Hernández" }],
+    coros: [],
+  },
+  {
+    id: "t4",
+    temploName: "Templo Luz del Mundo",
+    churchNumber: "04",
+    address: "Carretera Internacional Km 12, Sonora",
+    googleMapsUrl: "https://maps.google.com/?q=Templo+Luz+del+Mundo+Sonora",
+    pastores: [{ id: "p4", fullName: "Pastor Francisco Javier Morales" }],
+    coros: [
+      {
+        id: "c4",
+        coroName: "Coro Luz del Amanecer",
+        presidentName: "Roberto Sánchez",
+        presidentPhone: "6444567890",
+      },
+    ],
+  },
+  {
+    id: "t5",
+    temploName: "Templo Nueva Vida",
+    churchNumber: "05",
+    address: "Periférico Norte 567, Cd. Obregón, Sonora",
+    googleMapsUrl: "https://maps.google.com/?q=Templo+Nueva+Vida+Obregon",
+    phone: "6443456789",
+    description:
+      "Culto general: Domingos 10:30 AM y 7:00 PM\nEstudio bíblico: Miércoles 7:00 PM\nReunión de jóvenes: Sábados 5:00 PM",
+    presidenteJovenesName: "Hno. Carlos Mendoza",
+    presidenteJovenesPhone: "6443456788",
+    pastores: [
+      { id: "p5", fullName: "Pastor Eduardo Ramírez", phone: "6443456789" },
+    ],
+    coros: [],
+  },
+  {
+    id: "t6",
+    temploName: "Templo Gracia Divina",
+    churchNumber: "06",
+    address: "Calle Constitución 89, Navojoa, Sonora",
+    googleMapsUrl: "https://maps.google.com/?q=Templo+Gracia+Divina+Sonora",
+    pastores: [{ id: "p6", fullName: "Pastor José Luis Mendoza" }],
+    coros: [],
+  },
+];

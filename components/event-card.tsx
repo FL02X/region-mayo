@@ -1,139 +1,151 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import { 
-  MapPin, Clock, ExternalLink, ChevronDown, ChevronUp, Images, Facebook, Shirt, 
-  Utensils, Users, User, Mic, Info, X, CalendarDays,
-  Church, Music, BookOpen, Tent, Heart, GraduationCap, PartyPopper, Sparkles
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { useTime } from "@/lib/time-context"
-import type { Event, Vestimenta, EventType } from "@/lib/types"
+import { useState } from "react";
+import Image from "next/image";
+import {
+  MapPin,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Images,
+  Facebook,
+  Shirt,
+  Utensils,
+  Users,
+  User,
+  Mic,
+  Info,
+  X,
+  CalendarDays,
+  Church,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useTime } from "@/lib/time-context";
+import type { Event, Vestimenta, EventType } from "@/lib/types";
 
 interface EventCardProps {
-  event: Event
-  onRegister: (event: Event) => void
-  showAlbumButton?: boolean
+  event: Event;
+  onRegister: (event: Event) => void;
+  showAlbumButton?: boolean;
 }
 
-// Event type icons
-const eventTypeIcons: Record<EventType, React.ReactNode> = {
-  campana: <Tent className="h-3.5 w-3.5" />,
-  convencion: <Users className="h-3.5 w-3.5" />,
-  recorrido: <MapPin className="h-3.5 w-3.5" />,
-  cultoJuvenil: <Sparkles className="h-3.5 w-3.5" />,
-  culto: <Church className="h-3.5 w-3.5" />,
-  visita: <Heart className="h-3.5 w-3.5" />,
-  ensayo: <Music className="h-3.5 w-3.5" />,
-  actividad: <PartyPopper className="h-3.5 w-3.5" />,
-  estudioBiblico: <BookOpen className="h-3.5 w-3.5" />,
-  biregional: <Users className="h-3.5 w-3.5" />,
-  congresoBrilla: <GraduationCap className="h-3.5 w-3.5" />,
-  boda: <Heart className="h-3.5 w-3.5" />,
-}
-
-// Event type labels (in uppercase as requested)
 const eventTypeLabels: Record<EventType, string> = {
-  campana: "CAMPAÑA",
-  convencion: "CONVENCIÓN GENERAL",
-  recorrido: "RECORRIDO REGIONAL",
-  cultoJuvenil: "CULTO JUVENIL",
-  culto: "CULTO",
-  visita: "VISITA",
-  ensayo: "ENSAYO",
-  actividad: "ACTIVIDAD",
-  estudioBiblico: "ESTUDIO BÍBLICO",
-  biregional: "BIREGIONAL",
-  congresoBrilla: "CONGRESO BRILLA",
-  boda: "BODA",
-}
-
-// Simplified event type colors - using muted backgrounds for visual discipline
-const eventTypeColors: Record<EventType, string> = {
-  campana: "bg-muted text-foreground border-border",
-  convencion: "bg-muted text-foreground border-border",
-  recorrido: "bg-muted text-foreground border-border",
-  cultoJuvenil: "bg-muted text-foreground border-border",
-  culto: "bg-muted text-foreground border-border",
-  visita: "bg-muted text-foreground border-border",
-  ensayo: "bg-muted text-foreground border-border",
-  actividad: "bg-muted text-foreground border-border",
-  estudioBiblico: "bg-muted text-foreground border-border",
-  biregional: "bg-muted text-foreground border-border",
-  congresoBrilla: "bg-muted text-foreground border-border",
-  boda: "bg-muted text-foreground border-border",
-}
+  campana: "Campaña",
+  convencion: "Convención General",
+  recorrido: "Recorrido Regional",
+  cultoJuvenil: "Culto Juvenil",
+  culto: "Culto",
+  visita: "Visita",
+  ensayo: "Ensayo",
+  actividad: "Actividad",
+  estudioBiblico: "Estudio Bíblico",
+  biregional: "Biregional",
+  congresoBrilla: "Congreso Brilla",
+  boda: "Boda",
+};
 
 const vestimentaLabels: Record<Vestimenta, string> = {
   uniformeMGR: "Uniforme MGR",
   formalCasual: "Vestimenta Formal Casual",
   informal: "Vestimenta Informal",
   otro: "Vestimenta Especial",
-}
+};
 
-export function EventCard({ event, onRegister, showAlbumButton = false }: EventCardProps) {
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
-  const [showMoreInfoImage, setShowMoreInfoImage] = useState(false)
-  const { currentTime } = useTime()
+export function EventCard({
+  event,
+  onRegister,
+  showAlbumButton = false,
+}: EventCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showMoreInfoImage, setShowMoreInfoImage] = useState(false);
+  const { currentTime } = useTime();
 
-  // Use UTC methods to avoid hydration mismatches between server and client
+  /* ── date helpers (UTC to avoid hydration drift) ── */
   const formatDate = (date: Date) => {
-    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    return `${date.getUTCDate()} ${months[date.getUTCMonth()]}`
-  }
-  
-  const getDateDay = (date: Date) => date.getUTCDate()
-  
-  const formatDateRange = (startDate: Date, endDate: Date) => {
-    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    const startDay = startDate.getUTCDate()
-    const endDay = endDate.getUTCDate()
-    const startMonth = months[startDate.getUTCMonth()]
-    const endMonth = months[endDate.getUTCMonth()]
-    
-    if (startMonth === endMonth) {
-      return `${startDay}-${endDay} ${startMonth}`
-    }
-    return `${startDay} ${startMonth} - ${endDay} ${endMonth}`
-  }
+    const months = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
+    return `${date.getUTCDate()} ${months[date.getUTCMonth()]}`;
+  };
+
+  const formatDateRange = (start: Date, end: Date) => {
+    const months = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
+    const sd = start.getUTCDate();
+    const ed = end.getUTCDate();
+    const sm = months[start.getUTCMonth()];
+    const em = months[end.getUTCMonth()];
+    return sm === em ? `${sd}–${ed} ${sm}` : `${sd} ${sm} – ${ed} ${em}`;
+  };
 
   const openGoogleMaps = (url?: string, address?: string) => {
     if (url) {
-      window.open(url, "_blank")
+      window.open(url, "_blank");
     } else if (address) {
-      const query = encodeURIComponent(address)
-      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank")
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+        "_blank",
+      );
     }
-  }
+  };
 
   const openAlbum = () => {
-    if (event.googleDriveAlbumUrl) {
-      window.open(event.googleDriveAlbumUrl, "_blank")
-    }
-  }
+    if (event.googleDriveAlbumUrl)
+      window.open(event.googleDriveAlbumUrl, "_blank");
+  };
 
   const openFacebookPost = () => {
-    if (event.facebookPostUrl) {
-      window.open(event.facebookPostUrl, "_blank")
-    }
-  }
+    if (event.facebookPostUrl) window.open(event.facebookPostUrl, "_blank");
+  };
 
-  const isPastEvent = new Date(event.date) < currentTime
-  const hasAlbum = event.albumEnabled && event.googleDriveAlbumUrl
-  const hasFacebookPost = !!event.facebookPostUrl
-  const canRegister = !isPastEvent && event.registrationEnabled !== false
-  const shouldShowDescription = event.description && event.description.length > 0
-  const isMultiDay = event.endDate && event.endDate > event.date
-  const eventType = event.eventType || "culto"
+  /* ── state derivations ── */
+  const isPastEvent = new Date(event.date) < currentTime;
+  const hasAlbum = event.albumEnabled && event.googleDriveAlbumUrl;
+  const hasFacebookPost = !!event.facebookPostUrl;
+  const canRegister = !isPastEvent && event.registrationEnabled !== false;
+  const hasDescription = !!event.description && event.description.length > 0;
+  const isMultiDay = !!(event.endDate && event.endDate > event.date);
+  const eventType = event.eventType || "culto";
+
+  /* Does the card have any expandable details? */
+  const hasDetails =
+    !!event.location ||
+    !!event.vestimenta ||
+    !!event.speakers?.pastorMensaje ||
+    !!event.speakers?.jovenPreside ||
+    event.alimentos?.enabled ||
+    event.juntaJuvenil?.enabled ||
+    (event.moreInfo?.enabled && !!event.moreInfo.imageUrl);
 
   return (
     <>
-      <div className="bg-card rounded-2xl overflow-hidden shadow-sm border hover:shadow-md transition-shadow">
-        {/* Event Image */}
-        <div className="relative h-52 w-full">
-          {event.image ? (
+      <article className="bg-card border border-border overflow-hidden flex flex-col">
+        {/* ── Image with date/time strip ── */}
+        {event.image ? (
+          <div className="relative h-40 w-full shrink-0">
             <Image
               src={event.image}
               alt={event.title}
@@ -142,245 +154,339 @@ export function EventCard({ event, onRegister, showAlbumButton = false }: EventC
               loading="eager"
               priority
             />
-          ) : (
-            <div className="h-full w-full bg-muted flex items-center justify-center">
-              <Church className="h-12 w-12 text-muted-foreground" />
-            </div>
-          )}
-          {/* Date Badge - Shows range for multi-day events */}
-          <div className="absolute top-4 left-4 bg-white rounded-xl px-3 py-2 shadow-md text-center min-w-[56px]">
-            {isMultiDay ? (
-              <>
-                <div className="flex items-center justify-center gap-1">
-                  <CalendarDays className="h-3 w-3 text-primary" />
-                  <p className="text-xs font-semibold text-primary uppercase">Múltiples días</p>
-                </div>
-                <p className="text-sm font-bold text-foreground leading-none">
-                  {formatDateRange(event.date, event.endDate!)}
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-semibold text-primary uppercase">{formatDate(event.date).split(" ")[1]}</p>
-                <p className="text-2xl font-bold text-foreground leading-none">{getDateDay(event.date)}</p>
-              </>
-            )}
-          </div>
-          {/* Time Badge */}
-          <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
-            <Clock className="h-3.5 w-3.5 text-primary" />
-            <span className="text-sm font-medium text-foreground">{event.time}</span>
-          </div>
-        </div>
-
-        {/* Content - Increased padding for more whitespace */}
-        <div className="p-5">
-          {/* Type Badge with icon */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            <Badge variant="outline" className={`${eventTypeColors[eventType]} flex items-center gap-1.5 font-medium text-xs`}>
-              {eventTypeIcons[eventType]}
-              {eventTypeLabels[eventType]}
-            </Badge>
-          </div>
-
-          {/* Title - Larger for hierarchy */}
-          <h3 className="font-serif font-bold text-xl text-foreground mb-4 text-balance leading-tight">{event.title}</h3>
-
-          {/* Description (Expandable) */}
-          {shouldShowDescription && (
-            <div className="mb-4">
-              <p className={`text-sm text-muted-foreground leading-relaxed ${!isDescriptionExpanded ? "line-clamp-2" : ""}`}>
-                {event.description}
-              </p>
-              {event.description && event.description.length > 100 && (
-                <button
-                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 mt-1.5 font-medium"
-                >
-                  {isDescriptionExpanded ? (
-                    <>
-                      Ver menos <ChevronUp className="h-3 w-3" />
-                    </>
-                  ) : (
-                    <>
-                      Ver más <ChevronDown className="h-3 w-3" />
-                    </>
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3">
+              <div className="flex items-end justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  {isMultiDay && (
+                    <CalendarDays
+                      className="h-3.5 w-3.5 text-white/80 shrink-0"
+                      aria-hidden="true"
+                    />
                   )}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Location - Clean layout */}
-          <div className="flex items-start gap-3 mb-4">
-            <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground font-medium">{event.location}</p>
-              <p className="text-xs text-muted-foreground truncate">{event.address}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
-              className="shrink-0 text-primary hover:text-primary/80 h-8 px-2"
-            >
-              <ExternalLink className="h-3.5 w-3.5 mr-1" />
-              Maps
-            </Button>
-          </div>
-
-          {/* Vestimenta */}
-          {event.vestimenta && (
-            <div className="flex items-center gap-3 mb-4">
-              <Shirt className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-foreground font-medium">
-                  {vestimentaLabels[event.vestimenta]}
-                </p>
-                {event.vestimenta === "otro" && event.vestimentaCustom && (
-                  <p className="text-xs text-muted-foreground">{event.vestimentaCustom}</p>
-                )}
+                  <span className="text-sm font-semibold text-white leading-none">
+                    {isMultiDay
+                      ? formatDateRange(event.date, event.endDate!)
+                      : formatDate(event.date)}
+                  </span>
+                </div>
+                <span className="text-sm text-white/85 leading-none tabular-nums">
+                  {event.time}
+                </span>
               </div>
             </div>
+          </div>
+        ) : (
+          <div className="h-16 w-full bg-muted flex items-center justify-center shrink-0">
+            <Church
+              className="h-6 w-6 text-muted-foreground/25"
+              aria-hidden="true"
+            />
+          </div>
+        )}
+
+        {/* ── Card body ── */}
+        <div className="p-4 flex flex-col flex-1">
+          {/* Event type — plain uppercase label */}
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary mb-1.5">
+            {eventTypeLabels[eventType]}
+          </p>
+
+          {/* Title — Inter bold, no serif */}
+          <h3 className="text-base font-bold text-foreground leading-snug mb-2">
+            {event.title}
+          </h3>
+
+          {/* Description — always shown, 3-line clamp */}
+          {hasDescription && (
+            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-3">
+              {event.description}
+            </p>
           )}
 
-          {/* Pastor del Mensaje / Joven que Preside */}
-          {(event.speakers?.pastorMensaje || event.speakers?.jovenPreside) && (
-            <div className="mb-4 space-y-3">
-              {event.speakers.pastorMensaje && (
-                <div className="flex items-center gap-3">
-                  <Mic className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Pastor del Mensaje</p>
-                    <p className="text-sm text-foreground font-medium">{event.speakers.pastorMensaje}</p>
-                  </div>
-                </div>
-              )}
-              {event.speakers.jovenPreside && (
-                <div className="flex items-center gap-3">
-                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Joven que Preside</p>
-                    <p className="text-sm text-foreground font-medium">{event.speakers.jovenPreside}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Spacer pushes actions to bottom */}
+          <div className="flex-1" />
 
-          {/* Alimentos Section - Muted background for visual discipline */}
-          {event.alimentos?.enabled && (
-            <div className="mb-4 p-4 bg-muted/50 rounded-xl border border-border">
-              <div className="flex items-start gap-3">
-                <Utensils className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-foreground">Alimentos</p>
-                  {event.alimentos.location && (
-                    <p className="text-xs text-muted-foreground">{event.alimentos.location}</p>
-                  )}
-                  {event.alimentos.description && (
-                    <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">{event.alimentos.description}</p>
-                  )}
-                </div>
-                {event.alimentos.googleMapsUrl && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openGoogleMaps(event.alimentos?.googleMapsUrl)}
-                    className="shrink-0 text-foreground hover:bg-muted h-7 px-2"
-                  >
-                    <MapPin className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Junta Juvenil Section - Muted background for visual discipline */}
-          {event.juntaJuvenil?.enabled && (
-            <div className="mb-4 p-4 bg-muted/50 rounded-xl border border-border">
-              <div className="flex items-start gap-3">
-                <Users className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-foreground">Junta Juvenil</p>
-                  {event.juntaJuvenil.location && (
-                    <p className="text-xs text-muted-foreground">{event.juntaJuvenil.location}</p>
-                  )}
-                  {event.juntaJuvenil.description && (
-                    <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">{event.juntaJuvenil.description}</p>
-                  )}
-                </div>
-                {event.juntaJuvenil.googleMapsUrl && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openGoogleMaps(event.juntaJuvenil?.googleMapsUrl)}
-                    className="shrink-0 text-foreground hover:bg-muted h-7 px-2"
-                  >
-                    <MapPin className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons - More spacing before */}
-          <div className="flex flex-col gap-2 pt-2">
+          {/* ── Action buttons — ALWAYS VISIBLE ── */}
+          <div className="border-t border-border pt-3 mt-1">
             {isPastEvent ? (
               <div className="flex gap-2">
                 {hasAlbum && (
-                  <Button onClick={openAlbum} className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-white">
-                    <Images className="h-4 w-4 mr-2" />
-                    Ver Album
+                  <Button
+                    onClick={openAlbum}
+                    className="flex-1 bg-primary hover:bg-primary/90 text-white text-sm"
+                  >
+                    <Images className="h-4 w-4 mr-2" aria-hidden="true" />
+                    Ver Álbum
                   </Button>
                 )}
                 {hasFacebookPost && (
                   <Button
                     onClick={openFacebookPost}
                     variant={hasAlbum ? "outline" : "default"}
-                    className={`flex-1 rounded-xl ${!hasAlbum ? "bg-primary hover:bg-primary/90 text-white" : ""}`}
+                    className={`flex-1 text-sm ${
+                      !hasAlbum
+                        ? "bg-primary hover:bg-primary/90 text-white"
+                        : ""
+                    }`}
                   >
-                    <Facebook className="h-4 w-4 mr-2" />
+                    <Facebook className="h-4 w-4 mr-2" aria-hidden="true" />
                     Ver en Facebook
                   </Button>
                 )}
                 {!hasAlbum && !hasFacebookPost && (
-                  <Button disabled variant="secondary" className="flex-1 rounded-xl">
+                  <Button
+                    disabled
+                    variant="secondary"
+                    className="flex-1 text-sm"
+                  >
                     Evento finalizado
                   </Button>
                 )}
               </div>
             ) : (
-              <div className="flex gap-2">
-                {/* Mas Informacion Button */}
-                {event.moreInfo?.enabled && event.moreInfo.imageUrl && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowMoreInfoImage(true)}
-                    className="rounded-xl border-border"
-                  >
-                    <Info className="h-4 w-4 mr-2" />
-                    Mas Info
-                  </Button>
-                )}
-                <Button
-                  onClick={() => onRegister(event)}
-                  disabled={!canRegister}
-                  className="flex-1 rounded-xl bg-[#FF4E33] hover:bg-[#FF4E33]/90 text-white py-5"
-                >
-                  {canRegister ? "Registrarse" : "Registro no disponible"}
-                </Button>
-              </div>
+              <Button
+                onClick={() => onRegister(event)}
+                disabled={!canRegister}
+                className={`w-full text-sm py-5 ${
+                  canRegister
+                    ? "bg-primary hover:bg-primary/90 text-white"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                }`}
+                aria-disabled={!canRegister}
+              >
+                {canRegister ? "Registrarse" : "Registro no disponible"}
+              </Button>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* More Info Image Modal */}
+          {/* ── "Ver más información" — plain text toggle, NOT a button ── */}
+          {hasDetails && (
+            <div className="border-t border-border mt-3">
+              <button
+                onClick={() => setIsExpanded((v) => !v)}
+                className="w-full flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                aria-expanded={isExpanded}
+                aria-controls={`details-${event.id}`}
+                style={{
+                  minHeight: "unset",
+                  minWidth: "unset",
+                  background: "none",
+                  border: "none",
+                }}
+              >
+                <span>
+                  {isExpanded ? "Ocultar información" : "Ver más información"}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {/* ── Expanded details ── */}
+              {isExpanded && (
+                <div id={`details-${event.id}`} className="space-y-3 pb-1 pt-1">
+                  {/* Location */}
+                  {event.location && (
+                    <div className="flex items-start gap-2.5">
+                      <MapPin
+                        className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                        aria-hidden="true"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {event.location}
+                        </p>
+                        {event.address && (
+                          <p className="text-xs text-muted-foreground">
+                            {event.address}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() =>
+                          openGoogleMaps(event.googleMapsUrl, event.address)
+                        }
+                        className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
+                        aria-label={`Abrir ${event.location} en Google Maps`}
+                        style={{ minHeight: "unset", minWidth: "unset" }}
+                      >
+                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        Maps
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Vestimenta */}
+                  {event.vestimenta && (
+                    <div className="flex items-start gap-2.5">
+                      <Shirt
+                        className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                        aria-hidden="true"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm text-foreground">
+                          {vestimentaLabels[event.vestimenta]}
+                        </p>
+                        {event.vestimenta === "otro" &&
+                          event.vestimentaCustom && (
+                            <p className="text-xs text-muted-foreground">
+                              {event.vestimentaCustom}
+                            </p>
+                          )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Speakers */}
+                  {(event.speakers?.pastorMensaje ||
+                    event.speakers?.jovenPreside) && (
+                    <div className="space-y-2">
+                      {event.speakers.pastorMensaje && (
+                        <div className="flex items-start gap-2.5">
+                          <Mic
+                            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                            aria-hidden="true"
+                          />
+                          <p className="text-sm text-foreground">
+                            <span className="text-muted-foreground">
+                              Pastor ·{" "}
+                            </span>
+                            {event.speakers.pastorMensaje}
+                          </p>
+                        </div>
+                      )}
+                      {event.speakers.jovenPreside && (
+                        <div className="flex items-start gap-2.5">
+                          <User
+                            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                            aria-hidden="true"
+                          />
+                          <p className="text-sm text-foreground">
+                            <span className="text-muted-foreground">
+                              Preside ·{" "}
+                            </span>
+                            {event.speakers.jovenPreside}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Alimentos */}
+                  {event.alimentos?.enabled && (
+                    <div className="p-3 bg-muted/40 border border-border">
+                      <div className="flex items-start gap-2.5">
+                        <Utensils
+                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                          aria-hidden="true"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground mb-0.5">
+                            Alimentos
+                          </p>
+                          {event.alimentos.location && (
+                            <p className="text-xs text-muted-foreground">
+                              {event.alimentos.location}
+                            </p>
+                          )}
+                          {event.alimentos.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">
+                              {event.alimentos.description}
+                            </p>
+                          )}
+                        </div>
+                        {event.alimentos.googleMapsUrl && (
+                          <button
+                            onClick={() =>
+                              openGoogleMaps(event.alimentos?.googleMapsUrl)
+                            }
+                            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                            aria-label="Ver ubicación de alimentos en Maps"
+                            style={{ minHeight: "unset", minWidth: "unset" }}
+                          >
+                            <MapPin
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Junta Juvenil */}
+                  {event.juntaJuvenil?.enabled && (
+                    <div className="p-3 bg-muted/40 border border-border">
+                      <div className="flex items-start gap-2.5">
+                        <Users
+                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                          aria-hidden="true"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground mb-0.5">
+                            Junta Juvenil
+                          </p>
+                          {event.juntaJuvenil.location && (
+                            <p className="text-xs text-muted-foreground">
+                              {event.juntaJuvenil.location}
+                            </p>
+                          )}
+                          {event.juntaJuvenil.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">
+                              {event.juntaJuvenil.description}
+                            </p>
+                          )}
+                        </div>
+                        {event.juntaJuvenil.googleMapsUrl && (
+                          <button
+                            onClick={() =>
+                              openGoogleMaps(event.juntaJuvenil?.googleMapsUrl)
+                            }
+                            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                            aria-label="Ver ubicación de junta juvenil en Maps"
+                            style={{ minHeight: "unset", minWidth: "unset" }}
+                          >
+                            <MapPin
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Más Info image */}
+                  {!isPastEvent &&
+                    event.moreInfo?.enabled &&
+                    event.moreInfo.imageUrl && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowMoreInfoImage(true)}
+                        className="text-sm w-full"
+                      >
+                        <Info className="h-4 w-4 mr-1.5" aria-hidden="true" />
+                        Más información del evento
+                      </Button>
+                    )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </article>
+
+      {/* ── "Más Info" image modal ── */}
       {showMoreInfoImage && event.moreInfo?.imageUrl && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
           onClick={() => setShowMoreInfoImage(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Información adicional del evento"
         >
           <div className="relative max-w-lg w-full max-h-[90vh]">
             <Button
@@ -388,10 +494,11 @@ export function EventCard({ event, onRegister, showAlbumButton = false }: EventC
               size="icon"
               onClick={() => setShowMoreInfoImage(false)}
               className="absolute -top-12 right-0 text-white hover:bg-white/20 rounded-full"
+              aria-label="Cerrar imagen de información"
             >
               <X className="h-6 w-6" />
             </Button>
-            <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden">
+            <div className="relative aspect-[3/4] w-full overflow-hidden">
               <Image
                 src={event.moreInfo.imageUrl}
                 alt="Más información del evento"
@@ -403,7 +510,7 @@ export function EventCard({ event, onRegister, showAlbumButton = false }: EventC
         </div>
       )}
     </>
-  )
+  );
 }
 
-export type { Event }
+export type { Event };

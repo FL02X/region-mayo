@@ -85,7 +85,7 @@ export function DebugTimePicker() {
             className="fixed inset-0 z-40" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute right-0 top-full mt-2 z-50 w-72 bg-popover border rounded-xl shadow-lg p-4">
+          <div className="absolute right-0 bottom-full mb-2 z-50 w-72 bg-popover border rounded-xl shadow-lg p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium text-sm text-foreground">
                 Cambiar Tiempo (Debug)

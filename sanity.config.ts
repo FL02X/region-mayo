@@ -24,7 +24,7 @@ if (!dataset) {
 
 /**
  * DOCUMENTO TYPES QUE REQUIEREN AUDITORÍA
- * Estos tipos de documentos auto-populan _audit
+ * Estos tipos de documentos auto-populan audit
  */
 const AUDITABLE_DOCUMENT_TYPES = [
   'region',

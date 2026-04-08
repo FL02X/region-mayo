@@ -1,115 +1,150 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Menu, Home, Users, Music, Images, UserCircle, Instagram, Facebook } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  Menu,
+  Home,
+  Users,
+  Music,
+  Images,
+  UserCircle,
+  Instagram,
+  Facebook,
+  Church,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/components/ui/sheet";
 
 interface MobileMenuProps {
-  instagramUrl?: string
-  facebookUrl?: string
+  instagramUrl?: string;
+  facebookUrl?: string;
 }
 
 const menuItems = [
   { href: "/", label: "Inicio", icon: Home },
-  { href: "/directorio", label: "Directorio", description: "Pastores", icon: Users },
+  { href: "/templos", label: "Templos", icon: Church },
+  {
+    href: "/directorio",
+    label: "Directorio",
+    description: "Pastores",
+    icon: Users,
+  },
   { href: "/coros", label: "Coros Locales", icon: Music },
-  { href: "/album", label: "Album de Actividades", icon: Images },
+  { href: "/album", label: "Álbum de Actividades", icon: Images },
   { href: "/directiva", label: "Directiva", icon: UserCircle },
-]
+];
 
-export function MobileMenu({ 
+export function MobileMenu({
   instagramUrl = "https://instagram.com/regionmayo",
-  facebookUrl = "https://facebook.com/regionmayo"
+  facebookUrl = "https://facebook.com/regionmayo",
 }: MobileMenuProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-9 w-9 rounded-full"
-          aria-label="Abrir menú"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9"
+          aria-label="Abrir menú de navegación"
         >
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[280px] max-w-[85vw] p-0 overflow-y-auto">
-        <SheetHeader className="border-b px-4 py-3">
+
+      <SheetContent
+        side="right"
+        className="w-[260px] max-w-[85vw] p-0 flex flex-col overflow-y-auto"
+      >
+        {/* Header */}
+        <SheetHeader className="border-b border-border px-5 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <Image
               src="/images/region-mayo-logo.jpg"
-              alt="Region Mayo Logo"
-              width={36}
-              height={36}
+              alt="Región Mayo"
+              width={32}
+              height={32}
               className="rounded-full shrink-0"
             />
             <div className="min-w-0">
-              <SheetTitle className="text-left font-sans text-base">Region Mayo</SheetTitle>
-              <p className="text-xs text-muted-foreground">Tu Comunidad</p>
+              <SheetTitle className="text-left font-semibold text-sm leading-tight">
+                Region Mayo
+              </SheetTitle>
+              <p className="text-xs text-muted-foreground font-normal leading-tight mt-0.5">
+                Tu Comunidad
+              </p>
             </div>
           </div>
         </SheetHeader>
 
-        <nav className="flex flex-col py-2">
+        {/* Navigation */}
+        <nav className="flex-1" aria-label="Menú principal">
           {menuItems.map((item) => {
-            const Icon = item.icon
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors"
+                className="flex items-center gap-3 px-5 py-4 border-b border-border/60 hover:bg-muted transition-colors"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted shrink-0">
-                  <Icon className="h-4 w-4 text-foreground" />
-                </div>
+                <Icon
+                  className="h-4 w-4 text-muted-foreground shrink-0"
+                  aria-hidden="true"
+                />
                 <div className="min-w-0">
-                  <p className="font-medium text-sm text-foreground">{item.label}</p>
+                  <p className="text-sm font-medium text-foreground leading-tight">
+                    {item.label}
+                  </p>
                   {item.description && (
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                      {item.description}
+                    </p>
                   )}
                 </div>
               </Link>
-            )
+            );
           })}
         </nav>
 
-        {/* Social Links Footer - Monochromatic icons for visual discipline */}
-        <div className="mt-auto border-t bg-muted/30 px-4 py-3">
-          <p className="text-xs text-muted-foreground mb-2">Siguenos</p>
-          <div className="flex gap-2">
+        {/* Social links footer */}
+        <div className="border-t border-border px-5 py-4 shrink-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
+            Síguenos
+          </p>
+          <div className="flex flex-col gap-2">
             <a
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
-              aria-label="Siguenos en Instagram"
+              className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Síguenos en Instagram"
             >
-              <Instagram className="h-4 w-4 text-foreground" />
+              <Instagram className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Instagram
             </a>
             <a
               href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
-              aria-label="Siguenos en Facebook"
+              className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Síguenos en Facebook"
             >
-              <Facebook className="h-4 w-4 text-foreground" />
+              <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Facebook
             </a>
           </div>
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

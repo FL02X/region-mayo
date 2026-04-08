@@ -2,7 +2,7 @@
  * AUDIT HOOKS - Auto-llenado de Campos de Auditoría
  * 
  * Estos hooks se ejecutan automáticamente cuando se crea o modifica
- * un documento, poblando los campos _audit.
+ * un documento, poblando los campos audit.
  * 
  * INSTALACIÓN: Ver sanity.config.ts
  * 
@@ -28,10 +28,10 @@ export const auditBeforeCreate: DocumentBeforeCreateHandler = (
   // Obtener el UID del usuario actual
   const userId = currentUser?.id || 'system'
 
-  // Crear documento con campos _audit iniciales
+  // Crear documento con campos audit iniciales
   return {
     ...documentBeforeCreate,
-    _audit: {
+    audit: {
       createdBy: userId,
       createdAt: new Date().toISOString(),
       modifiedBy: userId,
@@ -55,14 +55,15 @@ export const auditBeforeCommit: DocumentBeforeCommitHandler = (
 ) => {
   const { currentUser } = context
 
-  // Si el documento no tiene _audit, crearlo (fallback)
-  const audit = documentBeforeCommit._audit || {}
+  // Compatibilidad: si el documento aún trae el campo legacy _audit, reutilizarlo.
+  const legacyAudit = (documentBeforeCommit as Record<string, any>)._audit
+  const audit = documentBeforeCommit.audit || legacyAudit || {}
 
   const userId = currentUser?.id || 'system'
 
   return {
     ...documentBeforeCommit,
-    _audit: {
+    audit: {
       // Preservar valores de creación
       createdBy: audit.createdBy || userId,
       createdAt: audit.createdAt || new Date().toISOString(),
@@ -94,10 +95,10 @@ export const auditBeforeCommit: DocumentBeforeCommitHandler = (
  * 1. Crear un nuevo documento desde Sanity Studio
  * 2. Abrirlo con Vision Tool (icono de ojo)
  * 3. Ejecutar query:
- *    *[_type == 'pastor'][0] { _audit }
+ *    *[_type == 'pastor'][0] { audit }
  * 4. Deberías ver:
  *    {
- *      "_audit": {
+ *      "audit": {
  *        "createdBy": "userId123",
  *        "createdAt": "2026-04-07T10:30:00Z",
  *        "modifiedBy": "userId123",
@@ -117,19 +118,19 @@ export const auditBeforeCommit: DocumentBeforeCommitHandler = (
  * CASOS DE USO - Queries con auditoría
  * 
  * // 1. Quién creó este documento?
- * *[_id == 'documento-id'] { _audit.createdBy, _audit.createdAt }
+ * *[_id == 'documento-id'] { audit.createdBy, audit.createdAt }
  * 
  * // 2. Documentos creados hoy
- * *[_type == 'pastor' && _audit.createdAt > '2026-04-07'] 
+ * *[_type == 'pastor' && audit.createdAt > '2026-04-07'] 
  * 
  * // 3. Documentos modificados por usuario X
- * *[_type == 'pastor' && _audit.modifiedBy == 'userId123']
+ * *[_type == 'pastor' && audit.modifiedBy == 'userId123']
  * 
  * // 4. Cambios en las últimas 24 horas
- * *[_type == 'pastor' && _audit.modifiedAt > now() - 86400000]
+ * *[_type == 'pastor' && audit.modifiedAt > now() - 86400000]
  * 
  * // 5. Documentos nunca modificados (solo creados)
- * *[_type == 'pastor' && _audit.createdBy == _audit.modifiedBy]
+ * *[_type == 'pastor' && audit.createdBy == audit.modifiedBy]
  */
 
 /**
@@ -141,11 +142,11 @@ export const auditBeforeCommit: DocumentBeforeCommitHandler = (
  * 
  * 2. Los hooks se ejecutan en Sanity Studio
  *    Si cambias documentos vía API directa, estos hooks NO se ejecutan
- *    SOLUCIÓN: En tu backend, también llenar _audit manualmente
+ *    SOLUCIÓN: En tu backend, también llenar audit manualmente
  * 
  * 3. Cambios en draft vs published
  *    Los hooks se ejecutan para ambos estados
- *    El documento draft y published tienen _audit independientes
+ *    El documento draft y published tienen audit independientes
  * 
  * 4. Usuarios con rol "Viewer" (solo lectura)
  *    No pueden editar, los hooks no se ejecutan (correcto)

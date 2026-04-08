@@ -430,6 +430,49 @@
  * - Multi-region si expande a múltiples países
  */
 
+// ============================================================================
+// SECCIÓN 11: TEMPLO - CAMPOS NUEVOS Y QUERIES JOINED
+// ============================================================================
+
+/**
+ * DECISIÓN: Agregar description, presidenteJovenesName, presidenteJovenesPhone a Templo
+ * 
+ * CAMPOS AÑADIDOS (todos opcionales):
+ * - description: text — horarios, información general; responsabilidad del admin
+ * - presidenteJovenesName: string — líder de jóvenes LOCAL del templo
+ * - presidenteJovenesPhone: string — WhatsApp del líder de jóvenes, 10 dígitos
+ * 
+ * POR QUÉ NO SE AÑADIERON COMO REFERENCIAS:
+ * El presidente de jóvenes LOCAL no es el mismo que el presidente regional
+ * (que está en directiva). Es un rol específico del templo, no necesita
+ * un documento propio en esta etapa. Un string + phone es suficiente.
+ * 
+ * POR QUÉ description ES text (NO array de bloques):
+ * El tipo 'text' (multiline string) es más simple de editar en el CMS para
+ * administradores no técnicos. Los bloques de Portable Text serían overkill
+ * para horarios simples. El texto plano con saltos de línea (\n) es suficiente.
+ * 
+ * DECISIÓN: GROQ Reverse References para Pastores y Coros
+ * 
+ * En lugar de guardar arrays de referencias en el Templo (templo.pastores[]),
+ * usamos referencias inversas en GROQ:
+ *   "pastores": *[_type == "pastor" && templo._ref == ^._id && ...]
+ * 
+ * POR QUÉ REVERSE REFERENCES:
+ * 1. SINGLE SOURCE OF TRUTH: El pastor sabe a qué templo pertenece
+ *    No hay duplicación de datos en ambos documentos
+ * 2. INTEGRIDAD: Si mueves un pastor a otro templo, solo cambias UN campo
+ *    en el pastor. No necesitas actualizar el array en el templo.
+ * 3. FLEXIBILIDAD: Un templo puede tener N pastores sin límite de array
+ * 4. MENOS BUGS: No hay riesgo de que templo.pastores[] esté desincronizado
+ *    con pastor.templo
+ * 
+ * COMPATIBILIDAD:
+ * Todos los campos nuevos son opcionales. Documentos existentes de templo
+ * sin estos campos seguirán funcionando — la UI los omite si son undefined.
+ * No se requiere migración de datos.
+ */
+
 export const CHANGE_SUMMARY = {
   date: '2026-04-07',
   author: 'Database Architecture Review',

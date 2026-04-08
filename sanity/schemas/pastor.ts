@@ -3,9 +3,10 @@
  * 
  * JERARQUÍA: Region → Templo → Pastor
  * 
- * DIFERENCIA CRÍTICA CON MIEMBRO:
- * - Pastor: lidera el TEMPLO completo (1:1 o N:1)
- * - Miembro: pertenece a un CORO/GRUPO (N:N)
+ * RELACIÓN CLAVE:
+ * - UNO-A-UNO: un pastor = un templo (un pastor NO puede estar en múltiples templos)
+ * - El pastor es el contacto principal del templo
+ * - Su teléfono y nombre se heredan a la UI del templo para mostrar contacto
  * 
  * RESTRICCIONES:
  * - templo: obligatorio (un pastor siempre pertenece a un templo)
@@ -48,7 +49,7 @@ export default defineType({
       to: [{ type: 'templo' }],
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Templo al que pertenece este pastor (OBLIGATORIO)',
+      description: 'Templo al que pertenece este pastor (OBLIGATORIO). Un pastor está en UN SOLO templo. Su teléfono y nombre se mostrarán en la UI del templo.',
     }),
     defineField({
       name: 'region',
@@ -81,18 +82,10 @@ export default defineType({
         invert: false,
       }).error('Debe ser 10 dígitos o dejarse vacío'),
     }),
-    defineField({
-      name: 'active',
-      title: 'Pastor Activo',
-      type: 'boolean',
-      group: 'metadata',
-      initialValue: true,
-      description: 'Marcar como inactivo si el pastor está jubilado o cambió de región',
-    }),
 
     // Auditoría
     defineField({
-      name: '_audit',
+      name: 'audit',
       title: 'Auditoría',
       type: 'object',
       group: 'metadata',

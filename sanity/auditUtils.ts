@@ -1,11 +1,11 @@
 /**
- * AUDIT UTILITIES - Funciones auxiliares para llenar _audit en API calls
+ * AUDIT UTILITIES - Funciones auxiliares para llenar audit en API calls
  * 
  * Use estas funciones cuando hagas mutations a Sanity desde tu backend
  * (Next.js API routes, scripts, etc.)
  * 
  * IMPORTANCIA: Los hooks en sanity.config.ts SOLO funcionan en Sanity Studio
- * Si modificas documentos desde API, debes llenar _audit manualmente
+ * Si modificas documentos desde API, debes llenar audit manualmente
  */
 
 export interface AuditData {
@@ -16,10 +16,10 @@ export interface AuditData {
 }
 
 /**
- * Crear un objeto _audit para documento nuevo
+ * Crear un objeto audit para documento nuevo
  * 
  * @param userId - ID del usuario actual o "system"
- * @returns Objeto _audit completo
+ * @returns Objeto audit completo
  * 
  * @example
  * const newAudit = createAudit('user123')
@@ -41,15 +41,15 @@ export function createAudit(userId: string = 'system'): AuditData {
 }
 
 /**
- * Actualizar un objeto _audit existente
+ * Actualizar un objeto audit existente
  * Preserva createdBy y createdAt, actualiza modifiedBy y modifiedAt
  * 
- * @param existingAudit - El _audit actual del documento
+ * @param existingAudit - El audit actual del documento
  * @param userId - ID del usuario que está haciendo el cambio
- * @returns Objeto _audit actualizado
+ * @returns Objeto audit actualizado
  * 
  * @example
- * const updatedAudit = updateAudit(document._audit, 'user456')
+ * const updatedAudit = updateAudit(document.audit, 'user456')
  * // {
  * //   createdBy: 'user123', // NO CAMBIA
  * //   createdAt: '2026-04-07T10:00:00Z', // NO CAMBIA
@@ -92,7 +92,7 @@ export function prepareForCreate(
   return {
     _type: documentType,
     ...documentData,
-    _audit: createAudit(userId),
+    audit: createAudit(userId),
   }
 }
 
@@ -101,7 +101,7 @@ export function prepareForCreate(
  * 
  * @param documentId - ID del documento
  * @param updateData - Solo los campos a actualizar
- * @param existingAudit - El _audit actual del documento
+ * @param existingAudit - El audit actual del documento
  * @param userId - ID del usuario
  * @returns Objeto para usar en client.mutate()
  * 
@@ -117,7 +117,7 @@ export function prepareForCreate(
  * //     id: 'docId123',
  * //     set: {
  * //       phone: '1234567890',
- * //       _audit: { ...updatedAudit }
+ * //       audit: { ...updatedAudit }
  * //     }
  * //   }
  * // }
@@ -133,7 +133,7 @@ export function prepareForUpdate(
       id: documentId,
       set: {
         ...updateData,
-        _audit: updateAudit(existingAudit, userId),
+        audit: updateAudit(existingAudit, userId),
       },
     },
   }
@@ -160,7 +160,7 @@ export function prepareForUpdate(
  * CASO: Usuario se registra en evento desde web
  * 
  * 1. Frontend envía POST /api/register con datos
- * 2. Backend crea documento Registration con _audit
+ * 2. Backend crea documento Registration con audit
  */
 
 export async function createRegistrationFromForm(
@@ -223,7 +223,7 @@ export async function batchUpdatePastores(
 // ============================================================================
 
 /**
- * EJEMPLO COMPLETO: API route que crea pastor y llena _audit
+ * EJEMPLO COMPLETO: API route que crea pastor y llena audit
  * 
  * Archivo: app/api/admin/pastor/create/route.ts
  */
@@ -236,13 +236,13 @@ export async function POST(request: Request) {
   try {
     const { fullName, temploId, phone, userId } = await request.json()
 
-    // Preparar documento con _audit
+    // Preparar documento con audit
     const newPastor = {
       _type: 'pastor',
       fullName,
       templo: { _ref: temploId },
       phone,
-      _audit: createAudit(userId || 'system'),
+      audit: createAudit(userId || 'system'),
     }
 
     // Guardar
@@ -277,19 +277,19 @@ export async function updateDocumentWithAudit(
   // 1. Obtener documento actual
   const doc = await client.fetch('*[_id == $id][0]', { id: documentId })
   
-  // 2. Preparar _audit actualizado
-  const updatedAudit = updateAudit(doc._audit, userId)
+  // 2. Preparar audit actualizado
+  const updatedAudit = updateAudit(doc.audit, userId)
   
   // 3. Hacer el cambio
   return client.patch(documentId).set({
     ...updates,
-    _audit: updatedAudit,
+    audit: updatedAudit,
   }).commit()
 }
 `
 
 // ============================================================================
-// TESTING - Verificar _audit en API
+// TESTING - Verificar audit en API
 // ============================================================================
 
 /**
@@ -303,15 +303,15 @@ export async function updateDocumentWithAudit(
  *     "userId": "user456"
  *   }'
  * 
- * ESPERADO: Respuesta incluye el documento creado con _audit
+ * ESPERADO: Respuesta incluye el documento creado con audit
  * 
  * PASO 2: Verificar en Sanity Studio Vision
  * 
- * *[_type == 'pastor' && fullName == 'Pastor Test API'][0] { _audit }
+ * *[_type == 'pastor' && fullName == 'Pastor Test API'][0] { audit }
  * 
  * DEBERÍAS VER:
  * {
- *   "_audit": {
+ *   "audit": {
  *     "createdBy": "user456",
  *     "createdAt": "2026-04-07T...",
  *     "modifiedBy": "user456",
@@ -322,8 +322,8 @@ export async function updateDocumentWithAudit(
 
 export const TESTING_API_AUDIT = {
   step1: 'Crear documento via POST /api/admin/[type]/create',
-  step2: 'Verificar respuesta tiene _audit',
-  step3: 'Verificar en Vision Tool que _audit aparece en documento',
+  step2: 'Verificar respuesta tiene audit',
+  step3: 'Verificar en Vision Tool que audit aparece en documento',
   step4: 'Actualizar documento via PATCH',
   step5: 'Verificar modifiedBy y modifiedAt se actualizaron',
 }

@@ -115,27 +115,11 @@ export default defineType({
       },
       description: 'Foto de grupo o reunión del coro',
     }),
-    defineField({
-      name: 'googleMapsUrl',
-      title: 'URL de Google Maps',
-      type: 'url',
-      group: 'location',
-      description: 'URL de la ubicación donde se reúne el coro',
-    }),
-
-    // Status
-    defineField({
-      name: 'active',
-      title: 'Coro Activo',
-      type: 'boolean',
-      group: 'metadata',
-      initialValue: true,
-      description: 'Marcar como inactivo si el coro ya no está operando',
-    }),
+    // Nota: Los coros se asumen ACTIVOS. Si una congregación no tiene coro, simplemente no se crea documento.
 
     // Auditoría
     defineField({
-      name: '_audit',
+      name: 'audit',
       title: 'Auditoría',
       type: 'object',
       group: 'metadata',

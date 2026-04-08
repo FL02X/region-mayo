@@ -1,112 +1,130 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const months = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-]
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
 
 interface MonthNavigatorProps {
-  selectedMonth: Date
-  onMonthSelect: (date: Date) => void
-  eventDates?: Date[]
+  selectedMonth: Date;
+  onMonthSelect: (date: Date) => void;
+  eventDates?: Date[];
 }
 
-export function MonthNavigator({ selectedMonth, onMonthSelect, eventDates = [] }: MonthNavigatorProps) {
-  const [viewYear, setViewYear] = useState(selectedMonth.getFullYear())
-  const [currentDate, setCurrentDate] = useState<Date | null>(null)
-  
-  // Set current date only on client to avoid hydration mismatch
+export function MonthNavigator({
+  selectedMonth,
+  onMonthSelect,
+  eventDates = [],
+}: MonthNavigatorProps) {
+  const [viewYear, setViewYear] = useState(selectedMonth.getFullYear());
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
+
   useEffect(() => {
-    setCurrentDate(new Date())
-  }, [])
+    setCurrentDate(new Date());
+  }, []);
 
   const navigateYear = (direction: "prev" | "next") => {
-    setViewYear(prev => direction === "next" ? prev + 1 : prev - 1)
-  }
+    setViewYear((prev) => (direction === "next" ? prev + 1 : prev - 1));
+  };
 
-  const isSelected = (monthIndex: number) => {
-    return selectedMonth.getMonth() === monthIndex && selectedMonth.getFullYear() === viewYear
-  }
+  const isSelected = (monthIndex: number) =>
+    selectedMonth.getMonth() === monthIndex &&
+    selectedMonth.getFullYear() === viewYear;
 
   const isCurrentMonth = (monthIndex: number) => {
-    if (!currentDate) return false
-    return currentDate.getMonth() === monthIndex && currentDate.getFullYear() === viewYear
-  }
+    if (!currentDate) return false;
+    return (
+      currentDate.getMonth() === monthIndex &&
+      currentDate.getFullYear() === viewYear
+    );
+  };
 
-  const hasEvents = (monthIndex: number) => {
-    return eventDates.some(date => 
-      date.getMonth() === monthIndex && date.getFullYear() === viewYear
-    )
-  }
-
-  const getEventCount = (monthIndex: number) => {
-    return eventDates.filter(date => 
-      date.getMonth() === monthIndex && date.getFullYear() === viewYear
-    ).length
-  }
+  const hasEvents = (monthIndex: number) =>
+    eventDates.some(
+      (date) =>
+        date.getMonth() === monthIndex && date.getFullYear() === viewYear,
+    );
 
   const handleMonthClick = (monthIndex: number) => {
-    const newDate = new Date(viewYear, monthIndex, 1)
-    onMonthSelect(newDate)
-  }
+    onMonthSelect(new Date(viewYear, monthIndex, 1));
+  };
 
   return (
-    <div className="bg-card rounded-2xl p-4 shadow-sm border">
-      {/* Year Header */}
-      <div className="flex items-center justify-between mb-4">
-        <Button
-          variant="ghost"
-          size="icon"
+    <div className="border border-border bg-card overflow-hidden">
+      {/* Year header */}
+      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+        <button
           onClick={() => navigateYear("prev")}
-          className="h-9 w-9 rounded-full"
+          className="flex items-center justify-center h-8 w-8 text-muted-foreground hover:text-foreground transition-colors rounded"
+          aria-label="Año anterior"
+          style={{ minHeight: "unset", minWidth: "unset" }}
         >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <h3 className="font-semibold text-xl">{viewYear}</h3>
-        <Button
-          variant="ghost"
-          size="icon"
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        <h3 className="font-semibold text-base tabular-nums">{viewYear}</h3>
+
+        <button
           onClick={() => navigateYear("next")}
-          className="h-9 w-9 rounded-full"
+          className="flex items-center justify-center h-8 w-8 text-muted-foreground hover:text-foreground transition-colors rounded"
+          aria-label="Año siguiente"
+          style={{ minHeight: "unset", minWidth: "unset" }}
         >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
 
-      {/* Month Grid */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* Month grid — flat cells divided by borders */}
+      <div className="grid grid-cols-3 divide-x divide-y divide-border">
         {months.map((month, index) => {
-          const eventCount = getEventCount(index)
+          const selected = isSelected(index);
+          const current = isCurrentMonth(index);
+          const withEvents = hasEvents(index);
+
           return (
             <button
               key={month}
               onClick={() => handleMonthClick(index)}
-              className={`relative flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all ${
-                isSelected(index)
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : isCurrentMonth(index)
-                  ? "bg-accent/50 text-foreground ring-2 ring-primary/30"
-                  : hasEvents(index)
-                  ? "bg-secondary hover:bg-secondary/80"
-                  : "hover:bg-secondary/50 text-muted-foreground"
-              }`}
+              aria-pressed={selected}
+              aria-label={`${month} ${viewYear}${withEvents ? " — con eventos" : ""}`}
+              className={[
+                "relative py-3.5 text-sm font-medium text-center transition-colors",
+                selected
+                  ? "bg-primary text-white"
+                  : current
+                    ? "text-primary font-semibold hover:bg-muted"
+                    : withEvents
+                      ? "text-foreground hover:bg-muted"
+                      : "text-muted-foreground hover:bg-muted",
+              ].join(" ")}
+              style={{ minHeight: "unset", minWidth: "unset" }}
             >
-              <span className="text-sm font-medium">{month.slice(0, 3)}</span>
-              {eventCount > 0 && (
-                <span className={`text-xs mt-0.5 ${
-                  isSelected(index) ? "text-primary-foreground/80" : "text-primary"
-                }`}>
-                  {eventCount} {eventCount === 1 ? "evento" : "eventos"}
-                </span>
+              {month.slice(0, 3)}
+
+              {/* Event dot — only when there are events and not selected */}
+              {withEvents && !selected && (
+                <span
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                  aria-hidden="true"
+                />
               )}
             </button>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }
