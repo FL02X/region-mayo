@@ -24,23 +24,10 @@ export const metadata: Metadata = {
   title: "Región Mayo - Tu Comunidad de Actividades",
   description:
     "Catálogo digital de eventos y actividades de la Región Mayo. Vive la comunidad.",
-  generator: "v0.app",
+  generator: "Next.js",
   icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
+    icon: "/images/region-mayo-logo.jpg",
+    apple: "/images/region-mayo-logo.jpg",
   },
   openGraph: {
     title: "Región Mayo - Tu Comunidad de Actividades",

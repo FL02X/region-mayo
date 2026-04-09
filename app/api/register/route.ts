@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
       await client.createDocument(registrationData)
     } else {
       // Log for debugging when Sanity write is not configured
-      console.log("[v0] Registration received (Sanity write not configured):", {
+      console.log("[register] Registration received (Sanity write not configured):", {
         name: registrationData.name,
         region: registrationData.region,
         eventRef: body.eventId,
@@ -232,7 +232,7 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (error) {
-    console.error("[v0] Registration error:", error)
+    console.error("[register] Registration error:", error)
     return NextResponse.json(
       { error: "Error al procesar el registro. Intenta de nuevo." },
       { status: 500 }
