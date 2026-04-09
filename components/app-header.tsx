@@ -53,7 +53,7 @@ export function AppHeader({
       <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#292929] border-none text-white h-[54px] md:h-[48px]">
         <div className="flex items-center justify-between h-full px-4 md:px-0 lg:px-6 max-w-[1150px] mx-auto relative z-[61]">
           {/* Left side container (flex-1 ensures desktop nav stays perfectly centered) */}
-          <div className="flex items-center h-full relative z-[62] md:pl-4 lg:pl-0 md:flex-1 md:justify-start">
+          <div className="flex items-center h-full relative z-[62] shrink-0 md:pl-4 lg:pl-0 md:flex-1 md:justify-start">
             <Link
               href="/"
               className="flex items-center gap-2.5 shrink-0"
@@ -96,9 +96,9 @@ export function AppHeader({
           </div>
 
           {/* Mobile Search Bar - between logo and hamburger */}
-          <div className="md:hidden flex-1 mx-3 relative z-[62] flex justify-center items-center h-full">
+          <div className="md:hidden flex-1 min-w-0 mx-2 sm:mx-3 relative z-[62] flex justify-center items-center h-full">
             <form 
-              className="relative w-full h-[36px] bg-white rounded flex items-center overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-[#4a70a5] transition-shadow"
+              className="relative w-full min-w-0 h-[36px] bg-white rounded flex items-center overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-[#4a70a5] transition-shadow"
               onSubmit={handleSearchSubmit}
             >
                <input
@@ -171,7 +171,7 @@ export function AppHeader({
             </div>
 
             {/* Mobile/Tablet only: hamburger (3. Resort to hamburger on small screens) */}
-            <div className="md:hidden flex items-center justify-center -mr-4 text-white relative z-[62] h-full">
+            <div className="md:hidden flex items-center justify-center -mr-2 sm:-mr-4 text-white relative z-[62] h-full shrink-0">
               <MobileMenu
                 instagramUrl={instagramUrl}
                 facebookUrl={facebookUrl}
