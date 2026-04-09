@@ -110,6 +110,7 @@ function sanitizePhone(input: unknown): string {
 
 function validateRegistration(data: Record<string, unknown>): { valid: boolean; errors: string[] } {
   const errors: string[] = []
+  const attendingAs = data.attendingAs === "miembro" ? "miembro" : "oyente"
 
   // Required fields
   if (!data.name || typeof data.name !== "string" || data.name.trim().length < 2) {
@@ -120,8 +121,10 @@ function validateRegistration(data: Record<string, unknown>): { valid: boolean; 
     errors.push("Teléfono válido es requerido (mínimo 10 dígitos)")
   }
 
-  if (!data.region || typeof data.region !== "string") {
-    errors.push("Región es requerida")
+  if (attendingAs === "miembro") {
+    if (!data.region || typeof data.region !== "string" || data.region.trim().length < 2) {
+      errors.push("Región es requerida para miembros")
+    }
   }
 
   if (!data.eventId || typeof data.eventId !== "string") {
@@ -194,15 +197,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Prepare sanitized data
+    const attendingAs = body.attendingAs === "miembro" ? "miembro" : "oyente"
+    const sanitizedRegion = sanitizeString(body.region)
+
     const registrationData = {
       name: sanitizeString(body.name),
       phone: sanitizePhone(body.phone),
-      region: sanitizeString(body.region),
+      region: attendingAs === "miembro" ? sanitizedRegion : null,
       event: { _type: "reference", _ref: String(body.eventId) },
       isVisiting: Boolean(body.isVisiting),
       needsLodging: Boolean(body.needsLodging),
       needsTransport: Boolean(body.needsTransport),
-      attendingAs: body.attendingAs === "miembro" ? "miembro" : "oyente",
+      attendingAs,
       isBaptized: Boolean(body.isBaptized),
       isCoroMGR: Boolean(body.isCoroMGR),
       registeredAt: new Date().toISOString(),
@@ -223,6 +229,7 @@ export async function POST(req: NextRequest) {
         name: registrationData.name,
         region: registrationData.region,
         eventRef: body.eventId,
+        attendingAs: registrationData.attendingAs,
       })
     }
 

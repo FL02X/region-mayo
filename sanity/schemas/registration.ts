@@ -59,8 +59,16 @@ export default defineType({
       title: 'Región del Asistente',
       type: 'string',
       group: 'basic',
-      validation: (Rule) => Rule.required(),
-      description: 'DENORMALIZADO (string, no reference) para analytics sin join. Ej: "Región Centro"',
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          const attendingAs = context.document?.attendingAs
+          if (attendingAs === 'miembro' && (!value || String(value).trim().length < 2)) {
+            return 'Región es requerida para asistentes "Miembro"'
+          }
+          return true
+        }),
+      description:
+        'DENORMALIZADO (string, no reference) para analytics sin join. Requerida solo si "Asistiendo como" = Miembro.',
     }),
     defineField({
       name: 'event',

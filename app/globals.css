@@ -144,16 +144,45 @@
 }
 
 @layer base {
+  html {
+    --app-zoom: 1.25;
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 768px) {
+    html {
+      --app-zoom: 1;
+    }
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
 
   body {
     @apply bg-background text-foreground;
+    width: calc(100% / var(--app-zoom));
+    min-height: calc(100% / var(--app-zoom));
+    transform: scale(var(--app-zoom));
+    transform-origin: top left;
     font-size: 18px;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Prefer native zoom in Chromium to match browser zoom behavior more closely. */
+  @supports (zoom: 1) {
+    html {
+      zoom: var(--app-zoom);
+    }
+
+    body {
+      width: auto;
+      min-height: 100%;
+      transform: none;
+      transform-origin: initial;
+    }
   }
 
   /* ─── Skip link — keyboard accessibility ─── */
