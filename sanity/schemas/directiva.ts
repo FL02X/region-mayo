@@ -22,7 +22,7 @@ import { defineType, defineField } from 'sanity'
 
 export default defineType({
   name: 'directiva',
-  title: 'Miembro de Directiva',
+  title: 'Directiva',
   type: 'document',
   groups: [
     { name: 'basic', title: 'Información Básica' },

@@ -450,7 +450,7 @@ function PhotoViewer({
 
   return (
     <div 
-      className="fixed inset-0 z-[60] bg-black flex flex-col"
+      className="fixed inset-0 z-[110] bg-black flex flex-col"
       onClick={onClose}
     >
       {/* Header */}

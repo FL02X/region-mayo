@@ -123,3 +123,9 @@
     @apply bg-[#f3f4f6] text-foreground dark:bg-[#09090b];
   }
 }
+
+/* Hashing / Target Highlights Clear */
+body.hash-cleared :target {
+  --tw-ring-color: transparent !important;
+  background-color: var(--card) !important;
+}

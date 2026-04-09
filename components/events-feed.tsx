@@ -41,7 +41,48 @@ export function EventsFeed({
 
   useEffect(() => {
     setIsHydrated(true);
-  }, []);
+    
+    let isSubscribed = true;
+
+    const syncHash = () => {
+      if (!isSubscribed) return;
+      if (window.location.hash) {
+        const id = window.location.hash.substring(1);
+        const targetEvent = events.find(e => e.id === id);
+        
+        if (targetEvent) {
+          // Set the month matching the target event immediately
+          setSelectedMonth(new Date(targetEvent.date.getFullYear(), targetEvent.date.getMonth(), 1));
+          
+          // Retry scrolling to handle React batch rendering the new month
+          let attempts = 0;
+          const attemptScroll = () => {
+            if (!isSubscribed) return;
+            const el = document.getElementById(id);
+            if (el) {
+              el.classList.add('global-highlight');
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else if (attempts < 10) {
+              attempts++;
+              setTimeout(attemptScroll, 50); // check roughly every frame
+            }
+          };
+          attemptScroll();
+        }
+      }
+    };
+
+    // Run on initial mount
+    syncHash();
+
+    // Listen to native hash changes (useful if user clicks multiple links sequentially)
+    window.addEventListener('hashchange', syncHash, { passive: true });
+
+    return () => {
+      isSubscribed = false;
+      window.removeEventListener('hashchange', syncHash);
+    };
+  }, [events]);
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,7 +124,7 @@ export function EventsFeed({
   };
 
   return (
-    <div className="w-full relative bg-[#f3f4f6] dark:bg-[#09090b]">
+    <div className="w-full relative bg-[#f3f4f6] dark:bg-[#09090b]" data-events-feed="true">
       <div className="max-w-[950px] mx-auto bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen pb-16 pt-[2px]">
         {/* Countdown */}
         <CountdownSection events={events} />
@@ -119,7 +160,7 @@ export function EventsFeed({
         ref={eventsListRef}
         className="bg-muted/20 border-t border-border px-4 md:px-6 pt-5 pb-12"
       >
-        <div className="max-w-4xl mx-auto w-full">
+        <div className="mt-3 max-w-4xl mx-auto w-full">
           {/* Month label */}
           <div className="mb-5">
             <h3 className="font-semibold text-base text-foreground">

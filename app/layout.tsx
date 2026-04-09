@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { TimeProvider } from "@/lib/time-context";
+import { HighlightClearer } from "@/components/highlight-clearer";
+import { Suspense } from "react";
 import "./globals.css";
 
 const inter = Inter({
@@ -65,6 +67,9 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Saltar al contenido principal
         </a>
+        <Suspense fallback={null}>
+          <HighlightClearer />
+        </Suspense>
         <TimeProvider>{children}</TimeProvider>
         <Analytics />
       </body>

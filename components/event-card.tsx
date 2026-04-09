@@ -141,7 +141,10 @@ export function EventCard({
 
   return (
     <>
-      <article className="bg-card border border-border overflow-hidden flex flex-col">
+      <article 
+        id={event.id}
+        className="bg-card border border-border overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+      >
         {/* ── Image with date/time strip ── */}
         {event.image ? (
           <div className="relative h-40 w-full shrink-0">
@@ -481,7 +484,7 @@ export function EventCard({
       {/* ── "Más Info" image modal ── */}
       {showMoreInfoImage && event.moreInfo?.imageUrl && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
           onClick={() => setShowMoreInfoImage(false)}
           role="dialog"
           aria-modal="true"

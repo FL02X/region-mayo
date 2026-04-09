@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Home,
@@ -13,10 +13,10 @@ import {
   Instagram,
   Facebook,
   Church,
+  Search,
 } from "lucide-react";
 import { MobileMenu } from "@/components/mobile-menu";
 import { DebugTimePicker } from "@/components/debug-time-picker";
-import { Logo } from "@/components/logo";
 
 interface AppHeaderProps {
   instagramUrl?: string;
@@ -37,35 +37,91 @@ export function AppHeader({
   facebookUrl = "https://facebook.com/regionmayo",
 }: AppHeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const query = formData.get("q")?.toString() || "";
+    if (query.trim()) {
+      router.push(`/buscar?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
 
   return (
     <>
       <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#292929] border-none text-white h-[54px] md:h-[48px]">
         <div className="flex items-center justify-between h-full px-4 md:px-0 lg:px-6 max-w-[1150px] mx-auto relative z-[61]">
-          {/* Logo — always visible, links to home */}
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 shrink-0 relative z-[62] md:pl-4 lg:pl-0"
-            aria-label="Inicio — Region Mayo"
-          >
-            <Image
-              src="/images/region-mayo-logo.jpg"
-              alt="Región Mayo"
-              width={30}
-              height={30}
-              className="rounded-full shrink-0"
-              loading="eager"
-              priority
-            />
-            {/* 1. Hide the text first when shrinking */}
-            <div className="hidden lg:block">
-              <Logo variant="small" className="text-white" />
-            </div>
-          </Link>
+          {/* Left side container (flex-1 ensures desktop nav stays perfectly centered) */}
+          <div className="flex items-center h-full relative z-[62] md:pl-4 lg:pl-0 md:flex-1 md:justify-start">
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 shrink-0"
+              aria-label="Inicio — Region Mayo"
+            >
+              <Image
+                src="/images/region-mayo-logo.jpg"
+                alt="Región Mayo"
+                width={30}
+                height={30}
+                className="rounded-full shrink-0"
+                loading="eager"
+                priority
+              />
+            </Link>
 
-          {/* Desktop navigation — resort to hamburger only on small screens < 768px */}
+            {/* Desktop Static Search Bar */}
+            <div className="hidden lg:flex lg:w-[160px] pl-3 shrink-0 h-full items-center">
+              <form 
+                className="relative w-full h-[32px] bg-white rounded flex items-center overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-[#4a70a5] transition-shadow"
+                onSubmit={handleSearchSubmit}
+              >
+                <input
+                  type="search"
+                  name="q"
+                  placeholder="Buscar"
+                  className="flex-1 min-w-0 h-full bg-transparent border-none text-[14px] text-black placeholder-gray-500 pl-3 pr-2 focus:outline-none focus:ring-0"
+                  aria-label="Búsqueda"
+                />
+                <div className="h-[20px] w-[1px] bg-gray-300 shrink-0" aria-hidden="true" />
+                <button
+                  type="submit"
+                  className="flex items-center justify-center px-3 h-full hover:bg-gray-100 transition-colors cursor-pointer"
+                  aria-label="Ejecutar búsqueda"
+                >
+                  <Search className="h-[15px] w-[15px] text-gray-700" strokeWidth={2} />
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Mobile Search Bar - between logo and hamburger */}
+          <div className="md:hidden flex-1 mx-3 relative z-[62] flex justify-center items-center h-full">
+            <form 
+              className="relative w-full h-[36px] bg-white rounded flex items-center overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-[#4a70a5] transition-shadow"
+              onSubmit={handleSearchSubmit}
+            >
+               <input
+                 type="search"
+                 name="q"
+                 placeholder="Buscar..."
+                 className="flex-1 min-w-0 h-full bg-transparent border-none text-[14px] text-black placeholder-gray-500 pl-3 pr-2 focus:outline-none focus:ring-0"
+                 aria-label="Escribe tu búsqueda"
+               />
+               <div className="h-[24px] w-[1px] bg-gray-300 shrink-0" aria-hidden="true"></div>
+               <button
+                 type="submit"
+                 className="flex items-center justify-center px-3 h-full hover:bg-gray-100 transition-colors cursor-pointer"
+                 aria-label="Ejecutar búsqueda"
+               >
+                 <Search className="h-[16px] w-[16px] text-gray-700" strokeWidth={2} />
+               </button>
+            </form>
+          </div>
+
+          {/* Desktop navigation — perfectly centered on desktop via flex context */}
           <nav
-            className="hidden md:flex items-center flex-1 justify-center h-full relative z-[62]"
+            className="hidden md:flex items-center shrink-0 justify-center h-full relative z-[62]"
             aria-label="Navegación principal"
           >
             {navItems.map(({ href, label, icon: Icon }) => {
@@ -90,8 +146,8 @@ export function AppHeader({
             })}
           </nav>
 
-          {/* Right side */}
-          <div className="flex items-center shrink-0 h-full relative z-[62] md:pr-4 lg:pr-0">
+          {/* Right side container */}
+          <div className="flex items-center justify-end shrink-0 h-full relative z-[62] md:pr-4 lg:pr-0 md:flex-1">
             {/* Social links — desktop only (2. Remove social links when shrinking) */}
             <div className="hidden lg:flex items-center gap-1">
               <a

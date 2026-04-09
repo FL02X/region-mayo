@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   Users,
@@ -27,7 +27,10 @@ function PastorCard({ pastor, searchQuery }: { pastor: Pastor; searchQuery: stri
   };
 
   return (
-    <div className="bg-card border border-border overflow-hidden flex flex-col h-full">
+    <div 
+      id={pastor.id} 
+      className="bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+    >
       {/* Photo */}
       <div className="relative h-60 w-full bg-muted shrink-0">
         {pastor.photo ? (
@@ -138,6 +141,19 @@ interface DirectorioContentProps {
 export function DirectorioContent({ pastors }: DirectorioContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add("global-highlight");
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 300);
+    }
+  }, []);
+
   const filteredPastors = useMemo(
     () => searchItems(pastors, searchQuery, SEARCH_CONFIGS.pastores),
     [pastors, searchQuery],
@@ -146,6 +162,7 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
   return (
     <div className="w-full relative pb-16 bg-[#f3f4f6] dark:bg-[#09090b]" id="main-content">
       <div className="max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen focus:outline-none">
+        {/* Main Content Area */}
         <div className="max-w-4xl mx-auto">
           {/* Header */}
         <div className="mb-6 pb-4 border-b border-border">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   UserCircle,
@@ -29,7 +29,10 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
   };
 
   return (
-    <div className="bg-card border border-border overflow-hidden flex flex-col h-full">
+    <div 
+      id={member.id} 
+      className="bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+    >
       {/* Photo */}
       <div className="relative h-60 w-full bg-muted shrink-0">
         {member.photo ? (
@@ -143,6 +146,19 @@ interface DirectivaContentProps {
 
 export function DirectivaContent({ members }: DirectivaContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add("global-highlight");
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 300);
+    }
+  }, []);
 
   const filteredMembers = useMemo(
     () => searchItems(members, searchQuery, SEARCH_CONFIGS.directiva),
