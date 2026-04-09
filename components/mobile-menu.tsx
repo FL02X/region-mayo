@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   Menu,
   Home,
@@ -47,6 +49,7 @@ export function MobileMenu({
   facebookUrl = "https://facebook.com/regionmayo",
 }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -90,23 +93,31 @@ export function MobileMenu({
         <nav className="flex-1" aria-label="Menú principal">
           {menuItems.map((item) => {
             const Icon = item.icon;
+            const isActive = pathname === item.href;
+            
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-5 py-4 border-b border-border/60 hover:bg-muted transition-colors"
+                className={cn(
+                  "flex items-center gap-3 px-5 py-4 border-b border-border/60 transition-colors",
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-muted"
+                )}
+                aria-current={isActive ? "page" : undefined}
               >
                 <Icon
-                  className="h-4 w-4 text-muted-foreground shrink-0"
+                  className={cn("h-4 w-4 shrink-0", isActive ? "text-foreground" : "text-muted-foreground")}
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground leading-tight">
+                  <p className={cn("text-sm leading-tight", isActive ? "font-bold text-foreground" : "font-medium text-foreground")}>
                     {item.label}
                   </p>
                   {item.description && (
-                    <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+                    <p className={cn("text-xs leading-tight mt-0.5", isActive ? "text-foreground/80 font-medium" : "text-muted-foreground")}>
                       {item.description}
                     </p>
                   )}

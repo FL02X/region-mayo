@@ -76,7 +76,7 @@ export function CountdownSection({ events }: CountdownSectionProps) {
 
   return (
     <section
-      className="bg-background px-4 py-6"
+      className="bg-background px-4 pt-6 pb-[0px]"
       data-countdown-section
       aria-label="Próximo evento"
     >

@@ -119,8 +119,10 @@ function mapPastor(raw: any): Pastor {
     fullName: raw.fullName,
     churchName: raw.churchName,
     churchNumber: raw.churchNumber ?? undefined,
+    temploName: raw.temploName ?? raw.templo?.temploName,
+    address: raw.address ?? raw.templo?.address,
     photo: raw.photo ? sanityImageUrl(raw.photo) : undefined,
-    googleMapsUrl: raw.googleMapsUrl ?? undefined,
+    googleMapsUrl: raw.googleMapsUrl ?? raw.templo?.googleMapsUrl,
     phone: raw.phone ?? undefined,
   };
 }
@@ -130,20 +132,41 @@ function mapCoro(raw: any): Coro {
     id: raw._id,
     coroName: raw.coroName,
     photo: raw.photo ? sanityImageUrl(raw.photo) : "/placeholder.svg",
-    googleMapsUrl: raw.googleMapsUrl ?? undefined,
+    temploName: raw.temploName ?? raw.templo?.temploName,
+    address: raw.address ?? raw.templo?.address,
+    googleMapsUrl: raw.googleMapsUrl ?? raw.templo?.googleMapsUrl,
     presidentName: raw.presidentName,
     presidentPhone: raw.presidentPhone,
   };
 }
 
+const ROLE_TRANSLATIONS: Record<string, string> = {
+  president_regional: "Presidente Regional",
+  vice_president_regional: "Vicepresidente Regional",
+  secretary_regional: "Secretaria Regional",
+  treasurer_regional: "Tesorera Regional",
+  president_local: "Presidente Local",
+  vice_president_local: "Vicepresidente Local",
+  secretary_local: "Secretaria Local",
+  treasurer_local: "Tesorera Local",
+  event_coordinator: "Coordinador de Eventos",
+  womens_ministry: "Coordinadora de Ministerio Femenino",
+  youth_ministry: "Coordinador de Ministerio Juvenil",
+  other: "Otro",
+};
+
 function mapDirectivaMember(raw: any): DirectivaMember {
+  const roleValue = raw.roleCustom || (raw.role ? (ROLE_TRANSLATIONS[raw.role] || raw.role) : undefined);
+
   return {
     id: raw._id,
     fullName: raw.fullName,
-    role: raw.role ?? undefined,
-    churchName: raw.churchName,
+    role: roleValue,
+    temploName: raw.temploName ?? raw.templo?.temploName,
+    temploId: raw.temploId ?? raw.templo?._id,
+    address: raw.address ?? raw.templo?.address,
     photo: raw.photo ? sanityImageUrl(raw.photo) : undefined,
-    googleMapsUrl: raw.googleMapsUrl ?? undefined,
+    googleMapsUrl: raw.googleMapsUrl ?? raw.templo?.googleMapsUrl,
     phone: raw.phone,
   };
 }
@@ -301,7 +324,8 @@ export async function getPastors(
         churchNumber,
         photo{asset->{url}},
         googleMapsUrl,
-        phone
+        phone,
+        templo->{temploName, address, googleMapsUrl}
       }`,
     { slug: regionSlug },
   );
@@ -333,7 +357,8 @@ export async function getCoros(regionSlug: string = "mayo"): Promise<Coro[]> {
         photo{asset->{url}},
         googleMapsUrl,
         presidentName,
-        presidentPhone
+        presidentPhone,
+        templo->{temploName, address, googleMapsUrl}
       }`,
     { slug: regionSlug },
   );
@@ -365,11 +390,12 @@ export async function getDirectiva(
         _id,
         fullName,
         role,
-        churchName,
+        roleCustom,
         photo{asset->{url}},
         googleMapsUrl,
         phone,
-        order
+        order,
+        templo->{temploName, address, googleMapsUrl}
       }`,
     { slug: regionSlug },
   );
@@ -537,7 +563,6 @@ export async function getTemplos(
     `*[
       _type == "templo" &&
       (region->slug.current == $slug || region->name == $slug) &&
-      active == true &&
       !defined(deletedAt)
     ] | order(churchNumber asc){
       _id,
@@ -553,13 +578,11 @@ export async function getTemplos(
       "pastores": *[
         _type == "pastor" &&
         templo._ref == ^._id &&
-        active == true &&
         !defined(deletedAt)
       ]{_id, fullName, phone},
       "coros": *[
         _type == "coro" &&
         templo._ref == ^._id &&
-        active == true &&
         !defined(deletedAt)
       ]{_id, coroName, presidentName, presidentPhone}
     }`,

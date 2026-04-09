@@ -1,11 +1,25 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Image from "next/image";
-import { Users, MapPin, ExternalLink } from "lucide-react";
+import {
+  Users,
+  MapPin,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  Church,
+  Phone,
+} from "lucide-react";
 import { WhatsAppIconButton } from "@/components/whatsapp-button";
+import { SearchBar } from "@/components/search-bar";
+import { HighlightedText } from "@/components/highlighted-text";
+import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Pastor } from "@/lib/types";
 
-function PastorCard({ pastor }: { pastor: Pastor }) {
+function PastorCard({ pastor, searchQuery }: { pastor: Pastor; searchQuery: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const openGoogleMaps = () => {
     if (pastor.googleMapsUrl) {
       window.open(pastor.googleMapsUrl, "_blank");
@@ -13,15 +27,15 @@ function PastorCard({ pastor }: { pastor: Pastor }) {
   };
 
   return (
-    <div className="bg-card border border-border overflow-hidden">
+    <div className="bg-card border border-border overflow-hidden flex flex-col h-full">
       {/* Photo */}
-      <div className="relative h-44 w-full bg-muted">
+      <div className="relative h-60 w-full bg-muted shrink-0">
         {pastor.photo ? (
           <Image
             src={pastor.photo}
             alt={pastor.fullName}
             fill
-            className="object-cover"
+            className="object-cover object-center"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -34,35 +48,83 @@ function PastorCard({ pastor }: { pastor: Pastor }) {
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-base text-foreground leading-snug mb-0.5">
-          {pastor.fullName}
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
+          <HighlightedText text={pastor.fullName} query={searchQuery} />
         </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          {pastor.churchName}
-        </p>
 
-        <div className="flex items-center gap-3">
-          {pastor.googleMapsUrl && (
-            <button
-              onClick={openGoogleMaps}
-              className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors flex-1"
-              aria-label={`Ver ubicación de ${pastor.fullName} en Maps`}
-            >
-              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              Ver en Maps
-              <ExternalLink
-                className="h-3 w-3 ml-auto shrink-0"
-                aria-hidden="true"
-              />
-            </button>
-          )}
-          {pastor.phone && (
-            <WhatsAppIconButton
-              phone={pastor.phone}
-              message={`Hola ${pastor.fullName}, me comunico del sitio web de Región Mayo.`}
-            />
-          )}
+        <div className="space-y-4 pt-4 border-t border-border mt-auto">
+          {pastor.temploName && (
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <Church
+                    className="h-4 w-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Iglesia Sede
+                  </p>
+                  <p className="text-sm font-medium text-foreground leading-tight mb-1">
+                    <HighlightedText text={pastor.temploName} query={searchQuery} />
+                  </p>
+                  {pastor.churchNumber && (
+                    <p className="text-xs text-muted-foreground mb-1.5">
+                      Pastor Local de Iglesia #<HighlightedText text={pastor.churchNumber.toString()} query={searchQuery} />
+                    </p>
+                  )}
+                  {pastor.address && (
+                    <div className="flex items-start gap-1.5 mb-1.5">
+                      <MapPin
+                        className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5"
+                        aria-hidden="true"
+                      />
+                      <p className="text-sm text-foreground/80 leading-tight">
+                        <HighlightedText text={pastor.address} query={searchQuery} />
+                      </p>
+                    </div>
+                  )}
+                  {pastor.googleMapsUrl && (
+                    <button
+                      onClick={openGoogleMaps}
+                      className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5"
+                      aria-label={`Ver ubicación de ${pastor.temploName} en Maps`}
+                    >
+                      <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span>Ver ubicación</span>
+                      <ExternalLink
+                        className="h-3 w-3 shrink-0"
+                        aria-hidden="true"
+                      />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {pastor.phone && (
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <Phone
+                    className="h-4 w-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Número de Teléfono
+                  </p>
+                  <p className="text-sm font-medium text-foreground leading-tight">
+                    <HighlightedText text={pastor.phone} query={searchQuery} />
+                  </p>
+                </div>
+                <WhatsAppIconButton
+                  phone={pastor.phone}
+                  message={`Hola ${pastor.fullName}, me comunico del sitio web de Región Mayo.`}
+                />
+              </div>
+            )}
         </div>
       </div>
     </div>
@@ -74,6 +136,13 @@ interface DirectorioContentProps {
 }
 
 export function DirectorioContent({ pastors }: DirectorioContentProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredPastors = useMemo(
+    () => searchItems(pastors, searchQuery, SEARCH_CONFIGS.pastores),
+    [pastors, searchQuery],
+  );
+
   return (
     <div className="px-4 py-6" id="main-content">
       <div className="max-w-4xl mx-auto">
@@ -87,31 +156,48 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
           </p>
         </div>
 
-        {pastors.length === 0 ? (
+        {/* Search Bar */}
+        <div className="mb-6">
+          <SearchBar
+            onSearchChange={setSearchQuery}
+            placeholder="Buscar por nombre, templo o teléfono..."
+            autoFocus
+          />
+        </div>
+
+        {filteredPastors.length === 0 ? (
           <div className="bg-card border border-border p-8 text-center">
             <Users
               className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3"
               aria-hidden="true"
             />
             <p className="text-sm font-medium text-foreground mb-1">
-              Sin pastores registrados
+              {pastors.length === 0
+                ? "Sin pastores registrados"
+                : "No se encontraron resultados"}
             </p>
             <p className="text-xs text-muted-foreground">
-              El directorio se actualizará pronto.
+              {pastors.length === 0
+                ? "El directorio se actualizará pronto."
+                : "Intenta con otros términos de búsqueda."}
             </p>
           </div>
         ) : (
           <div
             className={`grid gap-4 ${
-              pastors.length === 1
+              filteredPastors.length === 1
                 ? "grid-cols-1 max-w-sm mx-auto"
-                : pastors.length === 2
+                : filteredPastors.length === 2
                   ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
                   : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
             }`}
           >
-            {pastors.map((pastor) => (
-              <PastorCard key={pastor.id} pastor={pastor} />
+            {filteredPastors.map((pastor) => (
+              <PastorCard
+                key={pastor.id}
+                pastor={pastor}
+                searchQuery={searchQuery}
+              />
             ))}
           </div>
         )}

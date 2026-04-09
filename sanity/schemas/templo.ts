@@ -8,7 +8,6 @@
  *
  * RESTRICCIONES:
  * - region: OBLIGATORIA (todos los templos deben estar en una región)
- * - churchNumber: ÚNICO por región (ej: 01, 02, 101 en región "Centro")
  * - Un templo puede tener:
  *   • N pastores (mínimo 1)
  *   • 0 a N coros (NO es obligatorio)
@@ -44,7 +43,7 @@ export default defineType({
       group: "basic",
       validation: (Rule) => Rule.required(),
       description:
-        'Nombre oficial y completo de la iglesia (ej: "1ra Iglesia de Navojoa", "Iglesia el Redentor"). El número de orden va en el nombre si corresponde.',
+        'Nombre oficial y completo de la iglesia (ej: "1ra Iglesia de Navojoa", "Iglesia el Redentor"). Si la iglesia tiene un número, inclúyelo en el nombre.',
     }),
     defineField({
       name: "region",
@@ -53,7 +52,17 @@ export default defineType({
       to: [{ type: "region" }],
       group: "basic",
       validation: (Rule) => Rule.required(),
-      description: "Región obligatoria a la que pertenece este templo",
+      description: "La región a la que pertenece este templo (obligatorio)",
+    }),
+    defineField({
+      name: "photo",
+      title: "Foto del Templo",
+      type: "image",
+      group: "basic",
+      options: {
+        hotspot: true,
+      },
+      description: "Foto frontal o interior del templo. Se recomienda una imagen clara del edificio.",
     }),
 
     // Location Info
@@ -63,68 +72,35 @@ export default defineType({
       type: "string",
       group: "location",
       description:
-        "Dirección física del templo (calle, número, ciudad, estado)",
+        "Calle, número, ciudad y estado donde se encuentra el templo",
     }),
     defineField({
       name: "location",
-      title: "Geolocalización",
+      title: "Ubicación en Mapa (GPS)",
       type: "geopoint",
       group: "location",
       description:
-        "Ubicación GPS para análisis de proximidad y mapas interactivos",
+        "Marca el templo en el mapa. Esto se usa para mostrar la ubicación a los visitantes.",
     }),
     defineField({
       name: "googleMapsUrl",
-      title: "URL de Google Maps",
+      title: "Enlace de Google Maps",
       type: "url",
       group: "location",
       description:
-        "Link de Google Maps a la ubicación del templo (copiar desde maps.google.com)",
+        "Copia el enlace de Google Maps del templo. Esto permite a la gente ver la ruta.",
     }),
 
-    // Contact Info
+    // Description
     defineField({
       name: "description",
-      title: "Descripción / Horarios",
+      title: "Horarios y Actividades",
       type: "text",
-      group: "contact",
+      group: "basic",
       rows: 4,
       description:
-        "Información general del templo: horarios de cultos, actividades regulares, etc. " +
-        "El administrador es responsable de mantener esta información actualizada. " +
-        'Ejemplo: "Culto general: Domingos 10:00 AM y 7:00 PM\\nEstudio bíblico: Miércoles 7:00 PM"',
-    }),
-    defineField({
-      name: "presidenteJovenesName",
-      title: "Nombre del Presidente de Jóvenes Local",
-      type: "string",
-      group: "contact",
-      description:
-        "Nombre completo del líder de jóvenes del templo (opcional). " +
-        "Solo el líder LOCAL de este templo, no el regional.",
-    }),
-    defineField({
-      name: "presidenteJovenesPhone",
-      title: "Teléfono del Presidente de Jóvenes",
-      type: "string",
-      group: "contact",
-      description:
-        "Teléfono WhatsApp del líder de jóvenes local. Formato: 10 dígitos sin espacios ni +52.",
-      validation: (Rule) =>
-        Rule.regex(/^(\d{10})?$/, {
-          name: "phone",
-          invert: false,
-        }).error("Debe ser 10 dígitos o dejarse vacío"),
-    }),
-    defineField({
-      name: "photo",
-      title: "Foto del Templo",
-      type: "image",
-      group: "contact",
-      options: {
-        hotspot: true,
-      },
-      description: "Foto frontal o interior del templo",
+        "Escribe aquí los horarios de los cultos y otras actividades (ej: Cultos: Domingo 10 AM y 6 PM, Estudio Bíblico: Miércoles 7 PM). " +
+        "Mantenlo actualizado siempre.",
     }),
 
     // Auditoría
@@ -176,15 +152,13 @@ export default defineType({
   preview: {
     select: {
       title: "temploName",
-      churchNumber: "churchNumber",
       regionName: "region.name",
       media: "photo",
-      active: "active",
     },
-    prepare({ title, churchNumber, regionName, active }) {
+    prepare({ title, regionName }) {
       return {
         title: title,
-        subtitle: `${regionName || "?"} • Iglesia No. ${churchNumber || "?"}${!active ? " (INACTIVO)" : ""}`,
+        subtitle: `${regionName || "?"}`,
       };
     },
   },
@@ -193,11 +167,6 @@ export default defineType({
       title: "Nombre del Templo",
       name: "nameAsc",
       by: [{ field: "temploName", direction: "asc" }],
-    },
-    {
-      title: "Número de Iglesia",
-      name: "churchNumberAsc",
-      by: [{ field: "churchNumber", direction: "asc" }],
     },
   ],
 });

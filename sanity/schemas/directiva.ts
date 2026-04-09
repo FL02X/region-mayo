@@ -1,17 +1,21 @@
 /**
- * DIRECTIVA REGIONAL - Líderes Administrativos de la Región
+ * DIRECTIVA - Líderes Administrativos
  * 
- * Documento que representa a los líderes administrativos de la región.
+ * JERARQUÍA: Region + Templo → Directiva
+ * 
+ * CARACTERÍSTICAS:
+ * - Cada miembro de directiva está asignado a un templo (obligatorio)
+ * - Todos los miembros actualmente son de directiva local (no hay directiva regional)
+ * - Si un miembro está en el sistema, se asume que está ACTIVO (no hay campo activo/inactivo)
+ * - Los datos de dirección, pastor, etc. se heredan del templo asignado
  * 
  * RESTRICCIONES:
- * - region: SIEMPRE obligatoria
+ * - region: SIEMPRE obligatoria (heredada del templo)
  * - role: ENUM (valores predefinidos para consistencia)
- * - Si un dato está documentado, se asume que está ACTIVO (no hay campo active)
- * 
- * NOTA: La directiva local (presidente, secretaria, etc. de templo específico)
- * se guarda directamente en el schema de Templo (presidenteJovenes, etc.)
+ * - templo: OBLIGATORIO (cada directiva está asignada a un templo específico)
  * 
  * AUDITORÍA: registra quién creó, cuándo, quién modificó, cuándo
+ * SOFT DELETE: deletedAt permite archivar miembros sin perder datos
  */
 
 import { defineType, defineField } from 'sanity'
@@ -42,8 +46,18 @@ export default defineType({
       description: 'Nombre oficial y completo del miembro de directiva',
     }),
     defineField({
+      name: 'photo',
+      title: 'Foto',
+      type: 'image',
+      group: 'basic',
+      options: {
+        hotspot: true,
+      },
+      description: 'Foto frontal o de perfil',
+    }),
+    defineField({
       name: 'role',
-      title: 'Cargo/Posición',
+      title: 'Cargo o Posición',
       type: 'string',
       group: 'basic',
       validation: (Rule) => Rule.required(),
@@ -64,11 +78,11 @@ export default defineType({
         ],
         layout: 'dropdown',
       },
-      description: 'Selecciona el cargo. IMPORTANTE: esto define si es regional o local',
+      description: 'Selecciona el cargo que desempeña',
     }),
     defineField({
       name: 'roleCustom',
-      title: 'Descripción Personalizada de Cargo',
+      title: 'Especificar Otro Cargo',
       type: 'string',
       group: 'basic',
       hidden: ({ document }) => document?.role !== 'other',
@@ -81,28 +95,27 @@ export default defineType({
       to: [{ type: 'region' }],
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Región (SIEMPRE obligatoria)',
+      description: 'La región a la que pertenece (obligatorio)',
     }),
     defineField({
-      name: 'photo',
-      title: 'Foto',
-      type: 'image',
-      group: 'contact',
-      options: {
-        hotspot: true,
-      },
-      description: 'Foto frontal o de perfil',
+      name: 'templo',
+      title: 'Templo',
+      type: 'reference',
+      to: [{ type: 'templo' }],
+      group: 'basic',
+      validation: (Rule) => Rule.required(),
+      description: 'El templo al que está asignado este miembro de directiva (obligatorio). Se mostrarán la dirección, pastor y detalles del templo.',
     }),
     defineField({
       name: 'phone',
-      title: 'Teléfono (WhatsApp)',
+      title: 'Teléfono WhatsApp',
       type: 'string',
       group: 'contact',
-      validation: (Rule) => Rule.required().regex(/^\d{10}$/, {
+      validation: (Rule) => Rule.regex(/^(\d{10})?$/, {
         name: 'phoneNumber',
         invert: false,
-      }).error('Ingresa un número de 10 dígitos sin espacios ni guiones'),
-      description: 'Número de 10 dígitos para contacto por WhatsApp',
+      }).error('Debe ser 10 dígitos o dejarse vacío'),
+      description: 'Número de 10 dígitos (opcional). Formato: sin espacios ni +52.',
     }),
     defineField({
       name: 'order',
@@ -111,7 +124,7 @@ export default defineType({
       group: 'order',
       initialValue: 0,
       validation: (Rule) => Rule.min(0),
-      description: 'Número para ordenar la lista (menor = aparece primero). Ej: 1, 2, 3...',
+      description: 'Número para ordenar en la lista (0 = primero)',
     }),
 
     // Auditoría
@@ -168,13 +181,13 @@ export default defineType({
       temploName: 'templo.temploName',
       regionName: 'region.name',
       media: 'photo',
-      active: 'active',
     },
-    prepare({ title, role, roleCustom, regionName }) {
+    prepare({ title, role, roleCustom, temploName, regionName }) {
       const roleLabel = roleCustom || role
+      const location = temploName || regionName || '?'
       return {
         title: title,
-        subtitle: `${roleLabel || '?'} • Regional • ${regionName || '?'}`,
+        subtitle: `${roleLabel || '?'} • ${location}`,
       }
     },
   },

@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   Home,
   Users,
@@ -34,6 +36,8 @@ export function AppHeader({
   instagramUrl = "https://instagram.com/regionmayo",
   facebookUrl = "https://facebook.com/regionmayo",
 }: AppHeaderProps) {
+  const pathname = usePathname();
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
@@ -61,16 +65,25 @@ export function AppHeader({
             className="hidden md:flex items-center flex-1 justify-center"
             aria-label="Navegación principal"
           >
-            {navItems.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                {label}
-              </Link>
-            ))}
+            {navItems.map(({ href, label, icon: Icon }) => {
+              const isActive = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 text-sm transition-colors",
+                    isActive
+                      ? "text-foreground font-semibold border-b-2 border-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
+                  )}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right side */}

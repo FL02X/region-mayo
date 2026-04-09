@@ -132,7 +132,6 @@ export function EventCard({
 
   /* Does the card have any expandable details? */
   const hasDetails =
-    !!event.location ||
     !!event.vestimenta ||
     !!event.speakers?.pastorMensaje ||
     !!event.speakers?.jovenPreside ||
@@ -201,6 +200,37 @@ export function EventCard({
             <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-3">
               {event.description}
             </p>
+          )}
+
+          {/* Location — shown before action buttons */}
+          {event.location && (
+            <div className="mt-2 mb-4 flex items-center gap-2.5 mb-3">
+              <MapPin
+                className="h-3.5 w-3.5 text-muted-foreground shrink-0"
+                aria-hidden="true"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  {event.location}
+                </p>
+                {event.address && (
+                  <p className="text-xs text-muted-foreground">
+                    {event.address}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() =>
+                  openGoogleMaps(event.googleMapsUrl, event.address)
+                }
+                className="mr-5 mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors shrink-0 ml-2"
+                aria-label={`Abrir ${event.location} en Google Maps`}
+                style={{ minHeight: "unset", minWidth: "unset" }}
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                Maps
+              </button>
+            </div>
           )}
 
           {/* Spacer pushes actions to bottom */}
@@ -288,37 +318,6 @@ export function EventCard({
               {/* ── Expanded details ── */}
               {isExpanded && (
                 <div id={`details-${event.id}`} className="space-y-3 pb-1 pt-1">
-                  {/* Location */}
-                  {event.location && (
-                    <div className="flex items-start gap-2.5">
-                      <MapPin
-                        className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
-                        aria-hidden="true"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground">
-                          {event.location}
-                        </p>
-                        {event.address && (
-                          <p className="text-xs text-muted-foreground">
-                            {event.address}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        onClick={() =>
-                          openGoogleMaps(event.googleMapsUrl, event.address)
-                        }
-                        className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
-                        aria-label={`Abrir ${event.location} en Google Maps`}
-                        style={{ minHeight: "unset", minWidth: "unset" }}
-                      >
-                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                        Maps
-                      </button>
-                    </div>
-                  )}
-
                   {/* Vestimenta */}
                   {event.vestimenta && (
                     <div className="flex items-start gap-2.5">
@@ -403,12 +402,12 @@ export function EventCard({
                             onClick={() =>
                               openGoogleMaps(event.alimentos?.googleMapsUrl)
                             }
-                            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                            className="mt-4 mr-5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
                             aria-label="Ver ubicación de alimentos en Maps"
                             style={{ minHeight: "unset", minWidth: "unset" }}
                           >
                             <MapPin
-                              className="h-3.5 w-3.5"
+                              className="h-5 w-5"
                               aria-hidden="true"
                             />
                           </button>
@@ -445,12 +444,12 @@ export function EventCard({
                             onClick={() =>
                               openGoogleMaps(event.juntaJuvenil?.googleMapsUrl)
                             }
-                            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                            className="mt-4 mr-5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
                             aria-label="Ver ubicación de junta juvenil en Maps"
                             style={{ minHeight: "unset", minWidth: "unset" }}
                           >
                             <MapPin
-                              className="h-3.5 w-3.5"
+                              className="h-5 w-5"
                               aria-hidden="true"
                             />
                           </button>

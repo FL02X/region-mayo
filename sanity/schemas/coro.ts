@@ -41,7 +41,26 @@ export default defineType({
       type: 'string',
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Nombre oficial del coro/grupo (ej: "Coro de Jóvenes Centro", "MGR Región X")',
+      description: 'Nombre oficial del coro o grupo (ej: "Coro de Jóvenes Centro", "MGR Región X")',
+    }),
+    defineField({
+      name: 'presidentName',
+      title: 'Nombre del Presidente/Líder',
+      type: 'string',
+      group: 'basic',
+      validation: (Rule) => Rule.required(),
+      description: 'Nombre completo del líder del coro. Nota: Este es el mismo que el Presidente de Jóvenes del templo.',
+    }),
+    defineField({
+      name: 'presidentPhone',
+      title: 'Teléfono del Presidente',
+      type: 'string',
+      group: 'basic',
+      description: 'Número de 10 dígitos (opcional). Formato: sin espacios ni +52.',
+      validation: (Rule) => Rule.regex(/^(\d{10})?$/, {
+        name: 'phoneNumber',
+        invert: false,
+      }).error('Debe ser 10 dígitos o dejarse vacío'),
     }),
     defineField({
       name: 'templo',
@@ -50,7 +69,7 @@ export default defineType({
       to: [{ type: 'templo' }],
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Templo al que pertenece este coro (OBLIGATORIO)',
+      description: 'El templo donde se reúne este coro (obligatorio). En la UI se mostrarán los detalles del templo.',
     }),
     defineField({
       name: 'region',
@@ -58,12 +77,20 @@ export default defineType({
       type: 'reference',
       to: [{ type: 'region' }],
       group: 'basic',
-      validation: (Rule) => Rule.required(),
-      description: 'Región (heredada del templo, readOnly para consultas optimizadas)',
+      description: 'Se llena automáticamente desde el templo',
       readOnly: true,
+      hidden: true,
     }),
-
-    // Denormalización: copias de nombres para queries sin join
+    defineField({
+      name: 'photo',
+      title: 'Foto del Coro',
+      type: 'image',
+      group: 'basic',
+      options: {
+        hotspot: true,
+      },
+      description: 'Foto de grupo o de una reunión del coro',
+    }),
     defineField({
       name: 'temploName',
       title: 'Nombre del Templo (Denormalizado)',
@@ -71,7 +98,7 @@ export default defineType({
       group: 'basic',
       readOnly: true,
       hidden: true,
-      description: 'Copia de templo.temploName para queries rápidas sin join',
+      description: 'Se actualiza automáticamente',
     }),
     defineField({
       name: 'regionName',
@@ -80,40 +107,7 @@ export default defineType({
       group: 'basic',
       readOnly: true,
       hidden: true,
-      description: 'Copia de region.name para queries rápidas sin join',
-    }),
-
-    // Leadership
-    defineField({
-      name: 'presidentName',
-      title: 'Nombre del Presidente/Líder',
-      type: 'string',
-      group: 'leader',
-      validation: (Rule) => Rule.required(),
-      description: 'Nombre completo del líder del coro',
-    }),
-    defineField({
-      name: 'presidentPhone',
-      title: 'Teléfono del Presidente',
-      type: 'string',
-      group: 'leader',
-      description: 'Número de 10 dígitos (sin +52, se agregará automáticamente)',
-      validation: (Rule) => Rule.required().regex(/^\d{10}$/, {
-        name: 'phoneNumber',
-        invert: false,
-      }).error('Ingresa un número de 10 dígitos sin espacios ni guiones'),
-    }),
-
-    // Location
-    defineField({
-      name: 'photo',
-      title: 'Foto del Coro',
-      type: 'image',
-      group: 'location',
-      options: {
-        hotspot: true,
-      },
-      description: 'Foto de grupo o reunión del coro',
+      description: 'Se actualiza automáticamente',
     }),
     // Nota: Los coros se asumen ACTIVOS. Si una congregación no tiene coro, simplemente no se crea documento.
 
@@ -170,12 +164,11 @@ export default defineType({
       regionName: 'region.name',
       subtitle: 'presidentName',
       media: 'photo',
-      active: 'active',
     },
-    prepare({ title, temploName, regionName, subtitle, active }) {
+    prepare({ title, temploName, regionName, subtitle }) {
       return {
         title: title,
-        subtitle: `${temploName || '?'} • ${regionName || '?'} • ${subtitle || '?'}${!active ? ' [INACTIVO]' : ''}`,
+        subtitle: `${temploName || '?'} • ${regionName || '?'} • ${subtitle || '?'}`,
       }
     },
   },

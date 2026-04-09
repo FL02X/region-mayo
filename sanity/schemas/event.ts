@@ -11,6 +11,11 @@
  * - active: En progreso (actualmente sucediendo)
  * - past: Finalizado (ya pasó)
  * 
+ * ENLACES REQUERIDOS:
+ * - Si habilitас Google Drive, Facebook o Instagram, el enlace es OBLIGATORIO
+ * - Para Alimentos y Junta Juvenil, la descripción es OBLIGATORIA si están habilitados
+ * - La ubicación de Alimentos y Junta Juvenil son opcionales
+ * 
  * AUDITORÍA: registra quién creó, cuándo, quién modificó, cuándo
  * SOFT DELETE: deletedAt permite archivar eventos sin perder datos
  */
@@ -38,15 +43,15 @@ export default defineType({
     // Basic Info
     defineField({
       name: 'title',
-      title: 'Título del Evento',
+      title: 'Nombre del Evento',
       type: 'string',
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Nombre del evento (ej: "Campaña Regional Centro 2026")',
+      description: 'Ej: "Campaña Regional Centro 2026" o "Convención General"',
     }),
     defineField({
       name: 'eventType',
-      title: 'Tipo de Culto/Evento',
+      title: 'Tipo de Evento',
       type: 'string',
       group: 'basic',
       options: {
@@ -67,37 +72,37 @@ export default defineType({
         layout: 'dropdown',
       },
       validation: (Rule) => Rule.required(),
-      description: 'Clasificación del evento (afecta diseño y registro)',
+      description: 'Categoría del evento (esto afecta cómo se ve en la página)',
     }),
     defineField({
       name: 'date',
-      title: 'Fecha de Inicio',
+      title: 'Fecha y Hora de Inicio',
       type: 'datetime',
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Fecha y hora de inicio del evento',
+      description: 'Cuándo comienza el evento',
     }),
     defineField({
       name: 'endDate',
-      title: 'Fecha de Fin',
+      title: 'Fecha y Hora de Fin (Opcional)',
       type: 'datetime',
       group: 'basic',
-      description: 'Para eventos de varios días (opcional)',
+      description: 'Solo si el evento dura más de un día',
     }),
     defineField({
       name: 'time',
-      title: 'Hora (Texto Corto)',
+      title: 'Hora - Formato Corto (Ej: 10:00 AM)',
       type: 'string',
       group: 'basic',
-      description: 'Ej: "10:00 AM" - display corto para listsados',
+      description: 'La hora que se muestra en las listas (ej: "10:00 AM")',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'description',
-      title: 'Descripción',
+      title: 'Descripción del Evento',
       type: 'text',
       group: 'basic',
-      description: 'Descripción larga del evento, propósito, agenda, etc.',
+      description: 'Cuéntales a la gente qué es el evento, qué esperamos, detalles importantes, etc.',
     }),
     defineField({
       name: 'vestimenta',
@@ -113,25 +118,25 @@ export default defineType({
         ],
         layout: 'radio',
       },
-      description: 'Qué deben portar los asistentes',
+      description: 'Qué deben usar los asistentes',
     }),
     defineField({
       name: 'vestimentaCustom',
-      title: 'Descripción de Vestimenta Personalizada',
+      title: 'Especificar Otro Código de Vestimenta',
       type: 'string',
       group: 'basic',
       hidden: ({ document }) => document?.vestimenta !== 'otro',
-      description: 'Si es "Otro", describe aquí (ej: "Blanco y negro formal")',
+      description: 'Ej: "Blanco y negro formal"',
     }),
 
     // Location
     defineField({
       name: 'location',
-      title: 'Lugar/Nombre del Sitio',
+      title: 'Nombre del Lugar',
       type: 'string',
       group: 'location',
       validation: (Rule) => Rule.required(),
-      description: 'Nombre del lugar (ej: "Templo Centro", "Salón de Convenciones")',
+      description: 'Ej: "Templo Centro", "Salón de Convenciones", "Explanada Municipal"',
     }),
     defineField({
       name: 'address',
@@ -139,111 +144,131 @@ export default defineType({
       type: 'string',
       group: 'location',
       validation: (Rule) => Rule.required(),
-      description: 'Dirección física completa (calle, número, ciudad)',
+      description: 'Calle, número, ciudad donde se realizará el evento',
     }),
     defineField({
       name: 'googleMapsUrl',
-      title: 'URL de Google Maps',
+      title: 'Enlace de Google Maps',
       type: 'url',
       group: 'location',
-      description: 'Link de Google Maps a la ubicación (copiar desde maps.google.com)',
+      description: 'Copia la URL de Google Maps del sitio (para que la gente vea la ruta)',
     }),
 
     // Extras Opcionales
     defineField({
       name: 'alimentosEnabled',
-      title: 'Mostrar sección de Alimentos',
+      title: 'Sección de Alimentos Habilitada',
       type: 'boolean',
       group: 'extras',
       initialValue: false,
-      description: 'Si la sección de comida/catering es disponible',
-    }),
-    defineField({
-      name: 'alimentosLocation',
-      title: 'Ubicación de Alimentos',
-      type: 'string',
-      group: 'extras',
-      hidden: ({ document }) => !document?.alimentosEnabled,
-    }),
-    defineField({
-      name: 'alimentosGoogleMapsUrl',
-      title: 'URL de Google Maps (Alimentos)',
-      type: 'url',
-      group: 'extras',
-      hidden: ({ document }) => !document?.alimentosEnabled,
+      description: 'Marca esto si hay información sobre comidas o catering en este evento',
     }),
     defineField({
       name: 'alimentosDescription',
-      title: 'Descripción de Alimentos',
+      title: 'Descripción de Alimentos (OBLIGATORIA si habilitado)',
       type: 'text',
       group: 'extras',
-      description: 'Horarios de servicio, menú, detalles',
+      description: 'Horarios, menú, detalles de cómo se sirvirá la comida',
+      hidden: ({ document }) => !document?.alimentosEnabled,
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if (context.document?.alimentosEnabled && !value) {
+            return 'Se debe proporcionar una descripción si los alimentos están habilitados';
+          }
+          return true;
+        }),
+    }),
+    defineField({
+      name: 'alimentosLocation',
+      title: 'Ubicación de Alimentos (Opcional)',
+      type: 'string',
+      group: 'extras',
+      hidden: ({ document }) => !document?.alimentosEnabled,
+      description: 'Lugar donde se servirá la comida (opcional)',
+    }),
+    defineField({
+      name: 'alimentosGoogleMapsUrl',
+      title: 'Enlace de Google Maps (Alimentos - Opcional)',
+      type: 'url',
+      group: 'extras',
       hidden: ({ document }) => !document?.alimentosEnabled,
     }),
     defineField({
       name: 'juntaJuvenilEnabled',
-      title: 'Mostrar sección de Junta Juvenil',
+      title: 'Sección de Junta Juvenil Habilitada',
       type: 'boolean',
       group: 'extras',
       initialValue: false,
-    }),
-    defineField({
-      name: 'juntaJuvenilLocation',
-      title: 'Ubicación de Junta Juvenil',
-      type: 'string',
-      group: 'extras',
-      hidden: ({ document }) => !document?.juntaJuvenilEnabled,
-    }),
-    defineField({
-      name: 'juntaJuvenilGoogleMapsUrl',
-      title: 'URL de Google Maps (Junta Juvenil)',
-      type: 'url',
-      group: 'extras',
-      hidden: ({ document }) => !document?.juntaJuvenilEnabled,
+      description: 'Marca esto si existe una junta o reunión especial para jóvenes',
     }),
     defineField({
       name: 'juntaJuvenilDescription',
-      title: 'Descripción de Junta Juvenil',
+      title: 'Descripción de Junta Juvenil (OBLIGATORIA si habilitado)',
       type: 'text',
+      group: 'extras',
+      hidden: ({ document }) => !document?.juntaJuvenilEnabled,
+      description: 'Detalles: tema, duración, qué esperamos de los jóvenes, etc.',
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if (context.document?.juntaJuvenilEnabled && !value) {
+            return 'Se debe proporcionar una descripción si la junta juvenil está habilitada';
+          }
+          return true;
+        }),
+    }),
+    defineField({
+      name: 'juntaJuvenilLocation',
+      title: 'Ubicación de Junta Juvenil (Opcional)',
+      type: 'string',
+      group: 'extras',
+      hidden: ({ document }) => !document?.juntaJuvenilEnabled,
+      description: 'Lugar donde se realizará la junta (opcional)',
+    }),
+    defineField({
+      name: 'juntaJuvenilGoogleMapsUrl',
+      title: 'Enlace de Google Maps (Junta Juvenil - Opcional)',
+      type: 'url',
       group: 'extras',
       hidden: ({ document }) => !document?.juntaJuvenilEnabled,
     }),
     defineField({
       name: 'pastorMensaje',
-      title: 'Pastor del Mensaje',
+      title: 'Pastor que Dará el Mensaje',
       type: 'reference',
       to: [{ type: 'pastor' }],
       group: 'extras',
-      description: 'Selecciona un pastor de la lista',
+      description: 'Selecciona de la lista de pastores registrados',
     }),
     defineField({
       name: 'pastorMensajeCustom',
-      title: 'Pastor Invitado (Personalizado)',
+      title: 'Pastor Invitado (Si no está en la lista)',
       type: 'string',
       group: 'extras',
-      description: 'Si el pastor asignado no está en la lista, escríbelo aquí',
+      description: 'Nombre del pastor si no está registrado en el sistema',
     }),
     defineField({
       name: 'jovenPreside',
-      title: 'Joven que Preside',
+      title: 'Joven Encargado de Dirigir',
       type: 'string',
       group: 'extras',
-      description: 'Nombre del joven encargado de dirigir el evento',
+      description: 'Nombre del joven que dirigirá el evento',
     }),
     defineField({
       name: 'moreInfoEnabled',
-      title: 'Mostrar botón "Más Información"',
+      title: 'Mostrar Botón "Más Información"',
       type: 'boolean',
       group: 'extras',
       initialValue: false,
+      description: 'Marca esto si hay información adicional que mostrar (con imagen)',
     }),
     defineField({
       name: 'moreInfoImage',
-      title: 'Imagen de Más Información',
+      title: 'Imagen de "Más Información"',
       type: 'image',
       group: 'extras',
       options: { hotspot: true },
       hidden: ({ document }) => !document?.moreInfoEnabled,
+      description: 'Imagen que se mostrará en la sección de "Más Información"',
     }),
 
     // Media
@@ -253,7 +278,7 @@ export default defineType({
       type: 'image',
       group: 'media',
       options: { hotspot: true },
-      description: 'Imagen destacada para el evento',
+      description: 'Imagen destacada que se mostrará en la lista de eventos',
     }),
     defineField({
       name: 'photos',
@@ -261,30 +286,74 @@ export default defineType({
       type: 'array',
       group: 'media',
       of: [{ type: 'image', options: { hotspot: true } }],
-      description: 'Fotos (máximo 6) para mostrar en el registro',
+      description: 'Hasta 6 fotos del evento. Se mostrarán en la galería.',
       validation: (Rule) => Rule.max(6),
     }),
     defineField({
       name: 'albumEnabled',
-      title: 'Álbum de Google Drive Habilitado',
+      title: 'Álbum en Google Drive Habilitado',
       type: 'boolean',
       group: 'media',
       initialValue: false,
-      description: 'Si hay un álbum de fotos compartido en Google Drive',
+      description: 'Marca esto si hay un álbum de fotos en Google Drive',
     }),
     defineField({
       name: 'googleDriveAlbumUrl',
-      title: 'URL del Álbum de Google Drive',
+      title: 'Enlace del Álbum en Google Drive (OBLIGATORIO si habilitado)',
       type: 'url',
       group: 'media',
       hidden: ({ document }) => !document?.albumEnabled,
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if (context.document?.albumEnabled && !value) {
+            return 'Se debe proporcionar un enlace si el álbum de Google Drive está habilitado';
+          }
+          return true;
+        }),
+    }),
+    defineField({
+      name: 'facebookEnabled',
+      title: 'Enlace a Publicación de Facebook Habilitado',
+      type: 'boolean',
+      group: 'media',
+      initialValue: false,
+      description: 'Marca esto si la publicación del evento está en Facebook',
     }),
     defineField({
       name: 'facebookPostUrl',
-      title: 'URL del Post de Facebook',
+      title: 'Enlace de la Publicación de Facebook (OBLIGATORIO si habilitado)',
       type: 'url',
       group: 'media',
-      description: 'Link de la publicación en Facebook',
+      hidden: ({ document }) => !document?.facebookEnabled,
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if (context.document?.facebookEnabled && !value) {
+            return 'Se debe proporcionar el enlace de Facebook si está habilitado';
+          }
+          return true;
+        }),
+    }),
+    defineField({
+      name: 'instagramEnabled',
+      title: 'Enlace a Publicación de Instagram Habilitado',
+      type: 'boolean',
+      group: 'media',
+      initialValue: false,
+      description: 'Marca esto si la publicación del evento está en Instagram',
+    }),
+    defineField({
+      name: 'instagramPostUrl',
+      title: 'Enlace de la Publicación de Instagram (OBLIGATORIO si habilitado)',
+      type: 'url',
+      group: 'media',
+      hidden: ({ document }) => !document?.instagramEnabled,
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if (context.document?.instagramEnabled && !value) {
+            return 'Se debe proporcionar el enlace de Instagram si está habilitado';
+          }
+          return true;
+        }),
     }),
 
     // Settings
@@ -295,31 +364,31 @@ export default defineType({
       group: 'settings',
       to: [{ type: 'region' }],
       validation: (Rule) => Rule.required(),
-      description: 'Región a la que pertenece este evento (OBLIGATORIA)',
+      description: 'La región a la que pertenece este evento (obligatorio)',
     }),
     defineField({
       name: 'status',
-      title: 'Estado del Evento',
+      title: 'Estado',
       type: 'string',
       group: 'settings',
       options: {
         list: [
-          { title: 'Próximo', value: 'upcoming' },
+          { title: 'Por Venir', value: 'upcoming' },
           { title: 'En Progreso', value: 'active' },
           { title: 'Finalizado', value: 'past' },
         ],
         layout: 'radio',
       },
       initialValue: 'upcoming',
-      description: 'Define si el evento está por venir, en curso o finalizado',
+      description: '¿Está a punto de suceder, sucediendo ahora, o ya pasó?',
     }),
     defineField({
       name: 'registrationEnabled',
-      title: 'Registro Habilitado',
+      title: 'Permitir Registro de Asistentes',
       type: 'boolean',
       group: 'settings',
       initialValue: true,
-      description: 'Si los asistentes pueden registrarse en este evento',
+      description: 'Marca esto para permitir que la gente se registre como asistente al evento',
     }),
 
     // Auditoría

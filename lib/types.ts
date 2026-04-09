@@ -109,8 +109,10 @@ export interface Event {
 export interface Pastor {
   id: string;
   fullName: string;
-  churchName: string;
+  churchName?: string; // Legacy field for backward compatibility
   churchNumber?: string;
+  temploName?: string; // Temple name from reference
+  address?: string; // Temple address from reference
   photo?: string;
   googleMapsUrl?: string;
   phone?: string;
@@ -121,6 +123,8 @@ export interface Coro {
   id: string;
   coroName: string;
   photo: string;
+  temploName?: string;
+  address?: string;
   googleMapsUrl?: string;
   presidentName: string;
   presidentPhone: string;
@@ -131,7 +135,9 @@ export interface DirectivaMember {
   id: string;
   fullName: string;
   role?: string;
-  churchName: string;
+  temploName?: string;
+  temploId?: string;
+  address?: string; // Temple address from reference
   photo?: string;
   googleMapsUrl?: string;
   phone: string;

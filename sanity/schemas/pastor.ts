@@ -12,9 +12,10 @@
  * - templo: obligatorio (un pastor siempre pertenece a un templo)
  * - region: obligatoria, heredada del templo, readOnly (para queries rápidas)
  * - La región del pastor DEBE coincidir con la región del templo
+ * - Si un pastor está en el sistema, se asume que está ACTIVO (no hay campo activo/inactivo)
  * 
  * AUDITORÍA: registra quién creó, cuándo, quién modificó, cuándo
- * SOFT DELETE: deletedAt indica si el pastor está activo o no
+ * SOFT DELETE: deletedAt permite archivar pastores sin perder datos
  */
 
 import { defineType, defineField } from 'sanity'
@@ -31,7 +32,6 @@ export default defineType({
   indexes: [
     { name: 'byTemplo', keys: [['templo']] },
     { name: 'byRegion', keys: [['region']] },
-    { name: 'byRegionAndActive', keys: [['region'], ['active']] },
   ],
   fields: [
     defineField({
@@ -43,13 +43,23 @@ export default defineType({
       description: 'Nombre oficial y completo del pastor',
     }),
     defineField({
+      name: 'photo',
+      title: 'Foto',
+      type: 'image',
+      group: 'basic',
+      options: {
+        hotspot: true,
+      },
+      description: 'Foto frontal o de perfil del pastor',
+    }),
+    defineField({
       name: 'templo',
       title: 'Templo',
       type: 'reference',
       to: [{ type: 'templo' }],
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Templo al que pertenece este pastor (OBLIGATORIO). Un pastor está en UN SOLO templo. Su teléfono y nombre se mostrarán en la UI del templo.',
+      description: 'El templo donde ministra este pastor (obligatorio)',
     }),
     defineField({
       name: 'region',
@@ -58,25 +68,15 @@ export default defineType({
       to: [{ type: 'region' }],
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Región (heredada del templo, readOnly para consultas optimizadas)',
+      description: 'Se llena automáticamente desde el templo',
       readOnly: true,
-    }),
-    defineField({
-      name: 'photo',
-      title: 'Foto',
-      type: 'image',
-      group: 'contact',
-      options: {
-        hotspot: true,
-      },
-      description: 'Foto frontal o de perfil del pastor',
     }),
     defineField({
       name: 'phone',
       title: 'Teléfono WhatsApp',
       type: 'string',
-      group: 'contact',
-      description: 'Número de WhatsApp (opcional). Formato: 10 dígitos sin espacios ni +52.',
+      group: 'basic',
+      description: 'Número de 10 dígitos (opcional). Formato: sin espacios ni +52.',
       validation: (Rule) => Rule.regex(/^(\d{10})?$/, {
         name: 'phone',
         invert: false,
@@ -135,12 +135,11 @@ export default defineType({
       temploName: 'templo.temploName',
       regionName: 'region.name',
       media: 'photo',
-      active: 'active',
     },
-    prepare({ title, temploName, regionName, active }) {
+    prepare({ title, temploName, regionName }) {
       return {
         title: title,
-        subtitle: `${temploName || '?'} (${regionName || '?'})${!active ? ' [INACTIVO]' : ''}`,
+        subtitle: `${temploName || '?'} (${regionName || '?'})`,
       }
     },
   },

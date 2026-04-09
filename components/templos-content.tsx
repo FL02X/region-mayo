@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import {
   ChevronDown,
@@ -11,37 +11,54 @@ import {
   Mic,
   Music,
   Users,
+  User,
+  Clock,
   FileText,
 } from "lucide-react";
 import { WhatsAppIconButton } from "@/components/whatsapp-button";
+import { SearchBar } from "@/components/search-bar";
+import { HighlightedText } from "@/components/highlighted-text";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
+import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Templo } from "@/lib/types";
 
-function TemploCard({ templo }: { templo: Templo }) {
+function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const openGoogleMaps = () => {
     if (templo.googleMapsUrl) window.open(templo.googleMapsUrl, "_blank");
   };
 
+  const handleToggle = () => {
+    setIsExpanded((prev) => {
+      if (!prev) {
+        setTimeout(() => {
+          const el = document.getElementById(`templo-details-${templo.id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        }, 100);
+      }
+      return !prev;
+    });
+  };
+
   const hasExpandableContent =
-    !!templo.phone ||
     templo.pastores.length > 0 ||
     templo.coros.length > 0 ||
     !!templo.description ||
-    !!templo.presidenteJovenesName ||
     !!templo.googleMapsUrl;
 
   return (
-    <div className="bg-card border border-border overflow-hidden">
+    <div className="bg-card border border-border overflow-hidden flex flex-col h-full">
       {/* Photo */}
-      <div className="relative h-44 w-full bg-muted">
+      <div className="relative h-60 w-full bg-muted shrink-0">
         {templo.photo ? (
           <Image
             src={templo.photo}
             alt={templo.temploName}
             fill
-            className="object-cover"
+            className="object-cover object-center"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -51,42 +68,57 @@ function TemploCard({ templo }: { templo: Templo }) {
             />
           </div>
         )}
-        {/* Church number badge */}
-        <div className="absolute top-3 left-3">
-          <span className="bg-foreground/80 text-background text-xs font-semibold px-2 py-0.5">
-            #{templo.churchNumber}
-          </span>
-        </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-base text-foreground leading-snug mb-1">
-          {templo.temploName}
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="font-semibold text-lg text-foreground leading-snug mb-3">
+          <HighlightedText text={templo.temploName} query={searchQuery} />
         </h3>
 
-        {/* Address preview (always visible if present) */}
-        {templo.address && (
-          <div className="flex items-start gap-2 mb-2">
-            <MapPin
-              className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <p className="text-xs text-muted-foreground truncate">
-              {templo.address}
-            </p>
-          </div>
-        )}
+        <div className="mt-auto flex flex-col">
+          {/* Address preview (always visible if present) */}
+          {templo.address && (
+            <div className="flex items-start gap-2 mb-1.5">
+              <MapPin
+                className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                aria-hidden="true"
+              />
+              <p className="text-sm text-foreground/80 line-clamp-2">
+                <HighlightedText text={templo.address} query={searchQuery} />
+              </p>
+            </div>
+          )}
 
-        {/* Toggle — only shown if there is expandable content */}
-        {hasExpandableContent && (
-          <div className="border-t border-border">
+          {/* Maps link - always shown first if available */}
+          {templo.googleMapsUrl && (
             <button
-              onClick={() => setIsExpanded((v) => !v)}
-              className="w-full flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              onClick={openGoogleMaps}
+              className="w-full flex items-center justify-between text-sm text-primary font-medium hover:text-primary/80 transition-colors pt-1 pb-3 px-4 -mx-4"
+              aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
+            >
+              <div className="flex items-center gap-2">
+                <MapPin
+                  className="h-3.5 w-3.5 shrink-0"
+                  aria-hidden="true"
+                />
+                <span>Ver ubicación en Maps</span>
+              </div>
+              <ExternalLink
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
+            </button>
+          )}
+
+          {/* Toggle — only shown if there is expandable content */}
+          {(templo.pastores.length > 0 || templo.coros.length > 0 || templo.description) && (
+            <button
+              onClick={handleToggle}
+              className="w-full flex items-center justify-between py-3 px-4 -mx-4 text-sm text-foreground font-medium hover:text-foreground/80 transition-colors mt-auto border-t border-border"
               aria-expanded={isExpanded}
               aria-controls={`templo-details-${templo.id}`}
-              style={{ background: "none", border: "none" }}
+              style={{ background: "none" }}
             >
               <span>
                 {isExpanded ? "Ocultar información" : "Ver información"}
@@ -98,89 +130,78 @@ function TemploCard({ templo }: { templo: Templo }) {
                 aria-hidden="true"
               />
             </button>
+          )}
 
-            {/* Expanded details */}
-            {isExpanded && (
-              <div
-                id={`templo-details-${templo.id}`}
-                className="space-y-3 pt-1 pb-1"
-              >
-                {/* Phone */}
-                {templo.phone && (
-                  <div className="flex items-center gap-2.5">
-                    <Phone
-                      className="h-3.5 w-3.5 text-muted-foreground shrink-0"
-                      aria-hidden="true"
-                    />
-                    <p className="text-sm text-foreground flex-1">
-                      {formatPhoneForDisplay(templo.phone)}
-                    </p>
-                    <WhatsAppIconButton
-                      phone={templo.phone}
-                      message={`Hola, me comunico del sitio web de Region Mayo respecto al ${templo.temploName}`}
-                    />
-                  </div>
-                )}
-
+          {/* Expanded details */}
+          {(templo.pastores.length > 0 || templo.coros.length > 0 || templo.description) && isExpanded && (
+            <div
+              id={`templo-details-${templo.id}`}
+              className="space-y-4 pt-4 pb-4 px-4 -mx-4 border-t border-border"
+            >
                 {/* Pastores */}
-                {templo.pastores.length > 0 && (
-                  <div className="space-y-2">
-                    {templo.pastores.map((pastor) => (
-                      <div key={pastor.id} className="flex items-center gap-2.5">
-                        <Mic
-                          className="h-3.5 w-3.5 text-muted-foreground shrink-0"
-                          aria-hidden="true"
-                        />
-                        <p className="text-sm text-foreground flex-1">
-                          {pastor.fullName}
+                {templo.pastores.length > 0 && templo.pastores.map((pastor) => (
+                  <div key={pastor.id} className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                        {templo.pastores.length > 1 ? "Pastores a Cargo" : "Pastor a Cargo"}
+                      </p>
+                      <p className="text-sm font-medium text-foreground leading-tight">
+                        <HighlightedText text={pastor.fullName} query={searchQuery} />
+                      </p>
+                      {pastor.phone && (
+                        <p className="text-sm text-foreground/80 mt-0.5">
+                          {formatPhoneForDisplay(pastor.phone)}
                         </p>
-                        {pastor.phone && (
-                          <WhatsAppIconButton
-                            phone={pastor.phone}
-                            message={`Hola ${pastor.fullName}, me comunico del sitio web de Region Mayo.`}
-                          />
-                        )}
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                    {pastor.phone && (
+                      <WhatsAppIconButton
+                        phone={pastor.phone}
+                        message={`Hola ${pastor.fullName}, me comunico del sitio web de Region Mayo.`}
+                      />
+                    )}
                   </div>
-                )}
+                ))}
 
                 {/* Coros */}
-                {templo.coros.length > 0 && (
-                  <div className="space-y-2">
-                    {templo.coros.map((coro) => (
-                      <div key={coro.id} className="flex items-start gap-2.5">
-                        <Music
-                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
-                          aria-hidden="true"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground">
-                            {coro.coroName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Pdte. Coro: {coro.presidentName}
-                          </p>
-                        </div>
-                        <WhatsAppIconButton
-                          phone={coro.presidentPhone}
-                          message={`Hola, me comunico del sitio web de Region Mayo respecto al ${coro.coroName}`}
-                        />
-                      </div>
-                    ))}
+                {templo.coros.length > 0 && templo.coros.map((coro) => (
+                  <div key={coro.id} className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                        {templo.coros.length > 1 ? "Coros Locales" : "Coro Local"}
+                      </p>
+                      <p className="text-sm font-medium text-foreground leading-tight">
+                        <HighlightedText text={coro.coroName} query={searchQuery} />
+                      </p>
+                      <p className="text-sm text-foreground/80 mt-0.5">
+                        Pdte. <HighlightedText text={coro.presidentName} query={searchQuery} />
+                        {coro.presidentPhone ? ` · ${formatPhoneForDisplay(coro.presidentPhone)}` : ""}
+                      </p>
+                    </div>
+                    {coro.presidentPhone && (
+                      <WhatsAppIconButton
+                        phone={coro.presidentPhone}
+                        message={`Hola, me comunico del sitio web de Region Mayo respecto al ${coro.coroName}`}
+                      />
+                    )}
                   </div>
-                )}
+                ))}
 
                 {/* Description / Schedule */}
                 {templo.description && (
-                  <div className="flex items-start gap-2.5">
-                    <FileText
-                      className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
-                      aria-hidden="true"
-                    />
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-muted-foreground mb-0.5 uppercase tracking-wide">
-                        Horarios y actividades
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                        Horarios y Actividades
                       </p>
                       <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                         {templo.description}
@@ -188,58 +209,9 @@ function TemploCard({ templo }: { templo: Templo }) {
                     </div>
                   </div>
                 )}
-
-                {/* Presidente de Jóvenes */}
-                {templo.presidenteJovenesName && (
-                  <div className="flex items-center gap-2.5">
-                    <Users
-                      className="h-3.5 w-3.5 text-muted-foreground shrink-0"
-                      aria-hidden="true"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground">
-                        {templo.presidenteJovenesName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Pdte. de Jóvenes Local
-                      </p>
-                    </div>
-                    {templo.presidenteJovenesPhone && (
-                      <WhatsAppIconButton
-                        phone={templo.presidenteJovenesPhone}
-                        message={`Hola ${templo.presidenteJovenesName}, me comunico del sitio web de Region Mayo.`}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {/* Maps link */}
-                {templo.googleMapsUrl && (
-                  <div className="border-t border-border pt-3 mt-1">
-                    <button
-                      onClick={openGoogleMaps}
-                      className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors w-full"
-                      style={{ background: "none", border: "none" }}
-                      aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
-                    >
-                      <MapPin
-                        className="h-3.5 w-3.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="flex-1 text-left">
-                        Ver ubicación en Maps
-                      </span>
-                      <ExternalLink
-                        className="h-3 w-3 shrink-0"
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>
-        )}
       </div>
     </div>
   );
@@ -250,6 +222,13 @@ interface TemploContentProps {
 }
 
 export function TemplosContent({ templos }: TemploContentProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredTemplos = useMemo(
+    () => searchItems(templos, searchQuery, SEARCH_CONFIGS.templos),
+    [templos, searchQuery],
+  );
+
   return (
     <div className="px-4 py-6" id="main-content">
       <div className="max-w-4xl mx-auto">
@@ -261,32 +240,48 @@ export function TemplosContent({ templos }: TemploContentProps) {
           </p>
         </div>
 
-        {templos.length === 0 ? (
+        {/* Search Bar */}
+        <div className="mb-6">
+          <SearchBar
+            onSearchChange={setSearchQuery}
+            placeholder="Buscar por nombre, dirección, pastor o coro..."
+            autoFocus
+          />
+        </div>
+
+        {filteredTemplos.length === 0 ? (
           <div className="bg-card border border-border p-8 text-center">
             <Church
               className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3"
               aria-hidden="true"
             />
             <p className="text-sm font-medium text-foreground mb-1">
-              Sin templos registrados
+              {templos.length === 0
+                ? "Sin templos registrados"
+                : "No se encontraron resultados"}
             </p>
             <p className="text-xs text-muted-foreground">
-              Los templos de la región se mostrarán aquí cuando estén
-              disponibles.
+              {templos.length === 0
+                ? "Los templos de la región se mostrarán aquí cuando estén disponibles."
+                : "Intenta con otros términos de búsqueda."}
             </p>
           </div>
         ) : (
           <div
             className={`grid gap-4 ${
-              templos.length === 1
+              filteredTemplos.length === 1
                 ? "grid-cols-1 max-w-sm mx-auto"
-                : templos.length === 2
+                : filteredTemplos.length === 2
                   ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
                   : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
             }`}
           >
-            {templos.map((templo) => (
-              <TemploCard key={templo.id} templo={templo} />
+            {filteredTemplos.map((templo) => (
+              <TemploCard
+                key={templo.id}
+                templo={templo}
+                searchQuery={searchQuery}
+              />
             ))}
           </div>
         )}

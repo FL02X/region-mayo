@@ -8,8 +8,12 @@ const DEFAULT_COUNTRY_CODE = "52"
 /**
  * Format a phone number with Mexico country code for WhatsApp
  * Removes any non-digit characters and ensures +52 prefix
+ * Safely handles null/undefined values
  */
-export function formatPhoneForWhatsApp(phone: string): string {
+export function formatPhoneForWhatsApp(phone: string | null | undefined): string {
+  // Resilence: handle null/undefined
+  if (!phone) return ""
+  
   // Remove all non-digit characters
   const digitsOnly = phone.replace(/\D/g, "")
   
@@ -45,8 +49,12 @@ export function getWhatsAppLink(phone: string, message?: string): string {
  * Format phone number for display (Mexican format)
  * Input: 6441234567
  * Output: +52 644 123 4567
+ * Safely handles null/undefined values
  */
-export function formatPhoneForDisplay(phone: string): string {
+export function formatPhoneForDisplay(phone: string | null | undefined): string {
+  // Resilence: handle null/undefined
+  if (!phone) return ""
+  
   const digitsOnly = phone.replace(/\D/g, "")
   
   // Remove country code if present

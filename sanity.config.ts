@@ -3,6 +3,7 @@ import { deskTool } from 'sanity/desk'
 import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './sanity/schemas'
 import { auditBeforeCreate, auditBeforeCommit } from './sanity/auditHooks'
+import { coroBeforeCommit } from './sanity/denormalizationHooks'
 
 const projectId =
   process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || process.env.SANITY_STUDIO_PROJECT_ID
@@ -69,12 +70,20 @@ export default defineConfig({
       }
       return documentBeforeCreate
     },
-    beforeCommit: (documentBeforeCommit, context) => {
-      // Aplicar solo a documentos auditables
-      if (AUDITABLE_DOCUMENT_TYPES.includes(documentBeforeCommit._type)) {
-        return auditBeforeCommit(documentBeforeCommit, context)
+    beforeCommit: async (documentBeforeCommit, context) => {
+      let updated = documentBeforeCommit
+
+      // 1. Primero, aplicar denormalization para coros
+      if (documentBeforeCommit._type === 'coro') {
+        updated = await coroBeforeCommit(updated, context)
       }
-      return documentBeforeCommit
+
+      // 2. Luego, aplicar auditoría si corresponde
+      if (AUDITABLE_DOCUMENT_TYPES.includes(updated._type)) {
+        updated = auditBeforeCommit(updated, context)
+      }
+
+      return updated
     },
   },
   i18n: {
