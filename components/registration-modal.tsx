@@ -6,7 +6,6 @@ import { X, Check, Calendar, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PhoneInput } from "@/components/phone-input"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
@@ -88,7 +87,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
           isVisiting: formData.isVisiting,
           needsLodging: formData.needsLodging,
           needsTransport: formData.needsTransport,
-          attendingAs: formData.attendingAs,
+          attendingAs: formData.isCoroMGR ? "miembro" : "oyente",
           isBaptized: formData.isBaptized,
           isCoroMGR: formData.isCoroMGR,
           website: honeypot,
@@ -135,275 +134,140 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
 
   const stepLabels = ["Logística", "Contacto", "Confirmar"]
 
+  const ToggleQuestion = ({ label, value, field }: { label: string, value: boolean, field: string }) => (
+    <div className="flex items-center justify-between py-4 border-b border-border/50 last:border-0">
+      <span className="text-sm font-medium text-foreground">{label}</span>
+      <div className="flex bg-muted/30 border border-input">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleInputChange(field, true)}
+          className={`rounded-none h-10 px-5 text-sm ${value ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          Sí
+        </Button>
+        <div className="w-[1px] bg-input" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleInputChange(field, false)}
+          className={`rounded-none h-10 px-5 text-sm ${!value ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          No
+        </Button>
+      </div>
+    </div>
+  )
+
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 overflow-hidden">
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" onClick={onClose} />
+        <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={onClose} />
 
         {/* Modal */}
         <div 
-          className="relative bg-background w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95"
+          className="absolute inset-0 sm:relative sm:inset-auto bg-background w-full sm:max-w-md sm:h-auto sm:max-h-[90vh] flex flex-col shadow-2xl animate-in fade-in sm:zoom-in-95 duration-200"
           role="dialog"
           aria-modal="true"
           aria-labelledby="registration-title"
           aria-describedby="registration-description"
         >
           {/* Header */}
-          <div className="sticky top-0 bg-background z-10 px-5 py-4 border-b flex items-center justify-between">
+          <div className="shrink-0 bg-background z-10 px-5 py-4 border-b flex items-center justify-between">
             <div className="flex-1 min-w-0 pr-3">
-              <h2 id="registration-title" className="font-semibold text-base text-foreground">Registro</h2>
+              <h2 id="registration-title" className="font-bold text-lg text-foreground uppercase tracking-wide">Registro</h2>
               <p id="registration-description" className="text-sm text-muted-foreground truncate">{event.title}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full shrink-0 h-9 w-9">
-              <X className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-none shrink-0 h-10 w-10 hover:bg-muted">
+              <X className="h-5 w-5" />
             </Button>
           </div>
 
-          {/* Progress Bar */}
+          {/* Progress Text */}
           {step <= totalSteps && (
-            <div className="px-5 pt-4 pb-2">
-              <div className="flex items-center">
-                {[1, 2, 3].map((s, index) => (
-                  <div key={s} className="flex items-center flex-1 last:flex-none">
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 transition-colors ${
-                        s <= step
-                          ? "bg-primary text-white"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {s < step ? <Check className="h-3.5 w-3.5" /> : s}
-                    </div>
-                    {index < 2 && (
-                      <div className={`flex-1 h-0.5 mx-2 rounded-full transition-colors ${s < step ? "bg-primary" : "bg-muted"}`} />
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="flex mt-2">
-                {stepLabels.map((label, index) => (
-                  <div 
-                    key={label} 
-                    className={`${index === 2 ? "w-7" : "flex-1"} flex justify-center`}
-                  >
-                    <span 
-                      className={`text-xs text-center ${step === index + 1 ? "text-primary font-medium" : "text-muted-foreground"}`}
-                    >
-                      {label}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            <div className="shrink-0 bg-muted/20 px-5 py-3 border-b">
+              <p className="text-xs font-bold text-primary uppercase tracking-wider">
+                Paso {step} de {totalSteps} <span className="text-muted-foreground font-normal mx-1">|</span> {stepLabels[step - 1]}
+              </p>
             </div>
           )}
 
           {/* Content */}
-          <div className="px-5 py-4">
+          <div className="flex-1 overflow-y-auto px-5 py-6">
             {/* Step 1: Logistics */}
             {step === 1 && (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Ayúdanos a preparar todo para tu llegada
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Ayúdanos a preparar todo para tu llegada respondiendo estas preguntas:
                 </p>
 
-                {/* Visiting Toggle */}
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                  <span className="text-sm text-foreground">¿Vienes de otra región?</span>
-                  <div className="flex gap-1.5">
-                    <Button
-                      variant={formData.isVisiting ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("isVisiting", true)}
-                      className={`rounded-lg h-8 px-3 text-xs ${formData.isVisiting ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      Sí
-                    </Button>
-                    <Button
-                      variant={!formData.isVisiting ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("isVisiting", false)}
-                      className={`rounded-lg h-8 px-3 text-xs ${!formData.isVisiting ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      No
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Lodging Toggle */}
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                  <span className="text-sm text-foreground">¿Necesitas hospedaje?</span>
-                  <div className="flex gap-1.5">
-                    <Button
-                      variant={formData.needsLodging ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("needsLodging", true)}
-                      className={`rounded-lg h-8 px-3 text-xs ${formData.needsLodging ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      Sí
-                    </Button>
-                    <Button
-                      variant={!formData.needsLodging ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("needsLodging", false)}
-                      className={`rounded-lg h-8 px-3 text-xs ${!formData.needsLodging ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      No
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Transport Toggle */}
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                  <span className="text-sm text-foreground">¿Necesitas transporte?</span>
-                  <div className="flex gap-1.5">
-                    <Button
-                      variant={formData.needsTransport ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("needsTransport", true)}
-                      className={`rounded-lg h-8 px-3 text-xs ${formData.needsTransport ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      Sí
-                    </Button>
-                    <Button
-                      variant={!formData.needsTransport ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("needsTransport", false)}
-                      className={`rounded-lg h-8 px-3 text-xs ${!formData.needsTransport ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      No
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Baptized Toggle */}
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                  <span className="text-sm text-foreground">¿Eres bautizado?</span>
-                  <div className="flex gap-1.5">
-                    <Button
-                      variant={formData.isBaptized ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("isBaptized", true)}
-                      className={`rounded-lg h-8 px-3 text-xs ${formData.isBaptized ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      Sí
-                    </Button>
-                    <Button
-                      variant={!formData.isBaptized ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("isBaptized", false)}
-                      className={`rounded-lg h-8 px-3 text-xs ${!formData.isBaptized ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      No
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Coro MGR Toggle */}
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
-                  <span className="text-sm text-foreground">¿Eres joven del coro MGR?</span>
-                  <div className="flex gap-1.5">
-                    <Button
-                      variant={formData.isCoroMGR ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("isCoroMGR", true)}
-                      className={`rounded-lg h-8 px-3 text-xs ${formData.isCoroMGR ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      Sí
-                    </Button>
-                    <Button
-                      variant={!formData.isCoroMGR ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("isCoroMGR", false)}
-                      className={`rounded-lg h-8 px-3 text-xs ${!formData.isCoroMGR ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      No
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Attending As */}
-                <div className="p-3 bg-muted/50 rounded-xl">
-                  <span className="text-sm text-foreground block mb-2">Asistiré como:</span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={formData.attendingAs === "oyente" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("attendingAs", "oyente")}
-                      className={`rounded-lg h-9 px-4 text-sm flex-1 ${formData.attendingAs === "oyente" ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      Oyente
-                    </Button>
-                    <Button
-                      variant={formData.attendingAs === "miembro" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleInputChange("attendingAs", "miembro")}
-                      className={`rounded-lg h-9 px-4 text-sm flex-1 ${formData.attendingAs === "miembro" ? "bg-primary hover:bg-primary/90" : ""}`}
-                    >
-                      Miembro
-                    </Button>
-                  </div>
+                <div className="border border-border/50 bg-background px-4">
+                  <ToggleQuestion label="¿Vienes de otra región?" value={formData.isVisiting} field="isVisiting" />
+                  <ToggleQuestion label="¿Necesitas hospedaje?" value={formData.needsLodging} field="needsLodging" />
+                  <ToggleQuestion label="¿Necesitas transporte?" value={formData.needsTransport} field="needsTransport" />
+                  <ToggleQuestion label="¿Eres bautizado?" value={formData.isBaptized} field="isBaptized" />
+                  <ToggleQuestion label="¿Eres joven del coro MGR?" value={formData.isCoroMGR} field="isCoroMGR" />
                 </div>
               </div>
             )}
 
             {/* Step 2: Contact Info */}
             {step === 2 && (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name" className="text-sm text-foreground">Nombre completo</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    placeholder="Tu nombre"
-                    className="mt-1.5 rounded-xl h-11"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone" className="text-sm text-foreground">Teléfono</Label>
-                  <div className="mt-1.5">
-                    <PhoneInput
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(value) => handleInputChange("phone", value)}
+              <div className="space-y-6">
+                <div className="space-y-5">
+                  <div>
+                    <Label htmlFor="name" className="text-sm font-bold text-foreground uppercase tracking-wider">Nombre completo</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      placeholder="Escribe tu nombre"
+                      className="mt-2 rounded-none h-12 border-input focus-visible:ring-1"
                     />
                   </div>
-                </div>
-                <div>
-                  <Label className="text-sm text-foreground">Mi Región</Label>
-                  <Select value={formData.region} onValueChange={(value) => handleInputChange("region", value)}>
-                    <SelectTrigger className="mt-1.5 rounded-xl h-11">
-                      <SelectValue placeholder="Selecciona tu región" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {regions.map((region) => (
-                        <SelectItem key={region} value={region}>
-                          {region}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div>
+                    <Label htmlFor="phone" className="text-sm font-bold text-foreground uppercase tracking-wider">Teléfono</Label>
+                    <div className="mt-2 className-[&_input]:rounded-none [&_input]:h-12">
+                      <PhoneInput
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(value) => handleInputChange("phone", value)}
+                      />
+                    </div>
+                  </div>
+                  {formData.isCoroMGR && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                      <Label htmlFor="region" className="text-sm font-bold text-foreground uppercase tracking-wider">Mi Región</Label>
+                      <Input
+                        id="region"
+                        value={formData.region}
+                        onChange={(e) => handleInputChange("region", e.target.value)}
+                        placeholder="Escribe tu región"
+                        className="mt-2 rounded-none h-12 border-input focus-visible:ring-1"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Step 3: Review with Clickable Photos */}
             {step === 3 && (
-              <div className="space-y-4">
-                {/* Event Photos - Clickable with scroll indicator */}
+              <div className="space-y-6">
+                {/* Event Photos */}
                 {photos.length > 0 && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Mira lo que vivirás: Momentos de eventos pasados
+                    <p className="text-xs font-bold text-foreground mb-3 uppercase tracking-wider">
+                      Momentos de eventos pasados
                     </p>
                     <div className="relative">
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-1">
                         {photos.slice(0, maxPhotosToShow).map((photo, index) => (
                           <button
                             key={index}
                             onClick={() => openPhotoViewer(index)}
-                            className="relative aspect-square rounded-xl overflow-hidden group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                            className="relative aspect-square rounded-none overflow-hidden group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                           >
                             <Image 
                               src={photo} 
@@ -412,7 +276,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                               className="object-cover" 
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <span className="text-white text-xs font-medium">Ver</span>
+                              <span className="text-white text-xs font-bold uppercase">Ver</span>
                             </div>
                           </button>
                         ))}
@@ -421,9 +285,9 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                       {photos.length > maxPhotosToShow && (
                         <button
                           onClick={() => openPhotoViewer(0)}
-                          className="mt-2 text-xs text-primary font-medium flex items-center gap-1 hover:underline"
+                          className="mt-3 text-xs text-primary font-bold uppercase tracking-wider flex items-center gap-1 hover:underline"
                         >
-                          <span>+{photos.length - maxPhotosToShow} fotos mas</span>
+                          <span>+ {photos.length - maxPhotosToShow} fotos más</span>
                           <ChevronRight className="h-3 w-3" />
                         </button>
                       )}
@@ -432,44 +296,46 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                 )}
 
                 {/* Summary */}
-                <div className="bg-muted/50 rounded-xl p-4">
-                  <h4 className="font-semibold text-sm text-foreground mb-3">Resumen de tu registro</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
+                <div className="border border-border/50 bg-background p-5">
+                  <h4 className="font-bold text-xs text-foreground mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Resumen de tu registro</h4>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Nombre:</span>
                       <span className="text-foreground font-medium">{formData.name || "—"}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Teléfono:</span>
                       <span className="text-foreground font-medium">{formData.phone ? `+52 ${formData.phone}` : "—"}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Región:</span>
-                      <span className="text-foreground font-medium">{formData.region || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
+                    {formData.isCoroMGR && (
+                      <div className="flex justify-between border-b border-border/20 pb-2">
+                        <span className="text-muted-foreground">Región:</span>
+                        <span className="text-foreground font-medium">{formData.region || "—"}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Visitante:</span>
                       <span className="text-foreground font-medium">{formData.isVisiting ? "Sí" : "No"}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Hospedaje:</span>
                       <span className="text-foreground font-medium">{formData.needsLodging ? "Sí" : "No"}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Transporte:</span>
                       <span className="text-foreground font-medium">{formData.needsTransport ? "Sí" : "No"}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Bautizado:</span>
                       <span className="text-foreground font-medium">{formData.isBaptized ? "Sí" : "No"}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Coro MGR:</span>
                       <span className="text-foreground font-medium">{formData.isCoroMGR ? "Sí" : "No"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Asistiendo como:</span>
-                      <span className="text-foreground font-medium capitalize">{formData.attendingAs}</span>
+                      <span className="text-muted-foreground">Asistiré como:</span>
+                      <span className="text-foreground font-medium capitalize">{formData.isCoroMGR ? "Miembro" : "Oyente"}</span>
                     </div>
                   </div>
                 </div>
@@ -500,33 +366,33 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
 
           {/* Footer */}
           {step <= totalSteps && (
-            <div className="sticky bottom-0 bg-background border-t px-5 py-4">
+            <div className="shrink-0 bg-background border-t border-border/50 p-4">
               {submitError && (
-                <div className="mb-3 p-3 bg-destructive/10 text-destructive text-sm rounded-xl text-center">
+                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
                   {submitError}
                 </div>
               )}
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 {step > 1 && (
-                  <Button variant="outline" onClick={handleBack} disabled={isSubmitting} className="rounded-xl h-11 px-4">
-                    <ChevronLeft className="h-4 w-4 mr-1" />
+                  <Button variant="outline" onClick={handleBack} disabled={isSubmitting} className="rounded-none h-14 px-6 uppercase tracking-wider font-bold">
+                    <ChevronLeft className="h-5 w-5 mr-1" />
                     Atrás
                   </Button>
                 )}
                 <Button
                   onClick={step === totalSteps ? handleSubmit : handleNext}
                   disabled={isSubmitting}
-                  className="flex-1 rounded-xl h-11 bg-primary hover:bg-primary/90 text-white"
+                  className="flex-1 rounded-none h-14 bg-primary hover:bg-primary/90 text-primary-foreground uppercase tracking-wider font-bold text-sm"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Registrando...
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Procesando
                     </>
                   ) : (
                     <>
                       {step === totalSteps ? "Confirmar Registro" : "Siguiente"}
-                      {step < totalSteps && <ChevronRight className="h-4 w-4 ml-1" />}
+                      {step < totalSteps && <ChevronRight className="h-5 w-5 ml-1" />}
                     </>
                   )}
                 </Button>
@@ -535,8 +401,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
           )}
 
           {step === 4 && (
-            <div className="px-5 pb-5">
-              <Button onClick={onClose} className="w-full rounded-xl h-11 bg-primary hover:bg-primary/90 text-white">
+            <div className="shrink-0 bg-background p-4 border-t border-border/50">
+              <Button onClick={onClose} className="w-full rounded-none h-14 bg-primary hover:bg-primary/90 text-primary-foreground uppercase tracking-wider font-bold">
                 Cerrar
               </Button>
             </div>
@@ -584,19 +450,19 @@ function PhotoViewer({
 
   return (
     <div 
-      className="fixed inset-0 z-[60] bg-black/95 flex flex-col"
+      className="fixed inset-0 z-[60] bg-black flex flex-col"
       onClick={onClose}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 text-white">
-        <span className="text-sm font-medium">
+        <span className="text-sm font-bold tracking-widest uppercase">
           {currentIndex + 1} / {photos.length}
         </span>
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="text-white hover:bg-white/20 rounded-full"
+          className="text-white hover:bg-white/10 rounded-none h-12 w-12"
         >
           <X className="h-6 w-6" />
         </Button>
@@ -605,7 +471,7 @@ function PhotoViewer({
       {/* Main Image */}
       <div 
         ref={containerRef}
-        className="flex-1 flex items-center justify-center px-4 relative"
+        className="flex-1 flex items-center justify-center p-4 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Previous Button */}
@@ -614,14 +480,14 @@ function PhotoViewer({
             variant="ghost"
             size="icon"
             onClick={() => onNavigate("prev")}
-            className="absolute left-2 text-white hover:bg-white/20 rounded-full z-10"
+            className="absolute left-2 text-white hover:bg-white/10 rounded-none h-16 w-16 z-10"
           >
-            <ChevronLeft className="h-8 w-8" />
+            <ChevronLeft className="h-10 w-10" />
           </Button>
         )}
 
         {/* Image */}
-        <div className="relative w-full max-w-lg aspect-[3/4] max-h-[70vh]">
+        <div className="relative w-full max-w-2xl h-full max-h-[75vh]">
           <Image
             src={photos[currentIndex]}
             alt={`Foto ${currentIndex + 1}`}
@@ -637,16 +503,16 @@ function PhotoViewer({
             variant="ghost"
             size="icon"
             onClick={() => onNavigate("next")}
-            className="absolute right-2 text-white hover:bg-white/20 rounded-full z-10"
+            className="absolute right-2 text-white hover:bg-white/10 rounded-none h-16 w-16 z-10"
           >
-            <ChevronRight className="h-8 w-8" />
+            <ChevronRight className="h-10 w-10" />
           </Button>
         )}
       </div>
 
       {/* Thumbnail Strip */}
       {photos.length > 1 && (
-        <div className="p-4 overflow-x-auto">
+        <div className="p-4 overflow-x-auto bg-black/50">
           <div className="flex gap-2 justify-center">
             {photos.map((photo, index) => (
               <button
@@ -661,10 +527,10 @@ function PhotoViewer({
                     for (let i = 0; i < Math.abs(diff); i++) onNavigate("prev")
                   }
                 }}
-                className={`relative w-14 h-14 rounded-lg overflow-hidden shrink-0 transition-all ${
+                className={`relative w-16 h-16 rounded-none overflow-hidden shrink-0 transition-opacity ${
                   index === currentIndex 
-                    ? "ring-2 ring-primary ring-offset-2 ring-offset-black" 
-                    : "opacity-50 hover:opacity-80"
+                    ? "ring-2 ring-white opacity-100" 
+                    : "opacity-40 hover:opacity-80"
                 }`}
               >
                 <Image
@@ -695,61 +561,57 @@ function ConfirmationStep({
   const [isContactExpanded, setIsContactExpanded] = useState(false)
 
   return (
-    <div className="text-center py-6">
-      <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Check className="h-7 w-7 text-primary" />
+    <div className="text-center py-8">
+      <div className="w-16 h-16 bg-primary flex items-center justify-center mx-auto mb-6 rounded-none">
+        <Check className="h-8 w-8 text-primary-foreground" />
       </div>
-      <h3 className="text-lg font-semibold text-foreground mb-2">¡Registro Exitoso!</h3>
-      <p className="text-sm text-muted-foreground mb-6">
+      <h3 className="text-xl font-bold text-foreground mb-3 uppercase tracking-wide">¡Registro Exitoso!</h3>
+      <p className="text-sm text-muted-foreground mb-8">
         El staff ha sido notificado de tu asistencia. ¡Pronto estaremos en contacto!
       </p>
       
-      <div className="space-y-3">
-        <Button onClick={onAddToCalendar} variant="outline" className="w-full rounded-xl gap-2">
-          <Calendar className="h-4 w-4" />
+      <div className="space-y-4">
+        <Button onClick={onAddToCalendar} variant="outline" className="w-full rounded-none h-14 gap-2 font-bold uppercase tracking-wider text-sm border-input">
+          <Calendar className="h-5 w-5" />
           Agregar a Google Calendar
         </Button>
 
         {regionPresident ? (
-          <div className="text-left">
+          <div className="text-left border border-border/50 bg-background">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsContactExpanded(!isContactExpanded)}
-              className="w-full justify-between rounded-xl"
+              className="w-full justify-between rounded-none h-14 px-4 hover:bg-muted/50"
             >
-              <span className="text-sm">Ver información de contacto</span>
+              <span className="text-sm font-bold uppercase tracking-wider">Ver contacto</span>
               {isContactExpanded ? (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-5 w-5" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-5 w-5" />
               )}
             </Button>
 
             {isContactExpanded && (
-              <div className="mt-2 space-y-3 pt-2 border-t">
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <User className="h-5 w-5 text-primary" />
+              <div className="p-4 border-t border-border/50 bg-muted/10">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-primary/10 flex items-center justify-center shrink-0 rounded-none">
+                    <User className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{regionPresident.fullName}</p>
-                    <p className="text-xs text-muted-foreground">Presidente Regional</p>
+                    <p className="text-sm font-bold text-foreground truncate">{regionPresident.fullName}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">Presidente Regional</p>
                   </div>
                   <WhatsAppIconButton 
                     phone={regionPresident.phone} 
                     message={`Hola, me acabo de registrar para ${eventTitle} en el sitio web de Región Mayo.`}
                   />
                 </div>
-
-                <p className="text-sm text-muted-foreground text-center">
-                  {formatPhoneForDisplay(regionPresident.phone)}
-                </p>
               </div>
             )}
           </div>
         ) : (
-          <div className="bg-muted/50 rounded-xl p-3 text-sm text-muted-foreground text-center">
+          <div className="border border-border/50 bg-muted/10 p-4 text-sm text-muted-foreground text-center font-medium">
             Información de contacto no disponible en este momento.
           </div>
         )}

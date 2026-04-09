@@ -20,7 +20,7 @@ export default async function CorosPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <div className="pt-14">
+      <div>
         {region ? (
           <CorosContent coros={coros} />
         ) : (

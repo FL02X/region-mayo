@@ -230,9 +230,10 @@ export function TemplosContent({ templos }: TemploContentProps) {
   );
 
   return (
-    <div className="px-4 py-6" id="main-content">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
+    <div className="w-full relative pb-16 bg-[#f3f4f6] dark:bg-[#09090b]" id="main-content">
+      <div className="max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen focus:outline-none">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
         <div className="mb-6 pb-4 border-b border-border">
           <h1 className="text-2xl font-bold text-foreground">Templos</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -245,7 +246,6 @@ export function TemplosContent({ templos }: TemploContentProps) {
           <SearchBar
             onSearchChange={setSearchQuery}
             placeholder="Buscar por nombre, dirección, pastor o coro..."
-            autoFocus
           />
         </div>
 
@@ -285,6 +285,7 @@ export function TemplosContent({ templos }: TemploContentProps) {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

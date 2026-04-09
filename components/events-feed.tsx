@@ -66,7 +66,7 @@ export function EventsFeed({
         const offsetPosition =
           eventsListRef.current.getBoundingClientRect().top +
           window.scrollY -
-          56;
+          54;
         window.scrollTo({ top: offsetPosition, behavior: "smooth" });
       }
     }, 100);
@@ -83,12 +83,13 @@ export function EventsFeed({
   };
 
   return (
-    <>
-      {/* Countdown */}
-      <CountdownSection events={events} />
+    <div className="w-full relative bg-[#f3f4f6] dark:bg-[#09090b]">
+      <div className="max-w-[950px] mx-auto bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen pb-16 pt-[2px]">
+        {/* Countdown */}
+        <CountdownSection events={events} />
 
-      {/* Calendar section */}
-      <section id="calendario" className="bg-background px-4 md:px-6 py-6">
+        {/* Calendar section */}
+        <section id="calendario" className="px-4 md:px-8 py-6">
         <div className="max-w-4xl mx-auto w-full">
           <div className="mb-4">
             <h2
@@ -171,6 +172,7 @@ export function EventsFeed({
           )}
         </div>
       </section>
+      </div>
 
       {/* Registration modal */}
       {selectedEvent && (
@@ -182,6 +184,6 @@ export function EventsFeed({
           regions={regions}
         />
       )}
-    </>
+    </div>
   );
 }

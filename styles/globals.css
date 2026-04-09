@@ -120,6 +120,6 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[#f3f4f6] text-foreground dark:bg-[#09090b];
   }
 }

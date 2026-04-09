@@ -19,12 +19,16 @@ export function Logo({ variant = "default", className = "" }: LogoProps) {
   return (
     <div className={`flex flex-col leading-none ${className}`}>
       <span
-        className={`font-sans font-bold text-foreground tracking-tight ${nameSizes[variant]}`}
+        className={`font-sans font-bold tracking-tight ${nameSizes[variant]} ${
+          className.includes("text-white") ? "text-white" : "text-foreground"
+        }`}
       >
         Region Mayo
       </span>
       <span
-        className={`font-sans font-normal tracking-[0.08em] text-muted-foreground ${subSizes[variant]}`}
+        className={`font-sans font-normal tracking-[0.08em] ${subSizes[variant]} ${
+          className.includes("text-white") ? "text-gray-300" : "text-muted-foreground"
+        }`}
       >
         Calendario
       </span>

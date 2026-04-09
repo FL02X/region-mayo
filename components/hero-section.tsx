@@ -38,14 +38,14 @@ export function HeroSection({
     const countdownSection = document.querySelector("[data-countdown-section]");
     if (countdownSection) {
       const offsetPosition =
-        countdownSection.getBoundingClientRect().top + window.scrollY - 56;
+        countdownSection.getBoundingClientRect().top + window.scrollY - 54;
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
       return;
     }
     const calendarSection = document.getElementById("calendario");
     if (calendarSection) {
       const offsetPosition =
-        calendarSection.getBoundingClientRect().top + window.scrollY - 56;
+        calendarSection.getBoundingClientRect().top + window.scrollY - 54;
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
   };
@@ -86,7 +86,7 @@ export function HeroSection({
       />
 
       {/* Content — centred vertically so nothing overlaps */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 pt-14 pb-6">
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 pt-[54px] pb-6">
         <div className="w-full max-w-sm text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65 mb-2">
             {heroSubtitle}

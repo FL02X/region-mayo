@@ -57,40 +57,40 @@ export function MobileMenu({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9"
-          aria-label="Abrir menú de navegación"
+          className="h-[54px] w-[54px] rounded-none text-white hover:bg-white/10"
+          aria-label={open ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
         >
-          <Menu className="h-5 w-5" />
+          {open ? <div className="h-[28px] w-[28px] flex items-center justify-center"><div className="w-5 h-[2px] bg-white transform rotate-45 absolute"></div><div className="w-5 h-[2px] bg-white transform -rotate-45 absolute"></div></div> : <Menu className="h-[28px] w-[28px]" strokeWidth={1.5} />}
         </Button>
       </SheetTrigger>
 
       <SheetContent
         side="right"
-        className="w-[260px] max-w-[85vw] p-0 flex flex-col overflow-y-auto"
+        className="w-[85vw] sm:w-[350px] p-0 flex flex-col pt-[54px] bg-background border-l-0"
+        style={{
+          height: "100dvh",
+          boxShadow: "-10px 0 20px -10px rgba(0,0,0,0.2)"
+        }}
+        hideCloseButton
       >
-        {/* Header */}
-        <SheetHeader className="border-b border-border px-5 py-4 shrink-0">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/images/region-mayo-logo.jpg"
-              alt="Región Mayo"
-              width={32}
-              height={32}
-              className="rounded-full shrink-0"
-            />
-            <div className="min-w-0">
-              <SheetTitle className="text-left font-semibold text-sm leading-tight">
-                Region Mayo
-              </SheetTitle>
-              <p className="text-xs text-muted-foreground font-normal leading-tight mt-0.5">
-                Tu Comunidad
-              </p>
-            </div>
-          </div>
+        <SheetHeader className="sr-only">
+          <SheetTitle>Menú de Navegación</SheetTitle>
         </SheetHeader>
 
+        <div className="flex h-12 items-center justify-end px-4 border-b border-border/60 shrink-0 bg-[#292929] absolute top-0 right-0 left-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 text-white hover:bg-white/10 ml-auto"
+            onClick={() => setOpen(false)}
+            aria-label="Cerrar menú"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+        </div>
+
         {/* Navigation */}
-        <nav className="flex-1" aria-label="Menú principal">
+        <nav className="flex-1 overflow-y-auto" aria-label="Menú principal">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -103,21 +103,21 @@ export function MobileMenu({
                 className={cn(
                   "flex items-center gap-3 px-5 py-4 border-b border-border/60 transition-colors",
                   isActive
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-muted"
+                    ? "bg-gray-200"
+                    : "hover:bg-gray-100"
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
                 <Icon
-                  className={cn("h-4 w-4 shrink-0", isActive ? "text-foreground" : "text-muted-foreground")}
+                  className={cn("h-4 w-4 shrink-0", "text-[#00508F]")}
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className={cn("text-sm leading-tight", isActive ? "font-bold text-foreground" : "font-medium text-foreground")}>
+                  <p className={cn("text-sm leading-tight uppercase", isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
                     {item.label}
                   </p>
                   {item.description && (
-                    <p className={cn("text-xs leading-tight mt-0.5", isActive ? "text-foreground/80 font-medium" : "text-muted-foreground")}>
+                    <p className={cn("text-xs leading-tight mt-0.5 uppercase", isActive ? "text-[#00508F]/80 font-bold" : "text-[#00508F]/80 font-normal")}>
                       {item.description}
                     </p>
                   )}
@@ -129,7 +129,7 @@ export function MobileMenu({
 
         {/* Social links footer */}
         <div className="border-t border-border px-5 py-4 shrink-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
+          <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
             Síguenos
           </p>
           <div className="flex flex-col gap-2">
@@ -137,7 +137,7 @@ export function MobileMenu({
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2.5 text-sm font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
               aria-label="Síguenos en Instagram"
             >
               <Instagram className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -147,7 +147,7 @@ export function MobileMenu({
               href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2.5 text-sm font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
               aria-label="Síguenos en Facebook"
             >
               <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" />

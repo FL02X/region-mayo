@@ -21,7 +21,7 @@ export default async function TemploPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <div className="pt-14">
+      <div>
         {region ? (
           <TemplosContent templos={templos} />
         ) : (

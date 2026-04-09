@@ -123,6 +123,24 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Font size scale override (+2px / 1 step up across all standard sizes) */
+  --text-xs: 0.875rem; /* 14px */
+  --text-xs--line-height: 1.25rem;
+  --text-sm: 1rem; /* 16px */
+  --text-sm--line-height: 1.5rem;
+  --text-base: 1.125rem; /* 18px */
+  --text-base--line-height: 1.75rem;
+  --text-lg: 1.25rem; /* 20px */
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.375rem; /* 22px */
+  --text-xl--line-height: 2rem;
+  --text-2xl: 1.625rem; /* 26px */
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 2rem; /* 32px */
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl: 2.375rem; /* 38px */
+  --text-4xl--line-height: 2.5rem;
 }
 
 @layer base {
@@ -132,7 +150,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

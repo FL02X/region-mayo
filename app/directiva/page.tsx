@@ -20,7 +20,7 @@ export default async function DirectivaPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <div className="pt-14">
+      <div>
         {region ? (
           <DirectivaContent members={members} />
         ) : (

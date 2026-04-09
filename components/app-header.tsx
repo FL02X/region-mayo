@@ -40,12 +40,12 @@ export function AppHeader({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
-        <div className="flex items-center justify-between h-14 px-4 md:px-6 max-w-7xl mx-auto">
+      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#292929] border-none text-white h-[54px] md:h-[48px]">
+        <div className="flex items-center justify-between h-full px-4 md:px-0 lg:px-6 max-w-[1150px] mx-auto relative z-[61]">
           {/* Logo — always visible, links to home */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 shrink-0"
+            className="flex items-center gap-2.5 shrink-0 relative z-[62] md:pl-4 lg:pl-0"
             aria-label="Inicio — Region Mayo"
           >
             <Image
@@ -57,61 +57,65 @@ export function AppHeader({
               loading="eager"
               priority
             />
-            <Logo variant="small" />
+            {/* 1. Hide the text first when shrinking */}
+            <div className="hidden lg:block">
+              <Logo variant="small" className="text-white" />
+            </div>
           </Link>
 
-          {/* Desktop navigation — hidden on mobile */}
+          {/* Desktop navigation — resort to hamburger only on small screens < 768px */}
           <nav
-            className="hidden md:flex items-center flex-1 justify-center"
+            className="hidden md:flex items-center flex-1 justify-center h-full relative z-[62]"
             aria-label="Navegación principal"
           >
             {navItems.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href;
+              const isInicio = href === "/";
+              const isActive = pathname === href && !isInicio;
               return (
                 <Link
                   key={href}
                   href={href}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 text-sm transition-colors",
+                    "flex items-center gap-2 h-full px-2 lg:px-3 xl:px-4 text-[11px] transition-colors font-normal whitespace-nowrap tracking-wider",
                     isActive
-                      ? "text-foreground font-semibold border-b-2 border-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
+                      ? "text-white bg-[#4a70a5]"
+                      : "text-white hover:bg-[#4a70a5]/50"
                   )}
                   aria-current={isActive ? "page" : undefined}
                 >
-                  <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  {label}
+                  <Icon className="h-[15px] w-[15px] shrink-0" aria-hidden="true" strokeWidth={1.5} />
+                  {label.toUpperCase()}
                 </Link>
               );
             })}
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Social links — desktop only */}
-            <div className="hidden md:flex items-center gap-0.5">
+          <div className="flex items-center shrink-0 h-full relative z-[62] md:pr-4 lg:pr-0">
+            {/* Social links — desktop only (2. Remove social links when shrinking) */}
+            <div className="hidden lg:flex items-center gap-1">
               <a
                 href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex items-center justify-center h-10 w-10 text-white hover:bg-white/10 transition-colors"
                 aria-label="Síguenos en Instagram"
               >
-                <Instagram className="h-4 w-4" aria-hidden="true" />
+                <Instagram className="h-[15px] w-[15px]" aria-hidden="true" strokeWidth={1.5} />
               </a>
               <a
                 href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex items-center justify-center h-10 w-10 text-white hover:bg-white/10 transition-colors"
                 aria-label="Síguenos en Facebook"
               >
-                <Facebook className="h-4 w-4" aria-hidden="true" />
+                <Facebook className="h-[15px] w-[15px]" aria-hidden="true" strokeWidth={1.5} />
               </a>
             </div>
 
-            {/* Mobile only: hamburger */}
-            <div className="md:hidden">
+            {/* Mobile/Tablet only: hamburger (3. Resort to hamburger on small screens) */}
+            <div className="md:hidden flex items-center justify-center -mr-4 text-white relative z-[62] h-full">
               <MobileMenu
                 instagramUrl={instagramUrl}
                 facebookUrl={facebookUrl}
