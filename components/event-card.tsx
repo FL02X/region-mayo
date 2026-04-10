@@ -187,37 +187,37 @@ export function EventCard({
         )}
 
         {/* ── Card body ── */}
-        <div className="p-4 flex flex-col flex-1">
+        <div className="p-5 flex flex-col flex-1">
           {/* Event type — plain uppercase label */}
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary mb-1.5">
             {eventTypeLabels[eventType]}
           </p>
 
           {/* Title — Inter bold, no serif */}
-          <h3 className="text-base font-bold text-foreground leading-snug mb-2">
+          <h3 className="text-[18px] md:text-[19px] font-semibold text-foreground leading-tight mb-3">
             {event.title}
           </h3>
 
           {/* Description — always shown, 3-line clamp */}
           {hasDescription && (
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-3">
+            <p className="text-[14px] text-muted-foreground leading-relaxed line-clamp-3 mb-4">
               {event.description}
             </p>
           )}
 
           {/* Location — shown before action buttons */}
           {event.location && (
-            <div className="mt-2 mb-4 flex items-center gap-2.5 mb-3">
+            <div className="mt-1 mb-4 flex items-center gap-2.5">
               <MapPin
                 className="h-3.5 w-3.5 text-muted-foreground shrink-0"
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-[14px] font-semibold text-foreground leading-snug">
                   {event.location}
                 </p>
                 {event.address && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[12px] text-muted-foreground">
                     {event.address}
                   </p>
                 )}
@@ -280,7 +280,7 @@ export function EventCard({
               ) : (
                 <Button
                   onClick={() => onRegister(event)}
-                  className="w-full text-sm py-5 bg-primary hover:bg-primary/90 text-white"
+                  className="w-full text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
                 >
                   ¡Quiero asistir!
                 </Button>
@@ -290,10 +290,10 @@ export function EventCard({
 
           {/* ── "Ver más información" — plain text toggle, NOT a button ── */}
           {hasDetails && (
-            <div className="-mx-4 mt-3 border-t border-border">
+            <div className="-mx-5 mt-3 border-t border-border">
               <button
                 onClick={() => setIsExpanded((v) => !v)}
-                className="w-full px-4 flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="w-full px-5 flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 aria-expanded={isExpanded}
                 aria-controls={`details-${event.id}`}
                 style={{
@@ -316,7 +316,7 @@ export function EventCard({
 
               {/* ── Expanded details ── */}
               {isExpanded && (
-                <div id={`details-${event.id}`} className="space-y-3 pb-1 pt-1 px-4">
+                <div id={`details-${event.id}`} className="space-y-3 pb-1 pt-1 px-5">
                   {/* Vestimenta */}
                   {event.vestimenta && (
                     <div className="flex items-start gap-2.5">

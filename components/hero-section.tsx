@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import type { HeroImage } from "@/lib/types";
@@ -12,27 +11,10 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({
-  heroImages = [{ url: "/images/hero-choir.jpg", alt: "Coro Región Mayo" }],
-  heroTitle = "Bienvenido a Región Mayo",
-  heroSubtitle = "Vive la Comunidad",
+  heroImages,
+  heroTitle,
+  heroSubtitle,
 }: HeroSectionProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const images =
-    heroImages.length > 0
-      ? heroImages
-      : [{ url: "/images/hero-choir.jpg", alt: "Coro Región Mayo" }];
-
-  const nextImage = useCallback(() => {
-    if (images.length <= 1) return;
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  }, [images.length]);
-
-  useEffect(() => {
-    if (images.length <= 1) return;
-    const interval = setInterval(nextImage, 7000);
-    return () => clearInterval(interval);
-  }, [images.length, nextImage]);
 
   const scrollToContent = () => {
     const countdownSection = document.querySelector("[data-countdown-section]");
@@ -51,61 +33,47 @@ export function HeroSection({
   };
 
   return (
-    <section
-      className="relative w-full overflow-hidden"
-      style={{ height: "min(60vh, 480px)", minHeight: "280px" }}
-      aria-label="Bienvenida a Región Mayo"
-    >
-      {/* Background images — auto-rotate silently, no user interaction */}
-      {images.map((image, index) => (
-        <div
-          key={image.url}
-          className={`absolute inset-0 transition-opacity duration-700 pointer-events-none select-none ${
-            index === currentImageIndex ? "opacity-100" : "opacity-0"
-          }`}
-          aria-hidden="true"
+    <div className="w-full relative bg-[#f1f1f1]">
+      <div className="max-w-[950px] md:max-w-none mx-auto bg-background md:border-x-0 border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] md:shadow-none dark:shadow-none">
+        <section
+          className="relative overflow-hidden h-[min(60vh,480px)] md:h-[420px] min-h-[280px]"
+          aria-label="Bienvenida a Región Mayo"
         >
           <Image
-            src={image.url}
+            src="/images/event-conference.jpg"
             alt=""
             fill
             className="object-cover pointer-events-none select-none"
-            priority={index === 0}
-            loading={index === 0 ? "eager" : "lazy"}
-            fetchPriority={index === 0 ? "high" : "auto"}
+            priority
+            loading="eager"
+            fetchPriority="high"
             quality={75}
             draggable={false}
           />
-        </div>
-      ))}
 
-      {/* Uniform overlay — dark gray transparent across the full image */}
-      <div
-        className="absolute inset-0 bg-gray-900/45 pointer-events-none"
-        aria-hidden="true"
-      />
+          <div
+            className="absolute inset-0 bg-gray-900/60 pointer-events-none"
+            aria-hidden="true"
+          />
 
-      {/* Content — centred vertically so nothing overlaps */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 pt-[54px] pb-6">
-        <div className="w-full max-w-sm text-center">
-          {false && heroSubtitle && (
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65 mb-2">
-              {heroSubtitle}
-            </p>
-          )}
-          <h1 className="font-sans text-3xl sm:text-4xl font-bold text-white mb-6 tracking-tight leading-[1.1]">
-            <span className="block">Calendario</span>
-            <span className="block">Region Mayo</span>
-          </h1>
-          <Button
-            onClick={scrollToContent}
-            size="lg"
-            className="w-full text-sm font-semibold bg-primary hover:bg-primary/90 text-white shadow-none"
-          >
-            Explorar Calendario 2026
-          </Button>
-        </div>
+          {/* Content — centred vertically so nothing overlaps */}
+          <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 pt-[54px] md:pt-[48px] pb-6">
+            <div className="w-full max-w-sm text-center">
+              <h1 className="font-sans text-3xl sm:text-4xl font-bold text-white mb-6 tracking-tight leading-[1.1]">
+                <span className="block">Calendario</span>
+                <span className="block">Region Mayo</span>
+              </h1>
+              <Button
+                onClick={scrollToContent}
+                size="lg"
+                className="w-full text-sm font-semibold bg-primary hover:bg-primary/90 text-white shadow-none"
+              >
+                Explorar Calendario 2026
+              </Button>
+            </div>
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
   );
 }

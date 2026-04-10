@@ -25,25 +25,29 @@ export default async function Home() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <HeroSection
-        heroImages={siteSettings?.heroImages}
-        heroTitle={siteSettings?.heroTitle}
-        heroSubtitle={siteSettings?.heroSubtitle}
-      />
-      {region ? (
-        <EventsFeed
-          events={events}
-          regionPresident={regionPresident}
-          regions={regions}
+      <div className="hidden md:block">
+        <HeroSection
+          heroImages={siteSettings?.heroImages}
+          heroTitle={siteSettings?.heroTitle}
+          heroSubtitle={siteSettings?.heroSubtitle}
         />
-      ) : (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-lg text-gray-500">
-            No hay información de región disponible. Por favor, configúrala en
-            Sanity Studio.
-          </p>
-        </div>
-      )}
+      </div>
+      <div className="pt-[56px] md:pt-0">
+        {region ? (
+          <EventsFeed
+            events={events}
+            regionPresident={regionPresident}
+            regions={regions}
+          />
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-lg text-gray-500">
+              No hay información de región disponible. Por favor, configúrala en
+              Sanity Studio.
+            </p>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

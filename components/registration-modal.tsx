@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
-import { X, Check, Calendar, ChevronRight, ChevronLeft, User, Loader2 } from "lucide-react"
+import { X, Check, Calendar, ChevronRight, ChevronLeft, User, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -393,8 +393,15 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
           {step <= totalSteps && (
             <div className="shrink-0 bg-background border-t border-border/50 p-4">
               {submitError && (
-                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
-                  {submitError}
+                <div
+                  className="mb-4 p-3 bg-destructive/10 border border-destructive/20 text-destructive text-sm"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" aria-hidden="true" />
+                    <span>{submitError}</span>
+                  </div>
                 </div>
               )}
               <div className="flex gap-3">

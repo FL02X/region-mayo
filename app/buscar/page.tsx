@@ -20,7 +20,7 @@ export default async function BuscarPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[#f3f4f6] dark:bg-[#09090b]">
+    <main className="min-h-screen bg-[#f1f1f1]">
       <AppHeader
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
