@@ -118,7 +118,7 @@ export function AppHeader({
                   className="w-[42px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="h-[18px] w-[18px] text-[#7b7f87]" strokeWidth={1.6} />
+                  <Search className="h-[18px] w-[18px] text-[#2563eb]" strokeWidth={1.6} />
                 </button>
               </form>
             </div>
@@ -183,7 +183,7 @@ export function AppHeader({
                   className="w-[42px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="h-[18px] w-[18px] text-[#7b7f87]" strokeWidth={1.6} />
+                  <Search className="h-[18px] w-[18px] text-[#2563eb]" strokeWidth={1.6} />
                 </button>
               </form>
             </div>

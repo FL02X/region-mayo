@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Calendar, MapPin, Images } from "lucide-react";
+import { Calendar, MapPin, Images, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Event } from "@/lib/types";
 import { useTime } from "@/lib/time-context";
@@ -13,6 +13,7 @@ import {
 
 interface CountdownSectionProps {
   events: Event[];
+  onRegister?: (event: Event) => void;
 }
 
 interface TimeUnit {
@@ -20,7 +21,7 @@ interface TimeUnit {
   label: string;
 }
 
-export function CountdownSection({ events }: CountdownSectionProps) {
+export function CountdownSection({ events, onRegister }: CountdownSectionProps) {
   const { currentTime } = useTime();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -74,16 +75,23 @@ export function CountdownSection({ events }: CountdownSectionProps) {
     ];
   };
 
+  const openGoogleMaps = (url: string) => {
+    window.open(url, "_blank");
+  };
+
+  const canRegisterCountdownEvent =
+    !!countdownEvent && countdownEvent.registrationEnabled !== false;
+
   return (
     <section
-      className="bg-background px-4 pt-6 pb-[0px]"
+      className="bg-background px-4 pt-6 pb-0"
       data-countdown-section
       aria-label="Próximo evento"
     >
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* ── Active countdown ── */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
-          <div className="bg-card border border-border overflow-hidden">
+          <div className="bg-card border border-border overflow-hidden mb-3">
             {/* Thin primary accent bar at top */}
             <div className="h-[3px] bg-primary" aria-hidden="true" />
 
@@ -111,7 +119,30 @@ export function CountdownSection({ events }: CountdownSectionProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span>{countdownEvent.location}</span>
+                  {countdownEvent.googleMapsUrl ? (
+                    <button
+                      onClick={() => openGoogleMaps(countdownEvent.googleMapsUrl!)}
+                      className="group inline-flex min-w-0 items-center gap-1 text-left text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Abrir ubicación del evento en Google Maps"
+                    >
+                      <span className="truncate max-w-[170px] sm:max-w-[205px]">
+                        {countdownEvent.address || countdownEvent.location}
+                      </span>
+                      <span className="inline-flex h-6 w-6 items-center justify-center shrink-0 -ml-0.5 -mr-1 rounded-sm">
+                        <ExternalLink
+                          className="h-4 w-4 text-primary opacity-80 group-hover:opacity-100"
+                          aria-hidden="true"
+                        />
+                      </span>
+                      <span className="text-[16px] font-semibold text-primary opacity-90 group-hover:opacity-100">
+                        Maps
+                      </span>
+                    </button>
+                  ) : (
+                    <span className="truncate max-w-[170px] sm:max-w-[205px] text-muted-foreground">
+                      {countdownEvent.address || countdownEvent.location}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -132,6 +163,15 @@ export function CountdownSection({ events }: CountdownSectionProps) {
                   </div>
                 ))}
               </div>
+
+              {canRegisterCountdownEvent && onRegister && (
+                <Button
+                  onClick={() => onRegister(countdownEvent)}
+                  className="w-full mt-5 h-14 text-base font-extrabold tracking-[0.02em] bg-primary hover:bg-primary/90 text-white"
+                >
+                  REGISTRARSE
+                </Button>
+              )}
             </div>
           </div>
         )}

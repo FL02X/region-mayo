@@ -282,7 +282,7 @@ export function EventCard({
                   onClick={() => onRegister(event)}
                   className="w-full text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
                 >
-                  ¡Quiero asistir!
+                  REGISTRARSE
                 </Button>
               )}
             </div>

@@ -127,15 +127,17 @@ export function EventsFeed({
     <div className="w-full relative bg-[#f1f1f1]" data-events-feed="true">
       <div className="max-w-[950px] mx-auto bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen pb-16 pt-[2px]">
         {/* Countdown */}
-        <CountdownSection events={events} />
+        <CountdownSection events={events} onRegister={handleRegister} />
+
+        <div className="h-[20px] bg-muted/20" aria-hidden="true" />
 
         {/* Calendar section */}
-        <section id="calendario" className="px-4 md:px-8 py-6">
-        <div className="max-w-4xl mx-auto w-full">
+        <section id="calendario" className="px-4 md:px-8 pt-4 pb-2 border-t border-border bg-muted/20">
+        <div className="mt-4 max-w-4xl mx-auto w-full">
           <div className="mb-4">
             <h2
               id="calendar-title"
-              className="text-xl font-extrabold text-foreground tracking-tight"
+              className="text-xl font-extrabold text-foreground tracking-tight mb-2"
             >
               Calendario 2026
             </h2>
@@ -143,8 +145,8 @@ export function EventsFeed({
               Selecciona un mes para ver los eventos
             </p>
           </div>
-          {/* Navigator centered, capped at md width */}
-          <div className="max-w-md mx-auto">
+          {/* Navigator aligned with left content edge on desktop */}
+          <div className="max-w-md w-full">
             <MonthNavigator
               selectedMonth={selectedMonth}
               onMonthSelect={handleMonthSelect}
@@ -158,9 +160,9 @@ export function EventsFeed({
       <section
         id="eventos"
         ref={eventsListRef}
-        className="bg-muted/20 border-t border-border px-4 md:px-6 pt-5 pb-12"
+        className="bg-muted/20 px-4 md:px-6 pt-5 pb-12"
       >
-        <div className="mt-3 max-w-4xl mx-auto w-full">
+        <div className="mt-1 max-w-4xl mx-auto w-full">
           {/* Month label */}
           <div className="mb-5">
             <h3 className="font-bold text-lg text-foreground tracking-tight">

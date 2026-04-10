@@ -76,14 +76,7 @@ export function getNextUpcomingEvent(events: Event[], now: Date = new Date()): E
  * Get the next event that should show a countdown
  */
 export function getCountdownEvent(events: Event[], now: Date = new Date()): Event | null {
-  const countdownEvents = events.filter(e => isEventInCountdownWindow(e, now))
-  
-  if (countdownEvents.length === 0) return null
-  
-  // Return the closest event
-  return countdownEvents.sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  )[0]
+  return getNextUpcomingEvent(events, now)
 }
 
 /**
