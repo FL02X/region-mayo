@@ -79,20 +79,23 @@ export function HeroSection({
         </div>
       ))}
 
-      {/* Gradient overlay — heavier at bottom for text contrast */}
+      {/* Uniform overlay — dark gray transparent across the full image */}
       <div
-        className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 pointer-events-none"
+        className="absolute inset-0 bg-gray-900/45 pointer-events-none"
         aria-hidden="true"
       />
 
       {/* Content — centred vertically so nothing overlaps */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 pt-[54px] pb-6">
         <div className="w-full max-w-sm text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65 mb-2">
-            {heroSubtitle}
-          </p>
-          <h1 className="font-sans text-3xl sm:text-4xl font-bold text-white mb-6 tracking-tight">
-            Region Mayo
+          {false && heroSubtitle && (
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65 mb-2">
+              {heroSubtitle}
+            </p>
+          )}
+          <h1 className="font-sans text-3xl sm:text-4xl font-bold text-white mb-6 tracking-tight leading-[1.1]">
+            <span className="block">Calendario</span>
+            <span className="block">Region Mayo</span>
           </h1>
           <Button
             onClick={scrollToContent}

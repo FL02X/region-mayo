@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  Menu,
   Home,
   Users,
   Music,
@@ -57,10 +56,33 @@ export function MobileMenu({
         <Button
           variant="ghost"
           size="icon"
-          className="h-[54px] w-[54px] rounded-none text-white hover:bg-white/10"
+          className="h-[54px] w-[54px] rounded-none text-[#d1d5db] hover:bg-white/10"
           aria-label={open ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
         >
-          {open ? <div className="h-[28px] w-[28px] flex items-center justify-center"><div className="w-5 h-[2px] bg-white transform rotate-45 absolute"></div><div className="w-5 h-[2px] bg-white transform -rotate-45 absolute"></div></div> : <Menu className="h-[28px] w-[28px]" strokeWidth={1.5} />}
+          {open ? (
+            <svg
+              viewBox="0 0 20 20"
+              className="h-[40px] w-[40px]"
+              aria-hidden="true"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 3L17 17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M17 3L3 17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg
+              viewBox="0 0 20 20"
+              className="h-[40px] w-[40px]"
+              aria-hidden="true"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M1.25 4.5H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M1.25 10H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+              <path d="M1.25 15.5H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            </svg>
+          )}
         </Button>
       </SheetTrigger>
 
@@ -85,7 +107,16 @@ export function MobileMenu({
             onClick={() => setOpen(false)}
             aria-label="Cerrar menú"
           >
-            <Menu className="h-6 w-6" />
+            <svg
+              viewBox="0 0 20 20"
+              className="h-7 w-7"
+              aria-hidden="true"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 3L17 17" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M17 3L3 17" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
           </Button>
         </div>
 
@@ -101,15 +132,15 @@ export function MobileMenu({
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-5 py-4 border-b border-border/60 transition-colors",
+                  "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors",
                   isActive
-                    ? "bg-gray-200"
+                    ? "bg-gray-200 before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]"
                     : "hover:bg-gray-100"
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
                 <Icon
-                  className={cn("h-4 w-4 shrink-0", "text-[#00508F]")}
+                  className={cn("h-5 w-5 shrink-0", "text-[#8b929c]")}
                   aria-hidden="true"
                 />
                 <div className="min-w-0">

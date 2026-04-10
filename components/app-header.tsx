@@ -73,23 +73,23 @@ export function AppHeader({
             {/* Desktop Static Search Bar */}
             <div className="hidden lg:flex lg:w-[160px] pl-3 shrink-0 h-full items-center">
               <form 
-                className="relative w-full h-[32px] bg-white rounded flex items-center overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-[#4a70a5] transition-shadow"
+                className="relative w-full h-[32px] bg-white rounded-[2px] flex items-center overflow-hidden border border-[#bcc3cc] focus-within:ring-1 focus-within:ring-[#4a70a5] transition-shadow"
                 onSubmit={handleSearchSubmit}
               >
                 <input
                   type="search"
                   name="q"
                   placeholder="Buscar"
-                  className="flex-1 min-w-0 h-full bg-transparent border-none text-[14px] text-black placeholder-gray-500 pl-3 pr-2 focus:outline-none focus:ring-0"
+                  className="flex-1 min-w-0 h-full bg-transparent border-none text-[14px] text-black placeholder-[#6b7280] pl-3 pr-2 focus:outline-none focus:ring-0"
                   aria-label="Búsqueda"
                 />
-                <div className="h-[20px] w-[1px] bg-gray-300 shrink-0" aria-hidden="true" />
+                <div className="h-[18px] w-[1px] bg-[#c9ced6] shrink-0" aria-hidden="true" />
                 <button
                   type="submit"
-                  className="flex items-center justify-center px-3 h-full hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="flex items-center justify-center px-3 h-full bg-[#f8fafc] hover:bg-[#eef2f7] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="h-[15px] w-[15px] text-gray-700" strokeWidth={2} />
+                  <Search className="h-[15px] w-[15px] text-[#4b5563]" strokeWidth={2} />
                 </button>
               </form>
             </div>
@@ -98,23 +98,23 @@ export function AppHeader({
           {/* Mobile Search Bar - between logo and hamburger */}
           <div className="md:hidden flex-1 min-w-0 mx-2 sm:mx-3 relative z-[62] flex justify-center items-center h-full">
             <form 
-              className="relative w-full min-w-0 h-[36px] bg-white rounded flex items-center overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-[#4a70a5] transition-shadow"
+              className="relative w-full min-w-0 h-[36px] bg-white rounded-[2px] flex items-center overflow-hidden border border-[#bcc3cc] focus-within:ring-1 focus-within:ring-[#4a70a5] transition-shadow"
               onSubmit={handleSearchSubmit}
             >
                <input
                  type="search"
                  name="q"
                  placeholder="Buscar..."
-                 className="flex-1 min-w-0 h-full bg-transparent border-none text-[14px] text-black placeholder-gray-500 pl-3 pr-2 focus:outline-none focus:ring-0"
+                 className="flex-1 min-w-0 h-full bg-transparent border-none text-[14px] text-black placeholder-[#6b7280] pl-3 pr-2 focus:outline-none focus:ring-0"
                  aria-label="Escribe tu búsqueda"
                />
-               <div className="h-[24px] w-[1px] bg-gray-300 shrink-0" aria-hidden="true"></div>
+               <div className="h-[22px] w-[1px] bg-[#c9ced6] shrink-0" aria-hidden="true"></div>
                <button
                  type="submit"
-                 className="flex items-center justify-center px-3 h-full hover:bg-gray-100 transition-colors cursor-pointer"
+                 className="flex items-center justify-center px-3 h-full bg-[#f8fafc] hover:bg-[#eef2f7] transition-colors cursor-pointer"
                  aria-label="Ejecutar búsqueda"
                >
-                 <Search className="h-[16px] w-[16px] text-gray-700" strokeWidth={2} />
+                 <Search className="h-[16px] w-[16px] text-[#4b5563]" strokeWidth={2} />
                </button>
             </form>
           </div>
