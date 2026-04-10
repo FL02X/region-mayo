@@ -45,7 +45,22 @@ function toDate(value: unknown): Date {
   return date;
 }
 
-function mapEvent(raw: any): Event {
+const EVENT_ACTIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+function computeEventStatus(date: Date, endDate?: Date, now: Date = new Date()): Event["status"] {
+  if (now < date) {
+    return "upcoming";
+  }
+
+  const effectiveEnd = endDate ?? new Date(date.getTime() + EVENT_ACTIVE_WINDOW_MS);
+  if (now <= effectiveEnd) {
+    return "active";
+  }
+
+  return "past";
+}
+
+function mapEvent(raw: any, now: Date): Event {
   const date = toDate(raw.date);
   const endDate = raw.endDate ? toDate(raw.endDate) : undefined;
   const image = sanityImageUrl(raw.image);
@@ -68,7 +83,7 @@ function mapEvent(raw: any): Event {
     vestimenta: raw.vestimenta,
     vestimentaCustom: raw.vestimentaCustom,
     image,
-    status: (raw.status ?? "upcoming") as Event["status"],
+    status: computeEventStatus(date, endDate, now),
     albumEnabled: raw.albumEnabled ?? false,
     googleDriveAlbumUrl: raw.googleDriveAlbumUrl,
     facebookPostUrl: raw.facebookPostUrl,
@@ -231,7 +246,13 @@ export async function getAvailableRegions(): Promise<string[]> {
 
 export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
   if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return eventsData;
+    if (isMayoRegion(regionSlug)) {
+      const now = new Date();
+      return eventsData.map((event) => ({
+        ...event,
+        status: computeEventStatus(event.date, event.endDate, now),
+      }));
+    }
     return [];
   }
 
@@ -253,7 +274,6 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
         vestimentaCustom,
         typeColor,
         image{asset->{url}},
-        status,
         albumEnabled,
         googleDriveAlbumUrl,
         facebookPostUrl,
@@ -278,7 +298,8 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
     { slug: regionSlug },
   );
 
-  return (events ?? []).map(mapEvent);
+  const now = new Date();
+  return (events ?? []).map((event: any) => mapEvent(event, now));
 }
 
 export async function getUpcomingEvents(

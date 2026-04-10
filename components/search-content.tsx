@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, Suspense } from "react";
+import { useMemo, Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Users, Music, UserCircle, Church, Calendar, ChevronRight } from "lucide-react";
+import { Users, Music, UserCircle, Church, Calendar, Search } from "lucide-react";
 import { highlightText, normalizeText, getNestedValue } from "@/lib/search-utils";
 import type { Pastor, Coro, DirectivaMember, Templo, Event } from "@/lib/types";
 
@@ -18,68 +18,153 @@ interface SearchContentProps {
   };
 }
 
+type SearchResultType = "evento" | "templo" | "pastor" | "coro" | "directiva";
+
+type SearchResultItem = {
+  item: Record<string, any>;
+  type: SearchResultType;
+  label: string;
+  pathPrefix: string;
+  score: number;
+};
+
+const FILTER_ORDER: Array<{ key: SearchResultType | "all"; label: string }> = [
+  { key: "all", label: "Todos" },
+  { key: "evento", label: "Eventos" },
+  { key: "templo", label: "Templos" },
+  { key: "pastor", label: "Pastores" },
+  { key: "coro", label: "Coros" },
+  { key: "directiva", label: "Directiva" },
+];
+
+const TYPE_PRIORITY: Record<SearchResultType, number> = {
+  evento: 0,
+  templo: 1,
+  pastor: 2,
+  coro: 3,
+  directiva: 4,
+};
+
 function SearchContentInner({ data }: SearchContentProps) {
   const searchParams = useSearchParams();
-  const query = searchParams.get("q") || "";
+  const queryFromUrl = searchParams.get("q") || "";
+  const [localQuery, setLocalQuery] = useState(queryFromUrl);
+  const [activeFilter, setActiveFilter] = useState<SearchResultType | "all">("all");
 
-  // Global search function optimized for performance across all collections
-  const results = useMemo(() => {
-    if (!query.trim()) return [];
+  useEffect(() => {
+    setLocalQuery(queryFromUrl);
+  }, [queryFromUrl]);
 
-    const normQuery = normalizeText(query);
+  // Global search function with relevance scoring
+  const allResults = useMemo(() => {
+    if (!localQuery.trim()) return [] as SearchResultItem[];
+
+    const normQuery = normalizeText(localQuery);
+
+    const scoreFieldMatch = (value: string, fieldIndex: number, isPrimaryField: boolean) => {
+      const normValue = normalizeText(value);
+      if (!normValue.includes(normQuery)) return 0;
+
+      let score = 50;
+      if (normValue === normQuery) score = 140;
+      else if (normValue.startsWith(normQuery)) score = 100;
+      else if (normValue.includes(` ${normQuery}`)) score = 80;
+
+      // Earlier fields are more important in ranking.
+      score += Math.max(0, 20 - fieldIndex * 4);
+      if (isPrimaryField) score += 20;
+
+      return score;
+    };
+
     const searchMatches = <T extends Record<string, any>>(
       items: T[], 
       fields: string[], 
-      type: "pastor" | "coro" | "directiva" | "templo" | "evento",
+      type: SearchResultType,
       label: string,
-      pathPrefix: string
+      pathPrefix: string,
+      primaryField: string,
     ) => {
-      return items.filter((item) => {
-        return fields.some((field) => {
+      return items
+      .map((item) => {
+        let bestScore = 0;
+
+        fields.forEach((field, index) => {
           const val = getNestedValue(item, field);
-          if (val == null) return false;
+          if (val == null) return;
           const str = Array.isArray(val) ? val.join(" ") : String(val);
-          return normalizeText(str).includes(normQuery);
+          const score = scoreFieldMatch(str, index, field === primaryField);
+          bestScore = Math.max(bestScore, score);
         });
-      }).map(item => ({ item, type, label, pathPrefix }));
+
+        if (bestScore <= 0) return null;
+
+        return { item, type, label, pathPrefix, score: bestScore };
+      })
+      .filter((entry): entry is SearchResultItem => entry !== null);
     };
 
     const pastoresMatches = searchMatches(
       data.pastores, 
       ["fullName", "temploName", "phone", "address"], 
-      "pastor", "PASTOR", "/directorio"
+      "pastor", "PASTOR", "/directorio", "fullName"
     );
     
     const corosMatches = searchMatches(
       data.coros, 
       ["coroName", "presidentName", "temploName"], 
-      "coro", "CORO", "/coros"
+      "coro", "CORO", "/coros", "coroName"
     );
 
     const directivaMatches = searchMatches(
       data.directiva, 
       ["fullName", "role", "temploName"], 
-      "directiva", "DIRECTIVA", "/directiva"
+      "directiva", "DIRECTIVA", "/directiva", "fullName"
     );
     
     const templosMatches = searchMatches(
       data.templos, 
       ["temploName", "address", "pastores.fullName", "coros.coroName"], 
-      "templo", "TEMPLO", "/templos"
+      "templo", "TEMPLO", "/templos", "temploName"
     );
 
     const eventosMatches = searchMatches(
       data.eventos, 
       ["title", "location", "address", "description", "speakers.pastorMensaje", "speakers.jovenPreside"], 
-      "evento", "EVENTO", "/"
+      "evento", "EVENTO", "/", "title"
     );
 
-    return [...pastoresMatches, ...corosMatches, ...directivaMatches, ...templosMatches, ...eventosMatches];
-  }, [query, data]);
+    return [
+      ...eventosMatches,
+      ...templosMatches,
+      ...pastoresMatches,
+      ...corosMatches,
+      ...directivaMatches,
+    ].sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return TYPE_PRIORITY[a.type] - TYPE_PRIORITY[b.type];
+    });
+  }, [localQuery, data]);
+
+  const filteredResults = useMemo(() => {
+    if (activeFilter === "all") return allResults;
+    return allResults.filter((result) => result.type === activeFilter);
+  }, [allResults, activeFilter]);
+
+  const filterCounts = useMemo(() => {
+    return {
+      all: allResults.length,
+      evento: allResults.filter((r) => r.type === "evento").length,
+      templo: allResults.filter((r) => r.type === "templo").length,
+      pastor: allResults.filter((r) => r.type === "pastor").length,
+      coro: allResults.filter((r) => r.type === "coro").length,
+      directiva: allResults.filter((r) => r.type === "directiva").length,
+    };
+  }, [allResults]);
 
   const ResultHighlightedText = ({ text }: { text: string }) => {
     if (!text) return null;
-    const parts = highlightText(text, query);
+    const parts = highlightText(text, localQuery);
     return (
       <span className="break-words">
         {parts.map((p, i) =>
@@ -100,26 +185,80 @@ function SearchContentInner({ data }: SearchContentProps) {
       <div className="max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen focus:outline-none">
         
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6 pb-4 border-b border-border flex items-end justify-between">
+          <div className="mb-4 pb-4 border-b border-border">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Resultados de búsqueda</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Buscando: <span className="font-semibold text-foreground">&quot;{query}&quot;</span>
+                Buscando: <span className="font-semibold text-foreground">&quot;{localQuery || queryFromUrl}&quot;</span>
               </p>
-            </div>
-            <div className="text-sm text-muted-foreground hidden sm:block">
-              {results.length} resultado{results.length !== 1 ? 's' : ''}
+              <p className="text-sm text-muted-foreground mt-1">
+                {filteredResults.length} resultado{filteredResults.length !== 1 ? "s" : ""}
+              </p>
             </div>
           </div>
 
-          {results.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg mb-2">No se encontraron resultados para su búsqueda.</p>
-              <p className="text-sm">Asegúrese de que las palabras estén escritas correctamente o pruebe con palabras distintas.</p>
+          <div className="mb-5 space-y-3">
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="relative w-full h-[42px] bg-white rounded-[2px] flex items-center overflow-hidden border border-[#bcc3cc]"
+              role="search"
+              aria-label="Buscar dentro de resultados"
+            >
+              <input
+                type="search"
+                value={localQuery}
+                onChange={(e) => setLocalQuery(e.target.value)}
+                placeholder="Buscar"
+                className="flex-1 min-w-0 h-full bg-transparent border-none text-[14px] text-black placeholder-[#6b7280] pl-3 pr-2 focus:outline-none focus:ring-0"
+                aria-label="Buscar"
+              />
+              <button
+                type="submit"
+                className="w-[42px] h-full flex items-center justify-center bg-[#4a70a5] hover:bg-[#3f5f8d] transition-colors"
+                aria-label="Ejecutar búsqueda"
+              >
+                <Search className="h-[17px] w-[17px] text-white" strokeWidth={2} />
+              </button>
+            </form>
+
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {FILTER_ORDER.map((filter) => {
+                const isActive = activeFilter === filter.key;
+                const count = filterCounts[filter.key as keyof typeof filterCounts];
+                return (
+                  <button
+                    key={filter.key}
+                    type="button"
+                    onClick={() => setActiveFilter(filter.key as SearchResultType | "all")}
+                    className={[
+                      "shrink-0 border px-3 py-1.5 text-sm transition-colors",
+                      isActive
+                        ? "bg-[#7f7f7f] text-white border-[#7f7f7f]"
+                        : "bg-white text-[#4a70a5] border-[#d2d6dc] hover:bg-[#f6f8fb]",
+                    ].join(" ")}
+                    aria-pressed={isActive}
+                    aria-label={`Filtrar por ${filter.label}`}
+                  >
+                    {filter.label} <span className="opacity-80">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {filteredResults.length === 0 ? (
+            <div className="py-10 text-foreground">
+              <p className="text-lg mb-6">Lamentablemente no se encontró ningún resultado.</p>
+              <p className="text-xl mb-2">Sugerencias:</p>
+              <ul className="list-disc pl-7 space-y-1 text-lg">
+                <li>Asegúrese de que las palabras estén escritas correctamente.</li>
+                <li>Escriba palabras menos específicas.</li>
+                <li>Use menos palabras para la búsqueda.</li>
+              </ul>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-            {results.map((result, idx) => {
+            {filteredResults.map((result, idx) => {
               const { item, type, label, pathPrefix } = result;
               
               // Resolve primary display fields based on type

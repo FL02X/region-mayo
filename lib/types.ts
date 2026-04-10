@@ -147,8 +147,6 @@ export interface DirectivaMember {
 export interface RegistrationFormData {
   name: string;
   phone: string;
-  region?: string | null;
-  isVisiting: boolean;
   needsLodging: boolean;
   needsTransport: boolean;
   attendingAs: "oyente" | "miembro";
@@ -199,9 +197,7 @@ export interface SiteSettings {
 export interface RegistrationSubmission {
   name: string;
   phone: string;
-  region?: string | null;
   eventId: string;
-  isVisiting: boolean;
   needsLodging: boolean;
   needsTransport: boolean;
   attendingAs: "oyente" | "miembro";

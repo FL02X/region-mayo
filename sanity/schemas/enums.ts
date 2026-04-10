@@ -32,18 +32,6 @@ export const EVENT_TYPES = {
 export type EventType = typeof EVENT_TYPES[keyof typeof EVENT_TYPES]['value']
 
 // ============================================================================
-// EVENT STATUS - Estados de Eventos
-// ============================================================================
-
-export const EVENT_STATUS = {
-  UPCOMING: { value: 'upcoming', label: 'Próximo', emoji: '📅' },
-  ACTIVE: { value: 'active', label: 'En Progreso', emoji: '🔴' },
-  PAST: { value: 'past', label: 'Finalizado', emoji: '✅' },
-} as const
-
-export type EventStatus = typeof EVENT_STATUS[keyof typeof EVENT_STATUS]['value']
-
-// ============================================================================
 // DRESS CODE - Códigos de Vestimenta
 // ============================================================================
 
@@ -208,12 +196,12 @@ CÓMO USAR ESTOS ENUMS:
 
 1. EN COMPONENTES REACT:
    ```
-   import { EVENT_STATUS, getEnumLabel } from '@/sanity/schemas/enums'
+   import { EVENT_TYPES, getEnumLabel } from '@/sanity/schemas/enums'
    
-   <select value={selectedStatus}>
-     {Object.values(EVENT_STATUS).map(status => (
-       <option key={status.value} value={status.value}>
-         {status.label}
+   <select value={selectedType}>
+     {Object.values(EVENT_TYPES).map(type => (
+       <option key={type.value} value={type.value}>
+         {type.label}
        </option>
      ))}
    </select>
@@ -221,7 +209,7 @@ CÓMO USAR ESTOS ENUMS:
 
 2. EN QUERIES DE SANITY:
    ```
-   *[_type == 'event' && status == 'upcoming']
+   *[_type == 'event' && eventType == 'culto']
    ```
 
 3. EN VALIDACIONES:

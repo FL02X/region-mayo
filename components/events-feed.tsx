@@ -28,13 +28,11 @@ const INITIAL_DATE = new Date(2026, 3, 1); // April 2026
 interface EventsFeedProps {
   events: Event[];
   regionPresident: RegionPresident | null;
-  regions: string[];
 }
 
 export function EventsFeed({
   events,
   regionPresident,
-  regions,
 }: EventsFeedProps) {
   const [selectedMonth, setSelectedMonth] = useState(INITIAL_DATE);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -224,7 +222,6 @@ export function EventsFeed({
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           regionPresident={regionPresident}
-          regions={regions}
         />
       )}
     </div>

@@ -16,11 +16,10 @@ interface RegistrationModalProps {
   isOpen: boolean
   onClose: () => void
   regionPresident: RegionPresident | null
-  regions: string[]
 }
 
-export function RegistrationModal({ event, isOpen, onClose, regionPresident, regions }: RegistrationModalProps) {
-  const MIN_SUBMIT_LOADING_MS = 1000
+export function RegistrationModal({ event, isOpen, onClose, regionPresident }: RegistrationModalProps) {
+  const MIN_SUBMIT_LOADING_MS = 250
   const contentScrollRef = useRef<HTMLDivElement>(null)
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -31,8 +30,6 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    region: "",
-    isVisiting: false,
     needsLodging: false,
     needsTransport: false,
     attendingAs: "oyente" as "oyente" | "miembro",
@@ -88,9 +85,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
         body: JSON.stringify({
           name: formData.name,
           phone: formData.phone,
-          region: formData.region,
           eventId: event.id,
-          isVisiting: formData.isVisiting,
           needsLodging: formData.needsLodging,
           needsTransport: formData.needsTransport,
           attendingAs: formData.isCoroMGR ? "miembro" : "oyente",
@@ -143,7 +138,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
     setSelectedPhotoIndex(newIndex)
   }
 
-  const stepLabels = ["Logística", "Contacto", "Confirmar"]
+  const stepLabels = ["Contacto", "Logística", "Confirmar"]
 
   const ToggleQuestion = ({ label, value, field }: { label: string, value: boolean, field: string }) => (
     <div className="flex items-center justify-between py-4 border-b border-border/50 last:border-0">
@@ -178,7 +173,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
 
         {/* Modal */}
         <div 
-          className="absolute inset-0 sm:relative sm:inset-auto bg-background w-full sm:max-w-md sm:h-auto sm:max-h-[90vh] flex flex-col shadow-2xl animate-in fade-in sm:zoom-in-95 duration-200"
+          className="absolute inset-0 sm:relative sm:inset-auto bg-background w-full sm:max-w-2xl sm:h-auto sm:max-h-[88vh] md:max-h-[84vh] flex flex-col shadow-2xl animate-in fade-in sm:zoom-in-95 duration-200"
           role="dialog"
           aria-modal="true"
           aria-labelledby="registration-title"
@@ -205,26 +200,9 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
           )}
 
           {/* Content */}
-          <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-5 py-6">
-            {/* Step 1: Logistics */}
+          <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-5 py-5 md:px-6 md:py-4">
+            {/* Step 1: Contact Info */}
             {step === 1 && (
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Ayúdanos a preparar todo para tu llegada respondiendo estas preguntas:
-                </p>
-
-                <div className="border border-border/50 bg-background px-4">
-                  <ToggleQuestion label="¿Vienes de otra región?" value={formData.isVisiting} field="isVisiting" />
-                  <ToggleQuestion label="¿Necesitas hospedaje?" value={formData.needsLodging} field="needsLodging" />
-                  <ToggleQuestion label="¿Necesitas transporte?" value={formData.needsTransport} field="needsTransport" />
-                  <ToggleQuestion label="¿Eres bautizado?" value={formData.isBaptized} field="isBaptized" />
-                  <ToggleQuestion label="¿Eres joven del coro MGR?" value={formData.isCoroMGR} field="isCoroMGR" />
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Contact Info */}
-            {step === 2 && (
               <div className="space-y-6">
                 <div className="space-y-5">
                   <div>
@@ -247,18 +225,22 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                       />
                     </div>
                   </div>
-                  {formData.isCoroMGR && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                      <Label htmlFor="region" className="text-sm font-bold text-foreground uppercase tracking-wider">Mi Región</Label>
-                      <Input
-                        id="region"
-                        value={formData.region}
-                        onChange={(e) => handleInputChange("region", e.target.value)}
-                        placeholder="Escribe tu región"
-                        className="mt-2 rounded-none h-12 border-input focus-visible:ring-1"
-                      />
-                    </div>
-                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Logistics */}
+            {step === 2 && (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Ayúdanos a preparar todo para tu llegada respondiendo estas preguntas:
+                </p>
+
+                <div className="border border-border/50 bg-background px-4">
+                  <ToggleQuestion label="¿Necesitas hospedaje?" value={formData.needsLodging} field="needsLodging" />
+                  <ToggleQuestion label="¿Necesitas transporte?" value={formData.needsTransport} field="needsTransport" />
+                  <ToggleQuestion label="¿Eres bautizado?" value={formData.isBaptized} field="isBaptized" />
+                  <ToggleQuestion label="¿Eres joven del coro MGR?" value={formData.isCoroMGR} field="isCoroMGR" />
                 </div>
               </div>
             )}
@@ -275,7 +257,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                     <p className="mt-5 text-sm font-medium text-muted-foreground">Procesando tu registro...</p>
                   </div>
                 ) : (
-                  <>
+                  <div className="md:grid md:grid-cols-2 md:gap-5 md:items-start">
                 {/* Event Photos */}
                 {photos.length > 0 && (
                   <div>
@@ -328,16 +310,6 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                       <span className="text-muted-foreground">Teléfono:</span>
                       <span className="text-foreground font-medium">{formData.phone ? `+52 ${formData.phone}` : "—"}</span>
                     </div>
-                    {formData.isCoroMGR && (
-                      <div className="flex justify-between border-b border-border/20 pb-2">
-                        <span className="text-muted-foreground">Región:</span>
-                        <span className="text-foreground font-medium">{formData.region || "—"}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between border-b border-border/20 pb-2">
-                      <span className="text-muted-foreground">Visitante:</span>
-                      <span className="text-foreground font-medium">{formData.isVisiting ? "Sí" : "No"}</span>
-                    </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Hospedaje:</span>
                       <span className="text-foreground font-medium">{formData.needsLodging ? "Sí" : "No"}</span>
@@ -360,7 +332,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                     </div>
                   </div>
                 </div>
-                  </>
+                  </div>
                 )}
               </div>
             )}

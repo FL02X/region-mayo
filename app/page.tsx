@@ -2,7 +2,6 @@ import { AppHeader } from "@/components/app-header";
 import { HeroSection } from "@/components/hero-section";
 import { EventsFeed } from "@/components/events-feed";
 import {
-  getAvailableRegions,
   getEvents,
   getRegionConfig,
   getRegionPresident,
@@ -10,11 +9,10 @@ import {
 } from "@/lib/api";
 
 export default async function Home() {
-  const [region, events, regions, regionPresident, siteSettings] =
+  const [region, events, regionPresident, siteSettings] =
     await Promise.all([
       getRegionConfig("region-mayo"),
       getEvents("region-mayo"),
-      getAvailableRegions(),
       getRegionPresident("region-mayo"),
       getSiteSettings("region-mayo"),
     ]);
@@ -37,7 +35,6 @@ export default async function Home() {
           <EventsFeed
             events={events}
             regionPresident={regionPresident}
-            regions={regions}
           />
         ) : (
           <div className="flex items-center justify-center min-h-[400px]">

@@ -6,11 +6,6 @@
  * Un evento SIEMPRE pertenece a una región específica
  * Los eventos pueden incluir registros de asistencia
  * 
- * ESTATUS:
- * - upcoming: Próximo (no ha empezado)
- * - active: En progreso (actualmente sucediendo)
- * - past: Finalizado (ya pasó)
- * 
  * ENLACES REQUERIDOS:
  * - Si habilitас Google Drive, Facebook o Instagram, el enlace es OBLIGATORIO
  * - Para Alimentos y Junta Juvenil, la descripción es OBLIGATORIA si están habilitados
@@ -35,7 +30,6 @@ export default defineType({
   ],
   indexes: [
     { name: 'byRegion', keys: [['region']] },
-    { name: 'byStatus', keys: [['status']] },
     { name: 'byDate', keys: [['date']] },
     { name: 'byRegionAndDate', keys: [['region'], ['date']] },
   ],
@@ -367,22 +361,6 @@ export default defineType({
       description: 'La región a la que pertenece este evento (obligatorio)',
     }),
     defineField({
-      name: 'status',
-      title: 'Estado',
-      type: 'string',
-      group: 'settings',
-      options: {
-        list: [
-          { title: 'Por Venir', value: 'upcoming' },
-          { title: 'En Progreso', value: 'active' },
-          { title: 'Finalizado', value: 'past' },
-        ],
-        layout: 'radio',
-      },
-      initialValue: 'upcoming',
-      description: '¿Está a punto de suceder, sucediendo ahora, o ya pasó?',
-    }),
-    defineField({
       name: 'registrationEnabled',
       title: 'Permitir Registro de Asistentes',
       type: 'boolean',
@@ -474,10 +452,9 @@ export default defineType({
       date: 'date',
       eventType: 'eventType',
       regionName: 'region.name',
-      status: 'status',
       media: 'image',
     },
-    prepare({ title, date, eventType, regionName, status, media }) {
+    prepare({ title, date, eventType, regionName, media }) {
       const eventDate = date ? new Date(date).toLocaleDateString('es-MX') : 'Sin fecha'
       const typeLabels: Record<string, string> = {
         campana: 'Campaña',
@@ -493,14 +470,9 @@ export default defineType({
         congresoBrilla: 'Congreso Brilla',
         boda: 'Boda',
       }
-      const statusLabels: Record<string, string> = {
-        upcoming: '📅 Próximo',
-        active: '🔴 En Progreso',
-        past: '✅ Finalizado',
-      }
       return {
         title,
-        subtitle: `${statusLabels[status] || status} • ${typeLabels[eventType] || 'Evento'} • ${eventDate} • ${regionName || '?'}`,
+        subtitle: `${typeLabels[eventType] || 'Evento'} • ${eventDate} • ${regionName || '?'}`,
         media,
       }
     },

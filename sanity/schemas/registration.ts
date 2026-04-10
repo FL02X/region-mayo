@@ -6,7 +6,6 @@
  * 
  * CARACTERÍSTICAS:
  * - Datos desnormalizados intencionalmente para performance analytics
- * - region: string (NO reference) para rapidez sin joins
  * - ipAddress y userAgent: readOnly, para detectar spam/duplicados
  * 
  * PARTICIONAMIENTO: partition agrupa registros por año-mes
@@ -32,7 +31,6 @@ export default defineType({
   ],
   indexes: [
     { name: 'byEvent', keys: [['event']] },
-    { name: 'byRegion', keys: [['region']] },
     { name: 'byPartition', keys: [['partition']] },
     { name: 'byEventAndPartition', keys: [['event'], ['partition']] },
   ],
@@ -55,22 +53,6 @@ export default defineType({
       description: 'Teléfono de contacto (WhatsApp)',
     }),
     defineField({
-      name: 'region',
-      title: 'Región del Asistente',
-      type: 'string',
-      group: 'basic',
-      validation: (Rule) =>
-        Rule.custom((value, context) => {
-          const attendingAs = context.document?.attendingAs
-          if (attendingAs === 'miembro' && (!value || String(value).trim().length < 2)) {
-            return 'Región es requerida para asistentes "Miembro"'
-          }
-          return true
-        }),
-      description:
-        'DENORMALIZADO (string, no reference) para analytics sin join. Requerida solo si "Asistiendo como" = Miembro.',
-    }),
-    defineField({
       name: 'event',
       title: 'Evento',
       type: 'reference',
@@ -81,14 +63,6 @@ export default defineType({
     }),
 
     // Preferences
-    defineField({
-      name: 'isVisiting',
-      title: 'Viene de otra región',
-      type: 'boolean',
-      group: 'preferences',
-      initialValue: false,
-      description: 'Marcar si el asistente viene de una región diferente',
-    }),
     defineField({
       name: 'needsLodging',
       title: 'Necesita hospedaje',
@@ -184,16 +158,15 @@ export default defineType({
     select: {
       title: 'name',
       eventTitle: 'event.title',
-      region: 'region',
       date: 'registeredAt',
       attending: 'attendingAs',
     },
-    prepare({ title, eventTitle, region, date, attending }) {
+    prepare({ title, eventTitle, date, attending }) {
       const eventDate = date ? new Date(date).toLocaleDateString('es-MX') : 'Sin fecha'
       const attendingLabel = attending === 'miembro' ? '👤 Miembro' : '👁️ Oyente'
       return {
         title: title,
-        subtitle: `${attendingLabel} • ${eventTitle || '?'} • ${region || '?'} • ${eventDate}`,
+        subtitle: `${attendingLabel} • ${eventTitle || '?'} • ${eventDate}`,
       }
     },
   },

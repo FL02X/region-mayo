@@ -110,7 +110,6 @@ function sanitizePhone(input: unknown): string {
 
 function validateRegistration(data: Record<string, unknown>): { valid: boolean; errors: string[] } {
   const errors: string[] = []
-  const attendingAs = data.attendingAs === "miembro" ? "miembro" : "oyente"
 
   // Required fields
   if (!data.name || typeof data.name !== "string" || data.name.trim().length < 2) {
@@ -119,12 +118,6 @@ function validateRegistration(data: Record<string, unknown>): { valid: boolean; 
 
   if (!data.phone || typeof data.phone !== "string" || data.phone.replace(/\D/g, "").length < 10) {
     errors.push("Teléfono válido es requerido (mínimo 10 dígitos)")
-  }
-
-  if (attendingAs === "miembro") {
-    if (!data.region || typeof data.region !== "string" || data.region.trim().length < 2) {
-      errors.push("Región es requerida para miembros")
-    }
   }
 
   if (!data.eventId || typeof data.eventId !== "string") {
@@ -198,14 +191,10 @@ export async function POST(req: NextRequest) {
 
     // Prepare sanitized data
     const attendingAs = body.attendingAs === "miembro" ? "miembro" : "oyente"
-    const sanitizedRegion = sanitizeString(body.region)
-
     const registrationData = {
       name: sanitizeString(body.name),
       phone: sanitizePhone(body.phone),
-      region: attendingAs === "miembro" ? sanitizedRegion : null,
       event: { _type: "reference", _ref: String(body.eventId) },
-      isVisiting: Boolean(body.isVisiting),
       needsLodging: Boolean(body.needsLodging),
       needsTransport: Boolean(body.needsTransport),
       attendingAs,
@@ -227,7 +216,6 @@ export async function POST(req: NextRequest) {
       // Log for debugging when Sanity write is not configured
       console.log("[register] Registration received (Sanity write not configured):", {
         name: registrationData.name,
-        region: registrationData.region,
         eventRef: body.eventId,
         attendingAs: registrationData.attendingAs,
       })
