@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
-import { X, Check, Calendar, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, User, Loader2 } from "lucide-react"
+import { X, Check, Calendar, ChevronRight, ChevronLeft, User, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,6 +20,8 @@ interface RegistrationModalProps {
 }
 
 export function RegistrationModal({ event, isOpen, onClose, regionPresident, regions }: RegistrationModalProps) {
+  const MIN_SUBMIT_LOADING_MS = 1000
+  const contentScrollRef = useRef<HTMLDivElement>(null)
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -70,8 +72,12 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
   }
 
   const handleSubmit = async () => {
+    if (contentScrollRef.current) {
+      contentScrollRef.current.scrollTop = 0
+    }
     setIsSubmitting(true)
     setSubmitError(null)
+    const submitStartTime = performance.now()
 
     try {
       const response = await fetch("/api/register", {
@@ -99,6 +105,11 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
 
       if (!response.ok) {
         throw new Error(data.error || "Error al registrarse")
+      }
+
+      const elapsed = performance.now() - submitStartTime
+      if (elapsed < MIN_SUBMIT_LOADING_MS) {
+        await new Promise((resolve) => setTimeout(resolve, MIN_SUBMIT_LOADING_MS - elapsed))
       }
 
       setStep(4)
@@ -194,7 +205,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
           )}
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-5 py-6">
+          <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-5 py-6">
             {/* Step 1: Logistics */}
             {step === 1 && (
               <div className="space-y-1">
@@ -255,6 +266,16 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
             {/* Step 3: Review with Clickable Photos */}
             {step === 3 && (
               <div className="space-y-6">
+                {isSubmitting ? (
+                  <div className="flex min-h-[280px] flex-col items-center justify-center py-16">
+                    <div
+                      className="h-20 w-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin"
+                      aria-hidden="true"
+                    />
+                    <p className="mt-5 text-sm font-medium text-muted-foreground">Procesando tu registro...</p>
+                  </div>
+                ) : (
+                  <>
                 {/* Event Photos */}
                 {photos.length > 0 && (
                   <div>
@@ -339,6 +360,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                     </div>
                   </div>
                 </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -348,6 +371,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident, reg
                 onAddToCalendar={addToGoogleCalendar}
                 eventTitle={event.title}
                 regionPresident={regionPresident}
+                needsTransport={formData.needsTransport}
+                needsLodging={formData.needsLodging}
               />
             )}
           </div>
@@ -553,22 +578,76 @@ function ConfirmationStep({
   onAddToCalendar, 
   eventTitle,
   regionPresident,
+  needsTransport,
+  needsLodging,
 }: { 
   onAddToCalendar: () => void
   eventTitle: string
   regionPresident: RegionPresident | null
+  needsTransport: boolean
+  needsLodging: boolean
 }) {
-  const [isContactExpanded, setIsContactExpanded] = useState(false)
+  const showLogisticsInfo = needsTransport || needsLodging
 
   return (
-    <div className="text-center py-8">
-      <div className="w-16 h-16 bg-primary flex items-center justify-center mx-auto mb-6 rounded-none">
-        <Check className="h-8 w-8 text-primary-foreground" />
+    <div className="text-center py-6">
+      <div className="w-12 h-12 bg-primary flex items-center justify-center mx-auto mb-3 rounded-none">
+        <Check className="h-6 w-6 text-primary-foreground" />
       </div>
-      <h3 className="text-xl font-bold text-foreground mb-3 uppercase tracking-wide">¡Registro Exitoso!</h3>
-      <p className="text-sm text-muted-foreground mb-8">
-        El staff ha sido notificado de tu asistencia. ¡Pronto estaremos en contacto!
-      </p>
+      <h3 className="text-base sm:text-lg font-bold text-foreground mb-3 uppercase tracking-wide whitespace-nowrap">¡Registro Exitoso!</h3>
+      {showLogisticsInfo ? (
+        <div className="mb-8 text-left border border-border/50 bg-muted/10 p-4 sm:p-5 space-y-4">
+          <p className="text-base sm:text-lg font-bold text-foreground uppercase tracking-wide text-center sm:text-left">
+            Esto es lo que haremos
+          </p>
+
+          {needsTransport && (
+            <div className="flex items-start gap-3 sm:gap-4 border border-border/50 bg-background p-3 sm:p-4">
+              <div className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden ring-1 ring-border/60 shrink-0">
+                <Image
+                  src="/images/transporte.webp"
+                  alt="Apoyo para transporte"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="min-w-0 pt-0.5">
+                <p className="text-sm sm:text-base font-bold text-foreground uppercase tracking-wide">
+                  BUSCAREMOS TRANSPORTE
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+                  Trataremos de buscar y comunicarnos lo mas pronto posible con hermanos locales, para ofrecerte transporte gratuito.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {needsLodging && (
+            <div className="flex items-start gap-3 sm:gap-4 border border-border/50 bg-background p-3 sm:p-4">
+              <div className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden ring-1 ring-border/60 shrink-0">
+                <Image
+                  src="/images/hospedaje.webp"
+                  alt="Apoyo para hospedaje"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="min-w-0 pt-0.5">
+                <p className="text-sm sm:text-base font-bold text-foreground uppercase tracking-wide">
+                  BUSCAREMOS HOSPEDAJE
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+                  Trataremos de buscar y comunicarnos lo mas pronto posible con hermanos locales, para ofrecerte hospedaje gratuito.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground mb-8">
+          El staff ha sido notificado de tu asistencia. ¡Pronto estaremos en contacto!
+        </p>
+      )}
       
       <div className="space-y-4">
         <Button onClick={onAddToCalendar} variant="outline" className="w-full rounded-none h-14 gap-2 font-bold uppercase tracking-wider text-sm border-input">
@@ -578,37 +657,21 @@ function ConfirmationStep({
 
         {regionPresident ? (
           <div className="text-left border border-border/50 bg-background">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsContactExpanded(!isContactExpanded)}
-              className="w-full justify-between rounded-none h-14 px-4 hover:bg-muted/50"
-            >
-              <span className="text-sm font-bold uppercase tracking-wider">Ver contacto</span>
-              {isContactExpanded ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
-            </Button>
-
-            {isContactExpanded && (
-              <div className="p-4 border-t border-border/50 bg-muted/10">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-primary/10 flex items-center justify-center shrink-0 rounded-none">
-                    <User className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground truncate">{regionPresident.fullName}</p>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">Presidente Regional</p>
-                  </div>
-                  <WhatsAppIconButton 
-                    phone={regionPresident.phone} 
-                    message={`Hola, me acabo de registrar para ${eventTitle} en el sitio web de Región Mayo.`}
-                  />
+            <div className="p-4 bg-muted/10">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-primary/10 flex items-center justify-center shrink-0 rounded-none">
+                  <User className="h-6 w-6 text-primary" />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">{regionPresident.fullName}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">Presidente Regional</p>
+                </div>
+                <WhatsAppIconButton 
+                  phone={regionPresident.phone} 
+                  message={`Hola, me acabo de registrar para ${eventTitle} en el sitio web de Región Mayo.`}
+                />
               </div>
-            )}
+            </div>
           </div>
         ) : (
           <div className="border border-border/50 bg-muted/10 p-4 text-sm text-muted-foreground text-center font-medium">

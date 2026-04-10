@@ -116,23 +116,25 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
 
           {/* Toggle — only shown if there is expandable content */}
           {(templo.pastores.length > 0 || templo.coros.length > 0 || templo.description) && (
-            <button
-              onClick={handleToggle}
-              className="w-full flex items-center justify-between py-3 px-4 -mx-4 text-sm text-foreground font-medium hover:text-foreground/80 transition-colors mt-auto border-t border-border"
-              aria-expanded={isExpanded}
-              aria-controls={`templo-details-${templo.id}`}
-              style={{ background: "none" }}
-            >
-              <span>
-                {isExpanded ? "Ocultar información" : "Ver información"}
-              </span>
-              <ChevronDown
-                className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                  isExpanded ? "rotate-180" : ""
-                }`}
-                aria-hidden="true"
-              />
-            </button>
+            <div className="-mx-4 border-t border-border mt-auto">
+              <button
+                onClick={handleToggle}
+                className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/80 transition-colors"
+                aria-expanded={isExpanded}
+                aria-controls={`templo-details-${templo.id}`}
+                style={{ background: "none" }}
+              >
+                <span>
+                  {isExpanded ? "Ocultar información" : "Ver información"}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
           )}
 
           {/* Expanded details */}

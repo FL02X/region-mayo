@@ -46,9 +46,9 @@ const eventTypeLabels: Record<EventType, string> = {
 
 const vestimentaLabels: Record<Vestimenta, string> = {
   uniformeMGR: "Uniforme MGR",
-  formalCasual: "Vestimenta Formal Casual",
-  informal: "Vestimenta Informal",
-  otro: "Vestimenta Especial",
+  formalCasual: "Formal/Casual",
+  informal: "Informal",
+  otro: "Especial",
 };
 
 export function EventCard({
@@ -156,22 +156,22 @@ export function EventCard({
               loading="eager"
               priority
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-4 py-3.5">
               <div className="flex items-end justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   {isMultiDay && (
                     <CalendarDays
-                      className="h-3.5 w-3.5 text-white/80 shrink-0"
+                      className="h-4 w-4 text-white/90 shrink-0"
                       aria-hidden="true"
                     />
                   )}
-                  <span className="text-sm font-semibold text-white leading-none">
+                  <span className="text-[16px] font-bold text-white leading-none">
                     {isMultiDay
                       ? formatDateRange(event.date, event.endDate!)
                       : formatDate(event.date)}
                   </span>
                 </div>
-                <span className="text-sm text-white/85 leading-none tabular-nums">
+                <span className="text-[16px] font-bold text-white/95 leading-none tabular-nums">
                   {event.time}
                 </span>
               </div>
@@ -226,7 +226,7 @@ export function EventCard({
                 onClick={() =>
                   openGoogleMaps(event.googleMapsUrl, event.address)
                 }
-                className="mr-5 mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors shrink-0 ml-2"
+                className="mr-5 mt-2 ml-2 flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/50 bg-primary/10 hover:bg-primary/15 rounded-md px-2.5 py-1 transition-colors shrink-0"
                 aria-label={`Abrir ${event.location} en Google Maps`}
                 style={{ minHeight: "unset", minWidth: "unset" }}
               >
@@ -240,8 +240,9 @@ export function EventCard({
           <div className="flex-1" />
 
           {/* ── Action buttons — ALWAYS VISIBLE ── */}
-          <div className="border-t border-border pt-3 mt-1">
-            {isPastEvent ? (
+          {(isPastEvent || canRegister) && (
+            <div className="border-t border-border pt-3 mt-1">
+              {isPastEvent ? (
               <div className="flex gap-2">
                 {hasAlbum && (
                   <Button
@@ -276,28 +277,23 @@ export function EventCard({
                   </Button>
                 )}
               </div>
-            ) : (
-              <Button
-                onClick={() => onRegister(event)}
-                disabled={!canRegister}
-                className={`w-full text-sm py-5 ${
-                  canRegister
-                    ? "bg-primary hover:bg-primary/90 text-white"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                }`}
-                aria-disabled={!canRegister}
-              >
-                {canRegister ? "Registrarse" : "Registro no disponible"}
-              </Button>
-            )}
-          </div>
+              ) : (
+                <Button
+                  onClick={() => onRegister(event)}
+                  className="w-full text-sm py-5 bg-primary hover:bg-primary/90 text-white"
+                >
+                  ¡Quiero asistir!
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* ── "Ver más información" — plain text toggle, NOT a button ── */}
           {hasDetails && (
-            <div className="border-t border-border mt-3">
+            <div className="-mx-4 mt-3 border-t border-border">
               <button
                 onClick={() => setIsExpanded((v) => !v)}
-                className="w-full flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="w-full px-4 flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 aria-expanded={isExpanded}
                 aria-controls={`details-${event.id}`}
                 style={{
@@ -320,7 +316,7 @@ export function EventCard({
 
               {/* ── Expanded details ── */}
               {isExpanded && (
-                <div id={`details-${event.id}`} className="space-y-3 pb-1 pt-1">
+                <div id={`details-${event.id}`} className="space-y-3 pb-1 pt-1 px-4">
                   {/* Vestimenta */}
                   {event.vestimenta && (
                     <div className="flex items-start gap-2.5">
@@ -330,6 +326,9 @@ export function EventCard({
                       />
                       <div className="flex-1">
                         <p className="text-sm text-foreground">
+                          <span className="text-muted-foreground">
+                            Vestimenta ·{" "}
+                          </span>
                           {vestimentaLabels[event.vestimenta]}
                         </p>
                         {event.vestimenta === "otro" &&
