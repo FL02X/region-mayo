@@ -143,7 +143,7 @@ export function EventCard({
     <>
       <article 
         id={event.id}
-        className="bg-card border border-border overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+        className="bg-card border border-border/80 overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
       >
         {/* ── Image with date/time strip ── */}
         {event.image ? (
@@ -156,7 +156,7 @@ export function EventCard({
               loading="eager"
               priority
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-4 py-3.5">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-4 py-3">
               <div className="flex items-end justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   {isMultiDay && (
@@ -165,13 +165,13 @@ export function EventCard({
                       aria-hidden="true"
                     />
                   )}
-                  <span className="text-[16px] font-bold text-white leading-none">
+                  <span className="text-[15px] font-semibold text-white leading-none">
                     {isMultiDay
                       ? formatDateRange(event.date, event.endDate!)
                       : formatDate(event.date)}
                   </span>
                 </div>
-                <span className="text-[16px] font-bold text-white/95 leading-none tabular-nums">
+                <span className="text-[15px] font-semibold text-white/95 leading-none tabular-nums">
                   {event.time}
                 </span>
               </div>
@@ -189,18 +189,18 @@ export function EventCard({
         {/* ── Card body ── */}
         <div className="p-5 flex flex-col flex-1">
           {/* Event type — plain uppercase label */}
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary mb-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] mb-1.5">
             {eventTypeLabels[eventType]}
           </p>
 
           {/* Title — Inter bold, no serif */}
-          <h3 className="text-[18px] md:text-[19px] font-semibold text-foreground leading-tight mb-3">
+          <h3 className="text-[20px] md:text-[21px] font-bold text-foreground leading-[1.2] mb-3 font-sans tracking-tight">
             {event.title}
           </h3>
 
           {/* Description — always shown, 3-line clamp */}
           {hasDescription && (
-            <p className="text-[14px] text-muted-foreground leading-relaxed line-clamp-3 mb-4">
+            <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-3 mb-4">
               {event.description}
             </p>
           )}
@@ -213,7 +213,7 @@ export function EventCard({
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-foreground leading-snug">
+                <p className="text-[14px] font-medium text-foreground leading-snug">
                   {event.location}
                 </p>
                 {event.address && (
@@ -226,7 +226,7 @@ export function EventCard({
                 onClick={() =>
                   openGoogleMaps(event.googleMapsUrl, event.address)
                 }
-                className="mr-5 mt-2 ml-2 flex items-center gap-1.5 text-sm font-medium text-primary border border-primary/50 bg-primary/10 hover:bg-primary/15 rounded-md px-2.5 py-1 transition-colors shrink-0"
+                className="mr-5 mt-2 ml-2 flex items-center gap-1.5 text-sm font-medium text-[#2f5e93] border border-[#2f5e93]/35 bg-[#2f5e93]/5 hover:bg-[#2f5e93]/10 rounded-[3px] px-2.5 py-1 transition-colors shrink-0"
                 aria-label={`Abrir ${event.location} en Google Maps`}
                 style={{ minHeight: "unset", minWidth: "unset" }}
               >
@@ -241,7 +241,7 @@ export function EventCard({
 
           {/* ── Action buttons — ALWAYS VISIBLE ── */}
           {(isPastEvent || canRegister) && (
-            <div className="border-t border-border pt-3 mt-1">
+            <div className="border-t border-border/70 pt-3 mt-1">
               {isPastEvent ? (
               <div className="flex gap-2">
                 {hasAlbum && (

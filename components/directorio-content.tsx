@@ -160,22 +160,22 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
   );
 
   return (
-    <div className="w-full relative pb-16 bg-[#f1f1f1]" id="main-content">
-      <div className="max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen focus:outline-none">
+    <div className="w-full relative pb-20 bg-[var(--surface-shell)]" id="main-content">
+      <div className="max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[var(--surface-pane)] md:border-x border-[#dce2e9] dark:border-[#27272a] shadow-[0_0_10px_rgba(0,0,0,0.045)] dark:shadow-none min-h-screen focus:outline-none">
         {/* Main Content Area */}
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-        <div className="mb-6 pb-4 border-b border-border">
-          <h1 className="text-2xl font-bold text-foreground">
+        <div className="mb-6 pb-5 border-b border-border/70">
+          <h1 className="text-[1.7rem] font-semibold text-foreground tracking-tight">
             Directorio de Pastores
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-[13px] text-muted-foreground mt-1">
             Nuestros siervos en la Región Mayo
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-7">
           <SearchBar
             onSearchChange={setSearchQuery}
             placeholder="Buscar por nombre, templo o teléfono..."

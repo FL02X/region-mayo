@@ -36,49 +36,36 @@ export function EventsFeed({
 }: EventsFeedProps) {
   const [selectedMonth, setSelectedMonth] = useState(INITIAL_DATE);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [pendingHashEventId, setPendingHashEventId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
-    
+
     let isSubscribed = true;
 
-    const syncHash = () => {
+    const syncHashTarget = () => {
       if (!isSubscribed) return;
-      if (window.location.hash) {
-        const id = window.location.hash.substring(1);
-        const targetEvent = events.find(e => e.id === id);
-        
-        if (targetEvent) {
-          // Set the month matching the target event immediately
-          setSelectedMonth(new Date(targetEvent.date.getFullYear(), targetEvent.date.getMonth(), 1));
-          
-          // Retry scrolling to handle React batch rendering the new month
-          let attempts = 0;
-          const attemptScroll = () => {
-            if (!isSubscribed) return;
-            const el = document.getElementById(id);
-            if (el) {
-              el.classList.add('global-highlight');
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else if (attempts < 10) {
-              attempts++;
-              setTimeout(attemptScroll, 50); // check roughly every frame
-            }
-          };
-          attemptScroll();
-        }
-      }
+      if (!window.location.hash) return;
+
+      const id = window.location.hash.substring(1);
+      const targetEvent = events.find((event) => event.id === id);
+      if (!targetEvent) return;
+
+      setSelectedMonth(
+        new Date(targetEvent.date.getFullYear(), targetEvent.date.getMonth(), 1),
+      );
+      setPendingHashEventId(id);
     };
 
     // Run on initial mount
-    syncHash();
+    syncHashTarget();
 
     // Listen to native hash changes (useful if user clicks multiple links sequentially)
-    window.addEventListener('hashchange', syncHash, { passive: true });
+    window.addEventListener("hashchange", syncHashTarget, { passive: true });
 
     return () => {
       isSubscribed = false;
-      window.removeEventListener('hashchange', syncHash);
+      window.removeEventListener("hashchange", syncHashTarget);
     };
   }, [events]);
 
@@ -97,6 +84,44 @@ export function EventsFeed({
       )
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [events, selectedMonth]);
+
+  useEffect(() => {
+    if (!pendingHashEventId) return;
+
+    const isTargetMonthRendered = filteredEvents.some(
+      (event) => event.id === pendingHashEventId,
+    );
+    if (!isTargetMonthRendered) return;
+
+    let isSubscribed = true;
+    let attempts = 0;
+
+    const attemptScrollAndHighlight = () => {
+      if (!isSubscribed) return;
+
+      const targetEl = document.getElementById(pendingHashEventId);
+      if (targetEl) {
+        const existingHighlights = document.querySelectorAll(".global-highlight");
+        existingHighlights.forEach((el) => el.classList.remove("global-highlight"));
+
+        targetEl.classList.add("global-highlight");
+        targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        setPendingHashEventId(null);
+        return;
+      }
+
+      if (attempts < 24) {
+        attempts += 1;
+        setTimeout(attemptScrollAndHighlight, 60);
+      }
+    };
+
+    attemptScrollAndHighlight();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [filteredEvents, pendingHashEventId]);
 
   const handleMonthSelect = (date: Date) => {
     setSelectedMonth(date);
@@ -122,24 +147,26 @@ export function EventsFeed({
   };
 
   return (
-    <div className="w-full relative bg-[#f1f1f1]" data-events-feed="true">
-      <div className="max-w-[950px] mx-auto bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen pb-16 pt-[2px]">
-        {/* Countdown */}
-        <CountdownSection events={events} onRegister={handleRegister} />
+    <div className="w-full relative bg-[var(--surface-shell)]" data-events-feed="true">
+      <div className="max-w-[950px] mx-auto bg-[var(--surface-pane)] md:border-x border-[#dce2e9] dark:border-[#27272a] shadow-[0_0_10px_rgba(0,0,0,0.045)] dark:shadow-none min-h-screen pb-20 pt-[2px]">
+        {/* Countdown (mobile only; desktop featured event lives in hero) */}
+        <div className="md:hidden">
+          <CountdownSection events={events} onRegister={handleRegister} />
+        </div>
 
-        <div className="h-[20px] bg-muted/20" aria-hidden="true" />
+        <div className="h-[28px] bg-muted/20 md:hidden" aria-hidden="true" />
 
         {/* Calendar section */}
-        <section id="calendario" className="px-4 md:px-8 pt-4 pb-2 border-t border-border bg-muted/20">
+        <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 border-t border-border/70 bg-muted/20">
         <div className="mt-4 max-w-4xl mx-auto w-full">
-          <div className="mb-4">
+          <div className="mb-5">
             <h2
               id="calendar-title"
-              className="text-xl font-extrabold text-foreground tracking-tight mb-2"
+              className="text-[1.3rem] font-semibold text-foreground tracking-tight mb-2"
             >
               Calendario 2026
             </h2>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-[13px] text-muted-foreground mt-0.5">
               Selecciona un mes para ver los eventos
             </p>
           </div>
@@ -158,15 +185,15 @@ export function EventsFeed({
       <section
         id="eventos"
         ref={eventsListRef}
-        className="bg-muted/20 px-4 md:px-6 pt-5 pb-12"
+        className="bg-muted/20 px-4 md:px-6 pt-4 pb-14"
       >
         <div className="mt-1 max-w-4xl mx-auto w-full">
           {/* Month label */}
-          <div className="mb-5">
-            <h3 className="font-bold text-lg text-foreground tracking-tight">
+          <div className="mb-6">
+            <h3 className="font-semibold text-[1.15rem] text-foreground tracking-tight">
               {months[selectedMonth.getMonth()]} {selectedMonth.getFullYear()}
             </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-[12px] text-muted-foreground mt-0.5">
               {filteredEvents.length === 0
                 ? "No hay eventos programados"
                 : `${filteredEvents.length} ${

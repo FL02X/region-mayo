@@ -4,7 +4,7 @@ import { useMemo, Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Users, Music, UserCircle, Church, Calendar, Search } from "lucide-react";
+import { Users, Music, UserCircle, Church, Calendar, Search, ChevronRight } from "lucide-react";
 import { highlightText, normalizeText, getNestedValue } from "@/lib/search-utils";
 import type { Pastor, Coro, DirectivaMember, Templo, Event } from "@/lib/types";
 
@@ -181,26 +181,26 @@ function SearchContentInner({ data }: SearchContentProps) {
   };
 
   return (
-    <div className="w-full relative pb-16 bg-[#f1f1f1]" id="main-content">
-      <div className="max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen focus:outline-none">
+    <div className="w-full relative pb-20 bg-[var(--surface-shell)]" id="main-content">
+      <div className="max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[var(--surface-pane)] md:border-x border-[#dce2e9] dark:border-[#27272a] shadow-[0_0_10px_rgba(0,0,0,0.045)] dark:shadow-none min-h-screen focus:outline-none">
         
         <div className="max-w-4xl mx-auto">
-          <div className="mb-4 pb-4 border-b border-border">
+          <div className="mb-6 pb-5 border-b border-border/70">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Resultados de búsqueda</h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h1 className="text-[1.7rem] font-semibold text-foreground tracking-tight">Resultados de búsqueda</h1>
+              <p className="text-[13px] text-muted-foreground mt-1">
                 Buscando: <span className="font-semibold text-foreground">&quot;{localQuery || queryFromUrl}&quot;</span>
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground mt-1">
                 {filteredResults.length} resultado{filteredResults.length !== 1 ? "s" : ""}
               </p>
             </div>
           </div>
 
-          <div className="mb-5 space-y-3">
+          <div className="mb-7 space-y-3 rounded-[2px] border border-[#d7dbe1] bg-[#e9eaec] px-2.5 py-2.5">
             <form
               onSubmit={(e) => e.preventDefault()}
-              className="relative w-full h-[42px] bg-white rounded-[2px] flex items-center overflow-hidden border border-[#bcc3cc]"
+              className="relative w-full h-[42px] bg-white rounded-[2px] flex items-center overflow-hidden border border-[#b8c1cc]"
               role="search"
               aria-label="Buscar dentro de resultados"
             >
@@ -214,7 +214,7 @@ function SearchContentInner({ data }: SearchContentProps) {
               />
               <button
                 type="submit"
-                className="w-[42px] h-full flex items-center justify-center bg-[#4a70a5] hover:bg-[#3f5f8d] transition-colors"
+                className="w-[42px] h-full flex items-center justify-center bg-[#2f5e93] hover:bg-[#284e79] transition-colors"
                 aria-label="Ejecutar búsqueda"
               >
                 <Search className="h-[17px] w-[17px] text-white" strokeWidth={2} />
@@ -231,10 +231,10 @@ function SearchContentInner({ data }: SearchContentProps) {
                     type="button"
                     onClick={() => setActiveFilter(filter.key as SearchResultType | "all")}
                     className={[
-                      "shrink-0 border px-3 py-1.5 text-sm transition-colors",
+                      "shrink-0 border px-3 py-1.5 text-[13px] transition-colors rounded-[2px]",
                       isActive
-                        ? "bg-[#7f7f7f] text-white border-[#7f7f7f]"
-                        : "bg-white text-[#4a70a5] border-[#d2d6dc] hover:bg-[#f6f8fb]",
+                        ? "bg-[#2f5e93] text-white border-[#2f5e93]"
+                        : "bg-white text-[#2f5e93] border-[#d2d6dc] hover:bg-[#f6f8fb]",
                     ].join(" ")}
                     aria-pressed={isActive}
                     aria-label={`Filtrar por ${filter.label}`}
@@ -257,7 +257,7 @@ function SearchContentInner({ data }: SearchContentProps) {
               </ul>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
             {filteredResults.map((result, idx) => {
               const { item, type, label, pathPrefix } = result;
               
@@ -309,41 +309,41 @@ function SearchContentInner({ data }: SearchContentProps) {
                 <Link 
                   key={`${type}-${item.id}-${idx}`}
                   href={`${pathPrefix}#${item.id}`}
-                  className="group flex flex-col sm:flex-row bg-card border border-border overflow-hidden sm:hover:border-[#4a70a5] sm:hover:shadow-md transition-all duration-200 relative pointer-events-none sm:pointer-events-auto"
+                  className="group flex flex-col sm:flex-row bg-card border border-border/80 overflow-hidden hover:border-[#2f5e93] hover:shadow-[0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-200 relative active:scale-[0.997]"
                 >
-                  <div className="w-full sm:w-[120px] h-[160px] sm:h-auto bg-muted shrink-0 relative flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border">
+                  <div className="w-full sm:w-[120px] h-[160px] sm:h-auto bg-muted shrink-0 relative flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border pointer-events-none">
                     {photo ? (
                       <Image 
                         src={photo} 
                         alt={title} 
                         fill 
-                        className="object-cover object-center" 
+                        className="object-cover object-center pointer-events-none select-none" 
+                        draggable={false}
                       />
                     ) : (
                       <Icon className="h-8 w-8 text-muted-foreground/30" />
                     )}
                   </div>
-                  <div className="p-4 flex flex-col flex-1 sm:pr-4">
-                    <span className="text-[10px] font-bold tracking-widest text-[#4a70a5] mb-1">
+                  <div className="p-4 flex flex-col flex-1 sm:pr-4 pointer-events-none">
+                    <span className="text-[10px] font-semibold tracking-[0.14em] text-[#2f5e93] mb-1 uppercase">
                       {label}
                     </span>
-                    <h3 className="text-base sm:text-lg font-semibold text-[#292929] dark:text-gray-100 sm:group-hover:text-[#4a70a5] transition-colors leading-snug mb-1">
+                    <h3 className="text-[18px] sm:text-[19px] font-semibold text-[#222b35] dark:text-gray-100 sm:group-hover:text-[#2f5e93] transition-colors leading-snug mb-1 tracking-tight">
                       <ResultHighlightedText text={title} />
                     </h3>
                     {subtitle && (
-                      <p className="text-sm font-medium text-foreground mb-1">
+                      <p className="text-[14px] font-medium text-foreground mb-1">
                         <ResultHighlightedText text={subtitle} />
                       </p>
                     )}
                     {description && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[12px] text-muted-foreground">
                         <ResultHighlightedText text={description} />
                       </p>
                     )}
-                    <div className="mt-4 sm:hidden w-full pointer-events-auto">
-                      <div className="w-full bg-[#ffffff] text-[#292929] border border-gray-300 text-center text-sm font-semibold py-2 rounded shadow-sm active:bg-gray-200 transition-colors">
-                        Ver más información
-                      </div>
+                    <div className="mt-4 sm:hidden flex items-center justify-end gap-1 text-[11px] uppercase tracking-wide text-[#2f5e93]">
+                      <span className="font-semibold">Toca para ver</span>
+                      <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </div>
                   </div>
                 </Link>

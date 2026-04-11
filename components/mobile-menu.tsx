@@ -56,13 +56,13 @@ export function MobileMenu({
         <Button
           variant="ghost"
           size="icon"
-          className="h-[54px] w-[54px] rounded-none text-[#d1d5db] hover:bg-white/10"
+          className="h-9 w-9 rounded-[2px] text-[#d1d5db] hover:bg-white/10"
           aria-label={open ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
         >
           {open ? (
             <svg
               viewBox="0 0 20 20"
-              className="h-[40px] w-[40px]"
+              className="h-[22px] w-[22px]"
               aria-hidden="true"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +73,7 @@ export function MobileMenu({
           ) : (
             <svg
               viewBox="0 0 20 20"
-              className="h-[40px] w-[40px]"
+              className="h-[22px] w-[22px]"
               aria-hidden="true"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -144,11 +144,11 @@ export function MobileMenu({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className={cn("text-sm leading-tight uppercase", isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
+                  <p className={cn("text-[16px] leading-tight uppercase", isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
                     {item.label}
                   </p>
                   {item.description && (
-                    <p className={cn("text-xs leading-tight mt-0.5 uppercase", isActive ? "text-[#00508F]/80 font-bold" : "text-[#00508F]/80 font-normal")}>
+                    <p className={cn("text-[14px] leading-tight mt-0.5 uppercase", isActive ? "text-[#00508F]/80 font-bold" : "text-[#00508F]/80 font-normal")}>
                       {item.description}
                     </p>
                   )}
@@ -160,7 +160,7 @@ export function MobileMenu({
 
         {/* Social links footer */}
         <div className="border-t border-border px-5 py-4 shrink-0">
-          <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
+          <p className="text-[14px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
             Síguenos
           </p>
           <div className="flex flex-col gap-2">
@@ -168,7 +168,7 @@ export function MobileMenu({
               href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 text-sm font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
+              className="flex items-center gap-2.5 text-[16px] font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
               aria-label="Síguenos en Instagram"
             >
               <Instagram className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -178,7 +178,7 @@ export function MobileMenu({
               href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 text-sm font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
+              className="flex items-center gap-2.5 text-[16px] font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
               aria-label="Síguenos en Facebook"
             >
               <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" />

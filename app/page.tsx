@@ -17,6 +17,11 @@ export default async function Home() {
       getSiteSettings("region-mayo"),
     ]);
 
+  const nextUpcomingEvent =
+    events
+      .filter((event) => event.date.getTime() > Date.now())
+      .sort((a, b) => a.date.getTime() - b.date.getTime())[0] ?? null;
+
   return (
     <main id="main-content" className="min-h-screen">
       <AppHeader
@@ -26,8 +31,8 @@ export default async function Home() {
       <div className="hidden md:block">
         <HeroSection
           heroImages={siteSettings?.heroImages}
-          heroTitle={siteSettings?.heroTitle}
-          heroSubtitle={siteSettings?.heroSubtitle}
+          nextEvent={nextUpcomingEvent}
+          regionPresident={regionPresident}
         />
       </div>
       <div className="pt-[56px] md:pt-0">

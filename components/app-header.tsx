@@ -50,7 +50,7 @@ export function AppHeader({
 
   return (
     <>
-      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#292929] border-none text-white h-[49px] md:h-[43px]">
+      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[49px] md:h-[45px]">
         <div className="h-full max-w-[950px] mx-auto relative z-[61]">
           {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
           <div className="hidden md:flex items-center h-full px-4 lg:px-6 gap-2">
@@ -82,27 +82,27 @@ export function AppHeader({
                     key={href}
                     href={href}
                     className={cn(
-                      "flex items-center gap-2 h-full px-2 lg:px-3 text-[11px] transition-colors font-normal whitespace-nowrap tracking-[0.01em]",
+                      "flex items-center gap-1.5 h-full px-2.5 lg:px-3 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
                       isActive
-                        ? "text-white bg-[#4a70a5]"
-                        : "text-white hover:bg-[#4a70a5]/50"
+                        ? "text-white border-[#6c8fbc]"
+                        : "text-white/90 hover:text-white hover:border-white/30"
                     )}
                     aria-current={isActive ? "page" : undefined}
                   >
                     <Icon
-                      className="h-[18px] w-[18px] shrink-0"
+                      className="hidden xl:block h-[15px] w-[15px] shrink-0 opacity-80"
                       aria-hidden="true"
                       strokeWidth={1.75}
                     />
-                    {label.toUpperCase()}
+                    {label}
                   </Link>
                 );
               })}
             </nav>
 
-            <div className="w-[170px] shrink-0 h-full items-center flex">
+            <div className="w-[180px] shrink-0 h-full items-center flex">
               <form
-                className="relative w-full h-[36px] bg-[#f7f7f7] rounded-[3px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#7f8894] transition-colors"
+                className="relative w-full h-[34px] bg-[#f7f7f7] rounded-[2px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
                 onSubmit={handleSearchSubmit}
               >
                 <input
@@ -115,49 +115,49 @@ export function AppHeader({
                 <div className="h-[22px] w-px bg-[#b2b8c1] shrink-0" aria-hidden="true" />
                 <button
                   type="submit"
-                  className="w-[42px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
+                  className="w-[40px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="h-[18px] w-[18px] text-[#2563eb]" strokeWidth={1.6} />
+                  <Search className="h-[17px] w-[17px] text-[#2d5d94]" strokeWidth={1.6} />
                 </button>
               </form>
             </div>
 
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-0.5 shrink-0">
               <a
                 href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center h-10 w-10 text-white hover:bg-white/10 transition-colors"
+                className="flex items-center justify-center h-9 w-9 text-white/90 hover:text-white transition-colors"
                 aria-label="Síguenos en Instagram"
               >
-                <Instagram className="h-[19px] w-[19px]" aria-hidden="true" strokeWidth={1.75} />
+                <Instagram className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
               </a>
               <a
                 href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center h-10 w-10 text-white hover:bg-white/10 transition-colors"
+                className="flex items-center justify-center h-9 w-9 text-white/90 hover:text-white transition-colors"
                 aria-label="Síguenos en Facebook"
               >
-                <Facebook className="h-[19px] w-[19px]" aria-hidden="true" strokeWidth={1.75} />
+                <Facebook className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
               </a>
             </div>
           </div>
 
           {/* Mobile Search Bar - between logo and hamburger */}
-          <div className="md:hidden flex items-center justify-between h-full px-4 relative z-[62]">
-            <div className="flex items-center h-full relative z-[62] shrink-0">
+          <div className="md:hidden grid grid-cols-[40px_minmax(0,1fr)_40px] items-center h-full px-3 gap-2 relative z-[62]">
+            <div className="flex items-center justify-start h-full relative z-[62] shrink-0">
               <Link
                 href="/"
-                className="flex items-center gap-2.5 shrink-0"
+                className="flex items-center justify-center h-9 w-9 shrink-0"
                 aria-label="Inicio — Region Mayo"
               >
                 <Image
                   src="/images/region-mayo-logo.jpg"
                   alt="Región Mayo"
-                  width={30}
-                  height={30}
+                  width={26}
+                  height={26}
                   className="rounded-full shrink-0"
                   loading="eager"
                   priority
@@ -165,9 +165,9 @@ export function AppHeader({
               </Link>
             </div>
 
-            <div className="flex-1 min-w-0 mx-2 sm:mx-3 relative z-[62] flex justify-center items-center h-full">
+            <div className="min-w-0 relative z-[62] flex justify-center items-center h-full">
               <form
-                className="relative w-full min-w-0 h-[36px] bg-[#f7f7f7] rounded-[3px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#7f8894] transition-colors"
+                className="relative w-full min-w-0 h-[36px] bg-[#f7f7f7] rounded-[2px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
                 onSubmit={handleSearchSubmit}
               >
                 <input
@@ -180,16 +180,16 @@ export function AppHeader({
                 <div className="h-[22px] w-px bg-[#b2b8c1] shrink-0" aria-hidden="true"></div>
                 <button
                   type="submit"
-                  className="w-[42px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
+                  className="w-[40px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="h-[18px] w-[18px] text-[#2563eb]" strokeWidth={1.6} />
+                  <Search className="h-[17px] w-[17px] text-[#2d5d94]" strokeWidth={1.6} />
                 </button>
               </form>
             </div>
 
             {/* Mobile/Tablet only: hamburger (3. Resort to hamburger on small screens) */}
-            <div className="md:hidden flex items-center justify-center -mr-2 sm:-mr-4 text-white relative z-[62] h-full shrink-0">
+            <div className="md:hidden flex items-center justify-end text-white relative z-[62] h-full shrink-0">
               <MobileMenu
                 instagramUrl={instagramUrl}
                 facebookUrl={facebookUrl}
