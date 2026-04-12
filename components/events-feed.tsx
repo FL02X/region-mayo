@@ -154,10 +154,10 @@ export function EventsFeed({
           <CountdownSection events={events} onRegister={handleRegister} />
         </div>
 
-        <div className="h-[28px] bg-muted/20 md:hidden" aria-hidden="true" />
+        <div className="h-[12px] bg-muted/20 md:hidden" aria-hidden="true" />
 
         {/* Calendar section */}
-        <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 border-t border-border/70 bg-muted/20">
+        <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 md:border-t border-border/70 bg-muted/20">
         <div className="mt-4 max-w-4xl mx-auto w-full">
           <div className="mb-5">
             <h2

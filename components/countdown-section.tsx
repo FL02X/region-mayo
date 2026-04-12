@@ -187,11 +187,11 @@ export function CountdownSection({ events, onRegister }: CountdownSectionProps) 
 
   return (
     <section
-      className="bg-background px-4 pt-6 pb-0"
+      className="bg-background md:px-4 pt-[15px] md:pt-6 pb-0"
       data-countdown-section
       aria-label="Próximo evento"
     >
-      <div className="max-w-md mx-auto w-full space-y-4">
+      <div className="max-w-none md:max-w-md mx-auto w-full space-y-4">
         {/* ── Active countdown ── */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
           <div className="bg-card border border-border overflow-hidden mb-3">
@@ -199,6 +199,7 @@ export function CountdownSection({ events, onRegister }: CountdownSectionProps) 
             <div className="h-[3px] bg-primary" aria-hidden="true" />
 
             <div className="p-5">
+              <div className="max-w-md mx-auto">
               {/* Label */}
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary mb-3">
                 Próximo Evento
@@ -272,6 +273,7 @@ export function CountdownSection({ events, onRegister }: CountdownSectionProps) 
                   REGISTRARSE
                 </Button>
               )}
+              </div>
             </div>
           </div>
         )}
