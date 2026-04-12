@@ -34,8 +34,7 @@ const menuItems = [
   { href: "/templos", label: "Templos", icon: Church },
   {
     href: "/directorio",
-    label: "Directorio",
-    description: "Pastores",
+    label: "Pastores",
     icon: Users,
   },
   { href: "/coros", label: "Coros Locales", icon: Music },
@@ -124,7 +123,7 @@ export function MobileMenu({
         <nav className="flex-1 overflow-y-auto" aria-label="Menú principal">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href && item.href !== "/";
             
             return (
               <Link

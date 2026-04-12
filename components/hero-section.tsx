@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Playfair_Display } from "next/font/google";
-import { Calendar, ExternalLink, MapPin } from "lucide-react";
+import { Calendar, ExternalLink, MapPin, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RegistrationModal } from "@/components/registration-modal";
 import { useTime } from "@/lib/time-context";
@@ -281,24 +281,25 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
                 )}
               </div>
 
-              <div className="w-full max-w-[360px] text-center md:text-left md:justify-self-end">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/85 mb-2">
+              <div className="w-full max-w-[360px] text-center md:text-left md:justify-self-end flex flex-col justify-center">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/85 mb-2 opacity-75">
                   Sitio Oficial 2026
                 </p>
                 <h1 className={`${heroTitleFont.className} text-[2.05rem] sm:text-[2.45rem] font-semibold text-white mb-5 leading-[1.04] tracking-[0.01em] [text-shadow:0_3px_16px_rgba(0,0,0,0.45)]`}>
                   <span className="block">Calendario</span>
                   <span className="block">Región Mayo</span>
                 </h1>
-                <Button
+                <button
                   onClick={scrollToContent}
-                  size="lg"
-                  className="w-full h-12 text-[18px] font-semibold bg-[#2f5e93] hover:bg-[#294f7b] text-white shadow-none rounded-[2px]"
+                  className="w-full group flex items-center justify-start gap-2 text-[15px] font-semibold text-white/90 hover:text-white transition-colors py-3 opacity-75"
+                  aria-label="Explorar calendario y desplazarse hacia abajo"
                 >
                   Explorar Calendario 2026
-                </Button>
+                  <ChevronDown className="h-5 w-5 text-white/70 group-hover:text-white group-hover:translate-y-1 transition-all" aria-hidden="true" />
+                </button>
 
                 {slides.length > 1 && (
-                  <div className="mt-5 flex items-center justify-center md:justify-start gap-2" aria-label="Indicador de carrusel">
+                  <div className="mt-5 flex items-center justify-center md:justify-start gap-2 opacity-75" aria-label="Indicador de carrusel">
                     {slides.map((_, index) => {
                       const isActive = index === (incomingIndex ?? currentIndex);
                       return (
@@ -316,6 +317,12 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
               </div>
             </div>
           </div>
+
+          {/* Dark overlay for text on right side */}
+          <div
+            className="absolute top-0 right-0 bottom-0 w-[70%] bg-gradient-to-l from-black/60 via-black/30 to-transparent pointer-events-none"
+            aria-hidden="true"
+          />
 
           {nextEvent && (
             <RegistrationModal

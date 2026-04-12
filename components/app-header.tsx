@@ -26,7 +26,7 @@ interface AppHeaderProps {
 const navItems = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/templos", label: "Templos", icon: Church },
-  { href: "/directorio", label: "Directorio", icon: Users },
+  { href: "/directorio", label: "Pastores", icon: Users },
   { href: "/coros", label: "Coros", icon: Music },
   { href: "/album", label: "Álbum", icon: Images },
   { href: "/directiva", label: "Directiva", icon: UserCircle },
@@ -84,8 +84,8 @@ export function AppHeader({
                     className={cn(
                       "flex items-center gap-1.5 h-full px-2.5 lg:px-3 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
                       isActive
-                        ? "text-white border-[#6c8fbc]"
-                        : "text-white/90 hover:text-white hover:border-white/30"
+                        ? "text-white border-[#2f5e93] bg-[#2f5e93]"
+                        : "text-white/90 hover:text-white hover:border-white/30 hover:bg-white/5"
                     )}
                     aria-current={isActive ? "page" : undefined}
                   >

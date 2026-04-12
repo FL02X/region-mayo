@@ -316,7 +316,7 @@ export function EventCard({
 
               {/* ── Expanded details ── */}
               {isExpanded && (
-                <div id={`details-${event.id}`} className="space-y-3 pb-1 pt-1 px-5">
+                <div id={`details-${event.id}`} className="space-y-4 pb-5 pt-5 px-5">
                   {/* Vestimenta */}
                   {event.vestimenta && (
                     <div className="flex items-start gap-2.5">
