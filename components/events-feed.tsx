@@ -157,16 +157,16 @@ export function EventsFeed({
         <div className="h-[12px] bg-muted/20 md:hidden" aria-hidden="true" />
 
         {/* Calendar section */}
-        <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 md:border-t border-border/70 bg-muted/20">
+        <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 border-t border-border/70 bg-muted/20">
         <div className="mt-4 max-w-4xl mx-auto w-full">
           <div className="mb-5">
             <h2
               id="calendar-title"
-              className="text-[1.3rem] font-semibold text-foreground tracking-tight mb-2"
+              className="text-[1.425rem] font-semibold text-foreground tracking-tight mb-2"
             >
               Calendario 2026
             </h2>
-            <p className="text-[13px] text-muted-foreground mt-0.5">
+            <p className="text-[17px] text-muted-foreground mt-0.5">
               Selecciona un mes para ver los eventos
             </p>
           </div>
@@ -190,10 +190,10 @@ export function EventsFeed({
         <div className="mt-1 max-w-4xl mx-auto w-full">
           {/* Month label */}
           <div className="mb-6">
-            <h3 className="font-semibold text-[1.15rem] text-foreground tracking-tight">
+            <h3 className="font-semibold text-[1.275rem] text-foreground tracking-tight">
               {months[selectedMonth.getMonth()]} {selectedMonth.getFullYear()}
             </h3>
-            <p className="text-[12px] text-muted-foreground mt-0.5">
+            <p className="text-[16px] text-muted-foreground mt-0.5">
               {filteredEvents.length === 0
                 ? "No hay eventos programados"
                 : `${filteredEvents.length} ${

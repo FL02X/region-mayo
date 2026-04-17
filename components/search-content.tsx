@@ -187,11 +187,11 @@ function SearchContentInner({ data }: SearchContentProps) {
         <div className="max-w-4xl mx-auto">
           <div className="mb-6 pb-5 border-b border-border/70">
             <div>
-              <h1 className="text-[1.7rem] font-semibold text-foreground tracking-tight">Resultados de búsqueda</h1>
-              <p className="text-[13px] text-muted-foreground mt-1">
+              <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Resultados de búsqueda</h1>
+              <p className="text-[17px] text-muted-foreground mt-1">
                 Buscando: <span className="font-semibold text-foreground">&quot;{localQuery || queryFromUrl}&quot;</span>
               </p>
-              <p className="text-[13px] text-muted-foreground mt-1">
+              <p className="text-[17px] text-muted-foreground mt-1">
                 {filteredResults.length} resultado{filteredResults.length !== 1 ? "s" : ""}
               </p>
             </div>
@@ -231,7 +231,7 @@ function SearchContentInner({ data }: SearchContentProps) {
                     type="button"
                     onClick={() => setActiveFilter(filter.key as SearchResultType | "all")}
                     className={[
-                      "shrink-0 border px-3 py-1.5 text-[13px] transition-colors rounded-[2px]",
+                      "shrink-0 border px-3 py-1.5 text-[17px] transition-colors rounded-[2px]",
                       isActive
                         ? "bg-[#2f5e93] text-white border-[#2f5e93]"
                         : "bg-white text-[#2f5e93] border-[#d2d6dc] hover:bg-[#f6f8fb]",
@@ -328,20 +328,20 @@ function SearchContentInner({ data }: SearchContentProps) {
                     <span className="text-[10px] font-semibold tracking-[0.14em] text-[#2f5e93] mb-1 uppercase">
                       {label}
                     </span>
-                    <h3 className="text-[18px] sm:text-[19px] font-semibold text-[#222b35] dark:text-gray-100 sm:group-hover:text-[#2f5e93] transition-colors leading-snug mb-1 tracking-tight">
+                    <h3 className="text-[20px] sm:text-[21px] font-semibold text-[#222b35] dark:text-gray-100 sm:group-hover:text-[#2f5e93] transition-colors leading-snug mb-1 tracking-tight">
                       <ResultHighlightedText text={title} />
                     </h3>
                     {subtitle && (
-                      <p className="text-[14px] font-medium text-foreground mb-1">
+                      <p className="text-[16px] font-medium text-foreground mb-1">
                         <ResultHighlightedText text={subtitle} />
                       </p>
                     )}
                     {description && (
-                      <p className="text-[12px] text-muted-foreground">
+                      <p className="text-[16px] text-muted-foreground">
                         <ResultHighlightedText text={description} />
                       </p>
                     )}
-                    <div className="mt-4 sm:hidden flex items-center justify-end gap-1 text-[11px] uppercase tracking-wide text-[#2f5e93]">
+                    <div className="mt-4 sm:hidden flex items-center justify-end gap-1 text-[13px] uppercase tracking-wide text-[#2f5e93]">
                       <span className="font-semibold">Toca para ver</span>
                       <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </div>

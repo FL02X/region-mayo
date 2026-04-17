@@ -11,6 +11,7 @@ const inter = Inter({
   display: "swap",
   variable: "--font-inter",
   preload: true,
+  fallback: ["Segoe UI", "Tahoma", "Arial", "sans-serif"],
 });
 
 export const metadata: Metadata = {

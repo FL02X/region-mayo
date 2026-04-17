@@ -46,7 +46,7 @@ function AlbumCard({ event }: { event: Event }) {
         {/* Status label */}
         <div className="absolute top-3 right-3">
           <span
-            className={`text-[11px] font-semibold px-2 py-1 ${
+            className={`text-[13px] font-semibold px-2 py-1 ${
               isPastEvent
                 ? "bg-white/90 text-foreground"
                 : "bg-primary/90 text-white"

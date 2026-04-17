@@ -103,7 +103,12 @@ export function MobileMenu({
             variant="ghost"
             size="icon"
             className="h-10 w-10 text-white hover:bg-white/10 ml-auto"
-            onClick={() => setOpen(false)}
+            onClick={(e) => {
+              if (typeof navigator !== "undefined" && navigator.vibrate) {
+                navigator.vibrate(60);
+              }
+              setOpen(false);
+            }}
             aria-label="Cerrar menú"
           >
             <svg
@@ -125,11 +130,32 @@ export function MobileMenu({
             const Icon = item.icon;
             const isActive = pathname === item.href && item.href !== "/";
             
+            const handleMenuClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+              // Haptic feedback
+              if (typeof navigator !== "undefined" && navigator.vibrate) {
+                navigator.vibrate(60);
+              }
+              
+              // Add flick animation
+              const target = e.currentTarget;
+              target.classList.add("flick-feedback");
+              
+              // Remove animation class after it completes
+              const handleAnimationEnd = () => {
+                target.classList.remove("flick-feedback");
+                target.removeEventListener("animationend", handleAnimationEnd);
+              };
+              target.addEventListener("animationend", handleAnimationEnd);
+            };
+            
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setOpen(false)}
+                onClick={(e) => {
+                  handleMenuClick(e);
+                  setOpen(false);
+                }}
                 className={cn(
                   "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors",
                   isActive

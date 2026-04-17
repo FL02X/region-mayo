@@ -189,18 +189,18 @@ export function EventCard({
         {/* ── Card body ── */}
         <div className="p-5 flex flex-col flex-1">
           {/* Event type — plain uppercase label */}
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] mb-1.5">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] mb-1.5">
             {eventTypeLabels[eventType]}
           </p>
 
           {/* Title — Inter bold, no serif */}
-          <h3 className="text-[20px] md:text-[21px] font-bold text-foreground leading-[1.2] mb-3 font-sans tracking-tight">
+          <h3 className="text-[22px] md:text-[23px] font-bold text-foreground leading-[1.2] mb-3 font-sans tracking-tight">
             {event.title}
           </h3>
 
           {/* Description — always shown, 3-line clamp */}
           {hasDescription && (
-            <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-3 mb-4">
+            <p className="text-[15px] text-muted-foreground leading-relaxed line-clamp-3 mb-4">
               {event.description}
             </p>
           )}
@@ -213,11 +213,11 @@ export function EventCard({
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-medium text-foreground leading-snug">
+                <p className="text-[16px] font-medium text-foreground leading-snug">
                   {event.location}
                 </p>
                 {event.address && (
-                  <p className="text-[12px] text-muted-foreground">
+                  <p className="text-[16px] text-muted-foreground">
                     {event.address}
                   </p>
                 )}

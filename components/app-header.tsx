@@ -50,7 +50,7 @@ export function AppHeader({
 
   return (
     <>
-      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[49px] md:h-[45px]">
+      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[49px] md:h-[45px] md:shadow-none shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
         <div className="h-full max-w-[950px] mx-auto relative z-[61]">
           {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
           <div className="hidden md:flex items-center h-full px-4 lg:px-6 gap-2">
@@ -118,7 +118,7 @@ export function AppHeader({
                   className="w-[40px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="h-[17px] w-[17px] text-[#2d5d94]" strokeWidth={1.6} />
+                  <Search className="h-[17px] w-[17px] text-[#4a4a4a]" strokeWidth={1.6} />
                 </button>
               </form>
             </div>
@@ -183,7 +183,7 @@ export function AppHeader({
                   className="w-[40px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="h-[17px] w-[17px] text-[#2d5d94]" strokeWidth={1.6} />
+                  <Search className="h-[17px] w-[17px] text-[#4a4a4a]" strokeWidth={1.6} />
                 </button>
               </form>
             </div>

@@ -166,10 +166,10 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
-          <h1 className="text-[1.7rem] font-semibold text-foreground tracking-tight">
+          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">
             Directorio de Pastores
           </h1>
-          <p className="text-[13px] text-muted-foreground mt-1">
+          <p className="text-[17px] text-muted-foreground mt-1">
             Nuestros siervos en la Región Mayo
           </p>
         </div>

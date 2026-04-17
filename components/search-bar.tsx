@@ -30,7 +30,7 @@ export function SearchBar({
   return (
     <div className="rounded-[2px] border border-[#d7dbe1] bg-[#e9eaec] px-2.5 py-2">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5a6470]" aria-hidden="true" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#4a4a4a]" aria-hidden="true" />
         <input
           type="text"
           value={query}
