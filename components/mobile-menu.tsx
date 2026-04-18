@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -47,7 +47,30 @@ export function MobileMenu({
   facebookUrl = "https://facebook.com/regionmayo",
 }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
+  const [touchFeedbackHref, setTouchFeedbackHref] = useState<string | null>(null);
+  const touchFeedbackTimerRef = useRef<number | null>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    return () => {
+      if (touchFeedbackTimerRef.current !== null) {
+        window.clearTimeout(touchFeedbackTimerRef.current);
+      }
+    };
+  }, []);
+
+  const triggerTouchFeedback = (href: string) => {
+    setTouchFeedbackHref(href);
+
+    if (touchFeedbackTimerRef.current !== null) {
+      window.clearTimeout(touchFeedbackTimerRef.current);
+    }
+
+    touchFeedbackTimerRef.current = window.setTimeout(() => {
+      setTouchFeedbackHref(null);
+      touchFeedbackTimerRef.current = null;
+    }, 220);
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -129,8 +152,12 @@ export function MobileMenu({
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href && item.href !== "/";
+            const isTouchFeedback = touchFeedbackHref === item.href;
+            const showLeftAccent = isActive || isTouchFeedback;
             
             const handleMenuClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+              triggerTouchFeedback(item.href);
+
               // Haptic feedback
               if (typeof navigator !== "undefined" && navigator.vibrate) {
                 navigator.vibrate(60);
@@ -154,13 +181,21 @@ export function MobileMenu({
                 href={item.href}
                 onClick={(e) => {
                   handleMenuClick(e);
-                  setOpen(false);
+                  window.setTimeout(() => {
+                    setOpen(false);
+                  }, 120);
+                }}
+                onTouchStart={() => {
+                  triggerTouchFeedback(item.href);
                 }}
                 className={cn(
-                  "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors",
+                  "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
+                  showLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
                   isActive
-                    ? "bg-gray-200 before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]"
-                    : "hover:bg-gray-100"
+                    ? "bg-gray-200"
+                    : isTouchFeedback
+                      ? "bg-[#e8f1ff] shadow-[inset_0_0_0_1px_rgba(63,109,181,0.2)]"
+                      : "hover:bg-gray-100 active:bg-[#e8f1ff]"
                 )}
                 aria-current={isActive ? "page" : undefined}
               >

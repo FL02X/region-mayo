@@ -143,7 +143,7 @@ export function EventCard({
     <>
       <article 
         id={event.id}
-        className="bg-card border border-border/80 overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+        className="desktop-card-lift bg-card border border-border/80 overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
       >
         {/* ── Image with date/time strip ── */}
         {event.image ? (

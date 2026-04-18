@@ -175,7 +175,7 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
 
   return (
     <div className="w-full relative bg-[#f1f1f1]">
-      <div className="max-w-[950px] mx-auto bg-[var(--surface-pane)] md:border-x border-[#dce2e9] dark:border-[#27272a] shadow-[0_0_10px_rgba(0,0,0,0.045)] dark:shadow-none">
+      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a]">
         <section
           className="relative overflow-hidden h-[min(60vh,480px)] md:h-[420px] min-h-[280px]"
           aria-label="Bienvenida a Región Mayo"
@@ -228,7 +228,7 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
             <div className="w-full grid md:grid-cols-[minmax(290px,390px)_1fr] gap-4 md:gap-5 items-center">
               <div className="hidden md:block">
                 {nextEvent && (
-                  <article className="bg-white/93 backdrop-blur-[1px] shadow-[0_8px_20px_rgba(0,0,0,0.2)] p-4 rounded-[2px]">
+                  <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#2f5e93] mb-2">
                       Próximo Evento
                     </p>

@@ -29,7 +29,7 @@ function PastorCard({ pastor, searchQuery }: { pastor: Pastor; searchQuery: stri
   return (
     <div 
       id={pastor.id} 
-      className="bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+      className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
       <div className="relative h-60 w-full bg-muted shrink-0">
@@ -160,8 +160,8 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
   );
 
   return (
-    <div className="w-full relative pb-20 bg-[var(--surface-shell)]" id="main-content">
-      <div className="max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[var(--surface-pane)] md:border-x border-[#dce2e9] dark:border-[#27272a] shadow-[0_0_10px_rgba(0,0,0,0.045)] dark:shadow-none min-h-screen focus:outline-none">
+    <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
         {/* Main Content Area */}
         <div className="max-w-4xl mx-auto">
           {/* Header */}

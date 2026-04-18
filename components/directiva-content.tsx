@@ -31,7 +31,7 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
   return (
     <div 
       id={member.id} 
-      className="bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+      className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
       <div className="relative h-60 w-full bg-muted shrink-0">
@@ -167,7 +167,7 @@ export function DirectivaContent({ members }: DirectivaContentProps) {
 
   return (
     <div className="w-full relative pb-16 bg-[#f1f1f1]" id="main-content">
-      <div className="max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-background md:border-x border-[#e5e7eb] dark:border-[#27272a] shadow-[0_0_15px_1px_rgba(0,0,0,0.07)] dark:shadow-none min-h-screen focus:outline-none">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-[#ffffff] md:border-x border-[#e5e7eb] dark:border-[#27272a] min-h-screen focus:outline-none">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
         <div className="mb-6 pb-4 border-b border-border">

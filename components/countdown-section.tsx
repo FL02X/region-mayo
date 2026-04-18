@@ -194,7 +194,7 @@ export function CountdownSection({ events, onRegister }: CountdownSectionProps) 
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* ── Active countdown ── */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
-          <div className="bg-card border border-border overflow-hidden mb-3">
+          <div className="desktop-card-lift bg-card border border-border overflow-hidden mb-3">
             {/* Thin primary accent bar at top */}
             <div className="h-[3px] bg-primary" aria-hidden="true" />
 
@@ -278,7 +278,7 @@ export function CountdownSection({ events, onRegister }: CountdownSectionProps) 
 
         {/* ── Album sharing cards (post-event) ── */}
         {albumEvents.map((event) => (
-          <div key={event.id} className="bg-card border border-border p-4">
+          <div key={event.id} className="desktop-card-lift bg-card border border-border p-4">
             <div className="flex items-start gap-3">
               <Images
                 className="h-4 w-4 text-primary shrink-0 mt-0.5"

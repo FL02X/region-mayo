@@ -48,7 +48,7 @@ const TYPE_PRIORITY: Record<SearchResultType, number> = {
 function SearchContentInner({ data }: SearchContentProps) {
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q") || "";
-  const [localQuery, setLocalQuery] = useState(queryFromUrl);
+  const [localQuery, setLocalQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<SearchResultType | "all">("all");
 
   useEffect(() => {
@@ -84,9 +84,9 @@ function SearchContentInner({ data }: SearchContentProps) {
       label: string,
       pathPrefix: string,
       primaryField: string,
-    ) => {
+    ): SearchResultItem[] => {
       return items
-      .map((item) => {
+      .map((item): SearchResultItem | null => {
         let bestScore = 0;
 
         fields.forEach((field, index) => {
@@ -162,6 +162,8 @@ function SearchContentInner({ data }: SearchContentProps) {
     };
   }, [allResults]);
 
+  const hasActiveQuery = localQuery.trim().length > 0;
+
   const ResultHighlightedText = ({ text }: { text: string }) => {
     if (!text) return null;
     const parts = highlightText(text, localQuery);
@@ -181,23 +183,11 @@ function SearchContentInner({ data }: SearchContentProps) {
   };
 
   return (
-    <div className="w-full relative pb-20 bg-[var(--surface-shell)]" id="main-content">
-      <div className="max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[var(--surface-pane)] md:border-x border-[#dce2e9] dark:border-[#27272a] shadow-[0_0_10px_rgba(0,0,0,0.045)] dark:shadow-none min-h-screen focus:outline-none">
+    <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
         
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6 pb-5 border-b border-border/70">
-            <div>
-              <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Resultados de búsqueda</h1>
-              <p className="text-[17px] text-muted-foreground mt-1">
-                Buscando: <span className="font-semibold text-foreground">&quot;{localQuery || queryFromUrl}&quot;</span>
-              </p>
-              <p className="text-[17px] text-muted-foreground mt-1">
-                {filteredResults.length} resultado{filteredResults.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-7 space-y-3 rounded-[2px] border border-[#d7dbe1] bg-[#e9eaec] px-2.5 py-2.5">
+          <div className="mb-4 space-y-3 rounded-[2px] border border-[#d7dbe1] bg-[#e9eaec] px-2.5 py-2.5">
             <form
               onSubmit={(e) => e.preventDefault()}
               className="relative w-full h-[42px] bg-white rounded-[2px] flex items-center overflow-hidden border border-[#b8c1cc]"
@@ -244,9 +234,16 @@ function SearchContentInner({ data }: SearchContentProps) {
                 );
               })}
             </div>
+
           </div>
 
-          {filteredResults.length === 0 ? (
+          {hasActiveQuery && (
+            <p className="mb-7 px-0.5 text-[13px] text-[#6f7480] leading-tight" aria-live="polite">
+              {filteredResults.length} resultado{filteredResults.length !== 1 ? "s" : ""} obtenido{filteredResults.length !== 1 ? "s" : ""}
+            </p>
+          )}
+
+          {hasActiveQuery && filteredResults.length === 0 ? (
             <div className="py-10 text-foreground">
               <p className="text-lg mb-6">Lamentablemente no se encontró ningún resultado.</p>
               <p className="text-xl mb-2">Sugerencias:</p>
@@ -256,7 +253,7 @@ function SearchContentInner({ data }: SearchContentProps) {
                 <li>Use menos palabras para la búsqueda.</li>
               </ul>
             </div>
-          ) : (
+          ) : hasActiveQuery ? (
             <div className="flex flex-col gap-5">
             {filteredResults.map((result, idx) => {
               const { item, type, label, pathPrefix } = result;
@@ -309,7 +306,7 @@ function SearchContentInner({ data }: SearchContentProps) {
                 <Link 
                   key={`${type}-${item.id}-${idx}`}
                   href={`${pathPrefix}#${item.id}`}
-                  className="group flex flex-col sm:flex-row bg-card border border-border/80 overflow-hidden hover:border-[#2f5e93] hover:shadow-[0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-200 relative active:scale-[0.997]"
+                  className="desktop-card-lift group flex flex-col sm:flex-row bg-card border border-border/80 overflow-hidden hover:border-[#2f5e93] hover:shadow-[0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-200 relative active:scale-[0.997]"
                 >
                   <div className="w-full sm:w-[120px] h-[160px] sm:h-auto bg-muted shrink-0 relative flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border pointer-events-none">
                     {photo ? (
@@ -350,7 +347,7 @@ function SearchContentInner({ data }: SearchContentProps) {
               );
             })}
           </div>
-        )}
+          ) : null}
       </div>
     </div>
   </div>
@@ -360,7 +357,7 @@ function SearchContentInner({ data }: SearchContentProps) {
 export function SearchContent(props: SearchContentProps) {
   return (
     <Suspense fallback={
-      <div className="w-full relative pb-16 pt-[78px] md:pt-[84px] bg-background text-center py-12">
+      <div className="w-full relative pb-16 pt-[78px] md:pt-[84px] bg-[#f1f1f1] text-center py-12">
         <p className="text-muted-foreground">Cargando resultados...</p>
       </div>
     }>

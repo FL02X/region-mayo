@@ -23,7 +23,7 @@ export default async function Home() {
       .sort((a, b) => a.date.getTime() - b.date.getTime())[0] ?? null;
 
   return (
-    <main id="main-content" className="min-h-screen">
+    <main id="main-content" className="min-h-screen bg-[#f1f1f1]">
       <AppHeader
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
@@ -35,7 +35,7 @@ export default async function Home() {
           regionPresident={regionPresident}
         />
       </div>
-      <div className="pt-[56px] md:pt-0">
+      <div className="pt-[51px] md:pt-0">
         {region ? (
           <EventsFeed
             events={events}

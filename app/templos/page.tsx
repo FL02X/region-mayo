@@ -16,7 +16,7 @@ export default async function TemploPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-[#f1f1f1]">
       <AppHeader
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}

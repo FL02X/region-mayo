@@ -147,8 +147,8 @@ export function EventsFeed({
   };
 
   return (
-    <div className="w-full relative bg-[var(--surface-shell)]" data-events-feed="true">
-      <div className="max-w-[950px] mx-auto bg-[var(--surface-pane)] md:border-x border-[#dce2e9] dark:border-[#27272a] shadow-[0_0_10px_rgba(0,0,0,0.045)] dark:shadow-none min-h-screen pb-20 pt-[2px]">
+    <div className="w-full relative bg-[#f1f1f1]" data-events-feed="true">
+      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen pb-20 pt-[2px]">
         {/* Countdown (mobile only; desktop featured event lives in hero) */}
         <div className="md:hidden">
           <CountdownSection events={events} onRegister={handleRegister} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -38,6 +39,13 @@ export function AppHeader({
 }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const desktopTrackRef = useRef<HTMLDivElement | null>(null);
+  const desktopHoveredItemRef = useRef<HTMLElement | null>(null);
+  const [desktopHoverState, setDesktopHoverState] = useState({
+    x: 0,
+    width: 0,
+    opacity: 0,
+  });
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,16 +56,92 @@ export function AppHeader({
     }
   };
 
+  const getOffsetWithinTrack = (element: HTMLElement, track: HTMLElement) => {
+    let offset = 0;
+    let node: HTMLElement | null = element;
+
+    while (node && node !== track) {
+      offset += node.offsetLeft;
+      node = node.offsetParent instanceof HTMLElement ? node.offsetParent : null;
+    }
+
+    return offset;
+  };
+
+  const moveDesktopHighlight = (element: HTMLElement) => {
+    const track = desktopTrackRef.current;
+    if (!track) return;
+
+    const horizontalInset = 1;
+    const x = Math.max(0, getOffsetWithinTrack(element, track) + horizontalInset);
+    const width = Math.max(0, element.offsetWidth - horizontalInset * 2);
+
+    setDesktopHoverState({
+      x,
+      width,
+      opacity: 1,
+    });
+  };
+
+  const clearDesktopHighlight = () => {
+    desktopHoveredItemRef.current = null;
+    setDesktopHoverState((prev) => ({ ...prev, opacity: 0 }));
+  };
+
+  const handleDesktopTrackMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const track = desktopTrackRef.current;
+    if (!track) return;
+
+    const items = track.querySelectorAll<HTMLElement>(".desktop-header-item");
+    let hoveredItem: HTMLElement | null = null;
+
+    for (const item of items) {
+      const rect = item.getBoundingClientRect();
+      if (
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      ) {
+        hoveredItem = item;
+        break;
+      }
+    }
+
+    if (!hoveredItem) return;
+    if (desktopHoveredItemRef.current === hoveredItem) return;
+
+    desktopHoveredItemRef.current = hoveredItem;
+    moveDesktopHighlight(hoveredItem);
+  };
+
+  const desktopHighlightStyle = {
+    "--header-highlight-x": `${desktopHoverState.x}px`,
+    "--header-highlight-w": `${desktopHoverState.width}px`,
+    "--header-highlight-opacity": `${desktopHoverState.opacity}`,
+  } as CSSProperties;
+
   return (
     <>
-      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[49px] md:h-[45px] md:shadow-none shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[51px] md:h-[45px] shadow-none">
         <div className="h-full max-w-[950px] mx-auto relative z-[61]">
           {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
-          <div className="hidden md:flex items-center h-full px-4 lg:px-6 gap-2">
+          <div
+            ref={desktopTrackRef}
+            className="desktop-header-track hidden md:flex items-center h-full px-4 lg:px-6 gap-2"
+            onMouseMove={handleDesktopTrackMouseMove}
+            onMouseLeave={clearDesktopHighlight}
+          >
+            <div
+              className="desktop-header-hover-indicator"
+              style={desktopHighlightStyle}
+              aria-hidden="true"
+            />
             <Link
               href="/"
-              className="flex items-center gap-2.5 shrink-0"
+              className="desktop-header-item flex items-center gap-2.5 shrink-0"
               aria-label="Inicio — Region Mayo"
+              onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
             >
               <Image
                 src="/images/region-mayo-logo.jpg"
@@ -81,16 +165,17 @@ export function AppHeader({
                   <Link
                     key={href}
                     href={href}
+                    onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
                     className={cn(
-                      "flex items-center gap-1.5 h-full px-2.5 lg:px-3 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
+                      "desktop-header-item flex items-center gap-1.5 h-full px-2.5 lg:px-3 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
                       isActive
                         ? "text-white border-[#2f5e93] bg-[#2f5e93]"
-                        : "text-white/90 hover:text-white hover:border-white/30 hover:bg-white/5"
+                        : "text-white/90 hover:text-white hover:border-white/30"
                     )}
                     aria-current={isActive ? "page" : undefined}
                   >
                     <Icon
-                      className="hidden xl:block h-[15px] w-[15px] shrink-0 opacity-80"
+                      className="desktop-header-icon hidden xl:block h-[15px] w-[15px] shrink-0 opacity-80"
                       aria-hidden="true"
                       strokeWidth={1.75}
                     />
@@ -115,10 +200,10 @@ export function AppHeader({
                 <div className="h-[22px] w-px bg-[#b2b8c1] shrink-0" aria-hidden="true" />
                 <button
                   type="submit"
-                  className="w-[40px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
+                  className="desktop-search-button w-[40px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="h-[17px] w-[17px] text-[#4a4a4a]" strokeWidth={1.6} />
+                  <Search className="desktop-search-icon h-[17px] w-[17px] text-[#4a4a4a]" strokeWidth={1.6} />
                 </button>
               </form>
             </div>
@@ -128,19 +213,21 @@ export function AppHeader({
                 href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center h-9 w-9 text-white/90 hover:text-white transition-colors"
+                className="desktop-header-item flex items-center justify-center h-9 w-9 text-white/90 hover:text-white transition-colors"
                 aria-label="Síguenos en Instagram"
+                onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
               >
-                <Instagram className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
+                <Instagram className="desktop-header-icon h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
               </a>
               <a
                 href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center h-9 w-9 text-white/90 hover:text-white transition-colors"
+                className="desktop-header-item flex items-center justify-center h-9 w-9 text-white/90 hover:text-white transition-colors"
                 aria-label="Síguenos en Facebook"
+                onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
               >
-                <Facebook className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
+                <Facebook className="desktop-header-icon h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
               </a>
             </div>
           </div>
