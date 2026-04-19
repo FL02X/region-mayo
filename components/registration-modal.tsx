@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import Image from "next/image"
 import { X, Check, Calendar, ChevronRight, ChevronLeft, User, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -38,11 +39,18 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   })
 
   useEffect(() => {
-    if (isOpen) {
-      setFormStartTime(Date.now())
-      setStep(1)
-      setSubmitError(null)
-      setSelectedPhotoIndex(null)
+    if (!isOpen) return
+
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    setFormStartTime(Date.now())
+    setStep(1)
+    setSubmitError(null)
+    setSelectedPhotoIndex(null)
+
+    return () => {
+      document.body.style.overflow = prevOverflow
     }
   }, [isOpen])
 
@@ -165,7 +173,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     </div>
   )
 
-  return (
+  const modalContent = (
     <>
       <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 overflow-hidden">
         {/* Backdrop */}
@@ -217,7 +225,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                   </div>
                   <div>
                     <Label htmlFor="phone" className="text-sm font-bold text-foreground uppercase tracking-wider">Teléfono</Label>
-                    <div className="mt-2 className-[&_input]:rounded-none [&_input]:h-12">
+                    <div className="mt-2 [&_input]:rounded-none [&_input]:h-12">
                       <PhoneInput
                         id="phone"
                         value={formData.phone}
@@ -425,6 +433,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
       )}
     </>
   )
+
+  return createPortal(modalContent, document.body)
 }
 
 // Fullscreen Photo Viewer Component
