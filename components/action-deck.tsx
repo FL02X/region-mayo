@@ -313,22 +313,25 @@ export function ActionDeck({ events }: ActionDeckProps) {
       </div>
 
       {/* Desktop: horizontal scroll with arrows and custom scrollbar */}
-      <div className="hidden md:block relative px-6">
-        {/* Left arrow */}
+      <div className="hidden md:block relative">
+        {/* Left arrow - inside bounds with gradient fade */}
         {canScrollLeft && (
           <button
             onClick={() => scrollBy("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/[0.04] hover:bg-black/[0.08] transition-colors"
+            className="absolute left-0 top-0 bottom-0 z-10 flex items-center justify-center w-14 bg-gradient-to-r from-white via-white/80 to-transparent"
+            style={{ height: "calc(100% - 24px)" }} // Exclude scrollbar area
             aria-label="Ver elementos anteriores"
           >
-            <ChevronLeft className="h-5 w-5 text-[#425060]" />
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/[0.06] hover:bg-black/[0.10] transition-colors">
+              <ChevronLeft className="h-5 w-5 text-[#425060]" />
+            </div>
           </button>
         )}
 
         {/* Scrollable container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto pb-3"
+          className="flex gap-4 overflow-x-auto pb-3 px-6"
           style={{
             msOverflowStyle: "none",
             scrollbarWidth: "none",
@@ -350,14 +353,17 @@ export function ActionDeck({ events }: ActionDeckProps) {
           ))}
         </div>
 
-        {/* Right arrow */}
+        {/* Right arrow - inside bounds with gradient fade */}
         {canScrollRight && (
           <button
             onClick={() => scrollBy("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/[0.04] hover:bg-black/[0.08] transition-colors"
+            className="absolute right-0 top-0 bottom-0 z-10 flex items-center justify-center w-14 bg-gradient-to-l from-white via-white/80 to-transparent"
+            style={{ height: "calc(100% - 24px)" }} // Exclude scrollbar area
             aria-label="Ver más elementos"
           >
-            <ChevronRight className="h-5 w-5 text-[#425060]" />
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/[0.06] hover:bg-black/[0.10] transition-colors">
+              <ChevronRight className="h-5 w-5 text-[#425060]" />
+            </div>
           </button>
         )}
 
@@ -366,7 +372,7 @@ export function ActionDeck({ events }: ActionDeckProps) {
           <div
             ref={trackRef}
             onClick={handleTrackClick}
-            className="relative h-1.5 bg-[#f0f2f5] rounded-full mt-2 cursor-pointer"
+            className="relative h-1.5 bg-[#f0f2f5] rounded-full mx-6 cursor-pointer"
           >
             {/* Scrollbar thumb */}
             <div
