@@ -29,11 +29,15 @@ const INITIAL_DATE = new Date(2026, 3, 1); // April 2026
 interface EventsFeedProps {
   events: Event[];
   regionPresident: RegionPresident | null;
+  instagramUrl?: string;
+  facebookUrl?: string;
 }
 
 export function EventsFeed({
   events,
   regionPresident,
+  instagramUrl,
+  facebookUrl,
 }: EventsFeedProps) {
   const [selectedMonth, setSelectedMonth] = useState(INITIAL_DATE);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -157,10 +161,10 @@ export function EventsFeed({
 
         {/* ActionDeck (mobile only; desktop renders in page.tsx) */}
         <div className="md:hidden">
-          <ActionDeck events={events} />
+          <ActionDeck events={events} instagramUrl={instagramUrl} facebookUrl={facebookUrl} />
         </div>
 
-        <div className="h-[12px] bg-muted/20 md:hidden" aria-hidden="true" />
+        
 
         {/* Calendar section */}
         <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 border-t border-border/70 bg-muted/20">

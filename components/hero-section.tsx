@@ -150,10 +150,30 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
       return;
     }
+
+    // Prefer scrolling to the calendar title so we can precisely align it below
+    // the fixed header. Use scrollIntoView to rely on the DOM's layout, then
+    // apply a small smooth offset equal to header height + desired spacing
+    // so the title sits visibly below the header (no hard-coded absolute
+    // coordinates).
+    const calendarTitle = document.getElementById("calendar-title");
+    if (calendarTitle) {
+      // Increase desired spacing by 5px as requested (was 10px -> now 15px)
+      const DESIRED_SPACING = 15; // pixels of space between header and title
+
+      // Compute absolute position and perform a single smooth scroll to the
+      // target so the whole interaction is smooth (no instant jumps).
+      const absoluteTop = calendarTitle.getBoundingClientRect().top + window.scrollY;
+      const target = Math.max(0, absoluteTop - headerOffset - DESIRED_SPACING);
+      window.scrollTo({ top: target, behavior: "smooth" });
+      return;
+    }
+
     const calendarSection = document.getElementById("calendario");
     if (calendarSection) {
+      const EXTRA_OFFSET = 24; // fallback offset to ensure separator is hidden
       const offsetPosition =
-        calendarSection.getBoundingClientRect().top + window.scrollY - headerOffset;
+        calendarSection.getBoundingClientRect().top + window.scrollY - headerOffset + EXTRA_OFFSET;
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
   };
@@ -224,7 +244,7 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
             aria-hidden="true"
           />
 
-          <div className="relative z-10 h-full flex items-center px-5 md:px-6 pt-[52px] md:pt-[46px] pb-5">
+          <div className="relative z-10 h-full flex items-center px-5 md:px-6 pt-[52px] md:pt-[46px] pb-3">
             <div className="w-full grid md:grid-cols-[minmax(290px,390px)_1fr] gap-4 md:gap-5 items-center">
               <div className="hidden md:block">
                 {nextEvent && (

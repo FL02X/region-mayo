@@ -45,6 +45,15 @@ type DeckItem =
     }
   | {
       id: string;
+      type: "facebook";
+      title: string;
+      postedAt: Date;
+      image?: string;
+      href: string;
+      pinned?: boolean;
+    }
+  | {
+      id: string;
       type: "prayer";
       title: string;
       updatedAt: Date;
@@ -102,6 +111,11 @@ function scoreItem(item: DeckItem, now = Date.now()): number {
       score += Math.max(0, 200 - hoursSince);
       break;
     }
+    case "facebook": {
+      const hoursSince = (now - item.postedAt.getTime()) / MS_HOUR;
+      score += Math.max(0, 180 - hoursSince);
+      break;
+    }
     case "audio":
       score += 60;
       break;
@@ -133,9 +147,11 @@ function getMockNonEventCandidates(now: number): DeckItem[] {
 
 interface ActionDeckProps {
   events: Event[];
+  instagramUrl?: string;
+  facebookUrl?: string;
 }
 
-export function ActionDeck({ events }: ActionDeckProps) {
+export function ActionDeck({ events, instagramUrl, facebookUrl }: ActionDeckProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -154,29 +170,39 @@ export function ActionDeck({ events }: ActionDeckProps) {
   const deck = useMemo<DeckItem[]>(() => {
     const now = Date.now();
 
-    const eventItems: DeckItem[] = events
-      .filter((e) => e.date.getTime() > now - 2 * MS_HOUR)
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 4)
-      .map((e) => ({
-        id: `event-${e.id}`,
-        type: "event",
-        title: e.title,
-        date: e.date,
-        time: e.time,
-        location: e.location,
-        image: e.image,
-        href: `#${e.id}`,
-      }));
+    const nonEvent = getMockNonEventCandidates(now);
 
-    const candidates = [...eventItems, ...getMockNonEventCandidates(now)];
+    const socialCandidates: DeckItem[] = [];
+    if (instagramUrl) {
+      socialCandidates.push({
+        id: "instagram-home",
+        type: "instagram",
+        title: "Última publicación en Instagram",
+        postedAt: new Date(now - 18 * MS_HOUR),
+        href: instagramUrl,
+        image: undefined as any,
+        postType: "post",
+      });
+    }
+    if (facebookUrl) {
+      socialCandidates.push({
+        id: "facebook-home",
+        type: "facebook",
+        title: "Última publicación en Facebook",
+        postedAt: new Date(now - 36 * MS_HOUR),
+        href: facebookUrl,
+        image: undefined,
+      });
+    }
+
+    const candidates = [...nonEvent, ...socialCandidates];
 
     return candidates
       .map((item) => ({ item, score: scoreItem(item, now) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
       .map((s) => s.item);
-  }, [events]);
+  }, [instagramUrl, facebookUrl]);
 
   // Update desktop scroll state and scrollbar thumb
   const updateScrollState = () => {
@@ -241,6 +267,8 @@ export function ActionDeck({ events }: ActionDeckProps) {
     };
   }, [deck]);
 
+  
+
   // Smooth scroll by a certain amount (for arrow clicks)
   const scrollBy = (direction: "left" | "right") => {
     const container = scrollContainerRef.current;
@@ -253,6 +281,14 @@ export function ActionDeck({ events }: ActionDeckProps) {
       left: container.scrollLeft + (direction === "right" ? scrollAmount : -scrollAmount),
       behavior: "smooth",
     });
+  };
+
+  const handleMobileArrow = (direction: "left" | "right") => {
+    const container = mobileScrollRef.current;
+    if (!container) return;
+    const cardWidth = 280;
+    const amount = cardWidth * 1.5;
+    container.scrollTo({ left: container.scrollLeft + (direction === "right" ? amount : -amount), behavior: "smooth" });
   };
 
   // Handle thumb drag
@@ -312,10 +348,10 @@ export function ActionDeck({ events }: ActionDeckProps) {
   return (
     <section
       aria-label="Acciones destacadas"
-      className="w-full bg-white py-4 md:py-5 border-b border-[#ececec]"
+      className="w-full bg-gray-50 pt-6 md:pt-8 pb-8 md:pb-10"
     >
       <div className="flex items-center justify-between px-4 md:px-6 mb-2.5">
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#425060]">
+        <h2 className="text-[15px] mb-3 mt-3 font-bold uppercase tracking-[0.18em] text-[#425060]">
           Destacado para ti
         </h2>
         {/* Mobile only: swipe hint */}
@@ -326,25 +362,37 @@ export function ActionDeck({ events }: ActionDeckProps) {
 
       {/* Mobile: horizontal scroll with progress indicator */}
       <div className="md:hidden">
-        <div
-          ref={mobileScrollRef}
-          className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-2"
-          style={{
-            msOverflowStyle: "none",
-            scrollbarWidth: "none",
-          }}
-          role="list"
-        >
-          <style jsx>{`
-            div::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
-          {deck.map((item, idx) => (
-            <DeckCard key={item.id} item={item} featured={idx === 0} />
-          ))}
+        <div className="relative">
+          <div
+            ref={mobileScrollRef}
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-2"
+            style={{
+              msOverflowStyle: "none",
+              scrollbarWidth: "none",
+            }}
+            role="list"
+          >
+            <style jsx>{`
+              div::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+            {deck.map((item, idx) => (
+              <DeckCard key={item.id} item={item} featured={idx === 0} />
+            ))}
+          </div>
+
+          {mobileHasOverflow && (
+            <button
+              onClick={() => handleMobileArrow("right")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1 shadow-md"
+              aria-label="Ver más elementos"
+            >
+              <ChevronRight className="h-5 w-5 text-[#425060]" />
+            </button>
+          )}
         </div>
-        
+
         {/* Mobile scroll progress indicator */}
         {mobileHasOverflow && deck.length > 1 && (
           <div className="flex justify-center gap-1.5 pt-2 pb-1 px-4">
@@ -440,6 +488,8 @@ export function ActionDeck({ events }: ActionDeckProps) {
           </div>
         )}
       </div>
+
+      {/* Decorative lines removed — keep the page-level separator below */}
     </section>
   );
 }
@@ -462,6 +512,11 @@ const BADGE_META: Record<
     classes: "bg-[#f4edfa] text-[#6d49a8]",
     icon: <InstagramIcon className="h-3 w-3" aria-hidden="true" />,
   },
+  facebook: {
+    label: "Facebook",
+    classes: "bg-[#e8f1ff] text-[#1b74e4]",
+    icon: <Megaphone className="h-3 w-3" aria-hidden="true" />,
+  },
   prayer: {
     label: "Oración",
     classes: "bg-[#e7f1ea] text-[#2d6a4f]",
@@ -482,9 +537,20 @@ const BADGE_META: Record<
 const CTA_LABEL: Record<DeckItemType, string> = {
   event: "Ver evento",
   instagram: "Ver publicación",
+  facebook: "Ver publicación",
   prayer: "Agregar petición",
   promo: "Ver más",
   audio: "Escuchar",
+};
+
+// Accent colors for the top line on each card to visually link sections
+const ACCENT_COLORS: Record<DeckItemType, string> = {
+  event: "#2f5e93",
+  instagram: "#6d49a8",
+  facebook: "#1b74e4",
+  prayer: "#2d6a4f",
+  promo: "#92400e",
+  audio: "#3730a3",
 };
 
 function DeckCard({
@@ -506,7 +572,7 @@ function DeckCard({
   const imageHeight = featured && !isDesktop ? "h-28" : "h-24";
 
   const image =
-    (item.type === "event" || item.type === "instagram" || item.type === "promo") &&
+    (item.type === "event" || item.type === "instagram" || item.type === "promo" || item.type === "facebook") &&
     "image" in item
       ? item.image
       : undefined;
@@ -523,6 +589,12 @@ function DeckCard({
         widthClass,
       ].join(" ")}
     >
+      {/* Top accent line to match 'Próximo evento' cards */}
+      <div
+        className="w-full h-1 rounded-t-[3px]"
+        style={{ backgroundColor: ACCENT_COLORS[item.type] }}
+        aria-hidden="true"
+      />
       {image ? (
         <div className={`relative w-full ${imageHeight} bg-[#f1f1f1]`}>
           <Image

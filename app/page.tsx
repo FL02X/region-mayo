@@ -2,6 +2,8 @@ import { AppHeader } from "@/components/app-header";
 import { HeroSection } from "@/components/hero-section";
 import { EventsFeed } from "@/components/events-feed";
 import { ActionDeck } from "@/components/action-deck";
+import { Providers } from "@/components/providers";
+import { GoToCalendar } from "@/components/go-to-calendar";
 import {
   getEvents,
   getRegionConfig,
@@ -25,36 +27,48 @@ export default async function Home() {
 
   return (
     <main id="main-content" className="min-h-screen bg-[#f1f1f1]">
-      <AppHeader
-        instagramUrl={region?.socialLinks.instagram}
-        facebookUrl={region?.socialLinks.facebook}
-      />
-      <div className="hidden md:block">
-        <HeroSection
-          heroImages={siteSettings?.heroImages}
-          nextEvent={nextUpcomingEvent}
-          regionPresident={regionPresident}
+      <Providers>
+        <AppHeader
+          instagramUrl={region?.socialLinks.instagram}
+          facebookUrl={region?.socialLinks.facebook}
         />
-      </div>
-      {/* Desktop only: ActionDeck below hero */}
-      <div className="hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white">
-        <ActionDeck events={events} />
-      </div>
-      <div className="pt-[51px] md:pt-0">
-        {region ? (
-          <EventsFeed
-            events={events}
+
+        <div className="hidden md:block">
+          <HeroSection
+            heroImages={siteSettings?.heroImages}
+            nextEvent={nextUpcomingEvent}
             regionPresident={regionPresident}
           />
-        ) : (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <p className="text-lg text-gray-500">
-              No hay información de región disponible. Por favor, configúrala en
-              Sanity Studio.
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
+
+        {/* Desktop only: ActionDeck below hero — keep tight to hero, decorative bottom rules in component */}
+        <div className="hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white mt-0 mb-0">
+          <ActionDeck
+            events={events}
+            instagramUrl={region?.socialLinks.instagram}
+            facebookUrl={region?.socialLinks.facebook}
+          />
+        </div>
+
+        <div className="pt-[51px] md:pt-0">
+          {region ? (
+            <EventsFeed
+              events={events}
+              regionPresident={regionPresident}
+              instagramUrl={region?.socialLinks.instagram}
+              facebookUrl={region?.socialLinks.facebook}
+            />
+          ) : (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <p className="text-lg text-gray-500">
+                No hay información de región disponible. Por favor, configúrala en
+                Sanity Studio.
+              </p>
+            </div>
+          )}
+        </div>
+        <GoToCalendar />
+      </Providers>
     </main>
   );
 }
