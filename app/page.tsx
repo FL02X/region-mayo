@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/app-header";
 import { HeroSection } from "@/components/hero-section";
 import { EventsFeed } from "@/components/events-feed";
 import { InstagramHub } from "@/components/instagram-hub";
+import { ActionDeck } from "@/components/action-deck";
 import {
   getEvents,
   getRegionConfig,
@@ -37,6 +38,7 @@ export default async function Home() {
         />
       </div>
       <div className="max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white">
+        <ActionDeck events={events} />
         <InstagramHub />
       </div>
       <div className="pt-[51px] md:pt-0">
