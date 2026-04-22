@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -13,6 +13,7 @@ import {
   Megaphone,
   ArrowRight,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import type { Event } from "@/lib/types";
 
@@ -130,14 +131,20 @@ function getMockNonEventCandidates(now: number): DeckItem[] {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DESKTOP_VISIBLE_COUNT = 3;
-
 interface ActionDeckProps {
   events: Event[];
 }
 
 export function ActionDeck({ events }: ActionDeckProps) {
-  const [desktopStartIndex, setDesktopStartIndex] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
+  
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [thumbWidth, setThumbWidth] = useState(0);
+  const [thumbLeft, setThumbLeft] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const deck = useMemo<DeckItem[]>(() => {
     const now = Date.now();
@@ -166,21 +173,110 @@ export function ActionDeck({ events }: ActionDeckProps) {
       .map((s) => s.item);
   }, [events]);
 
-  if (deck.length === 0) return null;
+  // Update scroll state and scrollbar thumb
+  const updateScrollState = () => {
+    const container = scrollContainerRef.current;
+    const track = trackRef.current;
+    if (!container || !track) return;
 
-  const canShowMore = desktopStartIndex + DESKTOP_VISIBLE_COUNT < deck.length;
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    const maxScroll = scrollWidth - clientWidth;
 
-  const handleShowMore = () => {
-    setDesktopStartIndex((prev) =>
-      Math.min(prev + DESKTOP_VISIBLE_COUNT, deck.length - DESKTOP_VISIBLE_COUNT)
-    );
+    setCanScrollLeft(scrollLeft > 5);
+    setCanScrollRight(scrollLeft < maxScroll - 5);
+
+    // Calculate thumb size and position
+    const trackWidth = track.clientWidth;
+    const visibleRatio = clientWidth / scrollWidth;
+    const newThumbWidth = Math.max(40, trackWidth * visibleRatio);
+    const scrollRatio = maxScroll > 0 ? scrollLeft / maxScroll : 0;
+    const newThumbLeft = scrollRatio * (trackWidth - newThumbWidth);
+
+    setThumbWidth(newThumbWidth);
+    setThumbLeft(newThumbLeft);
   };
 
-  // Items visible on desktop (paginated)
-  const desktopVisibleItems = deck.slice(
-    desktopStartIndex,
-    desktopStartIndex + DESKTOP_VISIBLE_COUNT
-  );
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    updateScrollState();
+    container.addEventListener("scroll", updateScrollState);
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      container.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [deck]);
+
+  // Smooth scroll by a certain amount (for arrow clicks)
+  const scrollBy = (direction: "left" | "right") => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const cardWidth = 280; // Approximate card width + gap
+    const scrollAmount = cardWidth * 3;
+
+    container.scrollTo({
+      left: container.scrollLeft + (direction === "right" ? scrollAmount : -scrollAmount),
+      behavior: "smooth",
+    });
+  };
+
+  // Handle thumb drag
+  const handleThumbMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+
+    const startX = e.clientX;
+    const startThumbLeft = thumbLeft;
+    const track = trackRef.current;
+    const container = scrollContainerRef.current;
+    if (!track || !container) return;
+
+    const trackWidth = track.clientWidth;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newThumbLeft = Math.max(0, Math.min(trackWidth - thumbWidth, startThumbLeft + deltaX));
+      const scrollRatio = newThumbLeft / (trackWidth - thumbWidth);
+      container.scrollLeft = scrollRatio * maxScroll;
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  // Handle track click (jump to position)
+  const handleTrackClick = (e: React.MouseEvent) => {
+    const track = trackRef.current;
+    const container = scrollContainerRef.current;
+    if (!track || !container) return;
+
+    const rect = track.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const trackWidth = track.clientWidth;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+
+    // Center the thumb on click position
+    const targetThumbLeft = Math.max(0, Math.min(trackWidth - thumbWidth, clickX - thumbWidth / 2));
+    const scrollRatio = targetThumbLeft / (trackWidth - thumbWidth);
+    
+    container.scrollTo({
+      left: scrollRatio * maxScroll,
+      behavior: "smooth",
+    });
+  };
+
+  if (deck.length === 0) return null;
 
   return (
     <section
@@ -197,7 +293,7 @@ export function ActionDeck({ events }: ActionDeckProps) {
         </span>
       </div>
 
-      {/* Mobile: horizontal scroll */}
+      {/* Mobile: horizontal scroll (no custom scrollbar) */}
       <div
         className="md:hidden flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-1"
         style={{
@@ -216,28 +312,76 @@ export function ActionDeck({ events }: ActionDeckProps) {
         ))}
       </div>
 
-      {/* Desktop: grid with arrow navigation */}
+      {/* Desktop: horizontal scroll with arrows and custom scrollbar */}
       <div className="hidden md:block relative px-6">
-        <div className="grid grid-cols-3 gap-4" role="list">
-          {desktopVisibleItems.map((item, idx) => (
+        {/* Left arrow */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scrollBy("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/[0.04] hover:bg-black/[0.08] transition-colors"
+            aria-label="Ver elementos anteriores"
+          >
+            <ChevronLeft className="h-5 w-5 text-[#425060]" />
+          </button>
+        )}
+
+        {/* Scrollable container */}
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-4 overflow-x-auto pb-3"
+          style={{
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+          role="list"
+        >
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+          {deck.map((item, idx) => (
             <DeckCard
               key={item.id}
               item={item}
-              featured={desktopStartIndex === 0 && idx === 0}
+              featured={idx === 0}
               isDesktop
             />
           ))}
         </div>
 
-        {/* Arrow button for navigation */}
-        {canShowMore && (
+        {/* Right arrow */}
+        {canScrollRight && (
           <button
-            onClick={handleShowMore}
+            onClick={() => scrollBy("right")}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/[0.04] hover:bg-black/[0.08] transition-colors"
             aria-label="Ver más elementos"
           >
             <ChevronRight className="h-5 w-5 text-[#425060]" />
           </button>
+        )}
+
+        {/* Custom scrollbar track */}
+        {deck.length > 3 && (
+          <div
+            ref={trackRef}
+            onClick={handleTrackClick}
+            className="relative h-1.5 bg-[#f0f2f5] rounded-full mt-2 cursor-pointer"
+          >
+            {/* Scrollbar thumb */}
+            <div
+              ref={thumbRef}
+              onMouseDown={handleThumbMouseDown}
+              className={`absolute top-0 h-full rounded-full transition-colors ${
+                isDragging ? "bg-[#2f5e93]" : "bg-[#c5cdd6] hover:bg-[#9fb0c5]"
+              }`}
+              style={{
+                width: `${thumbWidth}px`,
+                left: `${thumbLeft}px`,
+                cursor: isDragging ? "grabbing" : "grab",
+              }}
+            />
+          </div>
         )}
       </div>
     </section>
@@ -296,9 +440,9 @@ function DeckCard({
   featured: boolean;
   isDesktop?: boolean;
 }) {
-  // Mobile: featured card is wider; Desktop: all cards equal width in grid
+  // Desktop: fixed width cards; Mobile: variable width with snap
   const widthClass = isDesktop
-    ? "w-full"
+    ? "w-[260px] shrink-0"
     : featured
       ? "w-[84vw] max-w-[360px]"
       : "w-[70vw] max-w-[260px]";
@@ -329,7 +473,7 @@ function DeckCard({
             src={image}
             alt={item.title}
             fill
-            sizes={isDesktop ? "300px" : "(max-width: 768px) 80vw, 360px"}
+            sizes={isDesktop ? "260px" : "(max-width: 768px) 80vw, 360px"}
             className="object-cover"
           />
           {item.type === "instagram" && item.postType === "reel" && (
