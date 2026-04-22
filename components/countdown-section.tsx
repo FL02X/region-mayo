@@ -225,22 +225,24 @@ export function CountdownSection({ events, onRegister }: CountdownSectionProps) 
                   {countdownEvent.googleMapsUrl ? (
                     <button
                       onClick={() => openGoogleMaps(countdownEvent.googleMapsUrl!)}
-                      className="group inline-flex items-center gap-1 text-left text-muted-foreground hover:text-foreground transition-colors"
+                      className="group inline-flex items-center gap-1.5 text-left text-muted-foreground hover:text-foreground transition-colors overflow-hidden"
                       aria-label="Abrir ubicación del evento en Google Maps"
                     >
-                      <span className="truncate max-w-[140px] sm:max-w-[180px]">
+                      <span className="truncate">
                         {countdownEvent.address || countdownEvent.location}
                       </span>
-                      <ExternalLink
-                        className="h-3.5 w-3.5 text-primary opacity-80 group-hover:opacity-100 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="text-sm font-semibold text-primary opacity-90 group-hover:opacity-100 shrink-0">
-                        Maps
+                      <span className="inline-flex items-center gap-1 shrink-0 text-primary">
+                        <ExternalLink
+                          className="h-3.5 w-3.5 opacity-80 group-hover:opacity-100"
+                          aria-hidden="true"
+                        />
+                        <span className="text-sm font-semibold opacity-90 group-hover:opacity-100">
+                          Maps
+                        </span>
                       </span>
                     </button>
                   ) : (
-                    <span className="truncate max-w-[170px] sm:max-w-[205px] text-muted-foreground">
+                    <span className="truncate text-muted-foreground">
                       {countdownEvent.address || countdownEvent.location}
                     </span>
                   )}
