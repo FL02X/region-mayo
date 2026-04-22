@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,6 +12,7 @@ import {
   Play,
   Megaphone,
   ArrowRight,
+  ChevronRight,
 } from "lucide-react";
 import type { Event } from "@/lib/types";
 
@@ -116,16 +117,6 @@ function scoreItem(item: DeckItem, now = Date.now()): number {
 function getMockNonEventCandidates(now: number): DeckItem[] {
   return [
     {
-      id: "ig-live",
-      type: "instagram",
-      title: "Coro regional en vivo este domingo",
-      postedAt: new Date(now - 3 * MS_HOUR),
-      image:
-        "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=600&h=600&fit=crop",
-      href: "https://www.instagram.com/mgrregionmayo/",
-      postType: "reel",
-    },
-    {
       id: "prayer-wall",
       type: "prayer",
       title: "Muro de oraciones · comparte tu petición",
@@ -139,11 +130,15 @@ function getMockNonEventCandidates(now: number): DeckItem[] {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+const DESKTOP_VISIBLE_COUNT = 3;
+
 interface ActionDeckProps {
   events: Event[];
 }
 
 export function ActionDeck({ events }: ActionDeckProps) {
+  const [desktopStartIndex, setDesktopStartIndex] = useState(0);
+
   const deck = useMemo<DeckItem[]>(() => {
     const now = Date.now();
 
@@ -167,11 +162,25 @@ export function ActionDeck({ events }: ActionDeckProps) {
     return candidates
       .map((item) => ({ item, score: scoreItem(item, now) }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 5)
+      .slice(0, 8)
       .map((s) => s.item);
   }, [events]);
 
   if (deck.length === 0) return null;
+
+  const canShowMore = desktopStartIndex + DESKTOP_VISIBLE_COUNT < deck.length;
+
+  const handleShowMore = () => {
+    setDesktopStartIndex((prev) =>
+      Math.min(prev + DESKTOP_VISIBLE_COUNT, deck.length - DESKTOP_VISIBLE_COUNT)
+    );
+  };
+
+  // Items visible on desktop (paginated)
+  const desktopVisibleItems = deck.slice(
+    desktopStartIndex,
+    desktopStartIndex + DESKTOP_VISIBLE_COUNT
+  );
 
   return (
     <section
@@ -182,18 +191,54 @@ export function ActionDeck({ events }: ActionDeckProps) {
         <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#425060]">
           Destacado para ti
         </h2>
-        <span className="hidden md:inline text-[11px] text-[#8a96a4]">
+        {/* Mobile only: swipe hint */}
+        <span className="md:hidden text-[11px] text-[#8a96a4]">
           Desliza para ver más
         </span>
       </div>
 
+      {/* Mobile: horizontal scroll */}
       <div
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-4 md:px-6 pb-1"
+        className="md:hidden flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-1"
+        style={{
+          msOverflowStyle: "none",
+          scrollbarWidth: "none",
+        }}
         role="list"
       >
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
         {deck.map((item, idx) => (
           <DeckCard key={item.id} item={item} featured={idx === 0} />
         ))}
+      </div>
+
+      {/* Desktop: grid with arrow navigation */}
+      <div className="hidden md:block relative px-6">
+        <div className="grid grid-cols-3 gap-4" role="list">
+          {desktopVisibleItems.map((item, idx) => (
+            <DeckCard
+              key={item.id}
+              item={item}
+              featured={desktopStartIndex === 0 && idx === 0}
+              isDesktop
+            />
+          ))}
+        </div>
+
+        {/* Arrow button for navigation */}
+        {canShowMore && (
+          <button
+            onClick={handleShowMore}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/[0.04] hover:bg-black/[0.08] transition-colors"
+            aria-label="Ver más elementos"
+          >
+            <ChevronRight className="h-5 w-5 text-[#425060]" />
+          </button>
+        )}
       </div>
     </section>
   );
@@ -242,12 +287,23 @@ const CTA_LABEL: Record<DeckItemType, string> = {
   audio: "Escuchar",
 };
 
-function DeckCard({ item, featured }: { item: DeckItem; featured: boolean }) {
-  const widthClass = featured
-    ? "w-[84vw] max-w-[360px] md:w-[360px]"
-    : "w-[70vw] max-w-[260px] md:w-[240px]";
+function DeckCard({
+  item,
+  featured,
+  isDesktop = false,
+}: {
+  item: DeckItem;
+  featured: boolean;
+  isDesktop?: boolean;
+}) {
+  // Mobile: featured card is wider; Desktop: all cards equal width in grid
+  const widthClass = isDesktop
+    ? "w-full"
+    : featured
+      ? "w-[84vw] max-w-[360px]"
+      : "w-[70vw] max-w-[260px]";
 
-  const imageHeight = featured ? "h-28 md:h-32" : "h-20 md:h-24";
+  const imageHeight = featured && !isDesktop ? "h-28" : "h-24";
 
   const image =
     (item.type === "event" || item.type === "instagram" || item.type === "promo") &&
@@ -273,7 +329,7 @@ function DeckCard({ item, featured }: { item: DeckItem; featured: boolean }) {
             src={image}
             alt={item.title}
             fill
-            sizes="(max-width: 768px) 80vw, 360px"
+            sizes={isDesktop ? "300px" : "(max-width: 768px) 80vw, 360px"}
             className="object-cover"
           />
           {item.type === "instagram" && item.postType === "reel" && (
@@ -294,7 +350,7 @@ function DeckCard({ item, featured }: { item: DeckItem; featured: boolean }) {
 
         <h3
           className={`font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 ${
-            featured ? "text-[15px]" : "text-[13px]"
+            featured && !isDesktop ? "text-[15px]" : "text-[13px]"
           }`}
         >
           {item.title}
@@ -344,7 +400,7 @@ function DeckCard({ item, featured }: { item: DeckItem; featured: boolean }) {
         <div className="mt-auto pt-1">
           <span
             className={`inline-flex items-center gap-1 text-[12px] font-semibold ${
-              featured ? "text-[#2f5e93]" : "text-[#425060]"
+              featured && !isDesktop ? "text-[#2f5e93]" : "text-[#425060]"
             }`}
           >
             {CTA_LABEL[item.type]}
