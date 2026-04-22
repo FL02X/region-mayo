@@ -137,6 +137,7 @@ interface ActionDeckProps {
 
 export function ActionDeck({ events }: ActionDeckProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const thumbRef = useRef<HTMLDivElement>(null);
   
@@ -145,6 +146,10 @@ export function ActionDeck({ events }: ActionDeckProps) {
   const [thumbWidth, setThumbWidth] = useState(0);
   const [thumbLeft, setThumbLeft] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Mobile scroll indicator state
+  const [mobileScrollProgress, setMobileScrollProgress] = useState(0);
+  const [mobileHasOverflow, setMobileHasOverflow] = useState(false);
 
   const deck = useMemo<DeckItem[]>(() => {
     const now = Date.now();
@@ -173,7 +178,7 @@ export function ActionDeck({ events }: ActionDeckProps) {
       .map((s) => s.item);
   }, [events]);
 
-  // Update scroll state and scrollbar thumb
+  // Update desktop scroll state and scrollbar thumb
   const updateScrollState = () => {
     const container = scrollContainerRef.current;
     const track = trackRef.current;
@@ -196,17 +201,43 @@ export function ActionDeck({ events }: ActionDeckProps) {
     setThumbLeft(newThumbLeft);
   };
 
-  useEffect(() => {
-    const container = scrollContainerRef.current;
+  // Update mobile scroll indicator
+  const updateMobileScrollState = () => {
+    const container = mobileScrollRef.current;
     if (!container) return;
 
-    updateScrollState();
-    container.addEventListener("scroll", updateScrollState);
-    window.addEventListener("resize", updateScrollState);
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    const maxScroll = scrollWidth - clientWidth;
+    
+    setMobileHasOverflow(scrollWidth > clientWidth + 10);
+    setMobileScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
+  };
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const mobileContainer = mobileScrollRef.current;
+
+    if (container) {
+      updateScrollState();
+      container.addEventListener("scroll", updateScrollState);
+      window.addEventListener("resize", updateScrollState);
+    }
+
+    if (mobileContainer) {
+      updateMobileScrollState();
+      mobileContainer.addEventListener("scroll", updateMobileScrollState);
+      window.addEventListener("resize", updateMobileScrollState);
+    }
 
     return () => {
-      container.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
+      if (container) {
+        container.removeEventListener("scroll", updateScrollState);
+        window.removeEventListener("resize", updateScrollState);
+      }
+      if (mobileContainer) {
+        mobileContainer.removeEventListener("scroll", updateMobileScrollState);
+        window.removeEventListener("resize", updateMobileScrollState);
+      }
     };
   }, [deck]);
 
@@ -293,33 +324,52 @@ export function ActionDeck({ events }: ActionDeckProps) {
         </span>
       </div>
 
-      {/* Mobile: horizontal scroll (no custom scrollbar) */}
-      <div
-        className="md:hidden flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-1"
-        style={{
-          msOverflowStyle: "none",
-          scrollbarWidth: "none",
-        }}
-        role="list"
-      >
-        <style jsx>{`
-          div::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
-        {deck.map((item, idx) => (
-          <DeckCard key={item.id} item={item} featured={idx === 0} />
-        ))}
+      {/* Mobile: horizontal scroll with progress indicator */}
+      <div className="md:hidden">
+        <div
+          ref={mobileScrollRef}
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-2"
+          style={{
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+          role="list"
+        >
+          <style jsx>{`
+            div::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+          {deck.map((item, idx) => (
+            <DeckCard key={item.id} item={item} featured={idx === 0} />
+          ))}
+        </div>
+        
+        {/* Mobile scroll progress indicator */}
+        {mobileHasOverflow && deck.length > 1 && (
+          <div className="flex justify-center gap-1.5 pt-2 pb-1 px-4">
+            {deck.map((item, idx) => (
+              <div
+                key={item.id}
+                className={`h-1 rounded-full transition-all duration-200 ${
+                  idx === Math.round(mobileScrollProgress * (deck.length - 1))
+                    ? "w-4 bg-[#2f5e93]"
+                    : "w-1.5 bg-[#d4dae2]"
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Desktop: horizontal scroll with arrows and custom scrollbar */}
       <div className="hidden md:block relative">
-        {/* Left arrow - inside bounds with gradient fade */}
+        {/* Left arrow - inside bounds with full-height gradient fade */}
         {canScrollLeft && (
           <button
             onClick={() => scrollBy("left")}
-            className="absolute left-0 top-0 bottom-0 z-10 flex items-center justify-center w-14 bg-gradient-to-r from-white via-white/80 to-transparent"
-            style={{ height: "calc(100% - 24px)" }} // Exclude scrollbar area
+            className="absolute left-0 top-0 z-10 flex items-center justify-center w-16 bg-gradient-to-r from-white via-white/90 to-transparent"
+            style={{ height: "calc(100% - 24px)" }}
             aria-label="Ver elementos anteriores"
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/[0.06] hover:bg-black/[0.10] transition-colors">
@@ -353,12 +403,12 @@ export function ActionDeck({ events }: ActionDeckProps) {
           ))}
         </div>
 
-        {/* Right arrow - inside bounds with gradient fade */}
+        {/* Right arrow - inside bounds with full-height gradient fade */}
         {canScrollRight && (
           <button
             onClick={() => scrollBy("right")}
-            className="absolute right-0 top-0 bottom-0 z-10 flex items-center justify-center w-14 bg-gradient-to-l from-white via-white/80 to-transparent"
-            style={{ height: "calc(100% - 24px)" }} // Exclude scrollbar area
+            className="absolute right-0 top-0 z-10 flex items-center justify-center w-16 bg-gradient-to-l from-white via-white/90 to-transparent"
+            style={{ height: "calc(100% - 24px)" }}
             aria-label="Ver más elementos"
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-black/[0.06] hover:bg-black/[0.10] transition-colors">
@@ -450,8 +500,8 @@ function DeckCard({
   const widthClass = isDesktop
     ? "w-[260px] shrink-0"
     : featured
-      ? "w-[84vw] max-w-[360px]"
-      : "w-[70vw] max-w-[260px]";
+      ? "w-[84vw] max-w-[360px] shrink-0"
+      : "w-[70vw] max-w-[260px] shrink-0";
 
   const imageHeight = featured && !isDesktop ? "h-28" : "h-24";
 
@@ -467,7 +517,7 @@ function DeckCard({
   const inner = (
     <article
       className={[
-        "snap-center shrink-0 relative overflow-hidden flex flex-col",
+        "snap-center relative overflow-hidden flex flex-col",
         "bg-white border border-[#dce2e9] rounded-[3px]",
         "hover:border-[#9fb0c5] hover:shadow-[0_2px_10px_rgba(47,94,147,0.08)] transition-all",
         widthClass,

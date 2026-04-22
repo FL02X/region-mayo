@@ -36,7 +36,8 @@ export default async function Home() {
           regionPresident={regionPresident}
         />
       </div>
-      <div className="max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white">
+      {/* Desktop only: ActionDeck below hero */}
+      <div className="hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white">
         <ActionDeck events={events} />
       </div>
       <div className="pt-[51px] md:pt-0">

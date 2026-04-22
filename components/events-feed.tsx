@@ -6,6 +6,7 @@ import { MonthNavigator } from "./month-navigator";
 import { EventCard } from "./event-card";
 import { RegistrationModal } from "./registration-modal";
 import { CountdownSection } from "./countdown-section";
+import { ActionDeck } from "./action-deck";
 import type { Event, RegionPresident } from "@/lib/types";
 
 const months = [
@@ -152,6 +153,11 @@ export function EventsFeed({
         {/* Countdown (mobile only; desktop featured event lives in hero) */}
         <div className="md:hidden">
           <CountdownSection events={events} onRegister={handleRegister} />
+        </div>
+
+        {/* ActionDeck (mobile only; desktop renders in page.tsx) */}
+        <div className="md:hidden">
+          <ActionDeck events={events} />
         </div>
 
         <div className="h-[12px] bg-muted/20 md:hidden" aria-hidden="true" />
