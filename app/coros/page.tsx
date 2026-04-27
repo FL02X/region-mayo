@@ -3,6 +3,11 @@ import { AppHeader } from "@/components/app-header"
 import { CorosContent } from "@/components/coros-content"
 import { getCoros, getRegionConfig } from "@/lib/api"
 
+// On-demand revalidation: only rebuild when webhook is triggered from Sanity
+// Optimized for free Vercel plan with low traffic
+// Page will be statically generated at build time and NOT revalidated automatically
+export const revalidate = false;
+
 export const metadata: Metadata = {
   title: "Coros Locales - Región Mayo",
   description: "Descubre los coros locales de la Región Mayo y contacta a sus presidentes.",

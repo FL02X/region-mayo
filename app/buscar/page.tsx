@@ -3,6 +3,11 @@ import { AppHeader } from "@/components/app-header";
 import { SearchContent } from "@/components/search-content";
 import { getRegionConfig, getPastors, getCoros, getDirectiva, getTemplos, getEvents } from "@/lib/api";
 
+// On-demand revalidation: only rebuild when webhook is triggered from Sanity
+// Optimized for free Vercel plan with low traffic
+// Page will be statically generated at build time and NOT revalidated automatically
+export const revalidate = false;
+
 export const metadata: Metadata = {
   title: "Búsqueda - Región Mayo",
   description: "Busca pastores, coros, directivos, templos y eventos en la Región Mayo.",

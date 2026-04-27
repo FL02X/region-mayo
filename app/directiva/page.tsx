@@ -3,6 +3,11 @@ import { AppHeader } from "@/components/app-header"
 import { DirectivaContent } from "@/components/directiva-content"
 import { getDirectiva, getRegionConfig } from "@/lib/api"
 
+// On-demand revalidation: only rebuild when webhook is triggered from Sanity
+// Optimized for free Vercel plan with low traffic
+// Page will be statically generated at build time and NOT revalidated automatically
+export const revalidate = false;
+
 export const metadata: Metadata = {
   title: "Directiva - Región Mayo",
   description: "Conoce a los miembros de la directiva de la Región Mayo y contacta con ellos.",

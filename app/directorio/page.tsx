@@ -3,6 +3,11 @@ import { AppHeader } from "@/components/app-header"
 import { DirectorioContent } from "@/components/directorio-content"
 import { getPastors, getRegionConfig } from "@/lib/api"
 
+// On-demand revalidation: only rebuild when webhook is triggered from Sanity
+// Optimized for free Vercel plan with low traffic
+// Page will be statically generated at build time and NOT revalidated automatically
+export const revalidate = false;
+
 export const metadata: Metadata = {
   title: "Directorio de Pastores - Región Mayo",
   description: "Conoce a los pastores de la Región Mayo y las iglesias que sirven en nuestra comunidad.",
