@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   UserCircle,
@@ -11,6 +11,7 @@ import {
   Church,
   Phone,
 } from "lucide-react";
+import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { Badge } from "@/components/ui/badge";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { SearchBar } from "@/components/search-bar";
@@ -31,6 +32,7 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
   return (
     <div 
       id={member.id} 
+      data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
@@ -60,11 +62,13 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
       </div>
 
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
-          <HighlightedText text={member.fullName} query={searchQuery} />
-        </h3>
+        <div data-eq-head>
+          <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
+            <HighlightedText text={member.fullName} query={searchQuery} />
+          </h3>
+        </div>
 
-        <div className="space-y-4 pt-4 border-t border-border mt-auto">
+        <div className="space-y-4 pt-4 border-t border-border">
           {/* Temple Information */}
           {member.temploName && (
               <div className="flex items-start gap-3">
@@ -146,6 +150,8 @@ interface DirectivaContentProps {
 
 export function DirectivaContent({ members }: DirectivaContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const gridRef = useRef<HTMLDivElement>(null);
+  useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
     if (window.location.hash) {
@@ -193,6 +199,7 @@ export function DirectivaContent({ members }: DirectivaContentProps) {
 
         {/* Grid */}
         <div
+          ref={gridRef}
           className={`grid gap-4 ${
             filteredMembers.length === 1
               ? "grid-cols-1 max-w-sm mx-auto"

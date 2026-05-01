@@ -18,6 +18,14 @@ export const EVENT_TYPES = {
   CAMPANA: { value: 'campana', label: 'Campaña' },
   CONVENCION: { value: 'convencion', label: 'Convención General' },
   RECORRIDO: { value: 'recorrido', label: 'Recorrido Regional' },
+  CONFRATERNIDAD_JUVENIL_REGIONAL: {
+    value: 'confraternidadJuvenilRegional',
+    label: 'Confraternidad Juvenil Regional',
+  },
+  CONFRATERNIDAD_JUVENIL_GENERAL: {
+    value: 'confraternidadJuvenilGeneral',
+    label: 'Confraternidad Juvenil General',
+  },
   CULTO_JUVENIL: { value: 'cultoJuvenil', label: 'Culto Juvenil' },
   CULTO: { value: 'culto', label: 'Culto' },
   VISITA: { value: 'visita', label: 'Visita' },

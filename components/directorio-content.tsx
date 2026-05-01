@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Users,
@@ -11,6 +11,7 @@ import {
   Church,
   Phone,
 } from "lucide-react";
+import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { WhatsAppIconButton } from "@/components/whatsapp-button";
 import { SearchBar } from "@/components/search-bar";
 import { HighlightedText } from "@/components/highlighted-text";
@@ -29,6 +30,7 @@ function PastorCard({ pastor, searchQuery }: { pastor: Pastor; searchQuery: stri
   return (
     <div 
       id={pastor.id} 
+      data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
@@ -52,11 +54,13 @@ function PastorCard({ pastor, searchQuery }: { pastor: Pastor; searchQuery: stri
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
-          <HighlightedText text={pastor.fullName} query={searchQuery} />
-        </h3>
+        <div data-eq-head>
+          <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
+            <HighlightedText text={pastor.fullName} query={searchQuery} />
+          </h3>
+        </div>
 
-        <div className="space-y-4 pt-4 border-t border-border mt-auto">
+        <div className="space-y-4 pt-4 border-t border-border">
           {pastor.temploName && (
               <div className="flex items-start gap-3">
                 <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
@@ -140,6 +144,8 @@ interface DirectorioContentProps {
 
 export function DirectorioContent({ pastors }: DirectorioContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const gridRef = useRef<HTMLDivElement>(null);
+  useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
     if (window.location.hash) {
@@ -201,6 +207,7 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
           </div>
         ) : (
           <div
+            ref={gridRef}
             className={`grid gap-4 ${
               filteredPastors.length === 1
                 ? "grid-cols-1 max-w-sm mx-auto"

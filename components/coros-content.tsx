@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Music,
@@ -10,6 +10,7 @@ import {
   User,
   Church,
 } from "lucide-react";
+import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { WhatsAppIconButton } from "@/components/whatsapp-button";
 import { SearchBar } from "@/components/search-bar";
 import { HighlightedText } from "@/components/highlighted-text";
@@ -43,6 +44,7 @@ function CoroCard({ coro, searchQuery }: { coro: Coro; searchQuery: string }) {
   return (
     <div 
       id={coro.id} 
+      data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
@@ -66,12 +68,14 @@ function CoroCard({ coro, searchQuery }: { coro: Coro; searchQuery: string }) {
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
-          <HighlightedText text={coro.coroName} query={searchQuery} />
-        </h3>
+        <div data-eq-head>
+          <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
+            <HighlightedText text={coro.coroName} query={searchQuery} />
+          </h3>
+        </div>
 
-        <div className="mt-auto flex flex-col">
-          <div className="-mx-4 border-t border-border mt-auto">
+        <div className="flex flex-col">
+          <div className="-mx-4 border-t border-border">
             <button
               onClick={handleToggle}
               className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/80 transition-colors"
@@ -183,6 +187,8 @@ interface CorosContentProps {
 
 export function CorosContent({ coros }: CorosContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const gridRef = useRef<HTMLDivElement>(null);
+  useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -280,6 +286,7 @@ export function CorosContent({ coros }: CorosContentProps) {
           </div>
         ) : (
           <div
+            ref={gridRef}
             className={`grid gap-4 ${
               filteredCoros.length === 1
                 ? "grid-cols-1 max-w-sm mx-auto"

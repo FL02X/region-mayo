@@ -33,6 +33,8 @@ const eventTypeLabels: Record<EventType, string> = {
   campana: "Campaña",
   convencion: "Convención General",
   recorrido: "Recorrido Regional",
+  confraternidadJuvenilRegional: "Confraternidad Juvenil Regional",
+  confraternidadJuvenilGeneral: "Confraternidad Juvenil General",
   cultoJuvenil: "Culto Juvenil",
   culto: "Culto",
   visita: "Visita",

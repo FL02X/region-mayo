@@ -53,6 +53,8 @@ export default defineType({
           { title: 'Campaña', value: 'campana' },
           { title: 'Convención General', value: 'convencion' },
           { title: 'Recorrido Regional', value: 'recorrido' },
+          { title: 'Confraternidad Juvenil Regional', value: 'confraternidadJuvenilRegional' },
+          { title: 'Confraternidad Juvenil General', value: 'confraternidadJuvenilGeneral' },
           { title: 'Culto Juvenil', value: 'cultoJuvenil' },
           { title: 'Culto', value: 'culto' },
           { title: 'Visita', value: 'visita' },
@@ -124,6 +126,16 @@ export default defineType({
     }),
 
     // Location
+    defineField({
+      name: 'templo',
+      title: 'Templo (Opcional)',
+      type: 'reference',
+      to: [{ type: 'templo' }],
+      group: 'location',
+      description:
+        'Opcional. Selecciona un templo para ahorrar tiempo: puedes usar su dirección y enlace de Google Maps como ubicación del evento. ' +
+        'Déjalo vacío si el evento es en un lugar que no es templo (ej: centro de convenciones).',
+    }),
     defineField({
       name: 'location',
       title: 'Nombre del Lugar',
@@ -460,6 +472,8 @@ export default defineType({
         campana: 'Campaña',
         convencion: 'Convención General',
         recorrido: 'Recorrido Regional',
+        confraternidadJuvenilRegional: 'Confraternidad Juvenil Regional',
+        confraternidadJuvenilGeneral: 'Confraternidad Juvenil General',
         cultoJuvenil: 'Culto Juvenil',
         culto: 'Culto',
         visita: 'Visita',

@@ -24,6 +24,8 @@ export type EventType =
   | "campana"
   | "convencion"
   | "recorrido"
+  | "confraternidadJuvenilRegional"
+  | "confraternidadJuvenilGeneral"
   | "cultoJuvenil"
   | "culto"
   | "visita"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   ChevronDown,
@@ -15,6 +15,7 @@ import {
   Clock,
   FileText,
 } from "lucide-react";
+import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { WhatsAppIconButton } from "@/components/whatsapp-button";
 import { SearchBar } from "@/components/search-bar";
 import { HighlightedText } from "@/components/highlighted-text";
@@ -52,6 +53,7 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
   return (
     <div 
       id={templo.id} 
+      data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
@@ -75,11 +77,11 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-lg text-foreground leading-snug mb-3">
-          <HighlightedText text={templo.temploName} query={searchQuery} />
-        </h3>
+        <div data-eq-head>
+          <h3 className="font-semibold text-lg text-foreground leading-snug mb-3">
+            <HighlightedText text={templo.temploName} query={searchQuery} />
+          </h3>
 
-        <div className="mt-auto flex flex-col">
           {/* Address preview (always visible if present) */}
           {templo.address && (
             <div className="flex items-start gap-2 mb-1.5">
@@ -101,22 +103,19 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
               aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
             >
               <div className="flex items-center gap-2">
-                <MapPin
-                  className="h-3.5 w-3.5 shrink-0"
-                  aria-hidden="true"
-                />
+                <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span>Ver ubicación en Maps</span>
               </div>
-              <ExternalLink
-                className="h-3.5 w-3.5 shrink-0"
-                aria-hidden="true"
-              />
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             </button>
           )}
+        </div>
+
+        <div className="flex flex-col">
 
           {/* Toggle — only shown if there is expandable content */}
           {(templo.pastores.length > 0 || templo.coros.length > 0 || templo.description) && (
-            <div className="-mx-4 border-t border-border mt-auto">
+            <div className="-mx-4 border-t border-border">
               <button
                 onClick={handleToggle}
                 className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/80 transition-colors"
@@ -228,6 +227,8 @@ interface TemploContentProps {
 
 export function TemplosContent({ templos }: TemploContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const gridRef = useRef<HTMLDivElement>(null);
+  useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
     if (window.location.hash) {
@@ -286,6 +287,7 @@ export function TemplosContent({ templos }: TemploContentProps) {
           </div>
         ) : (
           <div
+            ref={gridRef}
             className={`grid gap-4 ${
               filteredTemplos.length === 1
                 ? "grid-cols-1 max-w-sm mx-auto"
