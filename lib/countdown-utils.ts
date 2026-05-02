@@ -11,6 +11,10 @@ const MS_PER_MINUTE = MS_PER_SECOND * 60
 const MS_PER_HOUR = MS_PER_MINUTE * 60
 const MS_PER_DAY = MS_PER_HOUR * 24
 
+// Toggle: set to `true` to allow automatic post-event album cards.
+// Set to `false` to hide 'Comparte tus fotos' cards and related gallery auto-creation.
+export const ALBUM_SHARING_ENABLED = false
+
 /**
  * Check if an event is within the countdown window (5 days before)
  */
@@ -83,6 +87,8 @@ export function getCountdownEvent(events: Event[], now: Date = new Date()): Even
  * Get events that are in the album sharing window
  */
 export function getAlbumSharingEvents(events: Event[], now: Date = new Date()): Event[] {
+  if (!ALBUM_SHARING_ENABLED) return []
+
   return events.filter(e => isEventInAlbumWindow(e, events, now))
 }
 

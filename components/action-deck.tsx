@@ -10,12 +10,17 @@ import {
   HeartHandshake,
   Instagram as InstagramIcon,
   Play,
+  Search,
   Megaphone,
   ArrowRight,
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
-import type { Event } from "@/lib/types";
+import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
+import type { HeroCandidate } from "@/lib/ranker";
+import { pickHeroAndDeck } from "@/lib/ranker";
+import { PrayerWallForm } from "@/components/prayer-wall-form";
+import { Lightbox } from "@/components/lightbox";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES — each candidate slot the deck can show
@@ -38,7 +43,7 @@ type DeckItem =
       type: "instagram";
       title: string;
       postedAt: Date;
-      image: string;
+      image?: string;
       href: string;
       postType?: "reel" | "post";
       pinned?: boolean;
@@ -57,7 +62,9 @@ type DeckItem =
       type: "prayer";
       title: string;
       updatedAt: Date;
-      href?: string;
+      phase: "collect" | "show" | "paused";
+      prayers?: string[];
+      prayerObjects?: Array<{ text: string; submittedAt: string }>;
       pinned?: boolean;
     }
   | {
@@ -126,22 +133,6 @@ function scoreItem(item: DeckItem, now = Date.now()): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MOCK NON-EVENT CANDIDATES — ready to be swapped for real data later
-// ─────────────────────────────────────────────────────────────────────────────
-
-function getMockNonEventCandidates(now: number): DeckItem[] {
-  return [
-    {
-      id: "prayer-wall",
-      type: "prayer",
-      title: "Muro de oraciones · comparte tu petición",
-      updatedAt: new Date(now - 6 * MS_HOUR),
-      href: "#oraciones",
-    },
-  ];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -149,9 +140,98 @@ interface ActionDeckProps {
   events: Event[];
   instagramUrl?: string;
   facebookUrl?: string;
+  customHeroCard?: HeroCard | null;
+  prayerWall?: PrayerWallConfig | null;
+  socialPosts?: SocialPost[];
+  now?: number;
 }
 
-export function ActionDeck({ events, instagramUrl, facebookUrl }: ActionDeckProps) {
+function mapCandidateToDeckItem(
+  candidate: HeroCandidate,
+  prayerWall?: PrayerWallConfig | null,
+  socialPosts?: SocialPost[],
+): DeckItem | null {
+  if (candidate.type === "custom") {
+    return {
+      id: `custom-${candidate.id}`,
+      type: "promo",
+      title: candidate.ctaText || "Novedad destacada",
+      href: candidate.url,
+      pinned: candidate.pinned,
+      image: (candidate as any).media?.url,
+    };
+  }
+
+  if (candidate.type === "prayer") {
+    const selectedPrayers = prayerWall?.selectedPrayers ?? [];
+    const prayerObjects = selectedPrayers
+      .filter((prayer) => typeof prayer.text === "string" && prayer.text.length > 0)
+      .slice(0, 6)
+      .map((prayer) => ({
+        text: prayer.text,
+        submittedAt: prayer.submittedAt,
+      }));
+
+    return {
+      id: `prayer-${candidate.id}`,
+      type: "prayer",
+      // When in 'show' phase we intentionally remove the active label (UI uses only the mini-carousel text),
+      // and the ActionDeck will hide the CTA. When collecting, show the invite copy.
+      title: candidate.phase === "show" ? "" : "Muro de oraciones · comparte tu petición",
+      updatedAt: new Date(candidate.publishedAt),
+      phase: candidate.phase,
+      prayers: prayerObjects.map((prayer) => prayer.text),
+      prayerObjects,
+    };
+  }
+
+  if (candidate.type === "event") {
+    return {
+      id: `event-${candidate.id}`,
+      type: "event",
+      title: candidate.title,
+      date: new Date(candidate.date),
+      time: candidate.time,
+      location: candidate.location,
+      pinned: candidate.pinned,
+    };
+  }
+
+  if (candidate.type === "social") {
+    const post = socialPosts?.find((item) => item._id === candidate.id);
+    const image = post?.media?.url;
+    if (candidate.network === "instagram") {
+      return {
+        id: `ig-${candidate.id}`,
+        type: "instagram",
+        title: "Última publicación en Instagram",
+        postedAt: new Date(candidate.postedAt),
+        href: candidate.url,
+        image,
+      };
+    }
+    return {
+      id: `fb-${candidate.id}`,
+      type: "facebook",
+      title: "Última publicación en Facebook",
+      postedAt: new Date(candidate.postedAt),
+      href: candidate.url,
+      image,
+    };
+  }
+
+  return null;
+}
+
+export function ActionDeck({
+  events,
+  instagramUrl,
+  facebookUrl,
+  customHeroCard,
+  prayerWall,
+  socialPosts,
+  now: nowProp,
+}: ActionDeckProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -167,42 +247,109 @@ export function ActionDeck({ events, instagramUrl, facebookUrl }: ActionDeckProp
   const [mobileScrollProgress, setMobileScrollProgress] = useState(0);
   const [mobileHasOverflow, setMobileHasOverflow] = useState(false);
 
+  // Prayer modal open state (used when the deck's prayer card should open the submit modal)
+  const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
+
   const deck = useMemo<DeckItem[]>(() => {
-    const now = Date.now();
+    const now = typeof nowProp === "number" ? nowProp : Date.now();
 
-    const nonEvent = getMockNonEventCandidates(now);
+    const rankingCandidates: HeroCandidate[] = [];
 
-    const socialCandidates: DeckItem[] = [];
-    if (instagramUrl) {
-      socialCandidates.push({
-        id: "instagram-home",
-        type: "instagram",
-        title: "Última publicación en Instagram",
-        postedAt: new Date(now - 18 * MS_HOUR),
-        href: instagramUrl,
-        image: undefined as any,
-        postType: "post",
-      });
-    }
-    if (facebookUrl) {
-      socialCandidates.push({
-        id: "facebook-home",
-        type: "facebook",
-        title: "Última publicación en Facebook",
-        postedAt: new Date(now - 36 * MS_HOUR),
-        href: facebookUrl,
-        image: undefined,
+    if (customHeroCard?.media?.url) {
+      rankingCandidates.push({
+        type: "custom",
+        id: customHeroCard._id,
+        publishedAt: new Date(customHeroCard.publishedAt).getTime(),
+        accentColor: customHeroCard.accentColor || "#2f5e93",
+        media: {
+          isVertical: Boolean(customHeroCard.media.isVertical),
+          alt: customHeroCard.media.alt || "Contenido destacado",
+          url: customHeroCard.media.url,
+        },
+        url: customHeroCard.url,
+        ctaText: customHeroCard.ctaText,
+        pinned: customHeroCard.pinned,
+        priorityWeight: customHeroCard.priorityWeight,
       });
     }
 
-    const candidates = [...nonEvent, ...socialCandidates];
+    if (prayerWall && prayerWall.enabled) {
+      rankingCandidates.push({
+        type: "prayer",
+        id: prayerWall._id,
+        phase: prayerWall.phase,
+        publishedAt: new Date(prayerWall.publishedAt).getTime(),
+        selectedPrayersCount: prayerWall.selectedPrayers?.length ?? 0,
+      });
+    }
 
-    return candidates
+    events.forEach((event) => {
+      const diff = event.date.getTime() - now;
+      // Only consider upcoming events within the next 3 days
+      if (diff < 0 || diff > 3 * MS_DAY) return;
+
+      rankingCandidates.push({
+        type: "event",
+        id: event.id,
+        date: event.date.getTime(),
+        title: event.title,
+        time: event.time,
+        location: event.address || event.location,
+        registrationEnabled: event.registrationEnabled,
+        // include image so later mapping can render event thumbnails
+        image: event.image,
+      });
+    });
+
+    (socialPosts ?? []).forEach((post) => {
+      rankingCandidates.push({
+        type: "social",
+        id: post._id,
+        network: post.network,
+        postedAt: new Date(post.postedAt).getTime(),
+        url: post.url,
+        caption: post.caption,
+        media: post.media
+          ? { isVertical: post.media.isVertical }
+          : undefined,
+      });
+    });
+
+    const { deck: rankedDeck } = pickHeroAndDeck(rankingCandidates, now);
+    const rankedDeckItems = rankedDeck
+      .map((candidate) => {
+        const mapped = mapCandidateToDeckItem(candidate, prayerWall, socialPosts);
+        // If this is an event, ensure we include the event image from the source events array
+        if (mapped && mapped.type === "event") {
+          const srcEvent = events.find((e) => e.id === candidate.id);
+          if (srcEvent && srcEvent.image) {
+            mapped.image = srcEvent.image;
+          }
+        }
+        return mapped;
+      })
+      .filter((item): item is DeckItem => item !== null)
+      .map((item) => {
+        if (item.type !== "prayer") return item;
+        return {
+          ...item,
+          prayers: item.prayers ?? [],
+          prayerObjects: item.prayerObjects ?? [],
+        };
+      });
+
+    const candidates = [...rankedDeckItems];
+
+    const deduped = candidates.filter(
+      (item, index, array) => array.findIndex((other) => other.id === item.id) === index,
+    );
+
+    return deduped
       .map((item) => ({ item, score: scoreItem(item, now) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
       .map((s) => s.item);
-  }, [instagramUrl, facebookUrl]);
+  }, [customHeroCard, prayerWall, socialPosts, events, nowProp]);
 
   // Update desktop scroll state and scrollbar thumb
   const updateScrollState = () => {
@@ -346,18 +493,21 @@ export function ActionDeck({ events, instagramUrl, facebookUrl }: ActionDeckProp
   if (deck.length === 0) return null;
 
   return (
-    <section
-      aria-label="Acciones destacadas"
-      className="w-full bg-gray-50 pt-6 md:pt-8 pb-8 md:pb-10"
-    >
+    <>
+      <section
+        aria-label="Acciones destacadas"
+        className="w-full bg-gray-50 pt-6 md:pt-8 pb-8 md:pb-10"
+      >
       <div className="flex items-center justify-between px-4 md:px-6 mb-2.5">
         <h2 className="text-[15px] mb-3 mt-3 font-bold uppercase tracking-[0.18em] text-[#425060]">
           Destacado para ti
         </h2>
-        {/* Mobile only: swipe hint */}
-        <span className="md:hidden text-[11px] text-[#8a96a4]">
-          Desliza para ver más
-        </span>
+        {/* Mobile only: swipe hint - hide if only one element */}
+        {deck.length > 1 && (
+          <span className="md:hidden text-[11px] text-[#8a96a4]">
+            Desliza para ver más
+          </span>
+        )}
       </div>
 
       {/* Mobile: horizontal scroll with progress indicator */}
@@ -378,7 +528,18 @@ export function ActionDeck({ events, instagramUrl, facebookUrl }: ActionDeckProp
               }
             `}</style>
             {deck.map((item, idx) => (
-              <DeckCard key={item.id} item={item} featured={idx === 0} />
+              <DeckCard
+                key={item.id}
+                item={item}
+                featured={idx === 0}
+                deckLength={deck.length}
+                prayerWall={prayerWall}
+                onOpenPrayerModal={
+                  item.type === "prayer" && item.phase === "collect"
+                    ? () => setIsPrayerModalOpen(true)
+                    : undefined
+                }
+              />
             ))}
           </div>
 
@@ -447,6 +608,13 @@ export function ActionDeck({ events, instagramUrl, facebookUrl }: ActionDeckProp
               item={item}
               featured={idx === 0}
               isDesktop
+              deckLength={deck.length}
+              prayerWall={prayerWall}
+              onOpenPrayerModal={
+                item.type === "prayer" && item.phase === "collect"
+                  ? () => setIsPrayerModalOpen(true)
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -490,7 +658,17 @@ export function ActionDeck({ events, instagramUrl, facebookUrl }: ActionDeckProp
       </div>
 
       {/* Decorative lines removed — keep the page-level separator below */}
-    </section>
+      </section>
+
+      {/* Prayer modal colocated here so deck can open it */}
+      {prayerWall && (
+        <PrayerWallForm
+          isOpen={isPrayerModalOpen}
+          onClose={() => setIsPrayerModalOpen(false)}
+          isCollecting={prayerWall.phase === "collect"}
+        />
+      )}
+    </>
   );
 }
 
@@ -518,7 +696,7 @@ const BADGE_META: Record<
     icon: <Megaphone className="h-3 w-3" aria-hidden="true" />,
   },
   prayer: {
-    label: "Oración",
+    label: "Oraciones",
     classes: "bg-[#e7f1ea] text-[#2d6a4f]",
     icon: <HeartHandshake className="h-3 w-3" aria-hidden="true" />,
   },
@@ -538,7 +716,7 @@ const CTA_LABEL: Record<DeckItemType, string> = {
   event: "Ver evento",
   instagram: "Ver publicación",
   facebook: "Ver publicación",
-  prayer: "Agregar petición",
+  prayer: "Pedir oración",
   promo: "Ver más",
   audio: "Escuchar",
 };
@@ -553,21 +731,160 @@ const ACCENT_COLORS: Record<DeckItemType, string> = {
   audio: "#3730a3",
 };
 
+function PrayerMiniCarousel({
+  prayers,
+  prayerObjects,
+  deckLength = 1,
+  isDesktop = false,
+  onOpenModal,
+}: {
+  prayers: string[];
+  prayerObjects?: Array<{ text: string; submittedAt: string }>;
+  deckLength?: number;
+  isDesktop?: boolean;
+  onOpenModal?: (text: string) => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState<number | null>(null);
+  const [isSliding, setIsSliding] = useState(false);
+  const [shouldTransition, setShouldTransition] = useState(false);
+
+  const shouldTruncate = isDesktop && deckLength > 1;
+  let charLimit = 108;
+  if (prayers.length > 1) {
+    const longCount = prayers.filter((p) => p.length >= 108).length;
+    if (longCount >= 2) charLimit = 107;
+  }
+
+  const [maxHeightPx, setMaxHeightPx] = useState<number | null>(null);
+  const slidesRef = useRef<Array<HTMLDivElement | null>>([]);
+
+  useEffect(() => {
+    if (prayers.length <= 1) return;
+    const interval = window.setInterval(() => {
+      setShouldTransition(true);
+      setIsSliding(true);
+      setNextIndex((idx) => (idx === null ? (index + 1) % prayers.length : idx));
+
+      const completeTimer = window.setTimeout(() => {
+        setIndex((current) => (current + 1) % prayers.length);
+        setNextIndex(null);
+        setShouldTransition(false);
+
+        const resetTimer = window.setTimeout(() => setIsSliding(false), 16);
+        return () => window.clearTimeout(resetTimer);
+      }, 450);
+
+      return () => window.clearTimeout(completeTimer);
+    }, 10000);
+
+    return () => window.clearInterval(interval);
+  }, [prayers, index]);
+
+  useEffect(() => {
+    const measure = () => {
+      const heights = slidesRef.current.map((el) => (el ? el.getBoundingClientRect().height : 0));
+      const max = heights.length ? Math.max(...heights) : 0;
+      if (max > 0) setMaxHeightPx(Math.ceil(max));
+    };
+
+    const t = window.setTimeout(measure, 20);
+    window.addEventListener("resize", measure);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("resize", measure);
+    };
+  }, [prayers, index, charLimit, isDesktop]);
+
+  if (prayers.length === 0) {
+    return (
+      <p className="text-[12px] text-[#5b6876] mb-2">La comunidad está orando · únete</p>
+    );
+  }
+
+  const currentPrayer = prayers[index];
+  const nextPrayer = prayers[(index + 1) % prayers.length];
+  const isTruncated = shouldTruncate && currentPrayer.length > charLimit;
+  const displayText = isTruncated ? currentPrayer.substring(0, charLimit) + "..." : currentPrayer;
+  const nextIsTruncated = shouldTruncate && nextPrayer.length > charLimit;
+  const nextDisplayText = nextIsTruncated ? nextPrayer.substring(0, charLimit) + "..." : nextPrayer;
+
+  const textSize = isDesktop && deckLength === 1 ? "text-[16px]" : "text-[14px]";
+  const textAlign = isDesktop ? "text-center" : "text-justify";
+  const itemsAlign = isDesktop ? "items-center" : "items-start";
+  const minHeight = isDesktop && deckLength === 1 ? "min-h-[100px]" : "min-h-[80px]";
+  const padding = isDesktop && deckLength === 1 ? "p-4" : "p-3";
+
+  const translateAmount = isSliding && nextIndex !== null ? -100 : 0;
+
+  return (
+    <div className="mb-3">
+      <div className="relative overflow-hidden rounded-[3px] bg-[#f5f9f7] border border-[#d4e8e0]" style={{ height: maxHeightPx ? `${maxHeightPx}px` : undefined }}>
+        <div className={`${shouldTransition ? "transition-transform duration-450 ease-out" : ""} flex`} style={{ transform: `translateX(${translateAmount}%)` }}>
+          <div ref={(el) => (slidesRef.current[0] = el)} className={`w-full flex-shrink-0 ${padding} ${minHeight} flex flex-col ${itemsAlign} justify-center`}>
+            <p className={`${textSize} text-[#1f2833] italic leading-relaxed ${textAlign}`}>"{displayText}"</p>
+            {isTruncated && onOpenModal && (
+              <button onClick={() => onOpenModal(currentPrayer)} className="mt-2 text-[12px] text-[#2d6a4f] hover:text-[#1f4d39] font-semibold underline transition-colors">Ver más</button>
+            )}
+          </div>
+
+          {prayers.length > 1 && (
+            <div ref={(el) => (slidesRef.current[1] = el)} className={`w-full flex-shrink-0 ${padding} ${minHeight} flex flex-col ${itemsAlign} justify-center`}>
+              <p className={`${textSize} text-[#1f2833] italic leading-relaxed ${textAlign}`}>"{nextDisplayText}"</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {prayers.length > 1 && (
+        <div className="flex items-center gap-1 justify-center mt-1.5">
+          {prayers.map((_, idx) => (
+            <span key={idx} className={`h-1 rounded-full transition-all duration-300 ${idx === index ? "w-2 bg-[#2d6a4f]" : "w-1 bg-[#bfd6c7]"}`} aria-label={`Oración ${idx + 1} de ${prayers.length}`} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DeckCard({
   item,
   featured,
   isDesktop = false,
+  deckLength = 1,
+  prayerWall,
+  onOpenPrayerModal,
 }: {
   item: DeckItem;
   featured: boolean;
   isDesktop?: boolean;
+  deckLength?: number;
+  prayerWall?: PrayerWallConfig | null;
+  onOpenPrayerModal?: () => void;
 }) {
-  // Desktop: fixed width cards; Mobile: variable width with snap
-  const widthClass = isDesktop
-    ? "w-[260px] shrink-0"
-    : featured
-      ? "w-[84vw] max-w-[360px] shrink-0"
-      : "w-[70vw] max-w-[260px] shrink-0";
+  const [showFullPrayerModal, setShowFullPrayerModal] = useState(false);
+  const [fullPrayerText, setFullPrayerText] = useState("");
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Determine width based on type, deck length, and device
+  let widthClass = "";
+  if (isDesktop) {
+    // Desktop: if only prayer and it's the only element, make it full width
+    if (item.type === "prayer" && deckLength === 1) {
+      widthClass = "w-full shrink-0"; // Full width for single prayer
+    } else {
+      widthClass = "w-[260px] shrink-0";
+    }
+  } else {
+    // Mobile: if only one element, full width; otherwise normal
+    if (deckLength === 1) {
+      widthClass = "w-full shrink-0"; // Full width for single element
+    } else {
+      widthClass = featured
+        ? "w-[84vw] max-w-[360px] shrink-0"
+        : "w-[70vw] max-w-[260px] shrink-0";
+    }
+  }
 
   const imageHeight = featured && !isDesktop ? "h-28" : "h-24";
 
@@ -579,6 +896,10 @@ function DeckCard({
 
   const href = "href" in item ? item.href : undefined;
   const badge = BADGE_META[item.type];
+  const prayerDate =
+    item.type === "prayer" && item.phase === "show" && item.prayerObjects?.[0]?.submittedAt
+      ? formatPrayerDate(item.prayerObjects[0].submittedAt)
+      : null;
 
   const inner = (
     <article
@@ -596,7 +917,7 @@ function DeckCard({
         aria-hidden="true"
       />
       {image ? (
-        <div className={`relative w-full ${imageHeight} bg-[#f1f1f1]`}>
+        <div className={`relative w-full ${imageHeight} bg-[#f1f1f1] group`}>
           <Image
             src={image}
             alt={item.title}
@@ -604,6 +925,23 @@ function DeckCard({
             sizes={isDesktop ? "260px" : "(max-width: 768px) 80vw, 360px"}
             className="object-cover"
           />
+
+          {/* Overlay magnifier / open lightbox */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsLightboxOpen(true);
+              }}
+              aria-label="Ver imagen en pantalla completa"
+              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-2 pointer-events-auto"
+            >
+              <Search className="h-5 w-5 text-white" aria-hidden="true" />
+            </button>
+          </div>
+
           {item.type === "instagram" && item.postType === "reel" && (
             <div className="absolute top-2 right-2 bg-black/55 rounded-full h-6 w-6 flex items-center justify-center">
               <Play className="h-3 w-3 text-white" fill="white" />
@@ -613,12 +951,19 @@ function DeckCard({
       ) : null}
 
       <div className="flex flex-col flex-1 p-3">
-        <span
-          className={`inline-flex self-start items-center gap-1 px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-[0.08em] ${badge.classes} mb-2`}
-        >
-          {badge.icon}
-          {badge.label}
-        </span>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span
+            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-[0.08em] ${badge.classes}`}
+          >
+            {badge.icon}
+            {badge.label}
+          </span>
+          {prayerDate && (
+            <span className="rounded-sm bg-[#4a5568] px-2 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm whitespace-nowrap">
+              {prayerDate}
+            </span>
+          )}
+        </div>
 
         <h3
           className={`font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 ${
@@ -655,10 +1000,17 @@ function DeckCard({
           </p>
         )}
 
-        {item.type === "prayer" && (
-          <p className="text-[12px] text-[#5b6876] mb-2">
-            La comunidad está orando · únete
-          </p>
+        {item.type === "prayer" && item.phase === "show" && (
+          <PrayerMiniCarousel
+            prayers={item.prayers ?? []}
+            prayerObjects={item.prayerObjects ?? []}
+            deckLength={deckLength}
+            isDesktop={isDesktop}
+            onOpenModal={(text) => {
+              setFullPrayerText(text);
+              setShowFullPrayerModal(true);
+            }}
+          />
         )}
 
         {item.type === "promo" && (
@@ -669,50 +1021,125 @@ function DeckCard({
           <p className="text-[12px] text-[#5b6876] mb-2">Cápsula de audio</p>
         )}
 
-        <div className="mt-auto pt-1">
-          <span
-            className={`inline-flex items-center gap-1 text-[12px] font-semibold ${
-              featured && !isDesktop ? "text-[#2f5e93]" : "text-[#425060]"
-            }`}
-          >
-            {CTA_LABEL[item.type]}
-            <ArrowRight className="h-3 w-3" aria-hidden="true" />
-          </span>
-        </div>
+        {/* Footer / CTA: hide CTA for prayer when in 'show' phase */}
+        {!(item.type === "prayer" && item.phase === "show") && (
+          <div className="mt-auto pt-1">
+            <span
+              className={`inline-flex items-center gap-1 font-semibold ${
+                item.type === "prayer" && item.phase === "collect"
+                  ? "text-[17px] text-[#2d6a4f]" // Larger text for collect prayer CTA
+                  : featured && !isDesktop
+                    ? "text-[12px] text-[#2f5e93]"
+                    : "text-[12px] text-[#425060]"
+              }`}
+            >
+              {CTA_LABEL[item.type]}
+              <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            </span>
+          </div>
+        )}
       </div>
     </article>
   );
 
-  if (href?.startsWith("http")) {
-    return (
+  // Determine wrapper deterministically based on item type and properties
+  let wrapper: ReactNode;
+  
+  if (item.type === "prayer") {
+    // Prayer items: button only when collecting with callback, otherwise unwrapped
+    if (item.phase === "collect" && onOpenPrayerModal) {
+      wrapper = (
+        <button
+          type="button"
+          onClick={onOpenPrayerModal}
+          className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px] w-full text-left"
+          aria-label={`${BADGE_META[item.type].label}: ${item.title || "Oraciones"}`}
+        >
+          {inner}
+        </button>
+      );
+    } else {
+      wrapper = inner;
+    }
+  } else if (href && href.startsWith("http")) {
+    // External links as <a> tags
+    wrapper = (
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px]"
-        role="listitem"
         aria-label={`${BADGE_META[item.type].label}: ${item.title}`}
       >
         {inner}
       </a>
     );
-  }
-  if (href) {
-    return (
+  } else if (href) {
+    // Internal links as Next Link
+    wrapper = (
       <Link
         href={href}
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px]"
-        role="listitem"
         aria-label={`${BADGE_META[item.type].label}: ${item.title}`}
       >
         {inner}
       </Link>
     );
+  } else {
+    // No link: unwrapped article
+    wrapper = inner;
   }
+
   return (
-    <div role="listitem" className="block">
-      {inner}
-    </div>
+    <>
+      <div role="listitem" className="block">
+        {wrapper}
+      </div>
+
+      {/* Lightbox for card images */}
+      {isLightboxOpen && image && (
+        <Lightbox src={image} alt={item.title} onClose={() => setIsLightboxOpen(false)} />
+      )}
+      
+      {/* Full prayer text modal for long prayers */}
+      {showFullPrayerModal && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowFullPrayerModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-md w-full p-6 max-h-[80vh] overflow-y-auto shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-[15px] font-bold text-[#1f2833]">Oración completa</h3>
+              <button
+                onClick={() => setShowFullPrayerModal(false)}
+                className="text-[#8a96a4] hover:text-[#425060] transition-colors"
+                aria-label="Cerrar"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <p className="text-[14px] text-[#1f2833] italic leading-relaxed">
+              "{fullPrayerText}"
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -737,4 +1164,26 @@ function formatEventDate(date: Date) {
     "Dic",
   ];
   return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+}
+
+function formatPrayerDate(submittedAt: string) {
+  const date = new Date(submittedAt);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const months = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
+
+  return `${date.getDate()} de ${months[date.getMonth()]}`;
 }

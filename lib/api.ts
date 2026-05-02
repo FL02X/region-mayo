@@ -12,6 +12,10 @@ import type {
   SiteSettings,
   HeroImage,
   Templo,
+  HeroCard,
+  PrayerWallConfig,
+  SocialPost,
+  Prayer,
 } from "./types";
 import { getSanityClient } from "./sanity/client";
 import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
@@ -497,6 +501,62 @@ function mapSiteSettings(raw: any): SiteSettings {
   };
 }
 
+function mapHeroCard(raw: any): HeroCard {
+  const mediaUrl = raw?.media?.file?.asset?.url;
+  return {
+    _id: raw._id,
+    media: {
+      url: typeof mediaUrl === "string" && mediaUrl.length > 0 ? mediaUrl : "/placeholder.svg",
+      isVertical: Boolean(raw?.media?.isVertical),
+      alt: raw?.media?.alt || "Contenido destacado",
+    },
+    accentColor: raw?.accentColor || "#2f5e93",
+    url: raw?.url || undefined,
+    ctaText: raw?.ctaText || "Ver más información",
+    publishedAt: raw?.publishedAt || new Date(0).toISOString(),
+    pinned: Boolean(raw?.pinned),
+    priorityWeight: typeof raw?.priorityWeight === "number" ? raw.priorityWeight : 0,
+  };
+}
+
+function mapPrayer(raw: any): Prayer {
+  return {
+    _id: raw?._id,
+    text: raw?.text || "",
+    submittedAt: raw?.submittedAt || new Date(0).toISOString(),
+    approved: Boolean(raw?.approved),
+    spam: Boolean(raw?.spam),
+  };
+}
+
+function mapPrayerWallConfig(raw: any): PrayerWallConfig {
+  return {
+    _id: raw?._id,
+    phase: raw?.phase || "paused",
+    selectedPrayers: Array.isArray(raw?.selectedPrayers)
+      ? raw.selectedPrayers.map(mapPrayer)
+      : [],
+    enabled: raw?.enabled !== false,
+    publishedAt: raw?.publishedAt || new Date(0).toISOString(),
+  };
+}
+
+function mapSocialPost(raw: any): SocialPost {
+  return {
+    _id: raw?._id,
+    network: raw?.network === "facebook" ? "facebook" : "instagram",
+    url: raw?.url || "",
+    caption: raw?.caption || undefined,
+    media: raw?.media?.asset?.url
+      ? {
+          url: raw.media.asset.url,
+          isVertical: Boolean(raw?.isVertical),
+        }
+      : undefined,
+    postedAt: raw?.postedAt || new Date(0).toISOString(),
+  };
+}
+
 export async function getSiteSettings(
   regionSlug: string = "mayo",
 ): Promise<SiteSettings | null> {
@@ -526,6 +586,83 @@ export async function getSiteSettings(
   }
 
   return mapSiteSettings(settings);
+}
+
+// ============================================
+// Spotlight APIs (Priority Section)
+// ============================================
+
+export async function getLatestHeroCard(regionSlug: string = "mayo"): Promise<HeroCard | null> {
+  if (!SANITY_ENABLED) return null;
+
+  const client = getSanityClient();
+  const card = await client.fetch(
+    `*[_type == "heroCard" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
+      | order(publishedAt desc)[0]{
+        _id,
+        accentColor,
+        url,
+        ctaText,
+        publishedAt,
+        pinned,
+        priorityWeight,
+        media{
+          isVertical,
+          alt,
+          file{asset->{url}}
+        }
+      }`,
+    { slug: regionSlug },
+  );
+
+  if (!card) return null;
+  return mapHeroCard(card);
+}
+
+export async function getPrayerWallConfig(regionSlug: string = "mayo"): Promise<PrayerWallConfig | null> {
+  if (!SANITY_ENABLED) return null;
+
+  const client = getSanityClient();
+  const wall = await client.fetch(
+    `*[_type == "prayerWall" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
+      | order(publishedAt desc)[0]{
+        _id,
+        phase,
+        enabled,
+        publishedAt,
+        selectedPrayers[]->{
+          _id,
+          text,
+          submittedAt,
+          approved,
+          spam
+        }
+      }`,
+    { slug: regionSlug },
+  );
+
+  if (!wall) return null;
+  return mapPrayerWallConfig(wall);
+}
+
+export async function getLatestSocialPosts(limit: number = 6): Promise<SocialPost[]> {
+  if (!SANITY_ENABLED) return [];
+
+  const client = getSanityClient();
+  const posts = await client.fetch(
+    `*[_type == "socialPostCache"] | order(postedAt desc)[0...$limit]{
+      _id,
+      network,
+      url,
+      caption,
+      isVertical,
+      postedAt,
+      media{asset->{url}}
+    }`,
+    { limit },
+  );
+
+  return (posts ?? []).map(mapSocialPost).filter((p: SocialPost) => Boolean(p.url));
 }
 
 // ============================================

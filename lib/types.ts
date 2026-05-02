@@ -239,3 +239,54 @@ export interface Templo {
   /** Coros that belong to this templo (from the coro collection) */
   coros: TemploCoro[];
 }
+
+// ============================================
+// HERO SECTION - RANKING SYSTEM TYPES
+// ============================================
+
+// Prayer submission (anonymous)
+export interface Prayer {
+  _id: string;
+  text: string;
+  submittedAt: string;
+  approved?: boolean;
+  spam?: boolean;
+}
+
+// Prayer Wall configuration
+export interface PrayerWallConfig {
+  _id: string;
+  phase: 'collect' | 'show' | 'paused';
+  selectedPrayers: Prayer[];
+  enabled: boolean;
+  publishedAt: string;
+}
+
+// Custom Hero Card
+export interface HeroCard {
+  _id: string;
+  media: {
+    url: string;
+    isVertical: boolean;
+    alt: string;
+  };
+  accentColor: string;
+  url?: string;
+  ctaText?: string;
+  publishedAt: string;
+  pinned?: boolean;
+  priorityWeight?: number;
+}
+
+// Social Post (cached from Meta API)
+export interface SocialPost {
+  _id: string;
+  network: 'instagram' | 'facebook';
+  url: string;
+  caption?: string;
+  media?: {
+    url: string;
+    isVertical: boolean;
+  };
+  postedAt: string;
+}

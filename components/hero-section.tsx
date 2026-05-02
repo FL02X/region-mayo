@@ -6,9 +6,23 @@ import { Playfair_Display } from "next/font/google";
 import { Calendar, ExternalLink, MapPin, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RegistrationModal } from "@/components/registration-modal";
+import { PrayerCarousel } from "@/components/prayer-carousel";
+import { PrayerWallForm } from "@/components/prayer-wall-form";
+import { HeroDebugPanel } from "@/components/hero-debug-panel";
+import { Lightbox } from "@/components/lightbox";
+import { Search } from "lucide-react";
 import { useTime } from "@/lib/time-context";
 import { calculateCountdown } from "@/lib/countdown-utils";
-import type { Event, HeroImage, RegionPresident } from "@/lib/types";
+import type {
+  Event,
+  HeroImage,
+  RegionPresident,
+  HeroCard,
+  PrayerWallConfig,
+  SocialPost,
+} from "@/lib/types";
+import type { HeroCandidate } from "@/lib/ranker";
+import { pickHeroAndDeck, getAccentColor } from "@/lib/ranker";
 
 const heroTitleFont = Playfair_Display({
   subsets: ["latin"],
@@ -19,7 +33,12 @@ const heroTitleFont = Playfair_Display({
 
 interface HeroSectionProps {
   heroImages?: HeroImage[];
-  nextEvent?: Event | null;
+  events: Event[];
+  customHeroCard?: HeroCard | null;
+  prayerWall?: PrayerWallConfig | null;
+  socialPosts?: SocialPost[];
+  instagramUrl?: string;
+  facebookUrl?: string;
   regionPresident: RegionPresident | null;
 }
 
@@ -54,7 +73,16 @@ function CompactCountdownCell({ value, label }: { value: number; label: string }
   );
 }
 
-export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSectionProps) {
+export function HeroSection({
+  heroImages,
+  events,
+  customHeroCard,
+  prayerWall,
+  socialPosts,
+  instagramUrl,
+  facebookUrl,
+  regionPresident,
+}: HeroSectionProps) {
   const SLIDE_INTERVAL_MS = 5000;
   const SLIDE_DURATION_MS = 650;
   const [isDesktop, setIsDesktop] = useState(false);
@@ -62,12 +90,131 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
   const [incomingIndex, setIncomingIndex] = useState<number | null>(null);
   const [isSliding, setIsSliding] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const { currentTime } = useTime();
+  const spotlightCandidates = useMemo<HeroCandidate[]>(() => {
+    const nowMs = currentTime.getTime();
+    const candidates: HeroCandidate[] = [];
+
+    if (customHeroCard?.media?.url) {
+      candidates.push({
+        type: "custom",
+        id: customHeroCard._id,
+        publishedAt: new Date(customHeroCard.publishedAt).getTime(),
+        accentColor: customHeroCard.accentColor || "#2f5e93",
+        media: {
+          isVertical: Boolean(customHeroCard.media.isVertical),
+          alt: customHeroCard.media.alt || "Contenido destacado",
+        },
+        url: customHeroCard.url,
+        ctaText: customHeroCard.ctaText,
+        pinned: customHeroCard.pinned,
+        priorityWeight: customHeroCard.priorityWeight,
+      });
+    }
+
+    if (prayerWall && prayerWall.enabled) {
+      candidates.push({
+        type: "prayer",
+        id: prayerWall._id,
+        phase: prayerWall.phase,
+        publishedAt: new Date(prayerWall.publishedAt).getTime(),
+        selectedPrayersCount: prayerWall.selectedPrayers?.length ?? 0,
+      });
+    }
+
+    events.forEach((event) => {
+      candidates.push({
+        type: "event",
+        id: event.id,
+        title: event.title,
+        date: event.date.getTime(),
+        time: event.time,
+        location: event.location,
+        address: event.address,
+        registrationEnabled: event.registrationEnabled,
+      });
+    });
+
+    (socialPosts ?? []).forEach((post) => {
+      candidates.push({
+        type: "social",
+        id: post._id,
+        network: post.network,
+        postedAt: new Date(post.postedAt).getTime(),
+        url: post.url,
+        caption: post.caption,
+        media: post.media
+          ? {
+              isVertical: post.media.isVertical,
+            }
+          : undefined,
+      });
+    });
+
+    if ((socialPosts?.length ?? 0) === 0) {
+      const hasMetaKeys = Boolean(
+        process.env.META_PAGE_ACCESS_TOKEN ||
+          process.env.META_INSTAGRAM_ACCOUNT_ID ||
+          process.env.META_FACEBOOK_PAGE_ID,
+      )
+
+      // Only add social fallback links when Meta integration keys are present.
+      // This avoids showing an Instagram/Facebook card when the API isn't configured.
+      if (hasMetaKeys) {
+        if (instagramUrl) {
+          candidates.push({
+            type: "social",
+            id: "ig-fallback",
+            network: "instagram",
+            postedAt: nowMs - 18 * 60 * 60 * 1000,
+            url: instagramUrl,
+          });
+        }
+        if (facebookUrl) {
+          candidates.push({
+            type: "social",
+            id: "fb-fallback",
+            network: "facebook",
+            postedAt: nowMs - 36 * 60 * 60 * 1000,
+            url: facebookUrl,
+          });
+        }
+      }
+    }
+
+    return candidates;
+  }, [
+    currentTime,
+    customHeroCard,
+    prayerWall,
+    events,
+    socialPosts,
+    instagramUrl,
+    facebookUrl,
+  ]);
+
+  const spotlight = useMemo(
+    () => pickHeroAndDeck(spotlightCandidates, currentTime.getTime(), true),
+    [spotlightCandidates, currentTime],
+  );
+
+  const spotlightHero = spotlight.hero;
+  const spotlightAccent = spotlightHero ? getAccentColor(spotlightHero) : "#2f5e93";
+  const spotlightEvent = useMemo(() => {
+    if (!spotlightHero || spotlightHero.type !== "event") return null;
+    return events.find((event) => event.id === spotlightHero.id) ?? null;
+  }, [spotlightHero, events]);
+  const spotlightSocialPost = useMemo(() => {
+    if (!spotlightHero || spotlightHero.type !== "social") return null;
+    return (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null;
+  }, [spotlightHero, socialPosts]);
 
   const countdownData = useMemo(() => {
-    if (!nextEvent) return null;
-    return calculateCountdown(nextEvent, currentTime);
-  }, [nextEvent, currentTime]);
+    if (!spotlightEvent) return null;
+    return calculateCountdown(spotlightEvent, currentTime);
+  }, [spotlightEvent, currentTime]);
 
   const slides = useMemo(() => {
     const cmsSlides = (heroImages ?? [])
@@ -131,10 +278,6 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
     return () => window.clearTimeout(timeoutId);
   }, [incomingIndex, isSliding]);
 
-  if (!isDesktop) {
-    return null;
-  }
-
   const scrollToContent = () => {
     const header = document.querySelector("header");
     const headerOffset = header instanceof HTMLElement ? header.offsetHeight : 0;
@@ -193,6 +336,33 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
       ]
     : [];
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isLocal =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    if (!isLocal || !spotlight.debug) return;
+
+    window.dispatchEvent(
+      new CustomEvent("hero-ranking-debug", {
+        detail: spotlight.debug,
+      }),
+    );
+  }, [spotlight]);
+
+  const showPrayerCollectCard =
+    spotlightHero?.type === "prayer" && spotlightHero.phase === "collect";
+  const showPrayerDisplayCard =
+    spotlightHero?.type === "prayer" &&
+    spotlightHero.phase === "show" &&
+    (prayerWall?.selectedPrayers?.length ?? 0) > 0;
+  const showCustomCard = spotlightHero?.type === "custom";
+  const showSocialCard = spotlightHero?.type === "social";
+
+  if (!isDesktop) {
+    return null;
+  }
+
   return (
     <div className="w-full relative bg-[#f1f1f1]">
       <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a]">
@@ -247,32 +417,36 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
           <div className="relative z-10 h-full flex items-center px-5 md:px-6 pt-[52px] md:pt-[46px] pb-3">
             <div className="w-full grid md:grid-cols-[minmax(290px,390px)_1fr] gap-4 md:gap-5 items-center">
               <div className="hidden md:block">
-                {nextEvent && (
+                {spotlightEvent && (
                   <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#2f5e93] mb-2">
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2"
+                      style={{ color: spotlightAccent }}
+                    >
                       Próximo Evento
                     </p>
                     <h3 className="text-[34px] font-bold text-[#1f2833] leading-[1.04] mb-2.5 line-clamp-2">
-                      {nextEvent.title}
+                      {spotlightEvent.title}
                     </h3>
                     <div className="space-y-1.5 text-[13px] text-[#425060] mb-3.5">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        <span>{formatDate(nextEvent.date)} · {nextEvent.time}</span>
+                        <span>{formatDate(spotlightEvent.date)} · {spotlightEvent.time}</span>
                       </div>
                       <div className="flex items-center gap-2 min-w-0">
                         <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        {nextEvent.googleMapsUrl ? (
+                        {spotlightEvent.googleMapsUrl ? (
                           <button
-                            onClick={() => window.open(nextEvent.googleMapsUrl!, "_blank")}
-                            className="inline-flex items-center gap-1 min-w-0 text-left text-[#2f5e93] hover:text-[#264d79] transition-colors"
+                            onClick={() => window.open(spotlightEvent.googleMapsUrl!, "_blank")}
+                            className="inline-flex items-center gap-1 min-w-0 text-left transition-colors"
+                            style={{ color: spotlightAccent }}
                             aria-label="Abrir ubicación del próximo evento en Google Maps"
                           >
-                            <span className="truncate">{nextEvent.address || nextEvent.location}</span>
+                            <span className="truncate">{spotlightEvent.address || spotlightEvent.location}</span>
                             <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                           </button>
                         ) : (
-                          <span className="truncate">{nextEvent.address || nextEvent.location}</span>
+                          <span className="truncate">{spotlightEvent.address || spotlightEvent.location}</span>
                         )}
                       </div>
                     </div>
@@ -289,14 +463,138 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
                       </div>
                     )}
 
-                    {nextEvent.registrationEnabled !== false && (
+                    {spotlightEvent.registrationEnabled !== false && (
                       <Button
                         onClick={() => setIsRegisterModalOpen(true)}
-                        className="w-full h-10 text-[13px] font-extrabold tracking-[0.04em] bg-[#2f5e93] hover:bg-[#284e79] text-white rounded-[2px]"
+                        className="w-full h-10 text-[13px] font-extrabold tracking-[0.04em] text-white rounded-[2px]"
+                        style={{ backgroundColor: spotlightAccent }}
                       >
                         REGISTRARSE
                       </Button>
                     )}
+                  </article>
+                )}
+
+                {showCustomCard && customHeroCard && (
+                  <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-3 rounded-[2px]">
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setIsLightboxOpen(true)}
+                        aria-haspopup="dialog"
+                        aria-label="Ver imagen en pantalla completa"
+                        className={customHeroCard.url ? "block" : "pointer-events-none block"}
+                      >
+                        <div
+                          className={`group relative w-full overflow-hidden border border-[#dce2e9] bg-[#f5f6f8] ${
+                            customHeroCard.media.isVertical ? "h-[360px]" : "h-[240px]"
+                          }`}
+                        >
+                          <img
+                            src={customHeroCard.media.url}
+                            alt={customHeroCard.media.alt || "Contenido destacado"}
+                            className="object-contain w-full h-full m-auto"
+                            decoding="async"
+                          />
+
+                          {/* Desktop: centered magnifier on hover */}
+                          <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-3">
+                              <Search className="h-6 w-6 text-white" aria-hidden="true" />
+                            </div>
+                          </div>
+
+                          {/* Mobile: icon bottom-right */}
+                          <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
+                            <div className="bg-white/90 rounded-full p-2 shadow">
+                              <Search className="h-4 w-4 text-black" aria-hidden="true" />
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                      {isLightboxOpen && (
+                        <Lightbox
+                          src={customHeroCard.media.url}
+                          alt={customHeroCard.media.alt || "Contenido destacado"}
+                          onClose={() => setIsLightboxOpen(false)}
+                        />
+                      )}
+                    </div>
+                    {customHeroCard.url && (
+                      <Button asChild className="mt-3 w-full h-11 bg-[#2f5e93] hover:bg-[#244a72] text-white text-sm font-bold px-4">
+                        <a href={customHeroCard.url} target="_blank" rel="noopener noreferrer">
+                          <span className="inline-flex items-center justify-center gap-1.5 w-full">
+                            {customHeroCard.ctaText || "Ver más información"}
+                            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                          </span>
+                        </a>
+                      </Button>
+                    )}
+                  </article>
+                )}
+
+                {showSocialCard && spotlightHero && spotlightHero.type === "social" && (
+                  <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2"
+                      style={{ color: spotlightAccent }}
+                    >
+                      {spotlightHero.network === "instagram" ? "Instagram" : "Facebook"}
+                    </p>
+                    {spotlightSocialPost?.media?.url && (
+                      <div
+                        className={`relative w-full overflow-hidden border border-[#dce2e9] bg-[#f5f6f8] mb-3 ${
+                          spotlightSocialPost.media.isVertical ? "h-[360px]" : "h-[220px]"
+                        }`}
+                      >
+                        <Image
+                          src={spotlightSocialPost.media.url}
+                          alt={spotlightSocialPost.caption || "Publicación destacada"}
+                          fill
+                          sizes="(min-width: 768px) 390px"
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    <a
+                      href={spotlightHero.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm font-semibold"
+                      style={{ color: spotlightAccent }}
+                    >
+                      Ver publicación
+                      <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                    </a>
+                  </article>
+                )}
+
+                {showPrayerCollectCard && (
+                  <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#2d6a4f] mb-2">
+                      Muro de Oraciones
+                    </p>
+                    <h3 className="text-[20px] font-bold text-[#1f2833] leading-snug mb-2">
+                      Comparte tu petición de oración
+                    </h3>
+                    <p className="text-[13px] text-[#425060] mb-3">
+                      Tu mensaje es anónimo y será revisado por el equipo.
+                    </p>
+                    <Button
+                      onClick={() => setIsPrayerModalOpen(true)}
+                      className="w-full h-10 text-[13px] font-extrabold tracking-[0.04em] bg-[#2d6a4f] hover:bg-[#24573f] text-white rounded-[2px]"
+                    >
+                      Enviar oración
+                    </Button>
+                  </article>
+                )}
+
+                {showPrayerDisplayCard && prayerWall && (
+                  <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#2d6a4f] mb-2">
+                      Muro de Oraciones
+                    </p>
+                    <PrayerCarousel prayers={prayerWall.selectedPrayers} />
                   </article>
                 )}
               </div>
@@ -344,14 +642,22 @@ export function HeroSection({ heroImages, nextEvent, regionPresident }: HeroSect
             aria-hidden="true"
           />
 
-          {nextEvent && (
+          {spotlightEvent && (
             <RegistrationModal
-              event={nextEvent}
+              event={spotlightEvent}
               isOpen={isRegisterModalOpen}
               onClose={() => setIsRegisterModalOpen(false)}
               regionPresident={regionPresident}
             />
           )}
+
+          <PrayerWallForm
+            isOpen={isPrayerModalOpen}
+            onClose={() => setIsPrayerModalOpen(false)}
+            isCollecting={prayerWall?.phase === "collect"}
+          />
+
+          <HeroDebugPanel />
         </section>
       </div>
     </div>

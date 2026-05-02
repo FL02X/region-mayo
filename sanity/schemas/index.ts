@@ -17,6 +17,10 @@ import coro from './coro'
 import directiva from './directiva'
 import siteSettings from './siteSettings'
 import registration from './registration'
+import heroCard from './heroCard'
+import prayerWall from './prayerWall'
+import prayer from './prayer'
+import socialPostCache from './socialPostCache'
 
 export const schemaTypes = [
   region,
@@ -27,6 +31,10 @@ export const schemaTypes = [
   directiva,
   siteSettings,
   registration,
+  heroCard,
+  prayerWall,
+  prayer,
+  socialPostCache,
 ]
 
 export default schemaTypes

@@ -9,6 +9,9 @@ import {
   getRegionConfig,
   getRegionPresident,
   getSiteSettings,
+  getLatestHeroCard,
+  getPrayerWallConfig,
+  getLatestSocialPosts,
 } from "@/lib/api";
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity
@@ -17,12 +20,15 @@ import {
 export const revalidate = false;
 
 export default async function Home() {
-  const [region, events, regionPresident, siteSettings] =
+  const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts] =
     await Promise.all([
       getRegionConfig("region-mayo"),
       getEvents("region-mayo"),
       getRegionPresident("region-mayo"),
       getSiteSettings("region-mayo"),
+      getLatestHeroCard("region-mayo"),
+      getPrayerWallConfig("region-mayo"),
+      getLatestSocialPosts(6),
     ]);
 
   const nextUpcomingEvent =
@@ -41,7 +47,12 @@ export default async function Home() {
         <div className="hidden md:block">
           <HeroSection
             heroImages={siteSettings?.heroImages}
-            nextEvent={nextUpcomingEvent}
+            events={events}
+            customHeroCard={heroCard}
+            prayerWall={prayerWall}
+            socialPosts={socialPosts}
+            instagramUrl={region?.socialLinks.instagram}
+            facebookUrl={region?.socialLinks.facebook}
             regionPresident={regionPresident}
           />
         </div>
@@ -52,6 +63,10 @@ export default async function Home() {
             events={events}
             instagramUrl={region?.socialLinks.instagram}
             facebookUrl={region?.socialLinks.facebook}
+            customHeroCard={heroCard}
+            prayerWall={prayerWall}
+            socialPosts={socialPosts}
+            now={Date.now()}
           />
         </div>
 
@@ -62,6 +77,10 @@ export default async function Home() {
               regionPresident={regionPresident}
               instagramUrl={region?.socialLinks.instagram}
               facebookUrl={region?.socialLinks.facebook}
+              customHeroCard={heroCard}
+              prayerWall={prayerWall}
+              socialPosts={socialPosts}
+              now={Date.now()}
             />
           ) : (
             <div className="flex items-center justify-center min-h-[400px]">

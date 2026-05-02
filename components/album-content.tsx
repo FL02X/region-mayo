@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Images, ExternalLink, Calendar, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Event } from "@/lib/types";
+import { ALBUM_SHARING_ENABLED } from "@/lib/countdown-utils";
 
 function AlbumCard({ event }: { event: Event }) {
   const formatDate = (date: Date) => {
@@ -112,7 +113,9 @@ interface AlbumContentProps {
 }
 
 export function AlbumContent({ events }: AlbumContentProps) {
-  const eventsWithAlbums = events.filter((event) => event.albumEnabled);
+  const eventsWithAlbums = ALBUM_SHARING_ENABLED
+    ? events.filter((event) => event.albumEnabled)
+    : [];
 
   return (
     <div className="w-full relative pb-16 bg-[#f1f1f1]" id="main-content">

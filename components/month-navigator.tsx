@@ -164,7 +164,7 @@ export function MonthNavigator({
                       key={`${month}-${viewYear}`}
                       onClick={() => selectDesktopMonth(index)}
                       aria-pressed={selected}
-                      aria-label={`${month} ${viewYear}${withEvents ? " — con eventos" : ""}`}
+                      aria-label={`${month} ${viewYear}`}
                       className={[
                         "relative h-14 px-1 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
                         selected
@@ -178,15 +178,7 @@ export function MonthNavigator({
                       style={{ minHeight: "unset", minWidth: "unset" }}
                     >
                       <span className="block leading-none">{month.slice(0, 3)}</span>
-                      {eventCount > 0 && (
-                        <span
-                          className={`mt-1 block text-[10px] leading-none ${
-                            selected ? "text-white/90" : "text-muted-foreground"
-                          }`}
-                        >
-                          {eventCount} {eventCount === 1 ? "evento" : "eventos"}
-                        </span>
-                      )}
+                      {/* event count intentionally hidden per request */}
                     </button>
                   );
                 })}
@@ -242,7 +234,7 @@ export function MonthNavigator({
                 key={month}
                 onClick={() => handleMonthClick(index)}
                 aria-pressed={selected}
-                aria-label={`${month} ${viewYear}${withEvents ? " — con eventos" : ""}`}
+                aria-label={`${month} ${viewYear}`}
                 className={[
                   "relative py-3.5 text-sm font-medium text-center transition-colors",
                   selected
@@ -257,12 +249,7 @@ export function MonthNavigator({
               >
                 {month.slice(0, 3)}
 
-                {withEvents && !selected && (
-                  <span
-                    className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
-                    aria-hidden="true"
-                  />
-                )}
+                {/* event dot hidden per request */}
               </button>
             );
           })}

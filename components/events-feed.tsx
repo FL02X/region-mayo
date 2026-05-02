@@ -7,7 +7,13 @@ import { EventCard } from "./event-card";
 import { RegistrationModal } from "./registration-modal";
 import { CountdownSection } from "./countdown-section";
 import { ActionDeck } from "./action-deck";
-import type { Event, RegionPresident } from "@/lib/types";
+import type {
+  Event,
+  RegionPresident,
+  HeroCard,
+  PrayerWallConfig,
+  SocialPost,
+} from "@/lib/types";
 
 const months = [
   "Enero",
@@ -24,13 +30,18 @@ const months = [
   "Diciembre",
 ];
 
-const INITIAL_DATE = new Date(2026, 3, 1); // April 2026
+const now = new Date();
+const INITIAL_DATE = new Date(now.getFullYear(), now.getMonth(), 1);
 
 interface EventsFeedProps {
   events: Event[];
   regionPresident: RegionPresident | null;
   instagramUrl?: string;
   facebookUrl?: string;
+  customHeroCard?: HeroCard | null;
+  prayerWall?: PrayerWallConfig | null;
+  socialPosts?: SocialPost[];
+  now?: number;
 }
 
 export function EventsFeed({
@@ -38,6 +49,10 @@ export function EventsFeed({
   regionPresident,
   instagramUrl,
   facebookUrl,
+  customHeroCard,
+  prayerWall,
+  socialPosts,
+  now: nowProp,
 }: EventsFeedProps) {
   const [selectedMonth, setSelectedMonth] = useState(INITIAL_DATE);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -154,14 +169,30 @@ export function EventsFeed({
   return (
     <div className="w-full relative bg-[#f1f1f1]" data-events-feed="true">
       <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen pb-20 pt-[2px]">
-        {/* Countdown (mobile only; desktop featured event lives in hero) */}
+        {/* Priority spotlight section (mobile only) */}
         <div className="md:hidden">
-          <CountdownSection events={events} onRegister={handleRegister} />
+          <CountdownSection
+            events={events}
+            onRegister={handleRegister}
+            customHeroCard={customHeroCard}
+            prayerWall={prayerWall}
+            socialPosts={socialPosts}
+            instagramUrl={instagramUrl}
+            facebookUrl={facebookUrl}
+          />
         </div>
 
         {/* ActionDeck (mobile only; desktop renders in page.tsx) */}
         <div className="md:hidden">
-          <ActionDeck events={events} instagramUrl={instagramUrl} facebookUrl={facebookUrl} />
+          <ActionDeck
+            events={events}
+            instagramUrl={instagramUrl}
+            facebookUrl={facebookUrl}
+            customHeroCard={customHeroCard}
+            prayerWall={prayerWall}
+            socialPosts={socialPosts}
+            now={nowProp}
+          />
         </div>
 
         
