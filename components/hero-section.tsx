@@ -483,17 +483,17 @@ export function HeroSection({
                         onClick={() => setIsLightboxOpen(true)}
                         aria-haspopup="dialog"
                         aria-label="Ver imagen en pantalla completa"
-                        className={customHeroCard.url ? "block" : "pointer-events-none block"}
+                        className={customHeroCard.url ? "mx-auto block" : "pointer-events-none mx-auto block"}
                       >
                         <div
-                          className={`group relative w-full overflow-hidden border border-[#dce2e9] bg-[#f5f6f8] ${
+                          className={`group relative w-full overflow-hidden border border-[#dce2e9] bg-[#f5f6f8] flex items-center justify-center p-2 ${
                             customHeroCard.media.isVertical ? "h-[360px]" : "h-[240px]"
                           }`}
                         >
                           <img
                             src={customHeroCard.media.url}
                             alt={customHeroCard.media.alt || "Contenido destacado"}
-                            className="object-contain w-full h-full m-auto"
+                            className="block max-h-full max-w-full w-auto h-auto object-contain"
                             decoding="async"
                           />
 

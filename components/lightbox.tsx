@@ -27,27 +27,31 @@ export function Lightbox({ src, alt = "Imagen", onClose }: LightboxProps) {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
-      onClick={(e) => {
-        // close when clicking backdrop
-        if (e.target === e.currentTarget) onClose();
-      }}
+      className="fixed inset-0 z-[100] bg-black/85 p-4"
     >
-      <div className="relative max-w-[98vw] max-h-[98vh] w-full">
-        <button
-          aria-label="Cerrar imagen"
-          onClick={onClose}
-          className="absolute top-3 right-3 z-10 inline-flex items-center justify-center rounded-full bg-white/90 p-2 shadow"
-        >
-          <X className="h-4 w-4 text-black" />
-        </button>
+      <button
+        aria-label="Cerrar imagen"
+        onClick={onClose}
+        className="absolute right-4 top-4 z-[101] inline-flex items-center justify-center rounded-full bg-white/90 p-2 shadow"
+      >
+        <X className="h-4 w-4 text-black" />
+      </button>
 
-        <img
-          src={src}
-          alt={alt}
-          className="mx-auto max-h-[92vh] w-auto max-w-full object-contain"
-          loading="eager"
-        />
+      <div
+        className="flex h-full w-full items-center justify-center"
+        onClick={onClose}
+      >
+        <div
+          className="relative flex max-h-[100vh] max-w-[100vw] items-center justify-center md:max-h-[78vh] md:max-w-[72vw]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img
+            src={src}
+            alt={alt}
+            className="block max-h-[100vh] max-w-[100vw] w-auto h-auto object-contain shadow-2xl md:max-h-[78vh] md:max-w-[72vw]"
+            loading="eager"
+          />
+        </div>
       </div>
     </div>
   );

@@ -285,8 +285,9 @@ export function ActionDeck({
 
     events.forEach((event) => {
       const diff = event.date.getTime() - now;
-      // Only consider upcoming events within the next 3 days
-      if (diff < 0 || diff > 3 * MS_DAY) return;
+      // Only consider upcoming events within the next 5 days in the deck.
+      // The broader event ranking priority still favors the 3-day window.
+      if (diff < 0 || diff > 5 * MS_DAY) return;
 
       rankingCandidates.push({
         type: "event",
@@ -749,15 +750,13 @@ function PrayerMiniCarousel({
   const [isSliding, setIsSliding] = useState(false);
   const [shouldTransition, setShouldTransition] = useState(false);
 
-  const shouldTruncate = isDesktop && deckLength > 1;
-  let charLimit = 108;
+  // Truncate on both desktop and mobile when multiple deck items (deckLength > 1)
+  const shouldTruncate = deckLength > 1;
+  let charLimit = 85;
   if (prayers.length > 1) {
-    const longCount = prayers.filter((p) => p.length >= 108).length;
-    if (longCount >= 2) charLimit = 107;
+    const longCount = prayers.filter((p) => p.length >= 85).length;
+    if (longCount >= 2) charLimit = 84;
   }
-
-  const [maxHeightPx, setMaxHeightPx] = useState<number | null>(null);
-  const slidesRef = useRef<Array<HTMLDivElement | null>>([]);
 
   useEffect(() => {
     if (prayers.length <= 1) return;
@@ -781,21 +780,6 @@ function PrayerMiniCarousel({
     return () => window.clearInterval(interval);
   }, [prayers, index]);
 
-  useEffect(() => {
-    const measure = () => {
-      const heights = slidesRef.current.map((el) => (el ? el.getBoundingClientRect().height : 0));
-      const max = heights.length ? Math.max(...heights) : 0;
-      if (max > 0) setMaxHeightPx(Math.ceil(max));
-    };
-
-    const t = window.setTimeout(measure, 20);
-    window.addEventListener("resize", measure);
-    return () => {
-      window.clearTimeout(t);
-      window.removeEventListener("resize", measure);
-    };
-  }, [prayers, index, charLimit, isDesktop]);
-
   if (prayers.length === 0) {
     return (
       <p className="text-[12px] text-[#5b6876] mb-2">La comunidad está orando · únete</p>
@@ -809,28 +793,38 @@ function PrayerMiniCarousel({
   const nextIsTruncated = shouldTruncate && nextPrayer.length > charLimit;
   const nextDisplayText = nextIsTruncated ? nextPrayer.substring(0, charLimit) + "..." : nextPrayer;
 
-  const textSize = isDesktop && deckLength === 1 ? "text-[16px]" : "text-[14px]";
+  const textSize = isDesktop && deckLength === 1 ? "text-[16px]" : "text-[18px]";
   const textAlign = isDesktop ? "text-center" : "text-justify";
   const itemsAlign = isDesktop ? "items-center" : "items-start";
   const minHeight = isDesktop && deckLength === 1 ? "min-h-[100px]" : "min-h-[80px]";
   const padding = isDesktop && deckLength === 1 ? "p-4" : "p-3";
+  const actionSlotHeight = "h-[26px]";
 
   const translateAmount = isSliding && nextIndex !== null ? -100 : 0;
 
   return (
     <div className="mb-3">
-      <div className="relative overflow-hidden rounded-[3px] bg-[#f5f9f7] border border-[#d4e8e0]" style={{ height: maxHeightPx ? `${maxHeightPx}px` : undefined }}>
+      <div className="relative overflow-hidden rounded-[3px] bg-[#f5f9f7] border border-[#d4e8e0]" style={{ minHeight: deckLength > 1 ? minHeight : undefined }}>
         <div className={`${shouldTransition ? "transition-transform duration-450 ease-out" : ""} flex`} style={{ transform: `translateX(${translateAmount}%)` }}>
-          <div ref={(el) => (slidesRef.current[0] = el)} className={`w-full flex-shrink-0 ${padding} ${minHeight} flex flex-col ${itemsAlign} justify-center`}>
+          <div className={`w-full flex-shrink-0 ${padding} ${minHeight} flex flex-col ${itemsAlign} justify-between`}>
             <p className={`${textSize} text-[#1f2833] italic leading-relaxed ${textAlign}`}>"{displayText}"</p>
-            {isTruncated && onOpenModal && (
-              <button onClick={() => onOpenModal(currentPrayer)} className="mt-2 text-[12px] text-[#2d6a4f] hover:text-[#1f4d39] font-semibold underline transition-colors">Ver más</button>
-            )}
+            <div className={`${actionSlotHeight} flex items-center justify-center`}>
+              {isTruncated && onOpenModal ? (
+                <button onClick={() => onOpenModal(currentPrayer)} className="text-[12px] text-[#2d6a4f] hover:text-[#1f4d39] font-semibold underline transition-colors">
+                  Ver más
+                </button>
+              ) : (
+                <span className="invisible text-[12px] font-semibold underline">Ver más</span>
+              )}
+            </div>
           </div>
 
           {prayers.length > 1 && (
-            <div ref={(el) => (slidesRef.current[1] = el)} className={`w-full flex-shrink-0 ${padding} ${minHeight} flex flex-col ${itemsAlign} justify-center`}>
+            <div className={`w-full flex-shrink-0 ${padding} ${minHeight} flex flex-col ${itemsAlign} justify-between`}>
               <p className={`${textSize} text-[#1f2833] italic leading-relaxed ${textAlign}`}>"{nextDisplayText}"</p>
+              <div className={`${actionSlotHeight} flex items-center justify-center`}>
+                <span className="invisible text-[12px] font-semibold underline">Ver más</span>
+              </div>
             </div>
           )}
         </div>
