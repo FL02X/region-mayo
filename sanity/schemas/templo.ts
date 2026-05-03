@@ -55,14 +55,23 @@ export default defineType({
       description: "La región a la que pertenece este templo (obligatorio)",
     }),
     defineField({
-      name: "photo",
-      title: "Foto del Templo",
-      type: "image",
+      name: "photos",
+      title: "Fotos del Templo",
+      type: "array",
       group: "basic",
-      options: {
-        hotspot: true,
-      },
-      description: "Foto frontal o interior del templo. Se recomienda una imagen clara del edificio.",
+      of: [
+        {
+          type: "image",
+          options: {
+            hotspot: true,
+          },
+        },
+      ],
+      validation: (Rule) => Rule.max(6),
+      description:
+        "📸 Añade fotos del templo (máximo 6 fotos). Puedes subir fotos del frente, interior, altar, entrada, etc. " +
+        "Las fotos ayudan a los visitantes a reconocer el lugar. " +
+        "Arrastra y suelta para reordenar las fotos. Las fotos se mostrarán en el sitio web en el orden que las coloques.",
     }),
 
     // Location Info
@@ -153,7 +162,7 @@ export default defineType({
     select: {
       title: "temploName",
       regionName: "region.name",
-      media: "photo",
+      media: "photos.0",
     },
     prepare({ title, regionName }) {
       return {

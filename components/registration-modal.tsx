@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PhoneInput } from "@/components/phone-input"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
+import { ImageGalleryModal } from "@/components/image-gallery-modal"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import type { Event, RegionPresident } from "@/lib/types"
 
@@ -138,12 +139,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     setSelectedPhotoIndex(null)
   }
 
-  const navigatePhoto = (direction: "prev" | "next") => {
-    if (selectedPhotoIndex === null) return
-    const newIndex = direction === "next" 
-      ? (selectedPhotoIndex + 1) % photos.length
-      : (selectedPhotoIndex - 1 + photos.length) % photos.length
-    setSelectedPhotoIndex(newIndex)
+  const handlePhotoNavigate = (index: number) => {
+    setSelectedPhotoIndex(index)
   }
 
   const stepLabels = ["Contacto", "Logística", "Confirmar"]
@@ -424,142 +421,18 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
 
       {/* Fullscreen Photo Viewer */}
       {selectedPhotoIndex !== null && photos.length > 0 && (
-        <PhotoViewer
-          photos={photos}
+        <ImageGalleryModal
+          images={photos}
           currentIndex={selectedPhotoIndex}
           onClose={closePhotoViewer}
-          onNavigate={navigatePhoto}
+          onNavigate={handlePhotoNavigate}
+          alt="Foto del evento"
         />
       )}
     </>
   )
 
   return createPortal(modalContent, document.body)
-}
-
-// Fullscreen Photo Viewer Component
-function PhotoViewer({
-  photos,
-  currentIndex,
-  onClose,
-  onNavigate,
-}: {
-  photos: string[]
-  currentIndex: number
-  onClose: () => void
-  onNavigate: (direction: "prev" | "next") => void
-}) {
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  // Handle keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
-      if (e.key === "ArrowLeft") onNavigate("prev")
-      if (e.key === "ArrowRight") onNavigate("next")
-    }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [onClose, onNavigate])
-
-  return (
-    <div 
-      className="fixed inset-0 z-[110] bg-black flex flex-col"
-      onClick={onClose}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 text-white">
-        <span className="text-sm font-bold tracking-widest uppercase">
-          {currentIndex + 1} / {photos.length}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="text-white hover:bg-white/10 rounded-none h-12 w-12"
-        >
-          <X className="h-6 w-6" />
-        </Button>
-      </div>
-
-      {/* Main Image */}
-      <div 
-        ref={containerRef}
-        className="flex-1 flex items-center justify-center p-4 relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Previous Button */}
-        {photos.length > 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onNavigate("prev")}
-            className="absolute left-2 text-white hover:bg-white/10 rounded-none h-16 w-16 z-10"
-          >
-            <ChevronLeft className="h-10 w-10" />
-          </Button>
-        )}
-
-        {/* Image */}
-        <div className="relative w-full max-w-2xl h-full max-h-[75vh]">
-          <Image
-            src={photos[currentIndex]}
-            alt={`Foto ${currentIndex + 1}`}
-            fill
-            className="object-contain"
-            priority
-          />
-        </div>
-
-        {/* Next Button */}
-        {photos.length > 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onNavigate("next")}
-            className="absolute right-2 text-white hover:bg-white/10 rounded-none h-16 w-16 z-10"
-          >
-            <ChevronRight className="h-10 w-10" />
-          </Button>
-        )}
-      </div>
-
-      {/* Thumbnail Strip */}
-      {photos.length > 1 && (
-        <div className="p-4 overflow-x-auto bg-black/50">
-          <div className="flex gap-2 justify-center">
-            {photos.map((photo, index) => (
-              <button
-                key={index}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  // Direct navigation by setting index
-                  const diff = index - currentIndex
-                  if (diff > 0) {
-                    for (let i = 0; i < diff; i++) onNavigate("next")
-                  } else if (diff < 0) {
-                    for (let i = 0; i < Math.abs(diff); i++) onNavigate("prev")
-                  }
-                }}
-                className={`relative w-16 h-16 rounded-none overflow-hidden shrink-0 transition-opacity ${
-                  index === currentIndex 
-                    ? "ring-2 ring-white opacity-100" 
-                    : "opacity-40 hover:opacity-80"
-                }`}
-              >
-                <Image
-                  src={photo}
-                  alt={`Miniatura ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
 }
 
 // Confirmation step with WhatsApp contact dropdown

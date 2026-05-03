@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { WhatsAppIconButton } from "@/components/whatsapp-button";
+import { TemploImageGallery } from "@/components/templo-image-gallery";
 import { SearchBar } from "@/components/search-bar";
 import { HighlightedText } from "@/components/highlighted-text";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
@@ -56,14 +57,12 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
       data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
-      {/* Photo */}
+      {/* Photo Gallery */}
       <div className="relative h-60 w-full bg-muted shrink-0">
-        {templo.photo ? (
-          <Image
-            src={templo.photo}
+        {templo.photos && templo.photos.length > 0 ? (
+          <TemploImageGallery
+            images={templo.photos}
             alt={templo.temploName}
-            fill
-            className="object-cover object-center"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">

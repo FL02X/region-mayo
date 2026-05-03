@@ -287,13 +287,13 @@ function SearchContentInner({ data }: SearchContentProps) {
                 photo = d.photo || "";
                 Icon = UserCircle;
               } else if (type === "templo") {
-                const t = item as Templo;
-                title = t.temploName;
-                subtitle = t.address || "";
-                description = t.pastores?.map(p => p.fullName).join(", ") || "";
-                photo = t.photo || "";
-                Icon = Church;
-              } else if (type === "evento") {
+                            const t = item as Templo;
+                            title = t.temploName;
+                            subtitle = t.address || "";
+                            description = t.pastores?.map(p => p.fullName).join(", ") || "";
+                            photo = (t.photos && t.photos.length > 0) ? t.photos[0] : "";
+                            Icon = Church;
+                          } else if (type === "evento") {
                 const e = item as Event;
                 title = e.title;
                 subtitle = e.location || "";

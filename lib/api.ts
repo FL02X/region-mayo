@@ -67,8 +67,16 @@ function computeEventStatus(date: Date, endDate?: Date, now: Date = new Date()):
 function mapEvent(raw: any, now: Date): Event {
   const date = toDate(raw.date);
   const endDate = raw.endDate ? toDate(raw.endDate) : undefined;
-  const image = sanityImageUrl(raw.image);
+
+  const hasEventImage = Boolean(raw.image?.asset?.url || (typeof raw.image === "string" && raw.image.length > 0));
   const photos = sanityImagesUrls(raw.photos);
+  const eventGalleryFirstPhoto = photos.length > 0 ? photos[0] : undefined;
+  // Event primary image (can be undefined). If missing, prefer the event gallery and then the templo's first photo.
+  const eventImage = hasEventImage ? sanityImageUrl(raw.image) : undefined;
+  const temploFirstPhoto = raw.templo && Array.isArray(raw.templo.photos) && raw.templo.photos.length > 0
+    ? sanityImageUrl(raw.templo.photos[0])
+    : undefined;
+  const image = eventImage || eventGalleryFirstPhoto || temploFirstPhoto || "/placeholder.svg";
   const typeColor = (raw.typeColor ?? "worship") as Event["typeColor"];
 
   return {
@@ -81,9 +89,9 @@ function mapEvent(raw: any, now: Date): Event {
     endDate,
     time: raw.time,
     location: raw.location,
-    address: raw.address,
-    googleMapsUrl: raw.googleMapsUrl,
-    description: raw.description,
+    address: raw.address ?? raw.templo?.address,
+    googleMapsUrl: raw.googleMapsUrl ?? raw.templo?.googleMapsUrl,
+    description: raw.description ?? undefined,
     vestimenta: raw.vestimenta,
     vestimentaCustom: raw.vestimentaCustom,
     image,
@@ -283,6 +291,7 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
         facebookPostUrl,
         registrationEnabled,
         photos[]{asset->{url}},
+        templo->{temploName, address, googleMapsUrl, photos[]{asset->{url}}},
         isMultiDayEvent,
         eventGroupId,
         alimentosEnabled,
@@ -694,7 +703,7 @@ function mapTemplo(raw: any): Templo {
     address: raw.address ?? undefined,
     googleMapsUrl: raw.googleMapsUrl ?? undefined,
     phone: raw.phone ?? undefined,
-    photo: raw.photo ? sanityImageUrl(raw.photo) : undefined,
+    photos: sanityImagesUrls(raw.photos),
     description: raw.description ?? undefined,
     presidenteJovenesName: raw.presidenteJovenesName ?? undefined,
     presidenteJovenesPhone: raw.presidenteJovenesPhone ?? undefined,
@@ -729,7 +738,7 @@ export async function getTemplos(
       address,
       googleMapsUrl,
       phone,
-      photo{asset->{url}},
+      photos[]{asset->{url}},
       description,
       presidenteJovenesName,
       presidenteJovenesPhone,

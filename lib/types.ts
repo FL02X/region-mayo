@@ -230,7 +230,7 @@ export interface Templo {
   address?: string;
   googleMapsUrl?: string;
   phone?: string;
-  photo?: string;
+  photos?: string[];
   description?: string;
   presidenteJovenesName?: string;
   presidenteJovenesPhone?: string;
