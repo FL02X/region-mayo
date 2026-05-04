@@ -114,7 +114,7 @@ export function HeroSection({
       });
     }
 
-    if (prayerWall && prayerWall.enabled) {
+    if (prayerWall && prayerWall.enabled && prayerWall.phase !== 'paused') {
       candidates.push({
         type: "prayer",
         id: prayerWall._id,
@@ -324,7 +324,7 @@ export function HeroSection({
   const formatDate = (date: Date) => {
     const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
     const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} · ${date.getFullYear()}`;
+    return `${days[date.getUTCDay()]}, ${date.getUTCDate()} ${months[date.getUTCMonth()]} · ${date.getUTCFullYear()}`;
   };
 
   const timeUnits = countdownData

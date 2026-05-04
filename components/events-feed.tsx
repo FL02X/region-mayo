@@ -31,7 +31,7 @@ const months = [
 ];
 
 const now = new Date();
-const INITIAL_DATE = new Date(now.getFullYear(), now.getMonth(), 1);
+const INITIAL_DATE = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
 interface EventsFeedProps {
   events: Event[];
@@ -72,7 +72,7 @@ export function EventsFeed({
       if (!targetEvent) return;
 
       setSelectedMonth(
-        new Date(targetEvent.date.getFullYear(), targetEvent.date.getMonth(), 1),
+        new Date(Date.UTC(targetEvent.date.getUTCFullYear(), targetEvent.date.getUTCMonth(), 1)),
       );
       setPendingHashEventId(id);
     };
@@ -99,8 +99,8 @@ export function EventsFeed({
     return events
       .filter(
         (event) =>
-          event.date.getMonth() === selectedMonth.getMonth() &&
-          event.date.getFullYear() === selectedMonth.getFullYear(),
+          event.date.getUTCMonth() === selectedMonth.getUTCMonth() &&
+          event.date.getUTCFullYear() === selectedMonth.getUTCFullYear(),
       )
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [events, selectedMonth]);
@@ -232,7 +232,7 @@ export function EventsFeed({
           {/* Month label */}
           <div className="mb-6">
             <h3 className="font-semibold text-[1.275rem] text-foreground tracking-tight">
-              {months[selectedMonth.getMonth()]} {selectedMonth.getFullYear()}
+              {months[selectedMonth.getUTCMonth()]} {selectedMonth.getUTCFullYear()}
             </h3>
             <p className="text-[16px] text-muted-foreground mt-0.5">
               {filteredEvents.length === 0

@@ -175,7 +175,7 @@ export function CountdownSection({
       });
     }
 
-    if (prayerWall && prayerWall.enabled) {
+    if (prayerWall && prayerWall.enabled && prayerWall.phase !== 'paused') {
       candidates.push({
         type: "prayer",
         id: prayerWall._id,
@@ -313,7 +313,7 @@ export function CountdownSection({
       "Nov",
       "Dic",
     ];
-    return `${days[date.getDay()]}, ${date.getDate()} de ${months[date.getMonth()]}`;
+    return `${days[date.getUTCDay()]}, ${date.getUTCDate()} de ${months[date.getUTCMonth()]}`;
   };
 
   const getTimeUnits = (): TimeUnit[] => {

@@ -34,7 +34,7 @@ export function MonthNavigator({
   onMonthSelect,
   eventDates = [],
 }: MonthNavigatorProps) {
-  const [viewYear, setViewYear] = useState(selectedMonth.getFullYear());
+  const [viewYear, setViewYear] = useState(selectedMonth.getUTCFullYear());
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [isDesktopPickerOpen, setIsDesktopPickerOpen] = useState(false);
 
@@ -43,7 +43,7 @@ export function MonthNavigator({
   }, []);
 
   useEffect(() => {
-    setViewYear(selectedMonth.getFullYear());
+    setViewYear(selectedMonth.getUTCFullYear());
   }, [selectedMonth]);
 
   const navigateYear = (direction: "prev" | "next") => {
@@ -51,46 +51,48 @@ export function MonthNavigator({
   };
 
   const isSelected = (monthIndex: number) =>
-    selectedMonth.getMonth() === monthIndex &&
-    selectedMonth.getFullYear() === viewYear;
+    selectedMonth.getUTCMonth() === monthIndex &&
+    selectedMonth.getUTCFullYear() === viewYear;
 
   const isCurrentMonth = (monthIndex: number) => {
     if (!currentDate) return false;
     return (
-      currentDate.getMonth() === monthIndex &&
-      currentDate.getFullYear() === viewYear
+      currentDate.getUTCMonth() === monthIndex &&
+      currentDate.getUTCFullYear() === viewYear
     );
   };
 
   const hasEvents = (monthIndex: number) =>
     eventDates.some(
       (date) =>
-        date.getMonth() === monthIndex && date.getFullYear() === viewYear,
+        date.getUTCMonth() === monthIndex && date.getUTCFullYear() === viewYear,
     );
 
   const getEventCount = (monthIndex: number) =>
     eventDates.filter(
       (date) =>
-        date.getMonth() === monthIndex && date.getFullYear() === viewYear,
+        date.getUTCMonth() === monthIndex && date.getUTCFullYear() === viewYear,
     ).length;
 
   const handleMonthClick = (monthIndex: number) => {
-    onMonthSelect(new Date(viewYear, monthIndex, 1));
+    onMonthSelect(new Date(Date.UTC(viewYear, monthIndex, 1)));
   };
 
   const navigateMonth = (direction: "prev" | "next") => {
     const delta = direction === "next" ? 1 : -1;
     const next = new Date(
-      selectedMonth.getFullYear(),
-      selectedMonth.getMonth() + delta,
-      1,
+      Date.UTC(
+        selectedMonth.getUTCFullYear(),
+        selectedMonth.getUTCMonth() + delta,
+        1,
+      )
     );
     onMonthSelect(next);
-    setViewYear(next.getFullYear());
+    setViewYear(next.getUTCFullYear());
   };
 
   const selectDesktopMonth = (monthIndex: number) => {
-    onMonthSelect(new Date(viewYear, monthIndex, 1));
+    onMonthSelect(new Date(Date.UTC(viewYear, monthIndex, 1)));
     setIsDesktopPickerOpen(false);
   };
 
@@ -117,7 +119,7 @@ export function MonthNavigator({
               style={{ minHeight: "unset", minWidth: "unset" }}
             >
               <span className="truncate">
-                {months[selectedMonth.getMonth()]} {selectedMonth.getFullYear()}
+                {months[selectedMonth.getUTCMonth()]} {selectedMonth.getUTCFullYear()}
               </span>
               <ChevronDown
                 className={`h-4 w-4 shrink-0 transition-transform ${

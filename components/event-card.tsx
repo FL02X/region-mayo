@@ -124,7 +124,7 @@ export function EventCard({
   };
 
   /* ── state derivations ── */
-  const isPastEvent = new Date(event.date) < currentTime;
+  const isPastEvent = event.date.getTime() < currentTime.getTime();
   const hasAlbum = event.albumEnabled && event.googleDriveAlbumUrl;
   const hasFacebookPost = !!event.facebookPostUrl;
   const canRegister = !isPastEvent && event.registrationEnabled !== false;

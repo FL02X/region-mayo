@@ -22,7 +22,7 @@ function AlbumCard({ event }: { event: Event }) {
       "Nov",
       "Dic",
     ];
-    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    return `${date.getUTCDate()} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
   };
 
   const hasAlbum = !!event.googleDriveAlbumUrl;

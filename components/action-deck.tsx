@@ -74,6 +74,8 @@ type DeckItem =
       image?: string;
       href?: string;
       pinned?: boolean;
+      accentColor?: string;
+      ctaText?: string;
     }
   | {
       id: string;
@@ -159,6 +161,8 @@ function mapCandidateToDeckItem(
       href: candidate.url,
       pinned: candidate.pinned,
       image: (candidate as any).media?.url,
+      accentColor: candidate.accentColor,
+      ctaText: candidate.ctaText,
     };
   }
 
@@ -273,7 +277,7 @@ export function ActionDeck({
       });
     }
 
-    if (prayerWall && prayerWall.enabled) {
+    if (prayerWall && prayerWall.enabled && prayerWall.phase !== 'paused') {
       rankingCandidates.push({
         type: "prayer",
         id: prayerWall._id,
@@ -872,11 +876,11 @@ function DeckCard({
   } else {
     // Mobile: if only one element, full width; otherwise normal
     if (deckLength === 1) {
-      widthClass = "w-full shrink-0"; // Full width for single element
+      widthClass = "w-full min-w-[calc(100vw-32px)] shrink-0"; // Force full width for single element
     } else {
       widthClass = featured
-        ? "w-[84vw] max-w-[360px] shrink-0"
-        : "w-[70vw] max-w-[260px] shrink-0";
+         ? "w-[85vw] shrink-0"
+         : "w-[78vw] shrink-0";
     }
   }
 
@@ -907,11 +911,11 @@ function DeckCard({
       {/* Top accent line to match 'Próximo evento' cards */}
       <div
         className="w-full h-1 rounded-t-[3px]"
-        style={{ backgroundColor: ACCENT_COLORS[item.type] }}
+        style={{ backgroundColor: item.type === "promo" && item.accentColor ? item.accentColor : ACCENT_COLORS[item.type] }}
         aria-hidden="true"
       />
       {image ? (
-        <div className={`relative w-full ${imageHeight} bg-[#f1f1f1] group`}>
+        <div className={`relative w-full ${item.type === "promo" ? "flex-1 min-h-[160px] md:min-h-[180px]" : imageHeight} bg-[#f1f1f1] group`}>
           <Image
             src={image}
             alt={item.title}
@@ -941,31 +945,45 @@ function DeckCard({
               <Play className="h-3 w-3 text-white" fill="white" />
             </div>
           )}
+
+          {/* Promo Expand Badge */}
+          {item.type === "promo" && (
+            <div
+              className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center justify-center rounded-[6px] border border-white/10 bg-black/45 p-2 text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] backdrop-blur-[8px]"
+              aria-hidden="true"
+            >
+              <Search className="h-4 w-4" />
+            </div>
+          )}
         </div>
       ) : null}
 
-      <div className="flex flex-col flex-1 p-3">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span
-            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-[0.08em] ${badge.classes}`}
-          >
-            {badge.icon}
-            {badge.label}
-          </span>
-          {prayerDate && (
-            <span className="rounded-sm bg-[#4a5568] px-2 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm whitespace-nowrap">
-              {prayerDate}
-            </span>
-          )}
-        </div>
+      <div className={`flex flex-col ${item.type === "promo" ? "p-3" : "flex-1 p-3"}`}>
+        {item.type !== "promo" && (
+          <>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-[0.08em] ${badge.classes}`}
+              >
+                {badge.icon}
+                {badge.label}
+              </span>
+              {prayerDate && (
+                <span className="rounded-sm bg-[#4a5568] px-2 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm whitespace-nowrap">
+                  {prayerDate}
+                </span>
+              )}
+            </div>
 
-        <h3
-          className={`font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 ${
-            featured && !isDesktop ? "text-[15px]" : "text-[13px]"
-          }`}
-        >
-          {item.title}
-        </h3>
+            <h3
+              className={`font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 ${
+                featured && !isDesktop ? "text-[15px]" : "text-[13px]"
+              }`}
+            >
+              {item.title}
+            </h3>
+          </>
+        )}
 
         {item.type === "event" && (
           <div className="space-y-0.5 mb-2">
@@ -1007,17 +1025,13 @@ function DeckCard({
           />
         )}
 
-        {item.type === "promo" && (
-          <p className="text-[12px] text-[#5b6876] mb-2">Disponible ahora</p>
-        )}
-
         {item.type === "audio" && (
           <p className="text-[12px] text-[#5b6876] mb-2">Cápsula de audio</p>
         )}
 
         {/* Footer / CTA: hide CTA for prayer when in 'show' phase */}
         {!(item.type === "prayer" && item.phase === "show") && (
-          <div className="mt-auto pt-1">
+          <div className={`${item.type === "promo" ? "" : "mt-auto pt-1"}`}>
             <span
               className={`inline-flex items-center gap-1 font-semibold ${
                 item.type === "prayer" && item.phase === "collect"
@@ -1026,8 +1040,9 @@ function DeckCard({
                     ? "text-[12px] text-[#2f5e93]"
                     : "text-[12px] text-[#425060]"
               }`}
+              style={item.type === "promo" && item.accentColor ? { color: item.accentColor } : undefined}
             >
-              {CTA_LABEL[item.type]}
+              {item.type === "promo" && item.ctaText ? item.ctaText : CTA_LABEL[item.type]}
               <ArrowRight className="h-3 w-3" aria-hidden="true" />
             </span>
           </div>
@@ -1157,7 +1172,7 @@ function formatEventDate(date: Date) {
     "Nov",
     "Dic",
   ];
-  return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+  return `${days[date.getUTCDay()]}, ${date.getUTCDate()} ${months[date.getUTCMonth()]}`;
 }
 
 function formatPrayerDate(submittedAt: string) {
@@ -1179,5 +1194,5 @@ function formatPrayerDate(submittedAt: string) {
     "Diciembre",
   ];
 
-  return `${date.getDate()} de ${months[date.getMonth()]}`;
+  return `${date.getUTCDate()} de ${months[date.getUTCMonth()]}`;
 }

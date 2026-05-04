@@ -31,6 +31,8 @@ export default async function Home() {
       getLatestSocialPosts(6),
     ]);
 
+
+
   const nextUpcomingEvent =
     events
       .filter((event) => event.date.getTime() > Date.now())
