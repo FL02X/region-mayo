@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
+  ArrowRight,
   UserCircle,
   MapPin,
   ExternalLink,
@@ -68,7 +70,7 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
           </h3>
         </div>
 
-        <div className="space-y-4 pt-4 border-t border-border">
+        <div className="space-y-5 pt-5 pb-5 border-t border-border">
           {/* Temple Information */}
           {member.temploName && (
               <div className="flex items-start gap-3">
@@ -79,12 +81,27 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[5px]">
                     Iglesia Sede
                   </p>
-                  <p className="text-sm font-medium text-foreground leading-tight mb-1">
-                    <HighlightedText text={member.temploName} query={searchQuery} />
-                  </p>
+                  {member.temploId ? (
+                    <Link
+                      href={`/templos#${member.temploId}`}
+                      className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground hover:text-foreground/80 hover:underline underline-offset-2 leading-tight mb-2"
+                      aria-label={`Ver información de ${member.temploName}`}
+                    >
+                      <span className="inline-block">
+                        <HighlightedText text={member.temploName} query={searchQuery} />
+                      </span>
+                      <span className="flex-shrink-0">
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-medium text-foreground leading-[1.15] mb-2">
+                      <HighlightedText text={member.temploName} query={searchQuery} />
+                    </p>
+                  )}
                   {member.address && (
                     <div className="flex items-start gap-1.5 mb-1.5">
                       <MapPin
@@ -124,7 +141,7 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
-                  Número de Teléfono
+                  Contacto
                 </p>
                 <p className="text-sm font-medium text-foreground leading-tight">
                   <HighlightedText text={formatPhoneForDisplay(member.phone)} query={searchQuery} />
@@ -177,8 +194,8 @@ export function DirectivaContent({ members }: DirectivaContentProps) {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
         <div className="mb-6 pb-4 border-b border-border">
-          <h1 className="text-2xl font-bold text-foreground">Directiva</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Directiva de jovenes</h1>
+          <p className="text-sm text-muted-foreground mt-2">
             Miembros de la directiva regional
           </p>
         </div>

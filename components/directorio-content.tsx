@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
+  ArrowRight,
   Users,
   MapPin,
   ExternalLink,
@@ -60,7 +62,7 @@ function PastorCard({ pastor, searchQuery }: { pastor: Pastor; searchQuery: stri
           </h3>
         </div>
 
-        <div className="space-y-4 pt-4 border-t border-border">
+        <div className="space-y-5 pt-5 pb-5 border-t border-border">
           {pastor.temploName && (
               <div className="flex items-start gap-3">
                 <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
@@ -70,12 +72,27 @@ function PastorCard({ pastor, searchQuery }: { pastor: Pastor; searchQuery: stri
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[0px]">
                     Iglesia Sede
                   </p>
-                  <p className="text-sm font-medium text-foreground leading-tight mb-1">
-                    <HighlightedText text={pastor.temploName} query={searchQuery} />
-                  </p>
+                  {pastor.temploId ? (
+                    <Link
+                      href={`/templos#${pastor.temploId}`}
+                      className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground hover:text-foreground/80 hover:underline underline-offset-2 leading-tight mb-2"
+                      aria-label={`Ver información de ${pastor.temploName}`}
+                    >
+                      <span className="inline-block">
+                        <HighlightedText text={pastor.temploName} query={searchQuery} />
+                      </span>
+                      <span className="flex-shrink-0">
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-medium text-foreground leading-[1.15] mb-2">
+                      <HighlightedText text={pastor.temploName} query={searchQuery} />
+                    </p>
+                  )}
                   {pastor.churchNumber && (
                     <p className="text-xs text-muted-foreground mb-1.5">
                       Pastor Local de Iglesia #<HighlightedText text={pastor.churchNumber.toString()} query={searchQuery} />
@@ -173,10 +190,10 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
           <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">
-            Directorio de Pastores
+            Directorio de pastores
           </h1>
-          <p className="text-[17px] text-muted-foreground mt-1">
-            Nuestros siervos en la Región Mayo
+          <p className="text-[15px] text-muted-foreground mt-1">
+            Nuestros siervos en la Región Mayo. Estamos para servirle.
           </p>
         </div>
 

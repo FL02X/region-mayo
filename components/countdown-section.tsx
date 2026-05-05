@@ -359,7 +359,7 @@ export function CountdownSection({
                 className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3"
                 style={{ color: spotlightAccent }}
               >
-                Próximo Evento
+                Nuestro Próximo Evento
               </p>
 
               {/* Event title — serif for editorial weight */}
@@ -550,7 +550,7 @@ export function CountdownSection({
             <div className="h-[3px]" style={{ backgroundColor: "#2d6a4f" }} aria-hidden="true" />
             <div className="p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#2d6a4f] mb-3">
-                Muro de Oraciones
+                Mural de Oraciones
               </p>
               <h3 className="text-lg font-bold text-foreground leading-snug mb-2">
                 Comparte tu petición de oración
@@ -562,7 +562,7 @@ export function CountdownSection({
                 onClick={() => setIsPrayerModalOpen(true)}
                 className="w-full h-12 text-base font-bold bg-[#2d6a4f] hover:bg-[#24573f] text-white"
               >
-                Enviar oración
+                Enviar peticion
               </Button>
             </div>
           </div>
@@ -574,7 +574,7 @@ export function CountdownSection({
             <div className="h-[3px]" style={{ backgroundColor: "#2d6a4f" }} aria-hidden="true" />
             <div className="p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#2d6a4f] mb-3">
-                Muro de Oraciones
+                Mural de Oraciones
               </p>
               <PrayerCarousel prayers={prayerWall.selectedPrayers} />
             </div>

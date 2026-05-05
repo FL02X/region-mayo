@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
+  ArrowRight,
   Music,
   MapPin,
   ExternalLink,
@@ -96,7 +98,7 @@ function CoroCard({ coro, searchQuery }: { coro: Coro; searchQuery: string }) {
           </div>
 
           {isExpanded && (
-            <div id={`coro-details-${coro.id}`} className="space-y-4 pt-4 pb-4 px-4 -mx-4 border-t border-border">
+            <div id={`coro-details-${coro.id}`} className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border">
                 {/* Temple Information */}
                 {coro.temploName && (
                   <div className="flex items-start gap-3">
@@ -104,12 +106,27 @@ function CoroCard({ coro, searchQuery }: { coro: Coro; searchQuery: string }) {
                       <Church className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[0px]">
                         Iglesia Sede
                       </p>
-                      <p className="text-sm font-medium text-foreground leading-tight mb-1">
-                        <HighlightedText text={coro.temploName} query={searchQuery} />
-                      </p>
+                      {coro.temploId ? (
+                        <Link
+                          href={`/templos#${coro.temploId}`}
+                          className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground hover:text-foreground/80 hover:underline underline-offset-2 leading-tight mb-2"
+                          aria-label={`Ver información de ${coro.temploName}`}
+                        >
+                          <span className="inline-block">
+                            <HighlightedText text={coro.temploName} query={searchQuery} />
+                          </span>
+                          <span className="flex-shrink-0">
+                            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-medium text-foreground leading-[1.15] mb-2">
+                          <HighlightedText text={coro.temploName} query={searchQuery} />
+                        </p>
+                      )}
                       {coro.address && (
                         <div className="flex items-start gap-1.5 mb-1.5">
                           <MapPin className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
@@ -257,7 +274,7 @@ export function CorosContent({ coros }: CorosContentProps) {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
-          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Coros Locales</h1>
+          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Coros juveniles</h1>
           <p className="text-[17px] text-muted-foreground mt-1">
             Nuestros coros de la región
           </p>

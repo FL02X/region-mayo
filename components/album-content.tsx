@@ -118,15 +118,15 @@ export function AlbumContent({ events }: AlbumContentProps) {
     : [];
 
   return (
-    <div className="w-full relative pb-16 bg-[#f1f1f1]" id="main-content">
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-[#ffffff] md:border-x border-[#e5e7eb] dark:border-[#27272a] min-h-screen focus:outline-none">
+    <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
         <div className="mb-6 pb-4 border-b border-border">
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">
             Álbum de Actividades
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-[15px] text-muted-foreground mt-2">
             Revive los momentos especiales de nuestros eventos
           </p>
         </div>

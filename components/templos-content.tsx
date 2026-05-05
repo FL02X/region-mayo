@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
+  ArrowRight,
   ChevronDown,
   MapPin,
   ExternalLink,
@@ -23,6 +25,14 @@ import { HighlightedText } from "@/components/highlighted-text";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Templo } from "@/lib/types";
+
+const formatPresidentShortName = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length === 0) return name;
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[1]}`;
+};
 
 function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -139,23 +149,32 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
           {(templo.pastores.length > 0 || templo.coros.length > 0 || templo.description) && isExpanded && (
             <div
               id={`templo-details-${templo.id}`}
-              className="space-y-4 pt-4 pb-4 px-4 -mx-4 border-t border-border"
+              className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border"
             >
                 {/* Pastores */}
                 {templo.pastores.length > 0 && templo.pastores.map((pastor) => (
-                  <div key={pastor.id} className="flex items-start gap-3">
+                  <div key={pastor.id} className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                       <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[0px]">
                         {templo.pastores.length > 1 ? "Pastores a Cargo" : "Pastor a Cargo"}
                       </p>
-                      <p className="text-sm font-medium text-foreground leading-tight">
-                        <HighlightedText text={pastor.fullName} query={searchQuery} />
-                      </p>
+                      <Link
+                        href={`/directorio#${pastor.id}`}
+                        className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground hover:text-foreground/80 hover:underline underline-offset-2 leading-tight mb-2"
+                        aria-label={`Ver información de ${pastor.fullName}`}
+                      >
+                        <span className="inline-block">
+                          <HighlightedText text={pastor.fullName} query={searchQuery} />
+                        </span>
+                        <span className="flex-shrink-0">
+                          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                      </Link>
                       {pastor.phone && (
-                        <p className="text-sm text-foreground/80 mt-0.5">
+                        <p className="text-sm text-foreground/80 -mt-[1px]">
                           {formatPhoneForDisplay(pastor.phone)}
                         </p>
                       )}
@@ -171,19 +190,28 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
 
                 {/* Coros */}
                 {templo.coros.length > 0 && templo.coros.map((coro) => (
-                  <div key={coro.id} className="flex items-start gap-3">
+                  <div key={coro.id} className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                       <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[0px]">
                         {templo.coros.length > 1 ? "Coros Locales" : "Coro Local"}
                       </p>
-                      <p className="text-sm font-medium text-foreground leading-tight">
-                        <HighlightedText text={coro.coroName} query={searchQuery} />
-                      </p>
+                      <Link
+                        href={`/coros#${coro.id}`}
+                        className="inline-flex items-end gap-2 w-fit text-sm font-medium text-foreground hover:text-foreground/80 hover:underline underline-offset-2 leading-tight mb-0"
+                        aria-label={`Ver información de ${coro.coroName}`}
+                      >
+                        <span className="block">
+                          <HighlightedText text={coro.coroName} query={searchQuery} />
+                        </span>
+                        <span className="flex-shrink-0">
+                          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                      </Link>
                       <p className="text-sm text-foreground/80 mt-0.5">
-                        Pdte. <HighlightedText text={coro.presidentName} query={searchQuery} />
+                        Presidente: <HighlightedText text={formatPresidentShortName(coro.presidentName)} query={searchQuery} />
                         {coro.presidentPhone ? ` · ${formatPhoneForDisplay(coro.presidentPhone)}` : ""}
                       </p>
                     </div>
@@ -198,7 +226,7 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
 
                 {/* Description / Schedule */}
                 {templo.description && (
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 mt-2">
                     <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                       <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </div>
@@ -253,9 +281,9 @@ export function TemplosContent({ templos }: TemploContentProps) {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
-          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Templos</h1>
-          <p className="text-[17px] text-muted-foreground mt-1">
-            Iglesias de la Región Mayo
+          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Asista a nuestros templos</h1>
+          <p className="text-[15px] text-muted-foreground mt-2">
+            Todos son invitamos a nuestros servicios. Busque el templo mas cercano a usted.
           </p>
         </div>
 

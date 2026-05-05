@@ -423,7 +423,7 @@ export function HeroSection({
                       className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2"
                       style={{ color: spotlightAccent }}
                     >
-                      Próximo Evento
+                      Nuestro Próximo Evento
                     </p>
                     <h3 className="text-[34px] font-bold text-[#1f2833] leading-[1.04] mb-2.5 line-clamp-2">
                       {spotlightEvent.title}
@@ -572,7 +572,7 @@ export function HeroSection({
                 {showPrayerCollectCard && (
                   <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#2d6a4f] mb-2">
-                      Muro de Oraciones
+                      Mural de Oraciones
                     </p>
                     <h3 className="text-[20px] font-bold text-[#1f2833] leading-snug mb-2">
                       Comparte tu petición de oración
@@ -592,7 +592,7 @@ export function HeroSection({
                 {showPrayerDisplayCard && prayerWall && (
                   <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#2d6a4f] mb-2">
-                      Muro de Oraciones
+                      Mural de Oraciones
                     </p>
                     <PrayerCarousel prayers={prayerWall.selectedPrayers} />
                   </article>

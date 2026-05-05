@@ -114,6 +114,7 @@ export interface Pastor {
   churchName?: string; // Legacy field for backward compatibility
   churchNumber?: string;
   temploName?: string; // Temple name from reference
+  temploId?: string;
   address?: string; // Temple address from reference
   photo?: string;
   googleMapsUrl?: string;
@@ -126,6 +127,7 @@ export interface Coro {
   coroName: string;
   photo: string;
   temploName?: string;
+  temploId?: string;
   address?: string;
   googleMapsUrl?: string;
   presidentName: string;

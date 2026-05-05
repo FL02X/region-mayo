@@ -147,6 +147,7 @@ function mapPastor(raw: any): Pastor {
     churchName: raw.churchName,
     churchNumber: raw.churchNumber ?? undefined,
     temploName: raw.temploName ?? raw.templo?.temploName,
+    temploId: raw.temploId ?? raw.templo?._id,
     address: raw.address ?? raw.templo?.address,
     photo: raw.photo ? sanityImageUrl(raw.photo) : undefined,
     googleMapsUrl: raw.googleMapsUrl ?? raw.templo?.googleMapsUrl,
@@ -160,6 +161,7 @@ function mapCoro(raw: any): Coro {
     coroName: raw.coroName,
     photo: raw.photo ? sanityImageUrl(raw.photo) : "/placeholder.svg",
     temploName: raw.temploName ?? raw.templo?.temploName,
+    temploId: raw.temploId ?? raw.templo?._id,
     address: raw.address ?? raw.templo?.address,
     googleMapsUrl: raw.googleMapsUrl ?? raw.templo?.googleMapsUrl,
     presidentName: raw.presidentName,
@@ -359,7 +361,7 @@ export async function getPastors(
         photo{asset->{url}},
         googleMapsUrl,
         phone,
-        templo->{temploName, address, googleMapsUrl}
+        templo->{_id, temploName, address, googleMapsUrl}
       }`,
     { slug: regionSlug },
   );
@@ -392,7 +394,7 @@ export async function getCoros(regionSlug: string = "mayo"): Promise<Coro[]> {
         googleMapsUrl,
         presidentName,
         presidentPhone,
-        templo->{temploName, address, googleMapsUrl}
+        templo->{_id, temploName, address, googleMapsUrl}
       }`,
     { slug: regionSlug },
   );
@@ -429,7 +431,7 @@ export async function getDirectiva(
         googleMapsUrl,
         phone,
         order,
-        templo->{temploName, address, googleMapsUrl}
+        templo->{_id, temploName, address, googleMapsUrl}
       }`,
     { slug: regionSlug },
   );

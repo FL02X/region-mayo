@@ -10,7 +10,7 @@ import {
   HeartHandshake,
   Instagram as InstagramIcon,
   Play,
-  Search,
+  Maximize2,
   Megaphone,
   ArrowRight,
   ChevronRight,
@@ -936,7 +936,7 @@ function DeckCard({
               aria-label="Ver imagen en pantalla completa"
               className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-2 pointer-events-auto"
             >
-              <Search className="h-5 w-5 text-white" aria-hidden="true" />
+              <Maximize2 className="h-5 w-5 text-white" aria-hidden="true" />
             </button>
           </div>
 
@@ -952,7 +952,7 @@ function DeckCard({
               className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center justify-center rounded-[6px] border border-white/10 bg-black/45 p-2 text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] backdrop-blur-[8px]"
               aria-hidden="true"
             >
-              <Search className="h-4 w-4" />
+              <Maximize2 className="h-4 w-4" />
             </div>
           )}
         </div>
