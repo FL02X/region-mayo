@@ -10,7 +10,7 @@ const downloadLimiter = new Map<
 >();
 
 const RATE_LIMIT_WINDOW = 24 * 60 * 60 * 1000; // 24 horas en ms
-const RATE_LIMIT_MAX = 1; // 1 descarga por IP cada 24 horas
+const RATE_LIMIT_MAX = 10; // 1 descarga por IP cada 24 horas
 
 function getClientIp(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
