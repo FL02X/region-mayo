@@ -1,6 +1,7 @@
 import { defineConfig } from 'sanity'
 import { deskTool } from 'sanity/desk'
 import { visionTool } from '@sanity/vision'
+import { es } from 'sanity'
 import { schemaTypes } from './sanity/schemas'
 import { auditBeforeCreate, auditBeforeCommit } from './sanity/auditHooks'
 import { coroBeforeCommit } from './sanity/denormalizationHooks'
@@ -44,6 +45,21 @@ export default defineConfig({
   dataset,
   apiVersion,
   basePath: '/studio',
+  language: 'es',
+  studio: {
+    locale: 'es',
+    components: {
+      logo: undefined,
+    },
+  },
+  i18n: {
+    supportedLanguages: [
+      { id: 'es', title: 'Español' },
+      { id: 'en', title: 'English' },
+    ],
+    defaultLanguages: ['es'],
+    fieldLevelI18n: true,
+  },
   plugins: [deskTool(), visionTool()],
   schema: {
     types: schemaTypes,
@@ -85,13 +101,5 @@ export default defineConfig({
 
       return updated
     },
-  },
-  i18n: {
-    supportedLanguages: [
-      { id: 'es', title: 'Español' },
-      { id: 'en', title: 'English' },
-    ],
-    defaultLanguages: ['es'],
-    fieldLevelI18n: false,
   },
 })

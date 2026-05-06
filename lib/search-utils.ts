@@ -34,17 +34,62 @@ export function searchItems<T extends Record<string, any>>(
 
   const normalizedQuery = normalizeText(query);
 
-  return items.filter((item) => {
-    return config.searchFields.some((field) => {
-      const value = getNestedValue(item, field);
-      if (value == null) return false;
-      
-      const valueStr = Array.isArray(value) ? value.join(' ') : String(value);
-      if (!valueStr) return false;
+  // Tokenize query and remove common stopwords (Spanish + English)
+  const STOPWORDS = new Set([
+    'de', 'del', 'la', 'el', 'las', 'los', 'y', 'en', 'a', 'por', 'para', 'con', 'sin', 'que',
+    'the', 'of', 'and', 'in', 'on', 'for', 'to', 'from', 'by', 'at', 'is', 'are',
+  ]);
 
-      const normalizedValue = normalizeText(valueStr);
-      return normalizedValue.includes(normalizedQuery);
+  const tokens = normalizedQuery
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .filter((t) => !STOPWORDS.has(t));
+
+  // If all tokens were stopwords (e.g., user typed "de la"), fall back to full-query search
+  if (tokens.length === 0) {
+    return items.filter((item) => {
+      return config.searchFields.some((field) => {
+        const value = getNestedValue(item, field);
+        if (value == null) return false;
+
+        const valueStr = Array.isArray(value) ? value.join(' ') : String(value);
+        if (!valueStr) return false;
+
+        const normalizedValue = normalizeText(valueStr);
+        return normalizedValue.includes(normalizedQuery);
+      });
     });
+  }
+
+  return items.filter((item) => {
+    // Build a single searchable string from all configured fields so tokens
+    // can match across field boundaries and in any order.
+    const combinedParts: string[] = [];
+    for (const field of config.searchFields) {
+      const value = getNestedValue(item, field);
+      if (value == null) continue;
+      if (Array.isArray(value)) {
+        combinedParts.push(value.join(' '));
+      } else if (typeof value === 'object') {
+        // attempt JSON stringify for objects
+        try {
+          combinedParts.push(JSON.stringify(value));
+        } catch (e) {
+          // ignore
+        }
+      } else {
+        combinedParts.push(String(value));
+      }
+    }
+
+    if (combinedParts.length === 0) return false;
+
+    const combined = normalizeText(combinedParts.join(' '));
+
+    // All tokens must be present (order-independent). Use simple substring
+    // match which allows partials like "1ra" matching "1ra iglesia".
+    return tokens.every((token) => combined.includes(token));
   });
 }
 

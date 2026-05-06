@@ -136,10 +136,11 @@ export default defineType({
       regionName: 'region.name',
       media: 'photo',
     },
-    prepare({ title, temploName, regionName }) {
+    prepare({ title, temploName, regionName, media }) {
       return {
         title: title,
         subtitle: `${temploName || '?'} (${regionName || '?'})`,
+        media: media,
       }
     },
   },

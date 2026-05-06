@@ -162,12 +162,13 @@ export default defineType({
     select: {
       title: "temploName",
       regionName: "region.name",
-      media: "photos.0",
+      photos: "photos",
     },
-    prepare({ title, regionName }) {
+    prepare({ title, regionName, photos }) {
       return {
         title: title,
         subtitle: `${regionName || "?"}`,
+        media: photos && photos.length > 0 ? photos[0] : undefined,
       };
     },
   },

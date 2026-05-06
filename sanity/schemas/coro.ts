@@ -165,10 +165,11 @@ export default defineType({
       subtitle: 'presidentName',
       media: 'photo',
     },
-    prepare({ title, temploName, regionName, subtitle }) {
+    prepare({ title, temploName, regionName, subtitle, media }) {
       return {
         title: title,
         subtitle: `${temploName || '?'} • ${regionName || '?'} • ${subtitle || '?'}`,
+        media: media,
       }
     },
   },

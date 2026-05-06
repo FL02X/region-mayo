@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
   ChevronDown,
   MapPin,
   ExternalLink,
@@ -176,14 +175,14 @@ function TemploCard({
                       </p>
                       <Link
                         href={`/directorio#${pastor.id}`}
-                        className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground hover:text-foreground/80 hover:underline underline-offset-2 leading-tight mb-2"
+                        className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground underline underline-offset-2 md:hover:text-primary leading-tight mb-2 transition-colors"
                         aria-label={`Ver información de ${pastor.fullName}`}
                       >
                         <span className="inline-block">
                           <HighlightedText text={pastor.fullName} query={searchQuery} />
                         </span>
                         <span className="flex-shrink-0">
-                          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
                         </span>
                       </Link>
                       {pastor.phone && (
@@ -213,14 +212,14 @@ function TemploCard({
                       </p>
                       <Link
                         href={`/coros#${coro.id}`}
-                        className="inline-flex items-end gap-2 w-fit text-sm font-medium text-foreground hover:text-foreground/80 hover:underline underline-offset-2 leading-tight mb-0"
+                        className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground underline underline-offset-2 md:hover:text-primary leading-tight mb-0 transition-colors"
                         aria-label={`Ver información de ${coro.coroName}`}
                       >
                         <span className="block">
                           <HighlightedText text={coro.coroName} query={searchQuery} />
                         </span>
                         <span className="flex-shrink-0">
-                          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
                         </span>
                       </Link>
                       <p className="text-sm text-foreground/80 mt-0.5">

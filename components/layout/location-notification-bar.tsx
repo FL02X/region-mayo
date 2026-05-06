@@ -123,7 +123,7 @@ export function LocationNotificationBar({
 
   return (
     <div
-      className="w-full relative z-[55] overflow-hidden transition-[height,margin-bottom] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[height,margin-bottom]"
+      className="w-full md:max-w-[950px] md:mx-auto relative z-[55] overflow-hidden transition-[height,margin-bottom] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[height,margin-bottom]"
       style={{ height: `${containerHeight}px`, marginBottom: `${containerMarginBottom}px` }}
     >
       <div 
@@ -135,7 +135,7 @@ export function LocationNotificationBar({
         }}
       >
         <div className="w-full bg-[#2f5e93] shadow-md border-b border-[#2f5e93]/30">
-          <div className="max-w-[950px] mx-auto w-full text-white flex items-center justify-between min-h-[56px] px-4 md:px-6 py-2.5 gap-3 md:gap-4">
+          <div className="w-full text-white flex items-center justify-between min-h-[56px] px-4 md:px-6 py-2.5 gap-3 md:gap-4">
             
             <style>{`
               @keyframes pulse-breathing {

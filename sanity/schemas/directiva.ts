@@ -182,12 +182,13 @@ export default defineType({
       regionName: 'region.name',
       media: 'photo',
     },
-    prepare({ title, role, roleCustom, temploName, regionName }) {
+    prepare({ title, role, roleCustom, temploName, regionName, media }) {
       const roleLabel = roleCustom || role
       const location = temploName || regionName || '?'
       return {
         title: title,
         subtitle: `${roleLabel || '?'} • ${location}`,
+        media: media,
       }
     },
   },

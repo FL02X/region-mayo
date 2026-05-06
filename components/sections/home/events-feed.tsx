@@ -7,6 +7,7 @@ import { EventCard } from "@/components/shared/event-card";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { CountdownSection } from "./countdown-section";
 import { ActionDeck } from "./action-deck";
+import { HomeInfoCards } from "./home-info-cards";
 import type {
   Event,
   RegionPresident,
@@ -195,7 +196,8 @@ export function EventsFeed({
           />
         </div>
 
-        
+        {/* Info Cards (Services, Bible, Hymnal) */}
+        <HomeInfoCards />
 
         {/* Calendar section */}
         <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 border-t border-border/70 bg-muted/20">

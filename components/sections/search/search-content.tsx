@@ -45,6 +45,36 @@ const TYPE_PRIORITY: Record<SearchResultType, number> = {
   directiva: 4,
 };
 
+const SEARCH_STOPWORDS = new Set([
+  "de", "del", "la", "el", "las", "los", "y", "en", "a", "por", "para", "con", "sin", "que",
+  "the", "of", "and", "in", "on", "for", "to", "from", "by", "at", "is", "are",
+]);
+
+function tokenizeSearchQuery(query: string): string[] {
+  return normalizeText(query)
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !SEARCH_STOPWORDS.has(token));
+}
+
+function collectSearchableText(item: Record<string, any>, fields: string[]): string {
+  const parts: string[] = [];
+
+  for (const field of fields) {
+    const value = getNestedValue(item, field);
+    if (value == null) continue;
+
+    if (Array.isArray(value)) {
+      parts.push(value.join(" "));
+    } else {
+      parts.push(String(value));
+    }
+  }
+
+  return normalizeText(parts.join(" "));
+}
+
 function SearchContentInner({ data }: SearchContentProps) {
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("q") || "";
@@ -60,19 +90,36 @@ function SearchContentInner({ data }: SearchContentProps) {
     if (!localQuery.trim()) return [] as SearchResultItem[];
 
     const normQuery = normalizeText(localQuery);
+    const queryTokens = tokenizeSearchQuery(localQuery);
 
-    const scoreFieldMatch = (value: string, fieldIndex: number, isPrimaryField: boolean) => {
-      const normValue = normalizeText(value);
-      if (!normValue.includes(normQuery)) return 0;
+    const scoreTextMatch = (text: string, fieldIndex: number, isPrimaryField: boolean) => {
+      if (!text) return 0;
 
-      let score = 50;
-      if (normValue === normQuery) score = 140;
-      else if (normValue.startsWith(normQuery)) score = 100;
-      else if (normValue.includes(` ${normQuery}`)) score = 80;
+      // Fall back to exact substring behavior if the query only has stopwords.
+      if (queryTokens.length === 0) {
+        if (!text.includes(normQuery)) return 0;
 
-      // Earlier fields are more important in ranking.
-      score += Math.max(0, 20 - fieldIndex * 4);
+        let score = 50;
+        if (text === normQuery) score = 140;
+        else if (text.startsWith(normQuery)) score = 100;
+        else if (text.includes(` ${normQuery}`)) score = 80;
+
+        score += Math.max(0, 20 - fieldIndex * 4);
+        if (isPrimaryField) score += 20;
+
+        return score;
+      }
+
+      if (!queryTokens.every((token) => text.includes(token))) return 0;
+
+      const exactSequence = queryTokens.join(" ");
+      const matchedTokenCount = queryTokens.filter((token) => text.includes(token)).length;
+      const coverage = matchedTokenCount / queryTokens.length;
+
+      let score = 60 + Math.round(coverage * 40);
+      if (text === exactSequence) score += 30;
       if (isPrimaryField) score += 20;
+      score += Math.max(0, 16 - fieldIndex * 3);
 
       return score;
     };
@@ -89,13 +136,17 @@ function SearchContentInner({ data }: SearchContentProps) {
       .map((item): SearchResultItem | null => {
         let bestScore = 0;
 
+        const combinedText = collectSearchableText(item, fields);
+
         fields.forEach((field, index) => {
           const val = getNestedValue(item, field);
           if (val == null) return;
           const str = Array.isArray(val) ? val.join(" ") : String(val);
-          const score = scoreFieldMatch(str, index, field === primaryField);
+          const score = scoreTextMatch(normalizeText(str), index, field === primaryField);
           bestScore = Math.max(bestScore, score);
         });
+
+        bestScore = Math.max(bestScore, scoreTextMatch(combinedText, 0, primaryField === fields[0]));
 
         if (bestScore <= 0) return null;
 

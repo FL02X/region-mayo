@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
   UserCircle,
   MapPin,
   ExternalLink,
@@ -87,14 +86,14 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
                   {member.temploId ? (
                     <Link
                       href={`/templos#${member.temploId}`}
-                      className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground hover:text-foreground/80 hover:underline underline-offset-2 leading-tight mb-2"
+                      className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground underline underline-offset-2 md:hover:text-primary leading-tight mb-2 transition-colors"
                       aria-label={`Ver información de ${member.temploName}`}
                     >
                       <span className="inline-block">
                         <HighlightedText text={member.temploName} query={searchQuery} />
                       </span>
                       <span className="flex-shrink-0">
-                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
                       </span>
                     </Link>
                   ) : (

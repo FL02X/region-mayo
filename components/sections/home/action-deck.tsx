@@ -915,29 +915,32 @@ function DeckCard({
         aria-hidden="true"
       />
       {image ? (
-        <div className={`relative w-full ${item.type === "promo" ? "flex-1 min-h-[160px] md:min-h-[180px]" : imageHeight} bg-[#f1f1f1] group`}>
+        <div className={`relative w-full ${item.type === "promo" ? "flex-1 min-h-[160px] md:min-h-[180px]" : imageHeight} bg-[#f1f1f1] group cursor-pointer`}>
           <Image
             src={image}
             alt={item.title}
             fill
             sizes={isDesktop ? "260px" : "(max-width: 768px) 80vw, 360px"}
-            className="object-cover"
+            className={item.type === "promo" ? "object-contain" : "object-cover"}
           />
 
-          {/* Overlay magnifier / open lightbox */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsLightboxOpen(true);
-              }}
-              aria-label="Ver imagen en pantalla completa"
-              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-2 pointer-events-auto"
-            >
+          {/* Clickable overlay for entire image - opens lightbox */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsLightboxOpen(true);
+            }}
+            className="absolute inset-0 z-10 bg-transparent cursor-pointer hover:bg-black/[0.02] transition-colors"
+            aria-label="Ver imagen en pantalla completa"
+          />
+
+          {/* Overlay magnifier / open lightbox - desktop only hover */}
+          <div className="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-2 pointer-events-auto flex items-center justify-center">
               <Maximize2 className="h-5 w-5 text-white" aria-hidden="true" />
-            </button>
+            </div>
           </div>
 
           {item.type === "instagram" && item.postType === "reel" && (
@@ -946,10 +949,10 @@ function DeckCard({
             </div>
           )}
 
-          {/* Promo Expand Badge */}
+          {/* Promo Expand Badge - mobile only */}
           {item.type === "promo" && (
             <div
-              className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center justify-center rounded-[6px] border border-white/10 bg-black/45 p-2 text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] backdrop-blur-[8px]"
+              className="md:hidden pointer-events-none absolute bottom-2 right-2 inline-flex items-center justify-center rounded-[6px] border border-white/10 bg-black/45 p-2 text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] backdrop-blur-[8px]"
               aria-hidden="true"
             >
               <Maximize2 className="h-4 w-4" />
