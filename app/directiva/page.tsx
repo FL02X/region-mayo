@@ -1,6 +1,6 @@
 import { Metadata } from "next"
-import { AppHeader } from "@/components/app-header"
-import { DirectivaContent } from "@/components/directiva-content"
+import { AppHeader } from "@/components/layout/app-header"
+import { DirectivaContent } from "@/components/sections/directiva/directiva-content"
 import { getDirectiva, getRegionConfig } from "@/lib/api"
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity

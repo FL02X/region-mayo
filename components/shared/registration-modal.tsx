@@ -7,9 +7,9 @@ import { X, Check, Calendar, ChevronRight, ChevronLeft, User, Loader2, AlertCirc
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { PhoneInput } from "@/components/phone-input"
-import { WhatsAppIconButton } from "@/components/whatsapp-button"
-import { ImageGalleryModal } from "@/components/image-gallery-modal"
+import { PhoneInput } from "@/components/shared/phone-input"
+import { WhatsAppIconButton } from "@/components/shared/whatsapp-button"
+import { ImageGalleryModal } from "@/components/shared/image-gallery-modal"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import type { Event, RegionPresident } from "@/lib/types"
 

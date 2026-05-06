@@ -236,6 +236,9 @@ export interface Templo {
   description?: string;
   presidenteJovenesName?: string;
   presidenteJovenesPhone?: string;
+  /** GPS coordinates for distance calculation */
+  latitude?: number;
+  longitude?: number;
   /** Pastores that belong to this templo (from the pastor collection) */
   pastores: TemploPastor[];
   /** Coros that belong to this templo (from the coro collection) */

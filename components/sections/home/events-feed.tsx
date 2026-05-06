@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Calendar } from "lucide-react";
-import { MonthNavigator } from "./month-navigator";
-import { EventCard } from "./event-card";
-import { RegistrationModal } from "./registration-modal";
+import { MonthNavigator } from "@/components/shared/month-navigator";
+import { EventCard } from "@/components/shared/event-card";
+import { RegistrationModal } from "@/components/shared/registration-modal";
 import { CountdownSection } from "./countdown-section";
 import { ActionDeck } from "./action-deck";
 import type {

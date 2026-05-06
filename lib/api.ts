@@ -709,6 +709,8 @@ function mapTemplo(raw: any): Templo {
     description: raw.description ?? undefined,
     presidenteJovenesName: raw.presidenteJovenesName ?? undefined,
     presidenteJovenesPhone: raw.presidenteJovenesPhone ?? undefined,
+    latitude: raw.location?.lat,
+    longitude: raw.location?.lng,
     pastores: (raw.pastores ?? []).map(mapTemploPastor),
     coros: (raw.coros ?? []).map(mapTemploCoro),
   };
@@ -739,6 +741,7 @@ export async function getTemplos(
       churchNumber,
       address,
       googleMapsUrl,
+      location,
       phone,
       photos[]{asset->{url}},
       description,

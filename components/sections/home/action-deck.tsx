@@ -19,8 +19,8 @@ import {
 import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
 import type { HeroCandidate } from "@/lib/ranker";
 import { pickHeroAndDeck } from "@/lib/ranker";
-import { PrayerWallForm } from "@/components/prayer-wall-form";
-import { Lightbox } from "@/components/lightbox";
+import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
+import { Lightbox } from "@/components/shared/lightbox";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES — each candidate slot the deck can show

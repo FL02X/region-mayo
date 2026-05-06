@@ -1,6 +1,6 @@
 import { Metadata } from "next"
-import { AppHeader } from "@/components/app-header"
-import { CorosContent } from "@/components/coros-content"
+import { AppHeader } from "@/components/layout/app-header"
+import { CorosContent } from "@/components/sections/coros/coros-content"
 import { getCoros, getRegionConfig } from "@/lib/api"
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity

@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { AppHeader } from "@/components/app-header";
-import { SearchContent } from "@/components/search-content";
+import { AppHeader } from "@/components/layout/app-header";
+import { SearchContent } from "@/components/sections/search/search-content";
 import { getRegionConfig, getPastors, getCoros, getDirectiva, getTemplos, getEvents } from "@/lib/api";
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity

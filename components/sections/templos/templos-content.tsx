@@ -18,10 +18,12 @@ import {
   FileText,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
-import { WhatsAppIconButton } from "@/components/whatsapp-button";
-import { TemploImageGallery } from "@/components/templo-image-gallery";
-import { SearchBar } from "@/components/search-bar";
-import { HighlightedText } from "@/components/highlighted-text";
+import { useNearbyChurchDistances } from "@/hooks/use-nearby-church-distances";
+import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
+import { TemploImageGallery } from "./templo-image-gallery";
+import { DistanceBadge } from "./distance-badge";
+import { SearchBar } from "@/components/shared/search-bar";
+import { HighlightedText } from "@/components/shared/highlighted-text";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Templo } from "@/lib/types";
@@ -34,7 +36,17 @@ const formatPresidentShortName = (name: string) => {
   return `${parts[0]} ${parts[1]}`;
 };
 
-function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: string }) {
+function TemploCard({ 
+  templo, 
+  searchQuery,
+  distance,
+  showDistance,
+}: { 
+  templo: Templo; 
+  searchQuery: string;
+  distance?: any;
+  showDistance?: boolean;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const openGoogleMaps = () => {
@@ -82,6 +94,7 @@ function TemploCard({ templo, searchQuery }: { templo: Templo; searchQuery: stri
             />
           </div>
         )}
+        <DistanceBadge distance={distance} show={showDistance ?? false} />
       </div>
 
       {/* Content */}
@@ -256,6 +269,9 @@ export function TemplosContent({ templos }: TemploContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const gridRef = useRef<HTMLDivElement>(null);
   useEqualizeCardRowHeads(gridRef);
+  
+  // Calculate distances to nearby churches if user has granted permission
+  const { distances, hasPermission } = useNearbyChurchDistances(templos);
 
   useEffect(() => {
     if (window.location.hash) {
@@ -328,6 +344,8 @@ export function TemplosContent({ templos }: TemploContentProps) {
                 key={templo.id}
                 templo={templo}
                 searchQuery={searchQuery}
+                distance={distances[templo.id]}
+                showDistance={hasPermission && !!distances[templo.id]}
               />
             ))}
           </div>

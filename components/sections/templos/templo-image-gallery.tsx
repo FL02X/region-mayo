@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Images } from "lucide-react"
-import { ImageGalleryModal } from "@/components/image-gallery-modal"
+import { ImageGalleryModal } from "@/components/shared/image-gallery-modal"
 import { sanityImageVariantUrl } from "@/lib/sanity/image"
 
 interface TemploImageGalleryProps {

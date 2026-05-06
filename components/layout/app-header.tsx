@@ -16,8 +16,8 @@ import {
   Church,
   Search,
 } from "lucide-react";
-import { MobileMenu } from "@/components/mobile-menu";
-import { DebugTimePicker } from "@/components/debug-time-picker";
+import { MobileMenu } from "@/components/layout/mobile-menu";
+import { DebugTimePicker } from "@/components/shared/debug-time-picker";
 
 interface AppHeaderProps {
   instagramUrl?: string;

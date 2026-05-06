@@ -1,6 +1,6 @@
 import { Metadata } from "next"
-import { AppHeader } from "@/components/app-header"
-import { DirectorioContent } from "@/components/directorio-content"
+import { AppHeader } from "@/components/layout/app-header"
+import { DirectorioContent } from "@/components/sections/directorio/directorio-content"
 import { getPastors, getRegionConfig } from "@/lib/api"
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity

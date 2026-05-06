@@ -1,6 +1,6 @@
 import { Metadata } from "next"
-import { AppHeader } from "@/components/app-header"
-import { AlbumContent } from "@/components/album-content"
+import { AppHeader } from "@/components/layout/app-header"
+import { AlbumContent } from "@/components/sections/album/album-content"
 import { getEvents, getRegionConfig } from "@/lib/api"
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity

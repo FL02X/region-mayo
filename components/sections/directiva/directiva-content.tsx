@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { Badge } from "@/components/ui/badge";
-import { WhatsAppButton } from "@/components/whatsapp-button";
-import { SearchBar } from "@/components/search-bar";
-import { HighlightedText } from "@/components/highlighted-text";
+import { WhatsAppButton } from "@/components/shared/whatsapp-button";
+import { SearchBar } from "@/components/shared/search-bar";
+import { HighlightedText } from "@/components/shared/highlighted-text";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { DirectivaMember } from "@/lib/types";

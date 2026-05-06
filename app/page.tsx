@@ -1,9 +1,10 @@
-import { AppHeader } from "@/components/app-header";
-import { HeroSection } from "@/components/hero-section";
-import { EventsFeed } from "@/components/events-feed";
-import { ActionDeck } from "@/components/action-deck";
-import { Providers } from "@/components/providers";
-import { GoToCalendar } from "@/components/go-to-calendar";
+import { AppHeader } from "@/components/layout/app-header";
+import { LocationNotificationBar } from "@/components/layout/location-notification-bar";
+import { HeroSection } from "@/components/sections/home/hero-section";
+import { EventsFeed } from "@/components/sections/home/events-feed";
+import { ActionDeck } from "@/components/sections/home/action-deck";
+import { Providers } from "@/components/layout/providers";
+import { GoToCalendar } from "@/components/sections/home/go-to-calendar";
 import {
   getEvents,
   getRegionConfig,
@@ -12,6 +13,7 @@ import {
   getLatestHeroCard,
   getPrayerWallConfig,
   getLatestSocialPosts,
+  getTemplos,
 } from "@/lib/api";
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity
@@ -20,7 +22,7 @@ import {
 export const revalidate = false;
 
 export default async function Home() {
-  const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts] =
+  const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts, templos] =
     await Promise.all([
       getRegionConfig("region-mayo"),
       getEvents("region-mayo"),
@@ -29,6 +31,7 @@ export default async function Home() {
       getLatestHeroCard("region-mayo"),
       getPrayerWallConfig("region-mayo"),
       getLatestSocialPosts(6),
+      getTemplos("region-mayo"),
     ]);
 
 
@@ -45,6 +48,8 @@ export default async function Home() {
           instagramUrl={region?.socialLinks.instagram}
           facebookUrl={region?.socialLinks.facebook}
         />
+
+        <LocationNotificationBar templos={templos} />
 
         <div className="hidden md:block">
           <HeroSection
