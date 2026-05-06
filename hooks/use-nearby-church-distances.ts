@@ -54,12 +54,12 @@ export function useNearbyChurchDistances(
         setHasPermission(true);
         setLoading(true);
 
-        // Find 3 nearest churches
+        // Find all churches with coordinates, sorted from nearest to farthest
         const nearest = await findNearestChurches(
           location.lat,
           location.lng,
           templos,
-          3
+          templos.length
         );
 
         // Build distance map

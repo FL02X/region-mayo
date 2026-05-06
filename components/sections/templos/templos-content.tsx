@@ -291,6 +291,20 @@ export function TemplosContent({ templos }: TemploContentProps) {
     [templos, searchQuery],
   );
 
+  const sortedTemplos = useMemo(() => {
+    if (!hasPermission) return filteredTemplos;
+
+    return [...filteredTemplos].sort((a, b) => {
+      const distanceA = distances[a.id];
+      const distanceB = distances[b.id];
+
+      if (distanceA && distanceB) return distanceA.km - distanceB.km;
+      if (distanceA) return -1;
+      if (distanceB) return 1;
+      return 0;
+    });
+  }, [filteredTemplos, distances, hasPermission]);
+
   return (
     <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
@@ -332,14 +346,14 @@ export function TemplosContent({ templos }: TemploContentProps) {
           <div
             ref={gridRef}
             className={`grid gap-4 ${
-              filteredTemplos.length === 1
+              sortedTemplos.length === 1
                 ? "grid-cols-1 max-w-sm mx-auto"
-                : filteredTemplos.length === 2
+                : sortedTemplos.length === 2
                   ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
                   : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
             }`}
           >
-            {filteredTemplos.map((templo) => (
+            {sortedTemplos.map((templo) => (
               <TemploCard
                 key={templo.id}
                 templo={templo}
