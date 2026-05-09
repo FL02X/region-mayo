@@ -107,7 +107,7 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
                         className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5"
                         aria-hidden="true"
                       />
-                      <p className="text-sm text-foreground/80 leading-tight">
+                      <p className="text-sm text-foreground/70 leading-tight">
                         <HighlightedText text={member.address} query={searchQuery} />
                       </p>
                     </div>

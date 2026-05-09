@@ -83,10 +83,10 @@ curl -X POST https://your-domain.com/api/revalidate \
 ## Supported Document Types
 
 - **event** → Revalidates: `/`, `/album`, `/buscar`
-- **coro** → Revalidates: `/coros`, `/buscar`
-- **templo** → Revalidates: `/templos`, `/directorio`, `/buscar`
-- **pastor** → Revalidates: `/directorio`, `/buscar`
-- **directiva** → Revalidates: `/directiva`, `/buscar`
+- **coro** → Revalidates: `/`, `/coros`, `/buscar`
+- **templo** → Revalidates: `/`, `/templos`, `/directorio`, `/buscar`
+- **pastor** → Revalidates: `/`, `/directorio`, `/buscar`
+- **directiva** → Revalidates: `/`, `/directiva`, `/buscar`
 - **region** → Revalidates: All main pages
 - **siteSettings** → Revalidates: All main pages
 - **unknown types** → Revalidates: `/` (homepage)

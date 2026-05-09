@@ -224,6 +224,27 @@ export interface TemploCoro {
   presidentPhone: string;
 }
 
+export type TemploWeekday =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+export interface TemploServiceSchedule {
+  day: TemploWeekday;
+  startTime: string;
+  endTime?: string;
+  label?: string;
+}
+
+export interface TemploSchedule {
+  timezone?: string;
+  services: TemploServiceSchedule[];
+}
+
 // Local church (Templo) with its related pastors and coros joined
 export interface Templo {
   id: string;
@@ -233,6 +254,7 @@ export interface Templo {
   googleMapsUrl?: string;
   phone?: string;
   photos?: string[];
+  schedule?: TemploSchedule;
   description?: string;
   presidenteJovenesName?: string;
   presidenteJovenesPhone?: string;

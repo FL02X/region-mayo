@@ -38,6 +38,10 @@ const AUDITABLE_DOCUMENT_TYPES = [
   'registration',
 ]
 
+const HERO_CARD_TYPE = 'heroCard'
+
+const isDraftDocumentId = (id?: string) => Boolean(id && id.startsWith('drafts.'))
+
 export default defineConfig({
   name: 'default',
   title: 'Sanity Studio',
@@ -88,6 +92,15 @@ export default defineConfig({
     },
     beforeCommit: async (documentBeforeCommit, context) => {
       let updated = documentBeforeCommit
+
+      // Hero cards update their publish date automatically when the published document is committed.
+      // Draft saves keep their existing draft state untouched so the old content remains valid.
+      if (updated._type === HERO_CARD_TYPE && !isDraftDocumentId(updated._id)) {
+        updated = {
+          ...updated,
+          publishedAt: new Date().toISOString(),
+        }
+      }
 
       // 1. Primero, aplicar denormalization para coros
       if (documentBeforeCommit._type === 'coro') {

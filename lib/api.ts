@@ -697,6 +697,50 @@ function mapTemploCoro(raw: any): import("./types").TemploCoro {
   };
 }
 
+const VALID_TEMPO_DAYS = new Set([
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+]);
+
+function mapTemploSchedule(raw: any): import("./types").TemploSchedule | undefined {
+  const servicesRaw = Array.isArray(raw?.services) ? raw.services : [];
+
+  const services = servicesRaw
+    .filter((slot: any) =>
+      typeof slot?.day === "string" &&
+      VALID_TEMPO_DAYS.has(slot.day) &&
+      typeof slot?.startTime === "string" &&
+      slot.startTime.trim().length > 0
+    )
+    .map((slot: any) => ({
+      day: slot.day,
+      startTime: String(slot.startTime).trim(),
+      endTime:
+        typeof slot?.endTime === "string" && slot.endTime.trim().length > 0
+          ? slot.endTime.trim()
+          : undefined,
+      label:
+        typeof slot?.label === "string" && slot.label.trim().length > 0
+          ? slot.label.trim()
+          : undefined,
+    }));
+
+  if (services.length === 0) return undefined;
+
+  return {
+    timezone:
+      typeof raw?.timezone === "string" && raw.timezone.trim().length > 0
+        ? raw.timezone.trim()
+        : undefined,
+    services,
+  };
+}
+
 function mapTemplo(raw: any): Templo {
   return {
     id: raw._id,
@@ -706,6 +750,7 @@ function mapTemplo(raw: any): Templo {
     googleMapsUrl: raw.googleMapsUrl ?? undefined,
     phone: raw.phone ?? undefined,
     photos: sanityImagesUrls(raw.photos),
+    schedule: mapTemploSchedule(raw.schedule),
     description: raw.description ?? undefined,
     presidenteJovenesName: raw.presidenteJovenesName ?? undefined,
     presidenteJovenesPhone: raw.presidenteJovenesPhone ?? undefined,
@@ -744,6 +789,15 @@ export async function getTemplos(
       location,
       phone,
       photos[]{asset->{url}},
+      schedule{
+        timezone,
+        services[]{
+          day,
+          startTime,
+          endTime,
+          label
+        }
+      },
       description,
       presidenteJovenesName,
       presidenteJovenesPhone,

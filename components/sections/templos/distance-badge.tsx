@@ -20,17 +20,19 @@ export function DistanceBadge({ distance, show }: DistanceBadgeProps) {
   return (
     <div
       className="
-        absolute left-3 bottom-3 md:top-3 md:bottom-auto
+        absolute top-0 left-0
         bg-black/75 text-white
-        px-2.5 py-2
-        rounded-[3px]
+        px-3 py-2 md:px-4 md:py-2.5
         text-[10px] md:text-[11px]
         font-medium
         leading-tight
         backdrop-blur-sm
         pointer-events-none
-        shadow-[0_1px_2px_rgba(0,0,0,0.18)]
+        shadow-[0_2px_4px_rgba(0,0,0,0.25)]
       "
+      style={{
+        clipPath: 'polygon(0 0, 100% 0, 85% 100%, 0 100%)',
+      }}
       aria-label={`Distancia: ${formatDistanceAndTime(distance)}`}
     >
       <div className="flex items-center gap-1.5">

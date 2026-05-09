@@ -49,7 +49,9 @@ export default async function Home() {
           facebookUrl={region?.socialLinks.facebook}
         />
 
-        <LocationNotificationBar templos={templos} />
+        <div className="md:hidden">
+          <LocationNotificationBar templos={templos} />
+        </div>
 
         <div className="hidden md:block">
           <HeroSection
