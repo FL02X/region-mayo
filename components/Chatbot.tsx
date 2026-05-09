@@ -1,13 +1,26 @@
 'use client'; 
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation'; // 1. Importamos el lector de rutas
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [mensaje, setMensaje] = useState('');
-  const [historial, setHistorial] = useState([
-    { rol: 'bot', texto: '¡Paz de Cristo!, me presento: Soy el asistente virtual de los jóvenes de la página Región Mayo. ¿Qué duda tienes?' }
+  const [historial, setHistorial] = useState<any[]>([
+    { rol: 'bot', texto: '¡Hola! ¿En qué te puedo ayudar hoy?' }
   ]);
+
+  // 2. Obtenemos la ruta actual en la que está el usuario
+  const pathname = usePathname();
+
+  // 3. Hacemos una lista de las rutas donde SÍ queremos que aparezca
+  // '/' significa la página de Inicio
+  const rutasPermitidas = ['/', '/templos', '/pastores', '/coros', '/album', '/directiva'];
+
+  // 4. Si la ruta actual NO está en la lista de permitidas, el bot desaparece por completo
+  if (!rutasPermitidas.includes(pathname)) {
+    return null;
+  }
 
   const toggleChat = () => setIsOpen(!isOpen);
 
@@ -20,7 +33,7 @@ export default function Chatbot() {
     setMensaje('');
 
     const textoMinusculas = textoUsuario.toLowerCase();
-    let respuestaBot = "Lo siento, aún estoy aprendiendo. ¿Podrías intentar preguntarlo de otra forma?";
+    let respuestaBot: any = "Lo siento, aún estoy aprendiendo. ¿Podrías intentar preguntarlo de otra forma?";
 
     if (textoMinusculas.includes('hola') || textoMinusculas.includes('buenos dias')) {
       respuestaBot = '¡Hola! Bienvenido a la plataforma de Región Mayo. ¿En qué te puedo ayudar hoy?';
@@ -29,7 +42,18 @@ export default function Chatbot() {
     } else if (textoMinusculas.includes('templo') || textoMinusculas.includes('iglesia') || textoMinusculas.includes('ubicación') || textoMinusculas.includes('donde')) {
       respuestaBot = 'Puedes encontrar la iglesia más cercana a ti utilizando el buscador GPS en la sección de "Templos" del menú superior.';
     } else if (textoMinusculas.includes('coro') || textoMinusculas.includes('pastor')) {
-      respuestaBot = 'Toda la información sobre los coros y pastores de la región la encuentras navegando en el menú principal de arriba.';
+      respuestaBot = (
+        <span>
+          Toda la información sobre los coros y pastores de la región la encuentras en nuestro directorio.
+          <br /><br />
+          <a 
+            href="/pastores" 
+            style={{ color: '#2b4c7e', fontWeight: 'bold', textDecoration: 'underline' }}
+          >
+            👉 Pícale aquí para ir a la sección
+          </a>
+        </span>
+      );
     }
 
     setTimeout(() => {
@@ -44,12 +68,11 @@ export default function Chatbot() {
           onClick={toggleChat}
           style={{ padding: '14px 24px', borderRadius: '30px', backgroundColor: '#2b4c7e', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 8px 24px rgba(43, 76, 126, 0.3)', fontSize: '15px', fontWeight: '600', transition: 'transform 0.2s' }}
         >
-          Asistente Virtual
+          ✨ Asistente
         </button>
       ) : (
-        <div style={{ width: '250px', height: '380px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'flex', flexDirection: 'column', boxShadow: '0 12px 40px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
+        <div style={{ width: '300px', height: '420px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'flex', flexDirection: 'column', boxShadow: '0 12px 40px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
           
-          {/* Cabecera Minimalista */}
           <div style={{ padding: '20px 20px 10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%' }}></div>
@@ -58,14 +81,12 @@ export default function Chatbot() {
             <button onClick={toggleChat} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0' }}>×</button>
           </div>
 
-          {/* Área de Mensajes */}
           <div style={{ flex: 1, padding: '15px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#ffffff' }}>
             {historial.map((msg, index) => (
               <div key={index} style={{ 
                 alignSelf: msg.rol === 'usuario' ? 'flex-end' : 'flex-start', 
                 backgroundColor: msg.rol === 'usuario' ? '#2b4c7e' : '#f3f4f6', 
                 padding: '12px 16px', 
-                // Bordes asimétricos para dar efecto de "burbuja" de chat
                 borderRadius: msg.rol === 'usuario' ? '18px 18px 4px 18px' : '18px 18px 18px 4px', 
                 maxWidth: '85%', 
                 color: msg.rol === 'usuario' ? '#ffffff' : '#374151',
@@ -78,18 +99,17 @@ export default function Chatbot() {
             ))}
           </div>
 
-          {/* Caja de Texto estilo "Píldora" */}
           <form onSubmit={enviarMensaje} style={{ display: 'flex', padding: '15px', backgroundColor: '#ffffff', gap: '8px' }}>
             <input
               type="text"
               value={mensaje}
               onChange={(e) => setMensaje(e.target.value)}
               placeholder="Escribe un mensaje..."
-              style={{ flex: 1, padding: '11px 11px', borderRadius: '24px', border: 'none', backgroundColor: '#f3f4f6', color: '#111827', outline: 'none', fontSize: '14px' }}
+              style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: 'none', backgroundColor: '#f3f4f6', color: '#111827', outline: 'none', fontSize: '14px' }}
             />
             <button type="submit" style={{ width: '40px', height: '40px', minWidth: '40px', flexShrink: 0, backgroundColor: '#2b4c7e', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px' }}>
-  ↑
-</button>
+              ↑
+            </button>
           </form>
           
         </div>
