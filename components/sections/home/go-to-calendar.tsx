@@ -6,6 +6,8 @@ import { ChevronDown } from "lucide-react";
 export function GoToCalendar() {
   const [visible, setVisible] = useState(false);
 
+  const hiddenForNow = true;
+
   useEffect(() => {
     const checkTop = () => {
       setVisible(window.scrollY <= 8);
@@ -16,7 +18,7 @@ export function GoToCalendar() {
     return () => window.removeEventListener("scroll", checkTop);
   }, []);
 
-  if (!visible) return null;
+  if (hiddenForNow || !visible) return null;
 
   const handleClick = () => {
     const target = document.getElementById("calendario");

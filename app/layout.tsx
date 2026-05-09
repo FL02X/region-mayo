@@ -1,4 +1,3 @@
-import Chatbot from '@/components/Chatbot';
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
@@ -54,7 +53,6 @@ export default function RootLayout({
         </Suspense>
         <TimeProvider>{children}</TimeProvider>
         <Analytics />
-        <Chatbot />
       </body>
     </html>
   );

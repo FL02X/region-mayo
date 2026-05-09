@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { AppHeader } from "@/components/layout/app-header";
 import { TemplosContent } from "@/components/sections/templos/templos-content";
+import Chatbot from "@/components/shared/chatbot";
 import { getTemplos, getRegionConfig } from "@/lib/api";
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity
@@ -38,6 +39,7 @@ export default async function TemploPage() {
           </div>
         )}
       </div>
+      <Chatbot />
     </main>
   );
 }
