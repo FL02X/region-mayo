@@ -20,6 +20,18 @@
 
 import { defineType, defineField } from "sanity";
 
+const WEEKDAY_OPTIONS = [
+  { title: "Lunes", value: "monday" },
+  { title: "Martes", value: "tuesday" },
+  { title: "Miércoles", value: "wednesday" },
+  { title: "Jueves", value: "thursday" },
+  { title: "Viernes", value: "friday" },
+  { title: "Sábado", value: "saturday" },
+  { title: "Domingo", value: "sunday" },
+];
+
+const TIME_24H_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 export default defineType({
   name: "templo",
   title: "Templo",
@@ -100,16 +112,116 @@ export default defineType({
         "Copia el enlace de Google Maps del templo. Esto permite a la gente ver la ruta.",
     }),
 
-    // Description
+    // Schedules (structured, editor-friendly)
+    defineField({
+      name: "schedule",
+      title: "Horarios de Reunión",
+      type: "object",
+      group: "basic",
+      description:
+        "Agrega solo los días que sí tienen culto o actividad. " +
+        "Ejemplo común: Martes, Jueves y Domingo.",
+      fields: [
+        defineField({
+          name: "timezone",
+          title: "Zona horaria",
+          type: "string",
+          initialValue: "America/Hermosillo",
+          hidden: true,
+          readOnly: true,
+          description:
+            "Zona horaria fija para la Región Mayo. Oculto para evitar confusión; no es necesario editar.",
+        }),
+        defineField({
+          name: "services",
+          title: "Días con culto / actividad",
+          type: "array",
+          description:
+            "Solo agrega días activos. Si un día no aparece aquí, se considera sin actividades.",
+          of: [
+            {
+              type: "object",
+              name: "serviceSlot",
+              title: "Horario",
+              fields: [
+                defineField({
+                  name: "day",
+                  title: "Día de la semana",
+                  type: "string",
+                  options: {
+                    list: WEEKDAY_OPTIONS,
+                    layout: "dropdown",
+                  },
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: "startTime",
+                  title: "Hora de inicio (24h)",
+                  type: "string",
+                  placeholder: "18:30",
+                  description: "Formato HH:MM. Ejemplo: 18:30 o 10:00",
+                  validation: (Rule) =>
+                    Rule.required().regex(
+                      TIME_24H_REGEX,
+                      { name: "time", invert: false }
+                    ).error("Usa formato HH:MM (24h). Ejemplo: 18:30"),
+                }),
+                defineField({
+                  name: "endTime",
+                  title: "Hora de fin (opcional)",
+                  type: "string",
+                  placeholder: "20:00",
+                  description: "Formato HH:MM. Déjalo vacío si no aplica.",
+                  validation: (Rule) =>
+                    Rule.regex(TIME_24H_REGEX, {
+                      name: "time",
+                      invert: false,
+                    }).error("Usa formato HH:MM (24h). Ejemplo: 20:00"),
+                }),
+                defineField({
+                  name: "label",
+                  title: "Nombre de actividad (opcional)",
+                  type: "string",
+                  initialValue: "Culto",
+                  description:
+                    "Ejemplo: Culto general, Estudio bíblico, Reunión de jóvenes.",
+                }),
+              ],
+              preview: {
+                select: {
+                  day: "day",
+                  startTime: "startTime",
+                  endTime: "endTime",
+                  label: "label",
+                },
+                prepare({ day, startTime, endTime, label }) {
+                  const dayTitle =
+                    WEEKDAY_OPTIONS.find((d) => d.value === day)?.title || day || "Día";
+                  const range = endTime
+                    ? `${startTime || "--:--"} - ${endTime}`
+                    : `${startTime || "--:--"}`;
+                  return {
+                    title: `${dayTitle} · ${range}`,
+                    subtitle: label || "Culto",
+                  };
+                },
+              },
+            },
+          ],
+        }),
+      ],
+    }),
+
+    // Legacy/free text
     defineField({
       name: "description",
-      title: "Horarios y Actividades",
+      title: "Notas adicionales de horarios y actividades (opcional)",
       type: "text",
       group: "basic",
       rows: 4,
       description:
-        "Escribe aquí los horarios de los cultos y otras actividades (ej: Cultos: Domingo 10 AM y 6 PM, Estudio Bíblico: Miércoles 7 PM). " +
-        "Mantenlo actualizado siempre.",
+        "Texto libre opcional para aclaraciones. " +
+        "Los horarios principales ahora deben capturarse en 'Horarios de Reunión'.",
     }),
 
     // Auditoría

@@ -129,7 +129,7 @@ function CoroCard({ coro, searchQuery }: { coro: Coro; searchQuery: string }) {
                       {coro.address && (
                         <div className="flex items-start gap-1.5 mb-1.5">
                           <MapPin className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
-                          <p className="text-sm text-foreground/80 leading-tight">
+                          <p className="text-sm text-foreground/80">
                             <HighlightedText text={coro.address} query={searchQuery} />
                           </p>
                         </div>
@@ -162,7 +162,7 @@ function CoroCard({ coro, searchQuery }: { coro: Coro; searchQuery: string }) {
                       <p className="text-sm font-medium text-foreground leading-tight">
                         <HighlightedText text={coro.presidentName} query={searchQuery} />
                       </p>
-                      <p className="text-sm text-foreground/80 mt-0.5">
+                      <p className="text-sm text-foreground/60 mt-0.5">
                         <HighlightedText text={formatPhoneForDisplay(coro.presidentPhone)} query={searchQuery} />
                       </p>
                     </div>

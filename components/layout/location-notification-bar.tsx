@@ -134,7 +134,7 @@ export function LocationNotificationBar({
           transform: isVisible ? 'translateY(0)' : 'translateY(-10px)'
         }}
       >
-        <div className="w-full bg-[#2f5e93] shadow-md border-b border-[#2f5e93]/30">
+        <div className={`w-full shadow-md ${barState === 'success' ? 'bg-green-600 border border-white/0' : 'bg-[#2f5e93] border-b border-[#2f5e93]/30'}`}>
           <div className="w-full text-white flex items-center justify-between min-h-[56px] px-4 md:px-6 py-2.5 gap-3 md:gap-4">
             
             <style>{`
@@ -177,14 +177,20 @@ export function LocationNotificationBar({
               {barState === "success" && (
                 <button
                   onClick={handleSuccessClick}
-                  className="w-full text-left bg-green-600 hover:bg-green-500 transition-colors px-3 py-2 -ml-2 rounded-[3px] touch-manipulation flex items-center"
+                  className="w-full text-left bg-transparent hover:bg-green-500/10 transition-colors px-3 py-2 rounded-[3px] touch-manipulation flex flex-col items-start justify-center gap-0.5 border border-white/500"
                   aria-label={`Ir a ${nearestChurch?.temploName} - ${nearestDistance}`}
                 >
-                  <p className="text-[13px] md:text-[14px] font-medium text-white leading-tight">
-                    <span className="opacity-90">{nearestDistance}</span><br className="md:hidden" />
-                    <span className="hidden md:inline"> - </span>
-                    <span className="font-semibold">{nearestChurch?.temploName}</span>
-                  </p>
+                  <div className="w-full">
+                    <p className="text-[13px] md:text-[14px] font-medium text-white leading-tight whitespace-nowrap">
+                      <span className="opacity-90">{nearestDistance}</span>
+                    </p>
+                  </div>
+                  <div className="w-full flex items-center gap-1 min-w-0">
+                    <span className="text-[13px] md:text-[14px] font-semibold text-white leading-tight truncate min-w-0">
+                      {nearestChurch?.temploName}
+                    </span>
+                    <ExternalLink className="h-4 w-4 text-white/90 shrink-0" aria-hidden="true" />
+                  </div>
                 </button>
               )}
 

@@ -104,20 +104,6 @@ export default defineType({
       description: 'Texto que aparecerá en el botón si hay un link',
     }),
 
-    // ─────────────────────────────────────────────────────────
-    // CONTROL DE PUBLICACIÓN
-    // ─────────────────────────────────────────────────────────
-    defineField({
-      name: 'publishedAt',
-      title: 'Fecha de Publicación',
-      type: 'datetime',
-      initialValue: () => new Date().toISOString(),
-      description:
-        'Cuándo se publica esta tarjeta. Esto determina su prioridad. ' +
-        'Lo más reciente SIEMPRE aparece primero por 24 horas.',
-      validation: (Rule) => Rule.required(),
-    }),
-
     defineField({
       name: 'pinned',
       title: '🔧 Fijar en Hero (ignora prioridad automática)',
@@ -156,7 +142,6 @@ export default defineType({
     select: {
       media: 'media.file',
       title: 'title',
-      publishedAt: 'publishedAt',
       pinned: 'pinned',
     },
     prepare(selection) {

@@ -25,6 +25,12 @@ import { SearchBar } from "@/components/shared/search-bar";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
+import {
+  formatTempleServiceLine,
+  getTempleAvailability,
+  getSortedTempleServices,
+} from "@/lib/templo-schedule";
+import { useTime } from "@/lib/time-context";
 import type { Templo } from "@/lib/types";
 
 const formatPresidentShortName = (name: string) => {
@@ -47,6 +53,33 @@ function TemploCard({
   showDistance?: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { currentTime } = useTime();
+  const scheduleServices = useMemo(
+    () => getSortedTempleServices(templo.schedule),
+    [templo.schedule]
+  );
+  const availability = useMemo(
+    () => getTempleAvailability(templo.schedule, currentTime),
+    [templo.schedule, currentTime]
+  );
+
+  const availabilityBadgeClasses = useMemo(() => {
+    if (!availability) {
+      return "bg-white border border-border text-slate-700";
+    }
+
+    const title = availability.title.toLowerCase();
+
+    if (availability.tone === "open") {
+      return "bg-emerald-50 border border-emerald-200 text-emerald-800";
+    }
+
+    if (title.includes("minutos")) {
+      return "bg-amber-50 border border-amber-200 text-amber-800";
+    }
+
+    return "bg-white border border-border text-slate-700";
+  }, [availability]);
 
   const openGoogleMaps = () => {
     if (templo.googleMapsUrl) window.open(templo.googleMapsUrl, "_blank");
@@ -69,6 +102,7 @@ function TemploCard({
   const hasExpandableContent =
     templo.pastores.length > 0 ||
     templo.coros.length > 0 ||
+    scheduleServices.length > 0 ||
     !!templo.description ||
     !!templo.googleMapsUrl;
 
@@ -103,6 +137,34 @@ function TemploCard({
             <HighlightedText text={templo.temploName} query={searchQuery} />
           </h3>
 
+          {/* Availability badge — focus on anticipation (next service) or live state */}
+          {availability && (
+            <div className="mb-2">
+              <span className={`inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
+                <Clock className="h-3.5 w-3.5 opacity-80" aria-hidden="true" />
+                {(availability.tone === "open" || availability.tone === "opening-soon") ? (
+                  <span className="font-semibold text-xs">{availability.title}</span>
+                ) : (
+                  <>
+                    <span className="font-semibold text-xs">Próximo culto</span>
+                    <span className="opacity-80">·</span>
+                    <span className="text-xs opacity-90">{(() => {
+                      const sub = availability.subtitle || availability.title || "";
+                      let cleaned = String(sub)
+                        .replace(/^\s*Abre\s+/i, "")
+                        .replace(/\ba las\s*/i, "")
+                        .replace(/^\s*(el|la)\s+/i, "")
+                        .trim();
+                      if (!cleaned) cleaned = availability.title;
+                      cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                      return cleaned;
+                    })()}</span>
+                  </>
+                )}
+              </span>
+            </div>
+          )}
+
           {/* Address preview (always visible if present) */}
           {templo.address && (
             <div className="flex items-start gap-2 mb-1.5">
@@ -135,11 +197,11 @@ function TemploCard({
         <div className="flex flex-col">
 
           {/* Toggle — only shown if there is expandable content */}
-          {(templo.pastores.length > 0 || templo.coros.length > 0 || templo.description) && (
+          {hasExpandableContent && (
             <div className="-mx-4 border-t border-border">
               <button
                 onClick={handleToggle}
-                className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/80 transition-colors"
+                className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/70 transition-colors"
                 aria-expanded={isExpanded}
                 aria-controls={`templo-details-${templo.id}`}
                 style={{ background: "none" }}
@@ -158,7 +220,7 @@ function TemploCard({
           )}
 
           {/* Expanded details */}
-          {(templo.pastores.length > 0 || templo.coros.length > 0 || templo.description) && isExpanded && (
+          {hasExpandableContent && isExpanded && (
             <div
               id={`templo-details-${templo.id}`}
               className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border"
@@ -186,7 +248,7 @@ function TemploCard({
                         </span>
                       </Link>
                       {pastor.phone && (
-                        <p className="text-sm text-foreground/80 -mt-[1px]">
+                        <p className="text-sm text-foreground/60 -mt-[1px]">
                           {formatPhoneForDisplay(pastor.phone)}
                         </p>
                       )}
@@ -222,7 +284,7 @@ function TemploCard({
                           <ExternalLink className="h-3 w-3" aria-hidden="true" />
                         </span>
                       </Link>
-                      <p className="text-sm text-foreground/80 mt-0.5">
+                      <p className="text-sm text-foreground/70 mt-0.5">
                         Presidente: <HighlightedText text={formatPresidentShortName(coro.presidentName)} query={searchQuery} />
                         {coro.presidentPhone ? ` · ${formatPhoneForDisplay(coro.presidentPhone)}` : ""}
                       </p>
@@ -236,15 +298,39 @@ function TemploCard({
                   </div>
                 ))}
 
-                {/* Description / Schedule */}
-                {templo.description && (
-                  <div className="flex items-start gap-3 mt-2">
+                {/* Structured Schedule */}
+                {scheduleServices.length > 0 && (
+                  <div className="flex items-start gap-3">
                     <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                       <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
-                        Horarios y Actividades
+                        Horarios de Reunión
+                      </p>
+                      <ul className="space-y-1">
+                        {scheduleServices.map((service, idx) => (
+                          <li
+                            key={`${service.day}-${service.startTime}-${idx}`}
+                            className="text-sm text-foreground leading-relaxed"
+                          >
+                            {formatTempleServiceLine(service)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {/* Legacy free text notes */}
+                {templo.description && (
+                  <div className="flex items-start gap-3 mt-2">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <FileText className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                        Notas adicionales
                       </p>
                       <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                         {templo.description}
