@@ -15,7 +15,7 @@ export default function Chatbot() {
 
   // 3. Hacemos una lista de las rutas donde SÍ queremos que aparezca
   // '/' significa la página de Inicio
-  const rutasPermitidas = ['/', '/templos', '/pastores', '/coros', '/album', '/directiva'];
+  const rutasPermitidas = ['/', '/templos', '/directorio', '/coros', '/album', '/directiva'];
 
   // 4. Si la ruta actual NO está en la lista de permitidas, el bot desaparece por completo
   if (!rutasPermitidas.includes(pathname)) {
