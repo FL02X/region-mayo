@@ -40,7 +40,7 @@ export default function Chatbot() {
           onClick={toggleChat}
           style={{ padding: '15px 20px', borderRadius: '50px', backgroundColor: '#0070f3', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', fontSize: '16px', fontWeight: 'bold' }}
         >
-          💬 Cha
+          💬 Chat
         </button>
       ) : (
         <div style={{ width: '260px', height: '300px', backgroundColor: 'white', border: '1px solid #e0e0e0', borderRadius: '12px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
