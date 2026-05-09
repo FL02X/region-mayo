@@ -47,7 +47,7 @@ export default function Chatbot() {
           Toda la información sobre los coros y pastores de la región la encuentras en nuestro directorio.
           <br /><br />
           <a 
-            href="/pastores" 
+            href="/coros" 
             style={{ color: '#2b4c7e', fontWeight: 'bold', textDecoration: 'underline' }}
           >
             👉 Pícale aquí para ir a la sección
