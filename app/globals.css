@@ -38,6 +38,7 @@
   --sidebar-accent-foreground: oklch(0.25 0.05 240);
   --sidebar-border: oklch(0.86 0.015 240);
   --sidebar-ring: oklch(0.46 0.18 240);
+  --app-font-scale: 1;
 
   /* Editorial palette helpers */
   --surface-shell: #f1f1f1;
@@ -172,7 +173,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-size: 18px;
+    font-size: calc(18px * var(--app-font-scale, 1));
     line-height: 1.58;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -297,16 +298,33 @@
   --tw-ring-inset: ;
   --tw-ring-offset-width: 0px;
   --tw-ring-offset-color: #fff;
-  --tw-ring-color: #fce041 !important;
+  --tw-ring-color: #d8b400 !important;
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color) !important;
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color) !important;
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color) !important;
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000) !important;
-  background-color: rgb(252 224 65 / 0.1) !important;
-  transition: all 0.3s ease !important;
+  background-color: rgb(216 180 0 / 0.08) !important;
+  transition: all 0.25s ease !important;
 }
 
 .dark .global-highlight {
-  background-color: rgb(113 63 18 / 0.2) !important; /* Tailwind yellow-900/20 */
+  background-color: rgb(113 63 18 / 0.18) !important; /* Tailwind yellow-900/18 */
+}
+
+body[data-user-interacted="true"] .global-highlight {
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+body[data-user-interacted="true"] :target {
+  box-shadow: none !important;
+  background-color: inherit !important;
+}
+
+body:not([data-user-interacted="true"]) .global-highlight .availability-pill,
+body:not([data-user-interacted="true"]) :target .availability-pill {
+  background-color: rgb(216 180 0 / 0.2) !important;
+  border-color: rgb(216 180 0 / 0.55) !important;
+  color: #6b5200 !important;
 }
 
 /* ─── Flick animation — quick visual feedback on mobile menu click ─── */

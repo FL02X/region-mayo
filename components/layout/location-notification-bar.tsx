@@ -7,6 +7,9 @@ import { findNearestChurch } from "@/lib/location-service";
 import { formatDistanceAndTime } from "@/lib/geo-utils";
 import type { Templo } from "@/lib/types";
 
+const DISTANCE_ORDER_ENABLED_KEY = "region-mayo-templos-distance-order-enabled";
+const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
+
 type BarState =
   | "initial" 
   | "loading" 
@@ -103,6 +106,12 @@ export function LocationNotificationBar({
 
   const handleSuccessClick = () => {
     if (nearestChurch) {
+      try {
+        localStorage.setItem(DISTANCE_ORDER_ENABLED_KEY, "true");
+        sessionStorage.setItem(SHOW_DISTANCE_BADGES_KEY, "true");
+      } catch {
+        // Ignore storage failures (private mode, quota)
+      }
       setIsVisible(false); // Hide bar after click on success
       setTimeout(() => {
         window.location.href = `/templos#${nearestChurch.id}`;

@@ -1,13 +1,26 @@
 "use client";
 
 import { Heart, BookOpen, Music, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useConnectivity } from "@/hooks/use-connectivity";
 
 export function HomeInfoCards() {
   const [isDownloading, setIsDownloading] = useState(false);
+  const { isOnline } = useConnectivity();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  const effectiveOnline = hasMounted ? isOnline : true;
 
   const handleDownload = async () => {
     try {
+      if (!effectiveOnline) {
+        alert("Sin conexion. Conectate a internet para descargar el archivo.");
+        return;
+      }
       setIsDownloading(true);
       const response = await fetch("/api/download-himnario", {
         method: "GET",
@@ -97,6 +110,7 @@ export function HomeInfoCards() {
                     <p className="text-xs text-muted-foreground leading-relaxed mb-3">
                       {card.subtitle}
                       {card.id === "hymnal" && isDownloading && " (Descargando...)"}
+                      {card.id === "hymnal" && !effectiveOnline && " (Sin conexion)"}
                     </p>
                     <div className="mt-2">
                       {card.href ? (
@@ -113,7 +127,8 @@ export function HomeInfoCards() {
                         <button
                           type="button"
                           onClick={card.onClick}
-                          className="inline-flex items-center gap-1 text-sm font-medium text-[#2f5e93] hover:text-[#284e79] transition-colors"
+                          disabled={!effectiveOnline}
+                          className="inline-flex items-center gap-1 text-sm font-medium text-[#2f5e93] hover:text-[#284e79] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                           Descargar Himnario
                           <ChevronRight className="h-4 w-4" />

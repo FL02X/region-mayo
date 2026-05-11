@@ -11,6 +11,7 @@ import { PhoneInput } from "@/components/shared/phone-input"
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button"
 import { ImageGalleryModal } from "@/components/shared/image-gallery-modal"
 import useLockBodyScroll from "@/hooks/use-lock-scroll"
+import { useConnectivity } from "@/hooks/use-connectivity"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import type { Event, RegionPresident } from "@/lib/types"
 
@@ -30,6 +31,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const [formStartTime, setFormStartTime] = useState<number>(0)
   const [honeypot, setHoneypot] = useState("")
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null)
+  const { isOnline } = useConnectivity()
+  const isOffline = !isOnline
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -80,6 +83,12 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     setIsSubmitting(true)
     setSubmitError(null)
     const submitStartTime = performance.now()
+
+    if (isOffline) {
+      setSubmitError("Sin conexion. Conectate a internet para completar el registro.")
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       const response = await fetch("/api/register", {
@@ -202,6 +211,11 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
 
           {/* Content */}
           <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-5 py-5 md:px-6 md:py-4">
+            {isOffline && step <= totalSteps && (
+              <div className="mb-4 border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                Sin conexion. Esta seccion requiere internet para registrar tu asistencia.
+              </div>
+            )}
             {/* Step 1: Contact Info */}
             {step === 1 && (
               <div className="space-y-6">
@@ -386,7 +400,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 )}
                 <Button
                   onClick={step === totalSteps ? handleSubmit : handleNext}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (step === totalSteps && isOffline)}
                   className="flex-1 rounded-none h-14 bg-primary hover:bg-primary/90 text-primary-foreground uppercase tracking-wider font-bold text-sm"
                 >
                   {isSubmitting ? (
