@@ -1,4 +1,4 @@
-const VERSION = "v2";
+const VERSION = "v3";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const PAGE_CACHE = `rm-pages-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
@@ -10,7 +10,13 @@ const IS_DEV_HOST = DEV_HOSTS.has(self.location.hostname);
 self.addEventListener("install", (event) => {
   if (!IS_DEV_HOST) {
     event.waitUntil(
-      caches.open(STATIC_CACHE).then((cache) => cache.addAll([OFFLINE_URL])),
+      caches.open(STATIC_CACHE).then(async (cache) => {
+        try {
+          await cache.addAll([OFFLINE_URL, "/"]);
+        } catch (error) {
+          // Avoid blocking install if any precache request fails.
+        }
+      }),
     );
   }
   self.skipWaiting();
@@ -64,10 +70,10 @@ async function networkFirst(request, cacheName, fallbackUrl) {
     }
     return response;
   } catch (error) {
-    const cached = await cache.match(request);
+    const cached = await cache.match(request, { ignoreSearch: true });
     if (cached) return cached;
     if (fallbackUrl) {
-      const fallback = await caches.match(fallbackUrl);
+      const fallback = await caches.match(fallbackUrl, { ignoreSearch: true });
       if (fallback) return fallback;
     }
     throw error;
@@ -98,7 +104,9 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.method !== "GET") return;
-  if (request.cache === "only-if-cached" && request.mode !== "same-origin") return;
+  if (request.cache === "only-if-cached" && request.mode !== "same-origin" && request.mode !== "navigate") {
+    return;
+  }
 
   const url = new URL(request.url);
 

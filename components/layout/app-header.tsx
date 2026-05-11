@@ -22,6 +22,7 @@ import { DebugTimePicker } from "@/components/shared/debug-time-picker";
 interface AppHeaderProps {
   instagramUrl?: string;
   facebookUrl?: string;
+  behavior?: "fixed" | "sticky";
 }
 
 const navItems = [
@@ -36,6 +37,7 @@ const navItems = [
 export function AppHeader({
   instagramUrl = "https://instagram.com/regionmayo",
   facebookUrl = "https://facebook.com/regionmayo",
+  behavior = "fixed",
 }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -121,9 +123,12 @@ export function AppHeader({
     "--header-highlight-opacity": `${desktopHoverState.opacity}`,
   } as CSSProperties;
 
+  const headerPosition = behavior === "sticky" ? "sticky" : "fixed";
+  const headerDesktopPosition = behavior === "sticky" ? "md:sticky" : "md:absolute";
+
   return (
     <>
-      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[51px] md:h-[45px] shadow-none">
+      <header className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[51px] md:h-[45px] shadow-none`}>
         <div className="h-full max-w-[950px] mx-auto relative z-[61]">
           {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
           <div

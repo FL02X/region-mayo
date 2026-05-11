@@ -282,7 +282,7 @@ export function MobileMenu({
                 className={cn(
                   "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
                   isActive ? "bg-gray-200" : "hover:bg-gray-100 active:bg-[#e8f1ff]",
-                  isInstallItem && "bg-emerald-50/70",
+                  isInstallItem && "bg-emerald-50/60",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >

@@ -36,6 +36,8 @@ import type { Templo } from "@/lib/types";
 const DISTANCE_ORDER_STORAGE_KEY = "region-mayo-templos-distance-order";
 const DISTANCE_ORDER_ENABLED_KEY = "region-mayo-templos-distance-order-enabled";
 const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
+const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
+const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
 
 const formatPresidentShortName = (name: string) => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -363,6 +365,7 @@ export function TemplosContent({ templos }: TemploContentProps) {
   const [showDistanceBadges, setShowDistanceBadges] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+  const highlightedHashRef = useRef<string | null>(null);
   useEqualizeCardRowHeads(gridRef);
   
   // Calculate distances to nearby churches if user has granted permission
@@ -458,19 +461,6 @@ export function TemplosContent({ templos }: TemploContentProps) {
     }
   }, [distanceOrderEnabled, distanceOrderIds, hasPermission, loading]);
 
-  useEffect(() => {
-    if (window.location.hash) {
-      const id = window.location.hash.substring(1);
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.classList.add("global-highlight");
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 300);
-    }
-  }, []);
-
   const filteredTemplos = useMemo(
     () => searchItems(templos, searchQuery, SEARCH_CONFIGS.templos),
     [templos, searchQuery],
@@ -507,6 +497,43 @@ export function TemplosContent({ templos }: TemploContentProps) {
       return 0;
     });
   }, [filteredTemplos, distances, hasPermission, distanceOrderIds, distanceOrderEnabled]);
+
+  useEffect(() => {
+    if (!isClientReady) return;
+    if (!window.location.hash) return;
+
+    const id = decodeURIComponent(window.location.hash.substring(1));
+    if (!id || highlightedHashRef.current === id) return;
+
+    const gpsId = sessionStorage.getItem(GPS_HIGHLIGHT_KEY);
+    const gpsConsumed = sessionStorage.getItem(GPS_HIGHLIGHT_USED_KEY) === "true";
+
+    if (gpsId && gpsId === id && gpsConsumed) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+      return;
+    }
+
+    let cancelled = false;
+    const attemptHighlight = () => {
+      if (cancelled) return;
+      const el = document.getElementById(id);
+      if (!el) return;
+      highlightedHashRef.current = id;
+      el.classList.add("global-highlight");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      if (gpsId && gpsId === id) {
+        sessionStorage.setItem(GPS_HIGHLIGHT_USED_KEY, "true");
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    };
+
+    const timer = window.setTimeout(attemptHighlight, 350);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [isClientReady, sortedTemplos.length]);
 
   const shouldHideList = !isClientReady;
   const shouldShowLoader = !isClientReady;

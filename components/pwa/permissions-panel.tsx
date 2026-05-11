@@ -116,37 +116,35 @@ export function PermissionsPanel() {
 
         return (
           <div key={card.id} className="border border-border/60 bg-white p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted/30 flex items-center justify-center">
-                  <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground uppercase tracking-wide">
-                    {card.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{card.description}</p>
-                </div>
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-muted/30 flex items-center justify-center">
+                <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
               </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className={cn(
-                    "text-xs font-semibold uppercase tracking-wide",
-                    isGranted ? "text-emerald-600" : "text-muted-foreground",
-                  )}
-                >
-                  {statusLabel}
-                </span>
-                <Button
-                  variant={isGranted ? "outline" : "default"}
-                  size="sm"
-                  onClick={card.onRequest}
-                  className="rounded-none"
-                  disabled={card.status === "unsupported"}
-                >
-                  {isGranted ? "Listo" : "Permitir"}
-                </Button>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground uppercase tracking-wide">
+                  {card.title}
+                </p>
+                <p className="text-xs text-muted-foreground">{card.description}</p>
               </div>
+            </div>
+            <div className="mt-3 flex flex-col gap-2">
+              <span
+                className={cn(
+                  "text-xs font-semibold uppercase tracking-wide",
+                  isGranted ? "text-emerald-600" : "text-muted-foreground",
+                )}
+              >
+                {statusLabel}
+              </span>
+              <Button
+                variant={isGranted ? "outline" : "default"}
+                size="sm"
+                onClick={card.onRequest}
+                className="rounded-none w-full"
+                disabled={card.status === "unsupported"}
+              >
+                {isGranted ? "Listo" : "Permitir"}
+              </Button>
             </div>
 
             {card.id === "location" && locationHint && (

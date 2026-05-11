@@ -7,42 +7,26 @@ import { Switch } from "@/components/ui/switch";
 import { PermissionsPanel } from "@/components/pwa/permissions-panel";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useConnectivity } from "@/hooks/use-connectivity";
-import {
-  applyFontScale,
-  readAnalyticsOptIn,
-  readFontScale,
-  writeAnalyticsOptIn,
-  writeFontScale,
-  type FontScale,
-} from "@/lib/preferences";
+import { readAnalyticsOptIn, writeAnalyticsOptIn } from "@/lib/preferences";
 import { readLastSync, warmCacheRoutes, writeLastSync } from "@/lib/pwa-sync";
-
-const FONT_OPTIONS: Array<{ value: FontScale; label: string }> = [
-  { value: "normal", label: "Normal" },
-  { value: "large", label: "Grande" },
-  { value: "xlarge", label: "Muy grande" },
-];
 
 export default function ConfiguracionPage() {
   const { isInstalled } = useInstallPrompt();
   const { isOnline, connection } = useConnectivity();
+  const headerBehavior = isInstalled ? "sticky" : "fixed";
 
-  const [fontScale, setFontScale] = useState<FontScale>("normal");
   const [analyticsOptIn, setAnalyticsOptIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(0);
+  const [syncFeedback, setSyncFeedback] = useState<
+    | { tone: "success" | "error"; message: string }
+    | null
+  >(null);
 
   useEffect(() => {
-    setFontScale(readFontScale());
     setAnalyticsOptIn(readAnalyticsOptIn());
     setLastSync(readLastSync());
   }, []);
-
-  const handleFontScale = (value: FontScale) => {
-    setFontScale(value);
-    writeFontScale(value);
-    applyFontScale(value);
-  };
 
   const handleAnalytics = (checked: boolean) => {
     setAnalyticsOptIn(checked);
@@ -51,11 +35,21 @@ export default function ConfiguracionPage() {
 
   const handleSyncNow = async () => {
     setIsSyncing(true);
+    setSyncFeedback(null);
     try {
       await warmCacheRoutes();
       const now = Date.now();
       writeLastSync(now);
       setLastSync(now);
+      setSyncFeedback({
+        tone: "success",
+        message: "Sincronizacion completada.",
+      });
+    } catch (error) {
+      setSyncFeedback({
+        tone: "error",
+        message: "No se pudo sincronizar. Intenta de nuevo.",
+      });
     } finally {
       setIsSyncing(false);
     }
@@ -68,7 +62,7 @@ export default function ConfiguracionPage() {
 
   return (
     <main className="min-h-screen bg-[#f1f1f1]">
-      <AppHeader />
+      <AppHeader behavior={headerBehavior} />
       <div className="pt-[51px] md:pt-0 max-w-[950px] mx-auto px-4 md:px-6 py-8 space-y-6">
         <section className="bg-white border border-border/60 p-5">
           <h1 className="text-lg font-bold text-foreground uppercase tracking-wide">Configuracion</h1>
@@ -84,29 +78,6 @@ export default function ConfiguracionPage() {
         </section>
 
         <section className="bg-white border border-border/60 p-5 space-y-4">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Preferencias</h2>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Tamano de letra</p>
-              <p className="text-xs text-muted-foreground">Ajusta la lectura en el dispositivo.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {FONT_OPTIONS.map((option) => (
-                <Button
-                  key={option.value}
-                  variant={fontScale === option.value ? "default" : "outline"}
-                  size="sm"
-                  className="rounded-none"
-                  onClick={() => handleFontScale(option.value)}
-                >
-                  {option.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white border border-border/60 p-5 space-y-4">
           <div>
             <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Permisos</h2>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -118,7 +89,7 @@ export default function ConfiguracionPage() {
 
         <section className="bg-white border border-border/60 p-5 space-y-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Datos y sincronizacion</h2>
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <div>
               <p className="text-sm font-semibold text-foreground">Estado de conexion</p>
               <p className="text-xs text-muted-foreground">
@@ -127,13 +98,28 @@ export default function ConfiguracionPage() {
               </p>
               <p className="text-xs text-muted-foreground">Ultima sincronizacion: {lastSyncLabel}</p>
             </div>
-            <Button
-              onClick={handleSyncNow}
-              disabled={!isOnline || isSyncing}
-              className="rounded-none h-10 px-4 uppercase tracking-wider text-xs"
-            >
-              {isSyncing ? "Sincronizando..." : "Sincronizar ahora"}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleSyncNow}
+                disabled={!isOnline || isSyncing}
+                className="rounded-none h-10 px-4 uppercase tracking-wider text-xs"
+              >
+                {isSyncing ? "Sincronizando..." : "Sincronizar ahora"}
+              </Button>
+              {syncFeedback && (
+                <div
+                  className={`text-xs font-medium px-3 py-2 border rounded-none ${
+                    syncFeedback.tone === "success"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border-rose-200 bg-rose-50 text-rose-800"
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {syncFeedback.message}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 

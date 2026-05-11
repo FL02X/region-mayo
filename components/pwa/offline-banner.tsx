@@ -22,10 +22,21 @@ export function OfflineBanner() {
       return;
     }
 
+    try {
+      const skipToast = sessionStorage.getItem("rm-skip-online-toast") === "true";
+      if (skipToast) {
+        sessionStorage.removeItem("rm-skip-online-toast");
+        setShowOnlineToast(false);
+        return;
+      }
+    } catch {
+      // Ignore storage failures (private mode, quota)
+    }
+
     setShowOnlineToast(true);
     const timer = window.setTimeout(() => setShowOnlineToast(false), 3000);
     return () => window.clearTimeout(timer);
-  }, [isOnline]);
+  }, [isOnline, isInstalled]);
 
   if (isOnline && (!showOnlineToast || !isInstalled)) {
     return null;
