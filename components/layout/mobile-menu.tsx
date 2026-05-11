@@ -27,13 +27,21 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import { InstallModal } from "@/components/pwa/install-modal";
 
 interface MobileMenuProps {
   instagramUrl?: string;
   facebookUrl?: string;
 }
 
-const menuItems = [
+interface MobileMenuItem {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  description?: string;
+}
+
+const menuItems: MobileMenuItem[] = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/templos", label: "Templos", icon: Church },
   {
@@ -53,6 +61,7 @@ export function MobileMenu({
   const [open, setOpen] = useState(false);
   const [touchFeedbackHref, setTouchFeedbackHref] = useState<string | null>(null);
   const touchFeedbackTimerRef = useRef<number | null>(null);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const pathname = usePathname();
   const isMobile = useIsMobile();
   const { isInstalled } = useInstallPrompt();
@@ -87,7 +96,17 @@ export function MobileMenu({
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <>
+      <Sheet
+        open={open}
+        onOpenChange={(value) => {
+          if (isInstallModalOpen) {
+            setOpen(true);
+            return;
+          }
+          setOpen(value);
+        }}
+      >
       <SheetTrigger asChild>
         <Button
           variant="ghost"
@@ -239,13 +258,22 @@ export function MobileMenu({
             return (
               <Link
                 href={pwaItem.href}
-                onClick={() => {
+                onClick={(event) => {
+                  if (isInstallItem) {
+                    event.preventDefault();
+                  }
+
                   triggerTouchFeedback(pwaItem.href);
                   if (typeof navigator !== "undefined" && navigator.vibrate) {
                     navigator.vibrate(60);
                   }
                   window.setTimeout(() => {
-                    setOpen(false);
+                    if (!isInstallItem) {
+                      setOpen(false);
+                    }
+                    if (isInstallItem) {
+                      setIsInstallModalOpen(true);
+                    }
                   }, 120);
                 }}
                 onTouchStart={() => {
@@ -254,7 +282,7 @@ export function MobileMenu({
                 className={cn(
                   "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
                   isActive ? "bg-gray-200" : "hover:bg-gray-100 active:bg-[#e8f1ff]",
-                  isInstallItem && "hidden",
+                  isInstallItem && "bg-emerald-50/70",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
@@ -304,5 +332,11 @@ export function MobileMenu({
         </div>
       </SheetContent>
     </Sheet>
+
+      <InstallModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+      />
+    </>
   );
 }

@@ -4,13 +4,20 @@ import { useEffect, useState } from "react";
 import { WifiOff, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useConnectivity } from "@/hooks/use-connectivity";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 export function OfflineBanner() {
   const { isOnline } = useConnectivity();
+  const { isInstalled } = useInstallPrompt();
   const [showOnlineToast, setShowOnlineToast] = useState(false);
 
   useEffect(() => {
     if (!isOnline) {
+      setShowOnlineToast(false);
+      return;
+    }
+
+    if (!isInstalled) {
       setShowOnlineToast(false);
       return;
     }
@@ -20,7 +27,7 @@ export function OfflineBanner() {
     return () => window.clearTimeout(timer);
   }, [isOnline]);
 
-  if (isOnline && !showOnlineToast) {
+  if (isOnline && (!showOnlineToast || !isInstalled)) {
     return null;
   }
 

@@ -14,14 +14,24 @@ interface InstallModalProps {
 export function InstallModal({ isOpen, onClose }: InstallModalProps) {
   const { canInstall, promptInstall, isInstalled, isIos } = useInstallPrompt();
   const [installMessage, setInstallMessage] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
       setInstallMessage(null);
+      setIsActive(false);
+      return;
     }
+    const raf = requestAnimationFrame(() => setIsActive(true));
+    return () => cancelAnimationFrame(raf);
   }, [isOpen]);
 
-  if (!isOpen || typeof document === "undefined") return null;
+  if (!isOpen || !isMounted) return null;
 
   const handleInstall = async () => {
     const choice = await promptInstall();
@@ -38,14 +48,20 @@ export function InstallModal({ isOpen, onClose }: InstallModalProps) {
   };
 
   const modal = (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" role="presentation">
+      <div
+        className={`absolute inset-0 bg-black/60 transition-opacity duration-150 pointer-events-auto ${
+          isActive ? "opacity-100" : "opacity-0"
+        }`}
+      />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="install-title"
-        className="absolute inset-0 sm:relative sm:inset-auto bg-background w-full sm:max-w-lg sm:h-auto sm:max-h-[88vh] flex flex-col shadow-2xl border border-border"
+        className={`relative bg-background w-[92vw] max-w-[420px] max-h-[80vh] flex flex-col shadow-2xl border border-border transition-[opacity,transform] duration-180 pointer-events-auto ${
+          isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+        }`}
       >
         <div className="shrink-0 bg-background z-10 px-5 py-4 border-b flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -105,11 +121,6 @@ export function InstallModal({ isOpen, onClose }: InstallModalProps) {
           )}
         </div>
 
-        <div className="shrink-0 bg-background border-t border-border/50 p-4">
-          <Button onClick={onClose} className="w-full rounded-none h-12 uppercase tracking-wider font-semibold">
-            Cerrar
-          </Button>
-        </div>
       </div>
     </div>
   );
