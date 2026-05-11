@@ -1,7 +1,7 @@
 "use client";
 
 /*
-Design & Implementation Notes (IN-FILE DOCUMENTATION)
+Design & Implementation Notes
 
 Philosophy:
 - Keep UI simple, restrained and performant.
@@ -54,6 +54,7 @@ Placement:
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
+import useLockBodyScroll from "@/hooks/use-lock-scroll";
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -109,16 +110,8 @@ export default function Chatbot() {
     prevIsOpenRef.current = isOpen;
   }, [historial, isOpen]);
 
-  // Lock body scroll when modal is open (same pattern as RegistrationModal)
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [isOpen]);
+  // Lock body scroll while the modal is open (prevents page scroll/jump)
+  useLockBodyScroll(isOpen);
 
   // Modal mount animation: small fade + scale on open, respect prefers-reduced-motion
   useEffect(() => {
@@ -145,7 +138,17 @@ export default function Chatbot() {
 
   // Modal container inline styles to ensure desktop fits within viewport
   const modalContainerStyle: React.CSSProperties = isMobile
-    ? { position: 'fixed', inset: 0, width: '100vw', height: '100vh', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
+    ? {
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100dvh',
+        minHeight: '100svh',
+        backgroundColor: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }
     : { position: 'relative', width: 'min(600px, 92vw)', maxHeight: '72vh', backgroundColor: '#fff', borderRadius: 8, display: 'flex', flexDirection: 'column', overflow: 'hidden', margin: '0 auto' };
 
   // Per-render modal animation style (merged into container). Respect prefers-reduced-motion.
@@ -199,7 +202,7 @@ export default function Chatbot() {
 
   return (
     <div
-      style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 40, fontFamily: "system-ui, -apple-system, sans-serif" }}
+      style={{ position: "fixed", bottom: "calc(20px + env(safe-area-inset-bottom, 0px))", right: "20px", zIndex: 40, fontFamily: "system-ui, -apple-system, sans-serif" }}
       className="md:right-5"
     >
       {/* Launcher: desktop = small square, mobile = small circle */}
@@ -271,7 +274,21 @@ export default function Chatbot() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                <form onSubmit={enviarMensaje} style={{ display: 'flex', gap: 8, padding: 16, borderTop: '1px solid #e6e6e6' }}>
+                <form
+                  onSubmit={enviarMensaje}
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    paddingTop: 12,
+                    paddingRight: 16,
+                    paddingLeft: 16,
+                    paddingBottom: isMobile
+                      ? 'calc(12px + env(safe-area-inset-bottom, 0px))'
+                      : 16,
+                    borderTop: '1px solid #e6e6e6',
+                    backgroundColor: '#fff',
+                  }}
+                >
                   <input
                     type="text"
                     value={mensaje}

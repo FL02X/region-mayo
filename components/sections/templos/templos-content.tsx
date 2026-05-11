@@ -139,7 +139,7 @@ function TemploCard({
 
           {/* Availability badge — focus on anticipation (next service) or live state */}
           {availability && (
-            <div className="mb-2">
+            <div className="mb-2 -ml-2">
               <span className={`inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
                 <Clock className="h-3.5 w-3.5 opacity-80" aria-hidden="true" />
                 {(availability.tone === "open" || availability.tone === "opening-soon") ? (
@@ -435,7 +435,7 @@ export function TemplosContent({ templos }: TemploContentProps) {
                 ? "grid-cols-1 max-w-sm mx-auto"
                 : sortedTemplos.length === 2
                   ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-1 sm:grid-cols-2 templos-grid-3cols"
             }`}
           >
             {sortedTemplos.map((templo) => (

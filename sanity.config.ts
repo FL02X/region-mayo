@@ -1,10 +1,10 @@
 import { defineConfig } from 'sanity'
-import { deskTool } from 'sanity/desk'
-import { visionTool } from '@sanity/vision'
-import { es } from 'sanity'
+import { esESLocale } from '@sanity/locale-es-es'
+import { structureTool } from 'sanity/structure'
 import { schemaTypes } from './sanity/schemas'
 import { auditBeforeCreate, auditBeforeCommit } from './sanity/auditHooks'
 import { coroBeforeCommit } from './sanity/denormalizationHooks'
+import { StudioActiveToolLayout, StudioLayout } from './components/layout/studio-shell'
 
 const projectId =
   process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || process.env.SANITY_STUDIO_PROJECT_ID
@@ -49,42 +49,30 @@ export default defineConfig({
   dataset,
   apiVersion,
   basePath: '/studio',
-  language: 'es',
   studio: {
-    locale: 'es',
     components: {
+      layout: StudioLayout,
+      activeToolLayout: StudioActiveToolLayout,
       logo: undefined,
     },
   },
-  i18n: {
-    supportedLanguages: [
-      { id: 'es', title: 'Español' },
-      { id: 'en', title: 'English' },
-    ],
-    defaultLanguages: ['es'],
-    fieldLevelI18n: true,
+  plugins: [
+    structureTool({
+      title: 'Estructura del proyecto',
+    }),
+    esESLocale(),
+  ],
+  scheduledDrafts: {
+    enabled: false,
   },
-  plugins: [deskTool(), visionTool()],
+  releases: {
+    enabled: false,
+  },
   schema: {
     types: schemaTypes,
   },
   document: {
-    /**
-     * HOOKS DE AUDITORÍA
-     * 
-     * beforeCreate: Se ejecuta cuando se crea un documento nuevo
-     *   - Llena createdBy (usuario actual)
-     *   - Llena createdAt (timestamp actual)
-     *   - Llena modifiedBy (usuario actual)
-     *   - Llena modifiedAt (timestamp actual)
-     * 
-     * beforeCommit: Se ejecuta cuando se guarda cambios
-     *   - Actualiza modifiedBy (usuario actual)
-     *   - Actualiza modifiedAt (timestamp actual)
-     *   - Preserva createdBy y createdAt (no cambian)
-     */
     beforeCreate: (documentBeforeCreate, context) => {
-      // Aplicar solo a documentos auditables
       if (AUDITABLE_DOCUMENT_TYPES.includes(documentBeforeCreate._type)) {
         return auditBeforeCreate(documentBeforeCreate, context)
       }
@@ -93,8 +81,6 @@ export default defineConfig({
     beforeCommit: async (documentBeforeCommit, context) => {
       let updated = documentBeforeCommit
 
-      // Hero cards update their publish date automatically when the published document is committed.
-      // Draft saves keep their existing draft state untouched so the old content remains valid.
       if (updated._type === HERO_CARD_TYPE && !isDraftDocumentId(updated._id)) {
         updated = {
           ...updated,
@@ -102,17 +88,15 @@ export default defineConfig({
         }
       }
 
-      // 1. Primero, aplicar denormalization para coros
       if (documentBeforeCommit._type === 'coro') {
         updated = await coroBeforeCommit(updated, context)
       }
 
-      // 2. Luego, aplicar auditoría si corresponde
       if (AUDITABLE_DOCUMENT_TYPES.includes(updated._type)) {
         updated = auditBeforeCommit(updated, context)
       }
 
       return updated
     },
-  },
+  } as any,
 })

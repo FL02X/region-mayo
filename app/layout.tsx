@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { TimeProvider } from "@/lib/time-context";
 import { HighlightClearer } from "@/components/layout/highlight-clearer";
+import { RouteBodyFlags } from "@/components/layout/route-body-flags";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Saltar al contenido principal
         </a>
+        <RouteBodyFlags />
         <Suspense fallback={null}>
           <HighlightClearer />
         </Suspense>

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { PhoneInput } from "@/components/shared/phone-input"
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button"
 import { ImageGalleryModal } from "@/components/shared/image-gallery-modal"
+import useLockBodyScroll from "@/hooks/use-lock-scroll"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import type { Event, RegionPresident } from "@/lib/types"
 
@@ -39,20 +40,15 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     isCoroMGR: false,
   })
 
+  useLockBodyScroll(isOpen)
+
   useEffect(() => {
     if (!isOpen) return
-
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
 
     setFormStartTime(Date.now())
     setStep(1)
     setSubmitError(null)
     setSelectedPhotoIndex(null)
-
-    return () => {
-      document.body.style.overflow = prevOverflow
-    }
   }, [isOpen])
 
   if (!isOpen) return null
