@@ -21,7 +21,7 @@ export function InstallModal({ isOpen, onClose }: InstallModalProps) {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === "undefined") return null;
 
   const handleInstall = async () => {
     const choice = await promptInstall();

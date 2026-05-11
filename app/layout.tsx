@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { TimeProvider } from "@/lib/time-context";
 import { HighlightClearer } from "@/components/layout/highlight-clearer";
@@ -23,7 +23,6 @@ export const metadata: Metadata = {
     "Catálogo digital de eventos y actividades de la Región Mayo. Vive la comunidad.",
   generator: "Next.js",
   manifest: "/manifest.webmanifest",
-  themeColor: "#21252b",
   appleWebApp: {
     capable: true,
     title: "Region Mayo",
@@ -38,6 +37,10 @@ export const metadata: Metadata = {
     description: "Catálogo digital de eventos y actividades de la Región Mayo",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#21252b",
 };
 
 export default function RootLayout({
