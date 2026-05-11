@@ -1,9 +1,18 @@
-const VERSION = "v3";
+const VERSION = "v4";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const PAGE_CACHE = `rm-pages-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
 const IMAGE_CACHE = `rm-images-${VERSION}`;
 const OFFLINE_URL = "/offline";
+const PRECACHE_ROUTES = [
+  "/",
+  "/offline",
+  "/templos",
+  "/coros",
+  "/album",
+  "/directorio",
+  "/directiva",
+];
 const DEV_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const IS_DEV_HOST = DEV_HOSTS.has(self.location.hostname);
 
@@ -12,7 +21,7 @@ self.addEventListener("install", (event) => {
     event.waitUntil(
       caches.open(STATIC_CACHE).then(async (cache) => {
         try {
-          await cache.addAll([OFFLINE_URL, "/"]);
+          await cache.addAll(PRECACHE_ROUTES);
         } catch (error) {
           // Avoid blocking install if any precache request fails.
         }

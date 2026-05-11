@@ -83,6 +83,40 @@ export function PwaBootstrap() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+
+    if (!isStandalone) return;
+
+    const handleClick = (event: MouseEvent) => {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest?.("a") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      if (anchor.target && anchor.target !== "_self") return;
+      if (anchor.hasAttribute("download")) return;
+      if (!anchor.href) return;
+
+      const url = new URL(anchor.href);
+      if (url.origin !== window.location.origin) return;
+
+      if (!navigator.onLine) {
+        event.preventDefault();
+        window.location.href = url.href;
+      }
+    };
+
+    document.addEventListener("click", handleClick, { capture: true });
+    return () => document.removeEventListener("click", handleClick, { capture: true });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const handleBeforeInstall = (event: Event) => {
       event.preventDefault();
       setDeferredInstallPrompt(event as BeforeInstallPromptEvent);
