@@ -205,12 +205,12 @@ export function EventsFeed({
           />
         </div>
 
-        {/* Info Cards (Services, Bible, Hymnal) */}
-        <HomeInfoCards />
+        {/* Info Cards (Services, Bible, Hymnal) - HIDDEN */}
+        {/* <HomeInfoCards /> */}
 
         {/* Calendar section */}
         <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 border-t border-border/70 bg-muted/20">
-        <div className="mt-4 max-w-4xl mx-auto w-full">
+        <div className="mt-1 max-w-4xl mx-auto w-full">
           <div className="mb-5">
             <h2
               id="calendar-title"
@@ -218,7 +218,7 @@ export function EventsFeed({
             >
               Calendario 2026
             </h2>
-            <p className="text-[17px] text-muted-foreground mt-0.5">
+            <p className="text-[15px] text-muted-foreground mt-0.5">
               Selecciona un mes para ver los eventos
             </p>
           </div>
@@ -239,13 +239,13 @@ export function EventsFeed({
         ref={eventsListRef}
         className="bg-muted/20 px-4 md:px-6 pt-4 pb-14"
       >
-        <div className="mt-1 max-w-4xl mx-auto w-full">
+        <div className="mt-0 max-w-4xl mx-auto w-full">
           {/* Month label */}
           <div className="mb-6">
-            <h3 className="font-semibold text-[1.275rem] text-foreground tracking-tight">
+            <h3 className="font-semibold text-[1.200rem] text-foreground tracking-tight">
               {months[selectedMonth.getUTCMonth()]} {selectedMonth.getUTCFullYear()}
             </h3>
-            <p className="text-[16px] text-muted-foreground mt-0.5">
+            <p className="text-[15px] text-muted-foreground mt-0.5">
               {filteredEvents.length === 0
                 ? "No hay eventos programados"
                 : `${filteredEvents.length} ${

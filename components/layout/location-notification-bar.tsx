@@ -175,7 +175,7 @@ export function LocationNotificationBar({
               {barState === "initial" && (
                 <>
                   <p className="text-[13.5px] md:text-[14.5px] leading-tight font-medium text-white mb-[3px]">
-                    Busca la iglesia mas cercana a ti
+                    Busca nuestra iglesia más cercana a ti.
                   </p>
                   <button
                     onClick={handleRequestPermission}
@@ -223,18 +223,7 @@ export function LocationNotificationBar({
               )}
             </div>
 
-            {/* Close button */}
-            {barState !== "success" && (
-              <div className="shrink-0 flex items-center justify-center border-l border-white/20 pl-3 md:pl-4">
-                <button
-                  onClick={handleDismiss}
-                  className="flex items-center justify-center h-9 w-9 text-white/80 hover:text-white hover:bg-black/10 transition-colors touch-manipulation rounded-full active:scale-95"
-                  aria-label="Cerrar notificación"
-                >
-                   <X className="h-[20px] w-[20px] md:h-5 md:w-5" aria-hidden="true" strokeWidth={2} />
-                </button>
-              </div>
-            )}
+            {/* Close button intentionally removed per request */}
           </div>
         </div>
       </div>

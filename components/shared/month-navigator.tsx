@@ -37,6 +37,7 @@ export function MonthNavigator({
   const [viewYear, setViewYear] = useState(selectedMonth.getUTCFullYear());
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [isDesktopPickerOpen, setIsDesktopPickerOpen] = useState(false);
+  const [isMobilePickerOpen, setIsMobilePickerOpen] = useState(false);
 
   useEffect(() => {
     setCurrentDate(new Date());
@@ -89,6 +90,30 @@ export function MonthNavigator({
     );
     onMonthSelect(next);
     setViewYear(next.getUTCFullYear());
+  };
+
+  // Mobile: navigate without letting the page auto-scroll. We do this by
+  // remembering the current scroll position and restoring it shortly after
+  // the parent/consumer may trigger a scroll. This suppression is only used
+  // for the small prev/next buttons on mobile — selections from the full
+  // month grid should behave normally (allowing scroll).
+  const navigateMonthWithoutScroll = (direction: "prev" | "next") => {
+    if (typeof window === "undefined") {
+      navigateMonth(direction);
+      return;
+    }
+
+    const previousY = window.scrollY || window.pageYOffset || 0;
+
+    navigateMonth(direction);
+
+    // Restore scroll after a short delay. Use requestAnimationFrame twice to
+    // increase the chance we restore after any layout/scroll side-effects.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: previousY, left: 0, behavior: "instant" as ScrollBehavior });
+      });
+    });
   };
 
   const selectDesktopMonth = (monthIndex: number) => {
@@ -201,61 +226,108 @@ export function MonthNavigator({
         </button>
       </div>
 
-      {/* Mobile: original square month picker */}
-      <div className="md:hidden border border-border bg-card overflow-hidden">
-        <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-          <button
-            onClick={() => navigateYear("prev")}
-            className="flex items-center justify-center h-8 w-8 text-muted-foreground hover:text-foreground transition-colors rounded"
-            aria-label="Año anterior"
-            style={{ minHeight: "unset", minWidth: "unset" }}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
+      {/* Mobile: month picker similar to desktop but adapted */}
+      <div className="md:hidden border border-border bg-card h-11 px-2 flex items-center">
+        <button
+          onClick={() => navigateMonthWithoutScroll("prev")}
+          className="inline-flex items-center gap-1 h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          aria-label="Mes anterior"
+          title="Mes anterior"
+          style={{ minHeight: "unset", minWidth: "unset" }}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Ant.</span>
+        </button>
 
-          <h3 className="font-semibold text-base tabular-nums">{viewYear}</h3>
+        <Popover open={isMobilePickerOpen} onOpenChange={setIsMobilePickerOpen}>
+          <PopoverTrigger asChild>
+            <button
+              className="mx-1 flex-1 h-8 px-2 border border-border text-sm font-semibold text-foreground bg-background hover:bg-muted/60 transition-colors inline-flex items-center justify-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              aria-label="Seleccionar mes y año"
+              style={{ minHeight: "unset", minWidth: "unset" }}
+            >
+              <span className="truncate">
+                {months[selectedMonth.getUTCMonth()].slice(0, 3)} {selectedMonth.getUTCFullYear()}
+              </span>
+              <ChevronDown
+                className={`h-3 w-3 shrink-0 transition-transform ${
+                  isMobilePickerOpen ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+          </PopoverTrigger>
 
-          <button
-            onClick={() => navigateYear("next")}
-            className="flex items-center justify-center h-8 w-8 text-muted-foreground hover:text-foreground transition-colors rounded"
-            aria-label="Año siguiente"
-            style={{ minHeight: "unset", minWidth: "unset" }}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
+          <PopoverContent className="w-[280px] p-3" align="center" sideOffset={6}>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <button
+                  onClick={() => navigateYear("prev")}
+                  className="flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  aria-label="Año anterior"
+                  title="Año anterior"
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <h3 className="font-semibold text-sm tabular-nums">{viewYear}</h3>
+                <button
+                  onClick={() => navigateYear("next")}
+                  className="flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  aria-label="Año siguiente"
+                  title="Año siguiente"
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
 
-        <div className="grid grid-cols-3 divide-x divide-y divide-border">
-          {months.map((month, index) => {
-            const selected = isSelected(index);
-            const current = isCurrentMonth(index);
-            const withEvents = hasEvents(index);
+              <div className="grid grid-cols-3 gap-1">
+                {months.map((month, index) => {
+                  const selected = isSelected(index);
+                  const current = isCurrentMonth(index);
+                  const withEvents = hasEvents(index);
 
-            return (
-              <button
-                key={month}
-                onClick={() => handleMonthClick(index)}
-                aria-pressed={selected}
-                aria-label={`${month} ${viewYear}`}
-                className={[
-                  "relative py-3.5 text-sm font-medium text-center transition-colors",
-                  selected
-                    ? "bg-primary text-white"
-                    : current
-                      ? "text-primary font-semibold hover:bg-muted"
-                      : withEvents
-                        ? "text-foreground hover:bg-muted"
-                        : "text-muted-foreground hover:bg-muted",
-                ].join(" ")}
-                style={{ minHeight: "unset", minWidth: "unset" }}
-              >
-                {month.slice(0, 3)}
+                  return (
+                    <button
+                      key={`${month}-${viewYear}`}
+                      onClick={() => {
+                        onMonthSelect(new Date(Date.UTC(viewYear, index, 1)));
+                        setIsMobilePickerOpen(false);
+                      }}
+                      aria-pressed={selected}
+                      aria-label={`${month} ${viewYear}`}
+                      className={[
+                        "relative h-12 px-1 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                        selected
+                          ? "bg-primary text-white"
+                          : current
+                            ? "text-primary font-semibold hover:bg-muted"
+                            : withEvents
+                              ? "text-foreground hover:bg-muted"
+                              : "text-muted-foreground hover:bg-muted",
+                      ].join(" ")}
+                      style={{ minHeight: "unset", minWidth: "unset" }}
+                    >
+                      <span className="block leading-none">{month.slice(0, 3)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
-                {/* event dot hidden per request */}
-              </button>
-            );
-          })}
-        </div>
+        <button
+          onClick={() => navigateMonthWithoutScroll("next")}
+          className="inline-flex items-center gap-1 h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          aria-label="Mes siguiente"
+          title="Mes siguiente"
+          style={{ minHeight: "unset", minWidth: "unset" }}
+        >
+          <span>Sig.</span>
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
     </>
   );

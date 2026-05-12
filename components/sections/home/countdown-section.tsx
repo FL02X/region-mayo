@@ -351,7 +351,7 @@ export function CountdownSection({
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* Spotlight: event */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
-          <div className="desktop-card-lift bg-card border border-border overflow-hidden mb-3">
+          <div className="desktop-card-lift bg-card border border-border overflow-hidden mb-8">
             <div className="h-[3px]" style={{ backgroundColor: spotlightAccent }} aria-hidden="true" />
 
             <div className="p-5">
