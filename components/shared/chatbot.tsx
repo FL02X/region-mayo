@@ -62,15 +62,22 @@ export default function Chatbot() {
   const [historial, setHistorial] = useState<any[]>([
     { rol: "bot", texto: "¡Hola! ¿En qué te puedo ayudar hoy?" },
   ]);
+  
+  // NUEVO: Estado para controlar si se muestra el mensaje flotante de ayuda
+  const [mostrarAyuda, setMostrarAyuda] = useState(false);
 
   const pathname = usePathname();
-  const rutasPermitidas = ["/", "/coros", "/templos", "/directorio", "/directiva", "/album"]
+  const rutasPermitidas = ["/", "/coros", "/templos", "/directorio", "/directiva", "/album"];
 
   if (!rutasPermitidas.includes(pathname)) {
     return null;
   }
 
-  const toggleChat = () => setIsOpen(!isOpen);
+  const toggleChat = () => {
+    setIsOpen(!isOpen);
+    // Si abrimos el chat, ocultamos el mensaje flotante de inmediato
+    if (!isOpen) setMostrarAyuda(false);
+  };
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -84,6 +91,24 @@ export default function Chatbot() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  // NUEVO: Efecto para mostrar y ocultar el mensaje flotante con un temporizador
+  useEffect(() => {
+    // Aparece después de 1 segundo de entrar a la página
+    const timerMostrar = setTimeout(() => {
+      if (!isOpen) setMostrarAyuda(true);
+    }, 3000);
+
+    // Desaparece después de 7 segundos (6 segundos visible)
+    const timerOcultar = setTimeout(() => {
+      setMostrarAyuda(false);
+    }, 7000);
+
+    return () => {
+      clearTimeout(timerMostrar);
+      clearTimeout(timerOcultar);
+    };
+  }, [isOpen]);
 
   // Auto-scroll: when opening, jump to last message; when receiving new messages keep smooth scroll
   useEffect(() => {
@@ -131,12 +156,6 @@ export default function Chatbot() {
     return () => cancelAnimationFrame(raf);
   }, [isOpen]);
 
-  // NOTE (Design): modalActive controls the subtle mount animation (opacity
-  // + transform). We gate animation behind `prefers-reduced-motion` and use
-  // a small scale/translate to keep the effect lightweight. Keep durations
-  // short (<= 200ms) to avoid jank and to preserve perceived snappiness.
-
-  // Modal container inline styles to ensure desktop fits within viewport
   const modalContainerStyle: React.CSSProperties = isMobile
     ? {
         position: 'fixed',
@@ -151,7 +170,6 @@ export default function Chatbot() {
       }
     : { position: 'relative', width: 'min(600px, 92vw)', maxHeight: '72vh', backgroundColor: '#fff', borderRadius: 8, display: 'flex', flexDirection: 'column', overflow: 'hidden', margin: '0 auto' };
 
-  // Per-render modal animation style (merged into container). Respect prefers-reduced-motion.
   const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const modalAnimationStyle: React.CSSProperties = prefersReducedMotion
     ? {}
@@ -160,6 +178,7 @@ export default function Chatbot() {
         transform: modalActive ? 'none' : 'scale(0.985) translateY(6px)',
         transition: 'transform 180ms ease, opacity 180ms ease',
       };
+      
   const enviarMensaje = (e: React.FormEvent) => {
     e.preventDefault();
     if (!mensaje.trim()) return;
@@ -194,7 +213,26 @@ export default function Chatbot() {
         </span>
       );
     }
-
+    else if (textoMinusculas.includes("¿Qué necesita una persona para salvarse?") || textoMinusculas.includes("salvacion") || textoMinusculas.includes("salvarse") || textoMinusculas.includes("como se salva una persona")|| textoMinusculas.includes("salvo")) {
+      respuestaBot = (
+        <span>
+          La Biblia enseña que debemos experimentar el nuevo nacimiento. Esto requiere: arrepentimiento genuino, bautismo en agua en el nombre de Jesucristo para el perdón de los pecados, y la llenura del Espíritu Santo.
+          <br />
+          <br />
+          Fundamento bíblico: Hechos 2:38, Juan 3:5.
+        </span>
+      );
+    }
+    else if (textoMinusculas.includes("¿Creen que solamente su iglesia tiene la verdad?") || textoMinusculas.includes("verdad") || textoMinusculas.includes("su iglesia es la unica")) {
+      respuestaBot = (
+        <span>
+          Creemos que la Verdad absoluta es Jesucristo y Su Palabra, no una etiqueta denominacional. La iglesia verdadera está formada por todos aquellos que obedecen y viven la doctrina enseñada por los apóstoles y en la Biblia.
+          <br />
+          <br />
+         Fundamento bíblico: Juan 14:6, Efesios 2:20.
+        </span>
+      );
+    }
     setTimeout(() => {
       setHistorial((prev) => [...prev, { rol: "bot", texto: respuestaBot }]);
     }, 1000);
@@ -205,46 +243,74 @@ export default function Chatbot() {
       style={{ position: "fixed", bottom: "calc(20px + env(safe-area-inset-bottom, 0px))", right: "20px", zIndex: 40, fontFamily: "system-ui, -apple-system, sans-serif" }}
       className="md:right-5"
     >
-      {/* Launcher: desktop = small square, mobile = small circle */}
       {!isOpen ? (
         <>
-          {/* Desktop / tablet: square with slightly rounded corners, no shadow, header blue */}
-          {/* Launcher: keep the launcher compact, low-radius corners and
-              conservative visual weight. Do not add decorative shadows or
-              exaggerated radii here — follow the global design philosophy */}
+          {/* NUEVO: Mensaje flotante de bienvenida */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              right: '0',
+              marginBottom: '16px',
+              backgroundColor: '#fff',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              width: 'max-content',
+              maxWidth: '220px',
+              fontSize: '14px',
+              fontWeight: 500,
+              color: '#111827',
+              textAlign: 'left',
+              opacity: mostrarAyuda ? 1 : 0,
+              transform: mostrarAyuda ? 'translateY(0)' : 'translateY(10px)',
+              pointerEvents: mostrarAyuda ? 'auto' : 'none',
+              transition: 'all 100ms ease',
+            }}
+          >
+           ¡Paz de Cristo! 👋 ¿Tienes alguna duda? Aquí estoy para ayudarte.
+            
+            {/* Triangulito decorativo apuntando hacia abajo */}
+            <div style={{
+              position: 'absolute',
+              bottom: '-6px',
+              right: isMobile ? '14px' : '20px', // Se ajusta si es movil o escritorio
+              width: '10px',
+              height: '10px',
+              backgroundColor: '#fff',
+              borderBottom: '1px solid #e5e7eb',
+              borderRight: '1px solid #e5e7eb',
+              transform: 'rotate(45deg)'
+            }} />
+          </div>
+
+          {/* Launcher: desktop = small square, mobile = small circle */}
           <button
             onClick={toggleChat}
             aria-label="Abrir Asistente"
-            className="hidden md:flex items-center justify-center w-14 h-14 bg-[#21252b] text-white"
+            className="hidden md:flex items-center justify-center w-14 h-14 bg-[#21252b] text-white transition-transform hover:scale-105"
             style={{ borderRadius: 6, border: 'none', fontWeight: 600 }}
           >
-            {/* simple chat bubble SVG */}
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
               <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
-          {/* Mobile: small circle to avoid covering text */}
-          {/* Mobile launcher: reduce visual noise, keep it circular on small
-              screens for a compact touch target. Font size increased elsewhere
-              to prioritize message readability over launcher decoration. */}
           <button
             onClick={toggleChat}
             aria-label="Abrir Asistente"
-            className="md:hidden flex items-center justify-center w-10 h-10 bg-[#21252b] text-white"
-            style={{ borderRadius: '50%', border: 'none', fontWeight: 600 }}
+            className="md:hidden flex items-center justify-center w-12 h-12 bg-[#21252b] text-white transition-transform active:scale-95"
+            style={{ borderRadius: '50%', border: 'none', fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
           >
-            <span style={{ fontSize: 16, lineHeight: '1' }}>?</span>
+            <span style={{ fontSize: 20, lineHeight: '1' }}>?</span>
           </button>
         </>
         ) : (
-          // Render modal into a portal to ensure it's above other page overlays
           createPortal(
             <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 overflow-hidden">
-              {/* Backdrop */}
               <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={toggleChat} />
 
-              {/* Modal container - follows RegistrationModal pattern */}
               <div
                 style={{ ...modalContainerStyle, ...modalAnimationStyle }}
                 role="dialog"
