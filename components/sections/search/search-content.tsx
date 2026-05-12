@@ -4,7 +4,7 @@ import { useMemo, Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Users, Music, UserCircle, Church, Calendar, Search, ChevronRight } from "lucide-react";
+import { Users, Music, UserCircle, Church, Calendar, Search, ChevronRight, Loader2 } from "lucide-react";
 import { highlightText, normalizeText, getNestedValue } from "@/lib/search-utils";
 import type { Pastor, Coro, DirectivaMember, Templo, Event } from "@/lib/types";
 
@@ -80,10 +80,25 @@ function SearchContentInner({ data }: SearchContentProps) {
   const queryFromUrl = searchParams.get("q") || "";
   const [localQuery, setLocalQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<SearchResultType | "all">("all");
+  const [isRefreshingResults, setIsRefreshingResults] = useState(false);
 
   useEffect(() => {
     setLocalQuery(queryFromUrl);
   }, [queryFromUrl]);
+
+  useEffect(() => {
+    if (!localQuery.trim()) {
+      setIsRefreshingResults(false);
+      return;
+    }
+
+    setIsRefreshingResults(true);
+    const timer = window.setTimeout(() => {
+      setIsRefreshingResults(false);
+    }, 280);
+
+    return () => window.clearTimeout(timer);
+  }, [localQuery]);
 
   // Global search function with relevance scoring
   const allResults = useMemo(() => {
@@ -280,7 +295,8 @@ function SearchContentInner({ data }: SearchContentProps) {
                     aria-pressed={isActive}
                     aria-label={`Filtrar por ${filter.label}`}
                   >
-                    {filter.label} <span className="opacity-80">({count})</span>
+                    {filter.label}
+                    {hasActiveQuery ? <span className="opacity-80">({count})</span> : null}
                   </button>
                 );
               })}
@@ -288,13 +304,19 @@ function SearchContentInner({ data }: SearchContentProps) {
 
           </div>
 
-          {hasActiveQuery && (
+          {hasActiveQuery && !isRefreshingResults && (
             <p className="mb-7 px-0.5 text-[13px] text-[#6f7480] leading-tight" aria-live="polite">
               {filteredResults.length} resultado{filteredResults.length !== 1 ? "s" : ""} obtenido{filteredResults.length !== 1 ? "s" : ""}
             </p>
           )}
 
-          {hasActiveQuery && filteredResults.length === 0 ? (
+          {hasActiveQuery && isRefreshingResults && (
+            <div className="py-14 flex items-center justify-center" aria-live="polite" aria-label="Actualizando resultados">
+              <Loader2 className="h-16 w-16 text-[#9ca3af] animate-spin" strokeWidth={2.25} />
+            </div>
+          )}
+
+          {hasActiveQuery && !isRefreshingResults && filteredResults.length === 0 ? (
             <div className="py-10 text-foreground">
               <p className="text-lg mb-6">Lamentablemente no se encontró ningún resultado.</p>
               <p className="text-xl mb-2">Sugerencias:</p>
@@ -304,7 +326,7 @@ function SearchContentInner({ data }: SearchContentProps) {
                 <li>Use menos palabras para la búsqueda.</li>
               </ul>
             </div>
-          ) : hasActiveQuery ? (
+          ) : hasActiveQuery && !isRefreshingResults ? (
             <div className="flex flex-col gap-5">
             {filteredResults.map((result, idx) => {
               const { item, type, label, pathPrefix } = result;
@@ -398,7 +420,7 @@ function SearchContentInner({ data }: SearchContentProps) {
               );
             })}
           </div>
-          ) : (
+            ) : hasActiveQuery ? null : (
             <div className="py-7 ml-2 text-foreground">
               <p className="text-lg text-[15px] text-muted-foreground">Escriba en el campo "Buscar"</p>
             </div>

@@ -85,6 +85,13 @@ export default function Chatbot() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Listen for external requests to open the chatbot (e.g., header mobile icon)
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('open-chatbot', handleOpen as EventListener);
+    return () => window.removeEventListener('open-chatbot', handleOpen as EventListener);
+  }, []);
+
   // Auto-scroll: when opening, jump to last message; when receiving new messages keep smooth scroll
   useEffect(() => {
     const el = messagesEndRef.current;
@@ -224,18 +231,7 @@ export default function Chatbot() {
             </svg>
           </button>
 
-          {/* Mobile: small circle to avoid covering text */}
-          {/* Mobile launcher: reduce visual noise, keep it circular on small
-              screens for a compact touch target. Font size increased elsewhere
-              to prioritize message readability over launcher decoration. */}
-          <button
-            onClick={toggleChat}
-            aria-label="Abrir Asistente"
-            className="md:hidden flex items-center justify-center w-10 h-10 bg-[#21252b] text-white"
-            style={{ borderRadius: '50%', border: 'none', fontWeight: 600 }}
-          >
-            <span style={{ fontSize: 16, lineHeight: '1' }}>?</span>
-          </button>
+          {/* Mobile launcher removed — header will provide mobile entry point */}
         </>
         ) : (
           // Render modal into a portal to ensure it's above other page overlays

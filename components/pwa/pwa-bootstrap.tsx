@@ -69,15 +69,14 @@ export function PwaBootstrap() {
 
     const registerServiceWorker = async () => {
       try {
-        await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+        const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+        await registration.update();
       } catch (error) {
         console.error("Service worker registration failed", error);
       }
     };
 
-    window.addEventListener("load", registerServiceWorker, { once: true });
-
-    return () => window.removeEventListener("load", registerServiceWorker);
+    registerServiceWorker();
   }, []);
 
   useEffect(() => {

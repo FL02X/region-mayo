@@ -15,6 +15,7 @@ import {
   Facebook,
   Church,
   Search,
+  MessageSquare,
 } from "lucide-react";
 import { MobileMenu } from "@/components/layout/mobile-menu";
 import { DebugTimePicker } from "@/components/shared/debug-time-picker";
@@ -262,17 +263,33 @@ export function AppHeader({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Search icon link */}
+            {/* Asistente link */}
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('open-chatbot'));
+                }
+              }}
+              aria-label="Abrir Asistente"
+              className="mr-2 mb-1 relative flex items-center justify-center h-9 w-9 shrink-0 text-white/90 hover:text-white transition-colors md:hidden"
+            >
+              <MessageSquare className="h-[22px] w-[22px]" strokeWidth={1.6} />
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span className="text-[10px] font-semibold text-white">?</span>
+              </span>
+            </button>
+
+          {/* Search icon link */}
             <Link
               href="/buscar"
-              className="flex items-center justify-center h-9 w-9 shrink-0 text-white/90 hover:text-white transition-colors"
+              className="mr-2 mb-1 flex items-center justify-center h-9 w-9 shrink-0 text-white/90 hover:text-white transition-colors"
               aria-label="Ir a búsqueda"
             >
               <Search className="h-[23px] w-[23px]" strokeWidth={1.75} />
             </Link>
 
             {/* Mobile/Tablet only: hamburger menu */}
-            <div className="md:hidden flex items-center justify-end text-white relative z-[62] h-full shrink-0">
+            <div className="mb-1 md:hidden flex items-center justify-end text-white relative z-[62] h-full shrink-0">
               <MobileMenu
                 instagramUrl={instagramUrl}
                 facebookUrl={facebookUrl}

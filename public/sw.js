@@ -1,6 +1,5 @@
-const VERSION = "v4";
+const VERSION = "v5";
 const STATIC_CACHE = `rm-static-${VERSION}`;
-const PAGE_CACHE = `rm-pages-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
 const IMAGE_CACHE = `rm-images-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -70,17 +69,10 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
-async function networkFirst(request, cacheName, fallbackUrl) {
-  const cache = await caches.open(cacheName);
+async function networkOnlyWithOfflineFallback(request, fallbackUrl) {
   try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      cache.put(request, response.clone());
-    }
-    return response;
+    return await fetch(request, { cache: "no-store" });
   } catch (error) {
-    const cached = await cache.match(request, { ignoreSearch: true });
-    if (cached) return cached;
     if (fallbackUrl) {
       const fallback = await caches.match(fallbackUrl, { ignoreSearch: true });
       if (fallback) return fallback;
@@ -124,7 +116,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (isHtmlRequest(request)) {
-    event.respondWith(networkFirst(request, PAGE_CACHE, OFFLINE_URL));
+    event.respondWith(networkOnlyWithOfflineFallback(request, OFFLINE_URL));
     return;
   }
 
