@@ -148,6 +148,15 @@ export function EventsFeed({
     setSelectedMonth(date);
     setTimeout(() => {
       if (eventsListRef.current) {
+        // Disable autoscroll on desktop (md and up)
+        if (
+          typeof window !== "undefined" &&
+          window.matchMedia &&
+          window.matchMedia("(min-width: 768px)").matches
+        ) {
+          return;
+        }
+
         const offsetPosition =
           eventsListRef.current.getBoundingClientRect().top +
           window.scrollY -

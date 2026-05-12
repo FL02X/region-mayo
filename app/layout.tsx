@@ -1,9 +1,11 @@
-import Chatbot from '@/components/Chatbot';
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { TimeProvider } from "@/lib/time-context";
 import { HighlightClearer } from "@/components/layout/highlight-clearer";
+import { RouteBodyFlags } from "@/components/layout/route-body-flags";
+import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
+import { AnalyticsGate } from "@/components/pwa/analytics-gate";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -20,6 +22,12 @@ export const metadata: Metadata = {
   description:
     "Catálogo digital de eventos y actividades de la Región Mayo. Vive la comunidad.",
   generator: "Next.js",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Region Mayo",
+    statusBarStyle: "default",
+  },
   icons: {
     icon: "/images/region-mayo-logo.jpg",
     apple: "/images/region-mayo-logo.jpg",
@@ -29,6 +37,10 @@ export const metadata: Metadata = {
     description: "Catálogo digital de eventos y actividades de la Región Mayo",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#21252b",
 };
 
 export default function RootLayout({
@@ -49,12 +61,14 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Saltar al contenido principal
         </a>
+        <RouteBodyFlags />
         <Suspense fallback={null}>
           <HighlightClearer />
         </Suspense>
         <TimeProvider>{children}</TimeProvider>
-        <Analytics />
-        <Chatbot />
+        <OfflineBanner />
+        <PwaBootstrap />
+        <AnalyticsGate />
       </body>
     </html>
   );

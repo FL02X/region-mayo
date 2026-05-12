@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import Image from "next/image"
 import { Images, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import useLockBodyScroll from "@/hooks/use-lock-scroll"
 import { sanityImageVariantUrl } from "@/lib/sanity/image"
 
 interface ImageGalleryModalProps {
@@ -30,6 +31,7 @@ export function ImageGalleryModal({
   alt = "Imagen",
 }: ImageGalleryModalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  useLockBodyScroll(true)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,11 +52,9 @@ export function ImageGalleryModal({
     }
 
     window.addEventListener("keydown", handleKeyDown)
-    document.body.style.overflow = "hidden"
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = ""
     }
   }, [currentIndex, images.length, onClose, onNavigate])
 

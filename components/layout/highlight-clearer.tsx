@@ -10,11 +10,28 @@ export function HighlightClearer() {
   useEffect(() => {
     // Reset ref on path change
     attachedRef.current = true;
+    if (typeof document !== "undefined") {
+      document.body.removeAttribute("data-user-interacted");
+    }
     
-    const events = ['mousedown', 'touchstart', 'keydown', 'wheel'];
+    const events = [
+      "pointerdown",
+      "touchstart",
+      "touchmove",
+      "keydown",
+      "wheel",
+      "scroll",
+    ];
+    const eventOptions: AddEventListenerOptions = {
+      passive: true,
+      capture: true,
+    };
     
     // Only bind globally and clear immediately on user intent
     const handleInteraction = () => {
+      if (typeof document !== "undefined") {
+        document.body.setAttribute("data-user-interacted", "true");
+      }
       // 1. Remove manually added JS highlight class
       const highlightedElements = document.querySelectorAll('.global-highlight');
       highlightedElements.forEach(el => el.classList.remove('global-highlight'));
@@ -30,7 +47,7 @@ export function HighlightClearer() {
 
       // 3. Remove listeners: only needed once per navigation
       events.forEach(event => {
-        window.removeEventListener(event, handleInteraction);
+        window.removeEventListener(event, handleInteraction, eventOptions);
       });
       attachedRef.current = false;
     };
@@ -40,7 +57,7 @@ export function HighlightClearer() {
     const timer = setTimeout(() => {
       if (attachedRef.current) {
         events.forEach(event => {
-          window.addEventListener(event, handleInteraction, { passive: true });
+          window.addEventListener(event, handleInteraction, eventOptions);
         });
       }
     }, 1000); // 1-second grace period before an interaction kills the highlight
@@ -49,7 +66,7 @@ export function HighlightClearer() {
       attachedRef.current = false;
       clearTimeout(timer);
       events.forEach(event => {
-        window.removeEventListener(event, handleInteraction);
+        window.removeEventListener(event, handleInteraction, eventOptions);
       });
     };
   }, [pathname]);

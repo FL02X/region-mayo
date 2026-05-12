@@ -65,42 +65,42 @@ export function EventCard({
   /* ── date helpers (UTC to avoid hydration drift) ── */
   const formatDate = (date: Date) => {
     const months = [
-      "Ene",
-      "Feb",
-      "Mar",
-      "Abr",
-      "May",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dic",
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
     ];
     return `${date.getUTCDate()} ${months[date.getUTCMonth()]}`;
   };
 
   const formatDateRange = (start: Date, end: Date) => {
     const months = [
-      "Ene",
-      "Feb",
-      "Mar",
-      "Abr",
-      "May",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dic",
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
     ];
     const sd = start.getUTCDate();
     const ed = end.getUTCDate();
     const sm = months[start.getUTCMonth()];
     const em = months[end.getUTCMonth()];
-    return sm === em ? `${sd}–${ed} ${sm}` : `${sd} ${sm} – ${ed} ${em}`;
+    return sm === em ? `${sd} y ${ed} ${sm}` : `${sd} ${sm} hasta el ${ed} ${em}`;
   };
 
   const openGoogleMaps = (url?: string, address?: string) => {
@@ -123,6 +123,20 @@ export function EventCard({
     if (event.facebookPostUrl) window.open(event.facebookPostUrl, "_blank");
   };
 
+  const handleToggle = () => {
+    setIsExpanded((prev) => {
+      if (!prev) {
+        setTimeout(() => {
+          const el = document.getElementById(`details-${event.id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        }, 100);
+      }
+      return !prev;
+    });
+  };
+
   /* ── state derivations ── */
   const isPastEvent = event.date.getTime() < currentTime.getTime();
   const hasAlbum = event.albumEnabled && event.googleDriveAlbumUrl;
@@ -131,6 +145,9 @@ export function EventCard({
   const hasDescription = !!event.description && event.description.length > 0;
   const isMultiDay = !!(event.endDate && event.endDate > event.date);
   const eventType = event.eventType || "culto";
+  const dateLabel = isMultiDay
+    ? formatDateRange(event.date, event.endDate!)
+    : formatDate(event.date);
 
   /* Does the card have any expandable details? */
   const hasDetails =
@@ -145,7 +162,8 @@ export function EventCard({
     <>
       <article 
         id={event.id}
-        className="desktop-card-lift bg-card border border-border/80 overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+        data-eq-card
+        className="desktop-card-lift bg-card border border-border/80 overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:min-h-[520px]"
       >
         {/* ── Image with date/time strip ── */}
         {event.image ? (
@@ -158,26 +176,6 @@ export function EventCard({
               loading="eager"
               priority
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-4 py-3">
-              <div className="flex items-end justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  {isMultiDay && (
-                    <CalendarDays
-                      className="h-4 w-4 text-white/90 shrink-0"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <span className="text-[15px] font-semibold text-white leading-none">
-                    {isMultiDay
-                      ? formatDateRange(event.date, event.endDate!)
-                      : formatDate(event.date)}
-                  </span>
-                </div>
-                <span className="text-[15px] font-semibold text-white/95 leading-none tabular-nums">
-                  {event.time}
-                </span>
-              </div>
-            </div>
           </div>
         ) : (
           <div className="h-16 w-full bg-muted flex items-center justify-center shrink-0">
@@ -188,47 +186,69 @@ export function EventCard({
           </div>
         )}
 
+        <div className="flex h-10 w-full items-center justify-between gap-3 border-b border-border/80 bg-muted/55 px-4 text-[14px] font-bold text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <CalendarDays
+              className="h-4 w-4 shrink-0 text-foreground"
+              aria-hidden="true"
+            />
+            <span className="truncate">{dateLabel}</span>
+          </div>
+          <span className="shrink-0 tabular-nums text-foreground">
+            {event.time}
+          </span>
+        </div>
+
         {/* ── Card body ── */}
         <div className="p-5 flex flex-col flex-1">
+          <div data-eq-head>
           {/* Event type — plain uppercase label */}
-          <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] mb-1.5">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] mb-2.5">
             {eventTypeLabels[eventType]}
           </p>
 
           {/* Title — Inter bold, no serif */}
-          <h3 className="text-[22px] md:text-[23px] font-bold text-foreground leading-[1.2] mb-3 font-sans tracking-tight">
+          <h3 className="text-[22px] md:text-[23px] font-bold text-foreground leading-[1.2] mb-7 font-sans tracking-tight">
             {event.title}
           </h3>
 
           {/* Description — always shown, 3-line clamp */}
           {hasDescription && (
-            <p className="text-[15px] text-muted-foreground leading-relaxed line-clamp-3 mb-4">
+            <p className="text-[15px] leading-relaxed line-clamp-3 mb-8">
               {event.description}
             </p>
           )}
 
           {/* Location — shown before action buttons */}
           {event.location && (
-            <div className="mt-1 mb-4 flex items-center gap-2.5">
-              <MapPin
-                className="h-3.5 w-3.5 text-muted-foreground shrink-0"
-                aria-hidden="true"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-[16px] font-medium text-foreground leading-snug">
-                  {event.location}
-                </p>
-                {event.address && (
-                  <p className="text-[16px] text-muted-foreground">
-                    {event.address}
+            <div className="mt-1 mb-4 flex items-start gap-2.5">
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-start gap-2">
+                  <Church
+                    className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <p className="text-[15px] font-medium text-foreground leading-snug">
+                    {event.location}
                   </p>
+                </div>
+                {event.address && (
+                  <div className="flex items-start gap-2">
+                    <MapPin
+                      className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <p className="text-[15px] leading-snug text-foreground/85">
+                      {event.address}
+                    </p>
+                  </div>
                 )}
               </div>
               <button
                 onClick={() =>
                   openGoogleMaps(event.googleMapsUrl, event.address)
                 }
-                className="mr-5 mt-2 ml-2 flex items-center gap-1.5 text-sm font-medium text-[#2f5e93] border border-[#2f5e93]/35 bg-[#2f5e93]/5 hover:bg-[#2f5e93]/10 rounded-[3px] px-2.5 py-1 transition-colors shrink-0"
+                className="ml-2 self-start mt-1 flex items-center gap-1.5 text-sm font-medium text-[#2f5e93] border border-[#2f5e93]/35 bg-[#2f5e93]/5 hover:bg-[#2f5e93]/10 rounded-[3px] px-2.5 py-1 transition-colors shrink-0"
                 aria-label={`Abrir ${event.location} en Google Maps`}
                 style={{ minHeight: "unset", minWidth: "unset" }}
               >
@@ -238,6 +258,7 @@ export function EventCard({
             </div>
           )}
 
+          </div>
           {/* Spacer pushes actions to bottom */}
           <div className="flex-1" />
 
@@ -245,7 +266,7 @@ export function EventCard({
           {(isPastEvent || canRegister) && (
             <div className="border-t border-border/70 pt-3 mt-1">
               {isPastEvent ? (
-              <div className="flex gap-2">
+              <div className="mt-3.5 flex gap-2">
                 {hasAlbum && (
                   <Button
                     onClick={openAlbum}
@@ -282,7 +303,7 @@ export function EventCard({
               ) : (
                 <Button
                   onClick={() => onRegister(event)}
-                  className="w-full text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
+                  className="mt-3.5 w-full text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
                 >
                   REGISTRARSE
                 </Button>
@@ -292,9 +313,9 @@ export function EventCard({
 
           {/* ── "Ver más información" — plain text toggle, NOT a button ── */}
           {hasDetails && (
-            <div className="-mx-5 mt-3 border-t border-border">
+            <div className="-mx-5 mt-6 border-t border-border">
               <button
-                onClick={() => setIsExpanded((v) => !v)}
+                onClick={handleToggle}
                 className="w-full px-5 flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 aria-expanded={isExpanded}
                 aria-controls={`details-${event.id}`}
@@ -318,12 +339,12 @@ export function EventCard({
 
               {/* ── Expanded details ── */}
               {isExpanded && (
-                <div id={`details-${event.id}`} className="space-y-4 pb-5 pt-5 px-5">
+                <div id={`details-${event.id}`} className="space-y-2 pb-5 pt-5 px-5">
                   {/* Vestimenta */}
                   {event.vestimenta && (
                     <div className="flex items-start gap-2.5">
                       <Shirt
-                        className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                        className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
                         aria-hidden="true"
                       />
                       <div className="flex-1">
@@ -350,7 +371,7 @@ export function EventCard({
                       {event.speakers.pastorMensaje && (
                         <div className="flex items-start gap-2.5">
                           <Mic
-                            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
                             aria-hidden="true"
                           />
                           <p className="text-sm text-foreground">
@@ -362,9 +383,9 @@ export function EventCard({
                         </div>
                       )}
                       {event.speakers.jovenPreside && (
-                        <div className="flex items-start gap-2.5">
+                        <div className="flex items-start gap-2.5 mb-7">
                           <User
-                            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
                             aria-hidden="true"
                           />
                           <p className="text-sm text-foreground">
@@ -383,7 +404,7 @@ export function EventCard({
                     <div className="p-3 bg-muted/40 border border-border">
                       <div className="flex items-start gap-2.5">
                         <Utensils
-                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
                           aria-hidden="true"
                         />
                         <div className="flex-1 min-w-0">
@@ -422,10 +443,10 @@ export function EventCard({
 
                   {/* Junta Juvenil */}
                   {event.juntaJuvenil?.enabled && (
-                    <div className="p-3 bg-muted/40 border border-border">
+                    <div className="p-3 bg-muted/40 border border-border mt-3">
                       <div className="flex items-start gap-2.5">
                         <Users
-                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
+                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
                           aria-hidden="true"
                         />
                         <div className="flex-1 min-w-0">

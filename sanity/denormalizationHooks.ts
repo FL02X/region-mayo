@@ -12,16 +12,34 @@
  * INSTALACIÓN: Ver sanity.config.ts para registerBeforeCommit
  */
 
-import { DocumentBeforeCommitHandler } from 'sanity'
+type DenormalizationDocument = {
+  _type?: string
+  templo?: {
+    _ref?: string
+  }
+  region?: {
+    _type: 'reference'
+    _ref: string
+  } | null
+  temploName?: string
+  regionName?: string
+  [key: string]: any
+}
+
+type DenormalizationContext = {
+  getClient: (options: { apiVersion: string }) => {
+    fetch: <T>(query: string, params: Record<string, unknown>) => Promise<T>
+  }
+}
 
 /**
  * Hook para auto-llenar campos denormalizados en CORO
  * Llena: region (desde templo.region), temploName, regionName
  */
-export const coroBeforeCommit: DocumentBeforeCommitHandler = async (
-  documentBeforeCommit,
-  context
-) => {
+export const coroBeforeCommit = async (
+  documentBeforeCommit: DenormalizationDocument,
+  context: DenormalizationContext
+): Promise<DenormalizationDocument> => {
   // Solo procesar documentos de tipo 'coro'
   if (documentBeforeCommit._type !== 'coro') {
     return documentBeforeCommit

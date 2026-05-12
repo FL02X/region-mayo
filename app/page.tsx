@@ -5,6 +5,7 @@ import { EventsFeed } from "@/components/sections/home/events-feed";
 import { ActionDeck } from "@/components/sections/home/action-deck";
 import { Providers } from "@/components/layout/providers";
 import { GoToCalendar } from "@/components/sections/home/go-to-calendar";
+import Chatbot from "@/components/shared/chatbot";
 import {
   getEvents,
   getRegionConfig,
@@ -101,6 +102,7 @@ export default async function Home() {
           )}
         </div>
         <GoToCalendar />
+        <Chatbot />
       </Providers>
     </main>
   );

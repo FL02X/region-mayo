@@ -33,6 +33,12 @@ import {
 import { useTime } from "@/lib/time-context";
 import type { Templo } from "@/lib/types";
 
+const DISTANCE_ORDER_STORAGE_KEY = "region-mayo-templos-distance-order";
+const DISTANCE_ORDER_ENABLED_KEY = "region-mayo-templos-distance-order-enabled";
+const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
+const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
+const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
+
 const formatPresidentShortName = (name: string) => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
 
@@ -110,7 +116,7 @@ function TemploCard({
     <div 
       id={templo.id} 
       data-eq-card
-      className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+      className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20"
     >
       {/* Photo Gallery */}
       <div className="relative h-60 w-full bg-muted shrink-0">
@@ -139,8 +145,8 @@ function TemploCard({
 
           {/* Availability badge — focus on anticipation (next service) or live state */}
           {availability && (
-            <div className="mb-2">
-              <span className={`inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
+            <div className="mb-2 -ml-2">
+              <span className={`availability-pill inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
                 <Clock className="h-3.5 w-3.5 opacity-80" aria-hidden="true" />
                 {(availability.tone === "open" || availability.tone === "opening-soon") ? (
                   <span className="font-semibold text-xs">{availability.title}</span>
@@ -352,34 +358,69 @@ interface TemploContentProps {
 
 export function TemplosContent({ templos }: TemploContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [distanceOrderIds, setDistanceOrderIds] = useState<string[] | null>(
+    null,
+  );
+  const [distanceOrderEnabled, setDistanceOrderEnabled] = useState(false);
+  const [showDistanceBadges, setShowDistanceBadges] = useState(false);
+  const [isClientReady, setIsClientReady] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+  const highlightedHashRef = useRef<string | null>(null);
   useEqualizeCardRowHeads(gridRef);
   
   // Calculate distances to nearby churches if user has granted permission
-  const { distances, hasPermission } = useNearbyChurchDistances(templos);
+  const { distances, hasPermission, loading } = useNearbyChurchDistances(
+    templos,
+  );
 
   useEffect(() => {
-    if (window.location.hash) {
-      const id = window.location.hash.substring(1);
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.classList.add("global-highlight");
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 300);
+    let storedOrderIds: string[] | null = null;
+    let storedEnabled = false;
+    let shouldShowBadges = false;
+
+    try {
+      storedEnabled =
+        localStorage.getItem(DISTANCE_ORDER_ENABLED_KEY) === "true";
+    } catch {
+      storedEnabled = false;
+    }
+
+    try {
+      const stored = localStorage.getItem(DISTANCE_ORDER_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        storedOrderIds = Array.isArray(parsed) ? parsed : null;
+      }
+    } catch {
+      storedOrderIds = null;
+    }
+
+    try {
+      shouldShowBadges =
+        sessionStorage.getItem(SHOW_DISTANCE_BADGES_KEY) === "true";
+      if (shouldShowBadges) {
+        sessionStorage.removeItem(SHOW_DISTANCE_BADGES_KEY);
+      }
+    } catch {
+      shouldShowBadges = false;
+    }
+
+    setDistanceOrderEnabled(storedEnabled);
+    if (storedOrderIds && storedOrderIds.length > 0) {
+      setDistanceOrderIds(storedOrderIds);
+    }
+    setShowDistanceBadges(shouldShowBadges);
+
+    if (!storedEnabled || (storedOrderIds && storedOrderIds.length > 0)) {
+      setIsClientReady(true);
     }
   }, []);
 
-  const filteredTemplos = useMemo(
-    () => searchItems(templos, searchQuery, SEARCH_CONFIGS.templos),
-    [templos, searchQuery],
-  );
+  useEffect(() => {
+    if (!distanceOrderEnabled || !hasPermission) return;
+    if (!templos.length || Object.keys(distances).length === 0) return;
 
-  const sortedTemplos = useMemo(() => {
-    if (!hasPermission) return filteredTemplos;
-
-    return [...filteredTemplos].sort((a, b) => {
+    const orderedByDistance = [...templos].sort((a, b) => {
       const distanceA = distances[a.id];
       const distanceB = distances[b.id];
 
@@ -388,10 +429,127 @@ export function TemplosContent({ templos }: TemploContentProps) {
       if (distanceB) return 1;
       return 0;
     });
-  }, [filteredTemplos, distances, hasPermission]);
+
+    const orderedIds = orderedByDistance.map((templo) => templo.id);
+    const isSameOrder =
+      distanceOrderIds &&
+      distanceOrderIds.length === orderedIds.length &&
+      distanceOrderIds.every((id, index) => id === orderedIds[index]);
+
+    if (isSameOrder) return;
+
+    try {
+      localStorage.setItem(
+        DISTANCE_ORDER_STORAGE_KEY,
+        JSON.stringify(orderedIds),
+      );
+    } catch {
+      // Ignore storage failures (private mode, quota)
+    }
+
+    setDistanceOrderIds(orderedIds);
+    setIsClientReady(true);
+  }, [distanceOrderEnabled, hasPermission, distances, templos, distanceOrderIds]);
+
+  useEffect(() => {
+    if (!distanceOrderEnabled) return;
+    if (distanceOrderIds && distanceOrderIds.length > 0) return;
+    if (loading) return;
+    if (!hasPermission) {
+      setDistanceOrderEnabled(false);
+      setIsClientReady(true);
+    }
+  }, [distanceOrderEnabled, distanceOrderIds, hasPermission, loading]);
+
+  const filteredTemplos = useMemo(
+    () => searchItems(templos, searchQuery, SEARCH_CONFIGS.templos),
+    [templos, searchQuery],
+  );
+
+  const sortedTemplos = useMemo(() => {
+    const base = [...filteredTemplos];
+
+    if (distanceOrderIds && distanceOrderIds.length > 0) {
+      const orderMap = new Map(
+        distanceOrderIds.map((id, index) => [id, index]),
+      );
+
+      return base.sort((a, b) => {
+        const indexA = orderMap.get(a.id);
+        const indexB = orderMap.get(b.id);
+
+        if (indexA == null && indexB == null) return 0;
+        if (indexA == null) return 1;
+        if (indexB == null) return -1;
+        return indexA - indexB;
+      });
+    }
+
+    if (!distanceOrderEnabled || !hasPermission) return base;
+
+    return base.sort((a, b) => {
+      const distanceA = distances[a.id];
+      const distanceB = distances[b.id];
+
+      if (distanceA && distanceB) return distanceA.km - distanceB.km;
+      if (distanceA) return -1;
+      if (distanceB) return 1;
+      return 0;
+    });
+  }, [filteredTemplos, distances, hasPermission, distanceOrderIds, distanceOrderEnabled]);
+
+  useEffect(() => {
+    if (!isClientReady) return;
+    if (!window.location.hash) return;
+
+    const id = decodeURIComponent(window.location.hash.substring(1));
+    if (!id || highlightedHashRef.current === id) return;
+
+    const gpsId = sessionStorage.getItem(GPS_HIGHLIGHT_KEY);
+    const gpsConsumed = sessionStorage.getItem(GPS_HIGHLIGHT_USED_KEY) === "true";
+
+    if (gpsId && gpsId === id && gpsConsumed) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+      return;
+    }
+
+    let cancelled = false;
+    const attemptHighlight = () => {
+      if (cancelled) return;
+      const el = document.getElementById(id);
+      if (!el) return;
+      highlightedHashRef.current = id;
+      el.classList.add("global-highlight");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      if (gpsId && gpsId === id) {
+        sessionStorage.setItem(GPS_HIGHLIGHT_USED_KEY, "true");
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    };
+
+    const timer = window.setTimeout(attemptHighlight, 350);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [isClientReady, sortedTemplos.length]);
+
+  const shouldHideList = !isClientReady;
+  const shouldShowLoader = !isClientReady;
 
   return (
     <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
+      {shouldShowLoader && (
+        <div className="fixed inset-0 z-[60] bg-white/90 backdrop-blur-[1px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3" role="status" aria-label="Cargando templos">
+            <span
+              className="h-11 w-11 rounded-full border-[3px] border-[#2f5e93]/25 border-t-[#2f5e93] animate-spin"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      )}
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -435,8 +593,9 @@ export function TemplosContent({ templos }: TemploContentProps) {
                 ? "grid-cols-1 max-w-sm mx-auto"
                 : sortedTemplos.length === 2
                   ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-            }`}
+                  : "grid-cols-1 sm:grid-cols-2 templos-grid-3cols"
+            } ${shouldHideList ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+            aria-hidden={shouldHideList}
           >
             {sortedTemplos.map((templo) => (
               <TemploCard
@@ -444,7 +603,9 @@ export function TemplosContent({ templos }: TemploContentProps) {
                 templo={templo}
                 searchQuery={searchQuery}
                 distance={distances[templo.id]}
-                showDistance={hasPermission && !!distances[templo.id]}
+                showDistance={
+                  showDistanceBadges && hasPermission && !!distances[templo.id]
+                }
               />
             ))}
           </div>

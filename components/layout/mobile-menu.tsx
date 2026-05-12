@@ -14,6 +14,8 @@ import {
   Instagram,
   Facebook,
   Church,
+  Settings,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,13 +25,23 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import { InstallModal } from "@/components/pwa/install-modal";
 
 interface MobileMenuProps {
   instagramUrl?: string;
   facebookUrl?: string;
 }
 
-const menuItems = [
+interface MobileMenuItem {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  description?: string;
+}
+
+const menuItems: MobileMenuItem[] = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/templos", label: "Templos", icon: Church },
   {
@@ -49,7 +61,18 @@ export function MobileMenu({
   const [open, setOpen] = useState(false);
   const [touchFeedbackHref, setTouchFeedbackHref] = useState<string | null>(null);
   const touchFeedbackTimerRef = useRef<number | null>(null);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const pathname = usePathname();
+  const isMobile = useIsMobile();
+  const { isInstalled } = useInstallPrompt();
+
+  const showSettings = isMobile && isInstalled;
+  const showInstall = isMobile && !isInstalled;
+  const pwaItem = showSettings
+    ? { href: "/configuracion", label: "Configuracion", icon: Settings }
+    : showInstall
+      ? { href: "/instalar", label: "Instalar app", icon: Smartphone }
+      : null;
 
   useEffect(() => {
     return () => {
@@ -73,7 +96,17 @@ export function MobileMenu({
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <>
+      <Sheet
+        open={open}
+        onOpenChange={(value) => {
+          if (isInstallModalOpen) {
+            setOpen(true);
+            return;
+          }
+          setOpen(value);
+        }}
+      >
       <SheetTrigger asChild>
         <Button
           variant="ghost"
@@ -216,6 +249,57 @@ export function MobileMenu({
               </Link>
             );
           })}
+
+          {pwaItem && (() => {
+            const PwaIcon = pwaItem.icon;
+            const isActive = pathname === pwaItem.href;
+            const isInstallItem = pwaItem.label === "Instalar app";
+
+            return (
+              <Link
+                href={pwaItem.href}
+                onClick={(event) => {
+                  if (isInstallItem) {
+                    event.preventDefault();
+                  }
+
+                  triggerTouchFeedback(pwaItem.href);
+                  if (typeof navigator !== "undefined" && navigator.vibrate) {
+                    navigator.vibrate(60);
+                  }
+                  window.setTimeout(() => {
+                    if (!isInstallItem) {
+                      setOpen(false);
+                    }
+                    if (isInstallItem) {
+                      setIsInstallModalOpen(true);
+                    }
+                  }, 120);
+                }}
+                onTouchStart={() => {
+                  triggerTouchFeedback(pwaItem.href);
+                }}
+                className={cn(
+                  "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
+                  isActive ? "bg-gray-200" : "hover:bg-gray-100 active:bg-[#e8f1ff]",
+                  isInstallItem && "bg-emerald-50/60",
+                )}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <PwaIcon className={cn("h-5 w-5 shrink-0", "text-[#8b929c]")} aria-hidden="true" />
+                <div className="min-w-0">
+                  <p
+                    className={cn(
+                      "text-[16px] leading-tight uppercase",
+                      isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]",
+                    )}
+                  >
+                    {pwaItem.label}
+                  </p>
+                </div>
+              </Link>
+            );
+          })()}
         </nav>
 
         {/* Social links footer */}
@@ -248,5 +332,11 @@ export function MobileMenu({
         </div>
       </SheetContent>
     </Sheet>
+
+      <InstallModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+      />
+    </>
   );
 }

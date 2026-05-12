@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import useLockBodyScroll from "@/hooks/use-lock-scroll";
 
 interface LightboxProps {
   src: string;
@@ -11,15 +12,15 @@ interface LightboxProps {
 }
 
 export function Lightbox({ src, alt = "Imagen", onClose }: LightboxProps) {
+  useLockBodyScroll(true);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
     };
   }, [onClose]);
 

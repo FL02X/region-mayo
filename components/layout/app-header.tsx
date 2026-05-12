@@ -22,6 +22,7 @@ import { DebugTimePicker } from "@/components/shared/debug-time-picker";
 interface AppHeaderProps {
   instagramUrl?: string;
   facebookUrl?: string;
+  behavior?: "fixed" | "sticky";
 }
 
 const navItems = [
@@ -36,6 +37,7 @@ const navItems = [
 export function AppHeader({
   instagramUrl = "https://instagram.com/regionmayo",
   facebookUrl = "https://facebook.com/regionmayo",
+  behavior = "fixed",
 }: AppHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -121,9 +123,12 @@ export function AppHeader({
     "--header-highlight-opacity": `${desktopHoverState.opacity}`,
   } as CSSProperties;
 
+  const headerPosition = behavior === "sticky" ? "sticky" : "fixed";
+  const headerDesktopPosition = behavior === "sticky" ? "md:sticky" : "md:absolute";
+
   return (
     <>
-      <header className="fixed md:absolute top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[51px] md:h-[45px] shadow-none">
+      <header className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[51px] md:h-[45px] shadow-none`}>
         <div className="h-full max-w-[950px] mx-auto relative z-[61]">
           {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
           <div
@@ -155,7 +160,7 @@ export function AppHeader({
             </Link>
 
             <nav
-              className="flex items-center h-full flex-1 min-w-0"
+              className="flex items-center h-full flex-1 min-w-0 max-[914px]:justify-between max-[914px]:px-2"
               aria-label="Navegación principal"
             >
               {navItems.map(({ href, label, icon: Icon }) => {
@@ -167,19 +172,20 @@ export function AppHeader({
                     href={href}
                     onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
                     className={cn(
-                      "desktop-header-item flex items-center gap-1.5 h-full px-2.5 lg:px-3 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
+                      "desktop-header-item flex items-center gap-1.5 h-full px-2.5 lg:px-3 max-[914px]:w-12 max-[914px]:justify-center max-[914px]:gap-0 max-[914px]:px-0 max-[914px]:text-[0px] min-[915px]:px-3 min-[915px]:gap-0 min-[915px]:justify-center min-[915px]:text-[11px] min-[1101px]:justify-start min-[1101px]:gap-1.5 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
                       isActive
                         ? "text-white border-[#2f5e93] bg-[#2f5e93]"
                         : "text-white/90 hover:text-white hover:border-white/30"
                     )}
+                    aria-label={label}
                     aria-current={isActive ? "page" : undefined}
                   >
                     <Icon
-                      className="desktop-header-icon hidden xl:block h-[15px] w-[15px] shrink-0 opacity-80"
+                      className="desktop-header-icon h-[15px] w-[15px] shrink-0 opacity-80 hidden max-[914px]:block min-[1101px]:block"
                       aria-hidden="true"
                       strokeWidth={1.75}
                     />
-                    {label}
+                    <span className="max-[914px]:sr-only min-[915px]:inline max-[914px]:hidden">{label}</span>
                   </Link>
                 );
               })}
@@ -187,7 +193,7 @@ export function AppHeader({
 
             <div className="w-[180px] shrink-0 h-full items-center flex">
               <form
-                className="relative w-full h-[34px] bg-[#f7f7f7] rounded-[2px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
+                className="relative w-full h-[34px] max-[914px]:h-[40px] bg-[#f7f7f7] rounded-[2px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
                 onSubmit={handleSearchSubmit}
               >
                 <input
@@ -200,7 +206,7 @@ export function AppHeader({
                 <div className="h-[22px] w-px bg-[#b2b8c1] shrink-0" aria-hidden="true" />
                 <button
                   type="submit"
-                  className="desktop-search-button w-[40px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
+                  className="desktop-search-button w-[40px] max-[914px]:w-[44px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
                   <Search className="desktop-search-icon h-[17px] w-[17px] text-[#4a4a4a]" strokeWidth={1.6} />
@@ -208,12 +214,12 @@ export function AppHeader({
               </form>
             </div>
 
-            <div className="flex items-center gap-0.5 shrink-0">
+            <div className="flex items-center gap-0.5 shrink-0 max-[914px]:gap-1.5">
               <a
                 href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="desktop-header-item flex items-center justify-center h-9 w-9 text-white/90 hover:text-white transition-colors"
+                className="desktop-header-item flex items-center justify-center h-9 w-9 max-[914px]:h-11 max-[914px]:w-11 text-white/90 hover:text-white transition-colors"
                 aria-label="Síguenos en Instagram"
                 onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
               >
@@ -223,7 +229,7 @@ export function AppHeader({
                 href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="desktop-header-item flex items-center justify-center h-9 w-9 text-white/90 hover:text-white transition-colors"
+                className="desktop-header-item flex items-center justify-center h-9 w-9 max-[914px]:h-11 max-[914px]:w-11 text-white/90 hover:text-white transition-colors"
                 aria-label="Síguenos en Facebook"
                 onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
               >
@@ -288,7 +294,7 @@ export function AppHeader({
 
       {/* DebugTimePicker — fixed bottom-right, dev use only, never occupies header space */}
       {process.env.NODE_ENV === "development" && (
-        <div className="fixed bottom-4 right-4 z-50 opacity-60 hover:opacity-100 transition-opacity">
+        <div className="fixed bottom-16 left-4 z-[70] opacity-60 hover:opacity-100 transition-opacity">
           <DebugTimePicker />
         </div>
       )}

@@ -7,6 +7,12 @@ import { findNearestChurch } from "@/lib/location-service";
 import { formatDistanceAndTime } from "@/lib/geo-utils";
 import type { Templo } from "@/lib/types";
 
+const DISTANCE_ORDER_ENABLED_KEY = "region-mayo-templos-distance-order-enabled";
+const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
+const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
+const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
+const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
+
 type BarState =
   | "initial" 
   | "loading" 
@@ -69,6 +75,12 @@ export function LocationNotificationBar({
     try {
       const location = await (geolocation as any).requestGeolocation();
 
+      try {
+        sessionStorage.setItem(SKIP_ONLINE_TOAST_KEY, "true");
+      } catch {
+        // Ignore storage failures (private mode, quota)
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const nearest = await findNearestChurch(
@@ -103,6 +115,14 @@ export function LocationNotificationBar({
 
   const handleSuccessClick = () => {
     if (nearestChurch) {
+      try {
+        localStorage.setItem(DISTANCE_ORDER_ENABLED_KEY, "true");
+        sessionStorage.setItem(SHOW_DISTANCE_BADGES_KEY, "true");
+        sessionStorage.setItem(GPS_HIGHLIGHT_KEY, nearestChurch.id);
+        sessionStorage.removeItem(GPS_HIGHLIGHT_USED_KEY);
+      } catch {
+        // Ignore storage failures (private mode, quota)
+      }
       setIsVisible(false); // Hide bar after click on success
       setTimeout(() => {
         window.location.href = `/templos#${nearestChurch.id}`;

@@ -13,16 +13,36 @@
  * El usuario actual se obtiene de context.currentUser en Sanity
  */
 
-import { DocumentBeforeCreateHandler, DocumentBeforeCommitHandler } from 'sanity'
+type AuditDocument = {
+  audit?: {
+    createdBy?: string
+    createdAt?: string
+    modifiedBy?: string
+    modifiedAt?: string
+  }
+  _audit?: {
+    createdBy?: string
+    createdAt?: string
+    modifiedBy?: string
+    modifiedAt?: string
+  }
+  [key: string]: any
+}
+
+type AuditContext = {
+  currentUser?: {
+    id?: string
+  }
+}
 
 /**
  * Hook ejecutado ANTES de crear un documento
  * Llena: createdBy, createdAt
  */
-export const auditBeforeCreate: DocumentBeforeCreateHandler = (
-  documentBeforeCreate,
-  context
-) => {
+export const auditBeforeCreate = (
+  documentBeforeCreate: AuditDocument,
+  context: AuditContext
+): AuditDocument => {
   const { currentUser } = context
 
   // Obtener el UID del usuario actual
@@ -49,10 +69,10 @@ export const auditBeforeCreate: DocumentBeforeCreateHandler = (
  * @param context - Contexto de Sanity con currentUser
  * @returns Documento actualizado con modifiedBy/modifiedAt
  */
-export const auditBeforeCommit: DocumentBeforeCommitHandler = (
-  documentBeforeCommit,
-  context
-) => {
+export const auditBeforeCommit = (
+  documentBeforeCommit: AuditDocument,
+  context: AuditContext
+): AuditDocument => {
   const { currentUser } = context
 
   // Compatibilidad: si el documento aún trae el campo legacy _audit, reutilizarlo.

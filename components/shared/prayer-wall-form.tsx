@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import Script from "next/script"
 import { X, Loader2, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useConnectivity } from "@/hooks/use-connectivity"
 
 type GrecaptchaApi = {
   execute: (siteKey: string | undefined, options: { action: string }) => Promise<string>
@@ -36,6 +37,8 @@ export function PrayerWallForm({ isOpen, onClose, isCollecting }: PrayerWallForm
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const recaptchaRef = useRef<string | null>(null)
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+  const { isOnline } = useConnectivity()
+  const isOffline = !isOnline
 
   // Auto-focus cuando se abre
   useEffect(() => {
@@ -67,6 +70,11 @@ export function PrayerWallForm({ isOpen, onClose, isCollecting }: PrayerWallForm
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     setError(null)
+
+    if (isOffline) {
+      setError("Sin conexion. Conectate a internet para enviar la oracion.")
+      return
+    }
 
     if (!text.trim()) {
       setError("Por favor, escribe tu oración")
@@ -161,6 +169,13 @@ export function PrayerWallForm({ isOpen, onClose, isCollecting }: PrayerWallForm
               </div>
             ) : (
               <form className="space-y-4">
+                {isOffline && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="text-xs text-amber-900">
+                      Sin conexion. Esta funcion requiere internet.
+                    </p>
+                  </div>
+                )}
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
                   <p className="text-xs text-emerald-900"><strong>🔒 Anónimo:</strong> Tu petición es completamente anónima. No guardamos datos personales.</p>
                 </div>
@@ -172,7 +187,7 @@ export function PrayerWallForm({ isOpen, onClose, isCollecting }: PrayerWallForm
                     id="prayer-text"
                     value={text}
                     onChange={(e) => { setText(e.target.value); setError(null) }}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isOffline}
                     placeholder="Ej: Oración por mi familia, salud, trabajo..."
                     className="w-full h-36 px-3 py-2 border border-border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
                     maxLength={500}
@@ -205,7 +220,7 @@ export function PrayerWallForm({ isOpen, onClose, isCollecting }: PrayerWallForm
                 <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="rounded-none h-14 px-6 uppercase tracking-wider font-bold">Cancelar</Button>
                 <Button
                   onClick={() => handleSubmit()}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isOffline}
                   className="flex-1 rounded-none h-14 bg-emerald-600 hover:bg-emerald-700 text-white uppercase tracking-wider font-bold text-sm"
                 >
                   {isSubmitting ? (
