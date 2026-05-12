@@ -86,14 +86,11 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
                   {member.temploId ? (
                     <Link
                       href={`/templos#${member.temploId}`}
-                      className="inline-flex items-center gap-1 w-fit text-sm font-medium text-foreground underline underline-offset-2 md:hover:text-primary leading-tight mb-2 transition-colors"
+                      className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
                       aria-label={`Ver información de ${member.temploName}`}
                     >
                       <span className="inline-block">
                         <HighlightedText text={member.temploName} query={searchQuery} />
-                      </span>
-                      <span className="flex-shrink-0">
-                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
                       </span>
                     </Link>
                   ) : (
@@ -115,15 +112,11 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
                   {member.googleMapsUrl && (
                     <button
                       onClick={openGoogleMaps}
-                      className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5"
+                      className="text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 transition-colors flex items-center gap-1.5"
                       aria-label={`Ver ubicación de ${member.temploName} en Google Maps`}
                     >
                       <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
                       <span>Ver ubicación</span>
-                      <ExternalLink
-                        className="h-3 w-3 shrink-0"
-                        aria-hidden="true"
-                      />
                     </button>
                   )}
                 </div>

@@ -144,9 +144,14 @@ export function EventsFeed({
     };
   }, [filteredEvents, pendingHashEventId]);
 
-  const handleMonthSelect = (date: Date) => {
+  const handleMonthSelect = (
+    date: Date,
+    options?: { suppressScroll?: boolean },
+  ) => {
     setSelectedMonth(date);
     setTimeout(() => {
+      if (options?.suppressScroll) return;
+
       if (eventsListRef.current) {
         // Disable autoscroll on desktop (md and up)
         if (

@@ -167,14 +167,14 @@ export function LocationNotificationBar({
 
             {/* Icon section */}
             <div className="shrink-0 flex items-center justify-center">
-              <MapPin className="h-[22px] w-[22px] md:h-6 md:w-6 text-white" aria-hidden="true" strokeWidth={1.5} />
+              <MapPin className="h-[22px] mb-1 w-[22px] md:h-6 md:w-6 text-white" aria-hidden="true" strokeWidth={1.5} />
             </div>
 
             {/* Content section */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               {barState === "initial" && (
                 <>
-                  <p className="text-[13.5px] md:text-[14.5px] leading-tight font-medium text-white mb-[3px]">
+                  <p className="text-[14px] md:text-[14.5px] leading-tight font-medium text-white mb-[3px]">
                     Busca nuestra iglesia más cercana a ti.
                   </p>
                   <button

@@ -398,7 +398,11 @@ function SearchContentInner({ data }: SearchContentProps) {
               );
             })}
           </div>
-          ) : null}
+          ) : (
+            <div className="py-7 ml-2 text-foreground">
+              <p className="text-lg text-[15px] text-muted-foreground">Escriba en el campo "Buscar"</p>
+            </div>
+          )}
       </div>
     </div>
   </div>

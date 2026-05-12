@@ -238,7 +238,49 @@ export function AppHeader({
             </div>
           </div>
 
-          {/* Mobile Search Bar - between logo and hamburger */}
+          {/* Mobile layout: logo, spacer, search icon, hamburger */}
+          <div className="md:hidden flex items-center h-full px-3 gap-2 relative z-[62]">
+            {/* Logo */}
+            <div className="flex items-center justify-start h-full relative z-[62] shrink-0">
+              <Link
+                href="/"
+                className="flex items-center justify-center h-9 w-9 shrink-0"
+                aria-label="Inicio — Region Mayo"
+              >
+                <Image
+                  src="/images/region-mayo-logo.jpg"
+                  alt="Región Mayo"
+                  width={26}
+                  height={26}
+                  className="rounded-full shrink-0"
+                  loading="eager"
+                  priority
+                />
+              </Link>
+            </div>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Search icon link */}
+            <Link
+              href="/buscar"
+              className="flex items-center justify-center h-9 w-9 shrink-0 text-white/90 hover:text-white transition-colors"
+              aria-label="Ir a búsqueda"
+            >
+              <Search className="h-[23px] w-[23px]" strokeWidth={1.75} />
+            </Link>
+
+            {/* Mobile/Tablet only: hamburger menu */}
+            <div className="md:hidden flex items-center justify-end text-white relative z-[62] h-full shrink-0">
+              <MobileMenu
+                instagramUrl={instagramUrl}
+                facebookUrl={facebookUrl}
+              />
+            </div>
+          </div>
+
+          {/* OLD Mobile Search Bar - commented out for future use
           <div className="md:hidden grid grid-cols-[40px_minmax(0,1fr)_40px] items-center h-full px-3 gap-2 relative z-[62]">
             <div className="flex items-center justify-start h-full relative z-[62] shrink-0">
               <Link
@@ -281,7 +323,6 @@ export function AppHeader({
               </form>
             </div>
 
-            {/* Mobile/Tablet only: hamburger (3. Resort to hamburger on small screens) */}
             <div className="md:hidden flex items-center justify-end text-white relative z-[62] h-full shrink-0">
               <MobileMenu
                 instagramUrl={instagramUrl}
@@ -289,6 +330,7 @@ export function AppHeader({
               />
             </div>
           </div>
+          */}
         </div>
       </header>
 

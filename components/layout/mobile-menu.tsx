@@ -111,32 +111,25 @@ export function MobileMenu({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-[2px] text-[#d1d5db] hover:bg-white/10"
+          className="relative h-9 w-9 rounded-[2px] text-[#d1d5db] hover:bg-white/10"
           aria-label={open ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
         >
-          {open ? (
-            <svg
-              viewBox="0 0 20 20"
-              className="h-[22px] w-[22px]"
+          <svg
+            viewBox="0 0 20 20"
+            className="size-[20px]"
+            aria-hidden="true"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M1.25 4.5H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M1.25 10H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M1.25 15.5H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+          </svg>
+          {open && (
+            <span
+              className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-white"
               aria-hidden="true"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M3 3L17 17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-              <path d="M17 3L3 17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-            </svg>
-          ) : (
-            <svg
-              viewBox="0 0 20 20"
-              className="h-[22px] w-[22px]"
-              aria-hidden="true"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M1.25 4.5H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-              <path d="M1.25 10H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-              <path d="M1.25 15.5H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-            </svg>
+            />
           )}
         </Button>
       </SheetTrigger>

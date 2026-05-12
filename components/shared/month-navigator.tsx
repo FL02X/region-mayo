@@ -25,7 +25,7 @@ const months = [
 
 interface MonthNavigatorProps {
   selectedMonth: Date;
-  onMonthSelect: (date: Date) => void;
+  onMonthSelect: (date: Date, options?: { suppressScroll?: boolean }) => void;
   eventDates?: Date[];
 }
 
@@ -98,21 +98,29 @@ export function MonthNavigator({
   // for the small prev/next buttons on mobile — selections from the full
   // month grid should behave normally (allowing scroll).
   const navigateMonthWithoutScroll = (direction: "prev" | "next") => {
-    if (typeof window === "undefined") {
-      navigateMonth(direction);
-      return;
-    }
+    const delta = direction === "next" ? 1 : -1;
+    const next = new Date(
+      Date.UTC(
+        selectedMonth.getUTCFullYear(),
+        selectedMonth.getUTCMonth() + delta,
+        1,
+      )
+    );
 
-    const previousY = window.scrollY || window.pageYOffset || 0;
+    onMonthSelect(next, { suppressScroll: true });
+    setViewYear(next.getUTCFullYear());
+  };
 
-    navigateMonth(direction);
+  const handleMobileMonthNavClick = (direction: "prev" | "next") => {
+    navigateMonthWithoutScroll(direction);
 
-    // Restore scroll after a short delay. Use requestAnimationFrame twice to
-    // increase the chance we restore after any layout/scroll side-effects.
+    // Touch devices can keep the tapped button focused, which leaves a ghost
+    // selected state behind. Clearing focus restores the original appearance.
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: previousY, left: 0, behavior: "instant" as ScrollBehavior });
-      });
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) {
+        active.blur();
+      }
     });
   };
 
@@ -229,7 +237,7 @@ export function MonthNavigator({
       {/* Mobile: month picker similar to desktop but adapted */}
       <div className="md:hidden border border-border bg-card h-11 px-2 flex items-center">
         <button
-          onClick={() => navigateMonthWithoutScroll("prev")}
+          onClick={() => handleMobileMonthNavClick("prev")}
           className="inline-flex items-center gap-1 h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           aria-label="Mes anterior"
           title="Mes anterior"
@@ -319,7 +327,7 @@ export function MonthNavigator({
         </Popover>
 
         <button
-          onClick={() => navigateMonthWithoutScroll("next")}
+          onClick={() => handleMobileMonthNavClick("next")}
           className="inline-flex items-center gap-1 h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           aria-label="Mes siguiente"
           title="Mes siguiente"
