@@ -258,6 +258,11 @@ export function AppHeader({
                   priority
                 />
               </Link>
+
+              <div className="ml-2 flex flex-col justify-center leading-tight">
+                <span className="text-[#c9c9c9] text-[12px] font-semibold">IGC</span>
+                <span className="text-[#c9c9c9] text-[11px] opacity-90">Region Mayo</span>
+              </div>
             </div>
 
             {/* Spacer */}

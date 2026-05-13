@@ -9,10 +9,15 @@ interface TimeContextType {
   debugTime: Date | null
 }
 
+interface TimeProviderProps {
+  children: ReactNode
+  initialTimeISO?: string
+}
+
 const TimeContext = createContext<TimeContextType | undefined>(undefined)
 
-export function TimeProvider({ children }: { children: ReactNode }) {
-  const [realTime, setRealTime] = useState(new Date())
+export function TimeProvider({ children, initialTimeISO }: TimeProviderProps) {
+  const [realTime, setRealTime] = useState(() => new Date(initialTimeISO ?? Date.now()))
   const [debugTime, setDebugTime] = useState<Date | null>(null)
   
   // Update real time every second

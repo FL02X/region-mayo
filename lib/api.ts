@@ -507,6 +507,9 @@ function mapSiteSettings(raw: any): SiteSettings {
     id: raw._id,
     siteName: raw.siteName || "Región Mayo Calendario",
     heroImages: (raw.heroImages || []).map(mapHeroImage),
+    mobileHeroImage: raw.mobileHeroImage?.image?.asset?.url
+      ? mapHeroImage(raw.mobileHeroImage)
+      : undefined,
     heroTitle: raw.heroTitle || "Bienvenido a Región Mayo",
     heroSubtitle: raw.heroSubtitle || "Vive la Comunidad",
   };
@@ -582,6 +585,10 @@ export async function getSiteSettings(
       _id,
       siteName,
       heroImages[]{
+        image{asset->{url}},
+        alt
+      },
+      mobileHeroImage{
         image{asset->{url}},
         alt
       },

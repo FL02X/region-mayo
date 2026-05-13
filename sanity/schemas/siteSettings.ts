@@ -7,15 +7,9 @@ import { defineType, defineField } from 'sanity'
 
 export default defineType({
   name: 'siteSettings',
-  title: 'Configuración del Sitio',
+  title: 'Cambiar imágenes principales',
   type: 'document',
   fields: [
-    defineField({
-      name: 'siteName',
-      title: 'Nombre del Sitio',
-      type: 'string',
-      initialValue: 'Región Mayo Calendario',
-    }),
     defineField({
       name: 'heroImages',
       title: 'Imágenes del Hero (Página Principal)',
@@ -53,16 +47,35 @@ export default defineType({
       validation: (Rule) => Rule.max(5),
     }),
     defineField({
-      name: 'heroTitle',
-      title: 'Título del Hero',
-      type: 'string',
-      initialValue: 'Bienvenido a Región Mayo',
-    }),
-    defineField({
-      name: 'heroSubtitle',
-      title: 'Subtítulo del Hero',
-      type: 'string',
-      initialValue: '¡Dios te bendiga!',
+      name: 'mobileHeroImage',
+      title: 'Imagen única para Hero Móvil',
+      type: 'object',
+      description:
+        'Imagen independiente para la versión móvil (debajo del header). No afecta el carrusel de escritorio.',
+      fields: [
+        defineField({
+          name: 'image',
+          title: 'Imagen',
+          type: 'image',
+          options: {
+            hotspot: true,
+          },
+          validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: 'alt',
+          title: 'Texto Alternativo',
+          type: 'string',
+          description: 'Descripción de la imagen para accesibilidad',
+          validation: (Rule) => Rule.required(),
+        }),
+      ],
+      preview: {
+        select: {
+          media: 'image',
+          title: 'alt',
+        },
+      },
     }),
     defineField({
       name: 'region',

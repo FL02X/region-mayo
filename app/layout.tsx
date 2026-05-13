@@ -65,7 +65,7 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <HighlightClearer />
         </Suspense>
-        <TimeProvider>{children}</TimeProvider>
+        <TimeProvider initialTimeISO={new Date().toISOString()}>{children}</TimeProvider>
         <OfflineBanner />
         <PwaBootstrap />
         <AnalyticsGate />

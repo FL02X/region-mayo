@@ -193,6 +193,7 @@ export interface SiteSettings {
   id: string;
   siteName: string;
   heroImages: HeroImage[];
+  mobileHeroImage?: HeroImage;
   heroTitle: string;
   heroSubtitle: string;
 }

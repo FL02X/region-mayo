@@ -59,14 +59,18 @@ function TemploCard({
   showDistance?: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { currentTime } = useTime();
   const scheduleServices = useMemo(
     () => getSortedTempleServices(templo.schedule),
     [templo.schedule]
   );
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const availability = useMemo(
-    () => getTempleAvailability(templo.schedule, currentTime),
-    [templo.schedule, currentTime]
+    () => (isMounted ? getTempleAvailability(templo.schedule, currentTime) : null),
+    [templo.schedule, currentTime, isMounted]
   );
 
   const availabilityBadgeClasses = useMemo(() => {

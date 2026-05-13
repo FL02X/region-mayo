@@ -1,6 +1,7 @@
 import { AppHeader } from "@/components/layout/app-header";
 import { LocationNotificationBar } from "@/components/layout/location-notification-bar";
 import { HeroSection } from "@/components/sections/home/hero-section";
+import { MobileHero } from "@/components/sections/home/mobile-hero";
 import { EventsFeed } from "@/components/sections/home/events-feed";
 import { ActionDeck } from "@/components/sections/home/action-deck";
 import { Providers } from "@/components/layout/providers";
@@ -67,6 +68,13 @@ export default async function Home() {
           />
         </div>
 
+        <div className="pt-[51px] md:pt-0">
+          <MobileHero
+            src={siteSettings?.mobileHeroImage?.url || "/images/event-conference.jpg"}
+            alt={siteSettings?.mobileHeroImage?.alt || "Conferencia Regional"}
+          />
+        </div>
+
         {/* Desktop only: ActionDeck below hero — keep tight to hero, decorative bottom rules in component */}
         <div className="hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white mt-0 mb-0">
           <ActionDeck
@@ -80,7 +88,7 @@ export default async function Home() {
           />
         </div>
 
-        <div className="pt-[51px] md:pt-0">
+        <div className="pt-0 md:pt-0">
           {region ? (
             <EventsFeed
               events={events}

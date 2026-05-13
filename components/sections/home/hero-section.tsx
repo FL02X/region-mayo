@@ -376,7 +376,7 @@ export function HeroSection({
               src={slides[currentIndex].url}
               alt={slides[currentIndex].alt}
               fill
-              sizes="(min-width: 768px) 100vw"
+              sizes="(min-width: 950px) 950px, 100vw"
               className={`object-cover pointer-events-none select-none transition-transform duration-[650ms] ease-out ${
                 incomingIndex !== null && isSliding ? "-translate-x-[8%]" : "translate-x-0"
               }`}
@@ -399,7 +399,7 @@ export function HeroSection({
                 src={slides[incomingIndex].url}
                 alt={slides[incomingIndex].alt}
                 fill
-                sizes="(min-width: 768px) 100vw"
+                sizes="(min-width: 950px) 950px, 100vw"
                 className="object-cover pointer-events-none select-none"
                 loading="eager"
                 fetchPriority="high"
@@ -601,7 +601,7 @@ export function HeroSection({
 
               <div className="w-full max-w-[360px] text-center md:text-left md:justify-self-end flex flex-col justify-center">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/85 mb-2 opacity-75">
-                  Sitio Oficial 2026
+                  Iglesia Gentil de Cristo
                 </p>
                 <h1 className={`${heroTitleFont.className} text-[2.05rem] sm:text-[2.45rem] font-semibold text-white mb-5 leading-[1.04] tracking-[0.01em] [text-shadow:0_3px_16px_rgba(0,0,0,0.45)]`}>
                   <span className="block">Calendario</span>
