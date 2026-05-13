@@ -46,10 +46,10 @@ export function MobileHero({
       </div>
 
       <div className={`${jwStyleFont.className} w-full bg-[#2f3136] text-white px-5 py-4`}>
-        <p className="text-[12px] leading-tight uppercase tracking-[0.02em] text-white/95">
+        <p className="text-[12px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
           Iglesia Gentil de Cristo
         </p>
-        <p className="mt-1 text-[24px] leading-[1.05] font-semibold tracking-[0.01em] text-white">
+        <p className="mt-1 mb-1 text-[24px] leading-[1.05] font-semibold tracking-[0.01em] text-white">
           Calendario de la Region Mayo
         </p>
       </div>

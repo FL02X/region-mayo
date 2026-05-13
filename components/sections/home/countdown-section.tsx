@@ -344,7 +344,7 @@ export function CountdownSection({
 
   return (
     <section
-      className="bg-background px-4 pt-[15px] pb-0 md:pt-6"
+      className="bg-background px-4 pt-[15px] pb-0 md:pt-6 mt-4"
       data-countdown-section
       aria-label="Sección destacada"
     >
