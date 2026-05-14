@@ -181,7 +181,7 @@ export default function Chatbot() {
       respuesta = {
         rol: "bot",
         texto: "¡Perfecto! ¿Qué información sobre la región estás buscando?",
-        opciones: ["Eventos y recorridos", "Ubicar un templo", "Coros y Pastores", "Volver al inicio"]
+        opciones: ["Redes sociales", "Album de fotos","Eventos y recorridos", "Directiva local","Templos","Ubicar una iglesia", "Coros y Pastores", "Volver al inicio"]
       };
     }
     else if (textoMinusculas === "dudas doctrinales") {
@@ -197,19 +197,57 @@ export default function Chatbot() {
     else if (textoMinusculas.includes("eventos") || textoMinusculas.includes("recorrido")) {
       respuesta.texto = "Nuestro próximo gran evento es el Recorrido Regional Mayo en la calle Obregón 45, Navojoa. ¡No olvides registrarte en la página principal!";
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
-    } else if (textoMinusculas.includes("templo") || textoMinusculas.includes("ubicar")) {
+    } else if (textoMinusculas.includes("iglesia") || textoMinusculas.includes("ubicar") || textoMinusculas.includes("buscar iglesia")) {
       respuesta.texto = 'Puedes encontrar la iglesia más cercana a ti utilizando el buscador GPS en la sección de "Templos" del menú superior.';
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
     } else if (textoMinusculas.includes("coro") || textoMinusculas.includes("pastor")) {
       respuesta.texto = (
         <span>
           Toda la información sobre los coros y pastores de la región la encuentras en nuestro directorio.<br /><br />
+          <a href="/directorio" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir ala seccion de pastores</a><br />
           <a href="/coros" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la sección de Coros</a>
         </span>
       );
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
     }
-    // ---------------------------------------------------------
+    else if (textoMinusculas.includes("Directiva") || textoMinusculas.includes("directiva") || textoMinusculas.includes("quien dirige") || textoMinusculas.includes("Directiva local")) {
+      respuesta.texto = (
+        <span>
+          La Directiva de la región se encuentra en nuestra sección de información institucional.<br /><br />
+          <a href="/directiva" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la sección de Directiva</a>
+        </span>
+      );
+      respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
+    }
+    else if (textoMinusculas.includes("Templos") || textoMinusculas.includes("templo") || textoMinusculas.includes("Lugares de reunión") || textoMinusculas.includes("donde se reúnen")) {
+     respuesta.texto = (
+        <span>
+          Tenemos diferentes iglesias ubicadas en nuestra región mayo.<br /><br />
+          <a href="/templos" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la sección de Templos</a>
+        </span>
+      );
+      respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];  
+    }
+    else if (textoMinusculas.includes("album") || textoMinusculas.includes("fotos") || textoMinusculas.includes("imagenes")) {
+      respuesta.texto = (
+        <span>
+          Tenemos difetentes fotos en nuestro album de la región.<br /><br />
+          <a href="/album" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la sección de Album</a>
+        </span>
+      );
+      respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];  
+    }
+    else if (textoMinusculas.includes("redes sociales") || textoMinusculas.includes("facebook") || textoMinusculas.includes("instagram") || textoMinusculas.includes("redes")) {
+      respuesta.texto = (
+        <span>
+          Puedes seguirnos en nuestras redes sociales para estar al tanto de todas las novedades y eventos de la región mayo.<br /><br />
+          <a href="https://www.facebook.com/MGR.R.MY" target="_blank" rel="noopener noreferrer" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Seguir en Facebook</a><br />
+          <a href="https://www.instagram.com/mgrregionmayo/" target="_blank" rel="noopener noreferrer" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Seguir en Instagram</a>
+        </span>
+      );
+      respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
+    }
+      // ---------------------------------------------------------
     // 3. SUBMENÚS DOCTRINALES
     // ---------------------------------------------------------
     else if (textoMinusculas === "salvación y bautismo") {
