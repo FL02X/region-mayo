@@ -41,14 +41,12 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 
-// Definimos el tipo de mensaje para incluir opciones (botones rápidos)
 type Mensaje = {
   rol: "bot" | "usuario";
   texto: React.ReactNode;
-  opciones?: string[]; // Textos de los botones
+  opciones?: string[]; 
 };
 
-// NUEVO: Componente de ayuda para generar enlaces bíblicos clicables
 const LinkBiblico = ({ cita }: { cita: string }) => {
   const url = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(cita)}&version=RVR1960`;
   return (
@@ -68,16 +66,19 @@ export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [mensaje, setMensaje] = useState("");
   
-  // Mensaje de bienvenida inicial con menú de opciones
-  const [historial, setHistorial] = useState<Mensaje[]>([
+  const mensajeInicial: Mensaje[] = [
     { 
       rol: "bot", 
       texto: "¡Paz de Cristo! Bienvenido a la plataforma. Para darte un mejor servicio, por favor selecciona una de las siguientes opciones:",
       opciones: ["Dudas sobre la página", "Dudas doctrinales", "Otra consulta (WhatsApp)"]
     },
-  ]);
-  
+  ];
+
+  const [historial, setHistorial] = useState<Mensaje[]>(mensajeInicial);
   const [mostrarAyuda, setMostrarAyuda] = useState(false);
+  
+  // NUEVO: Estado para controlar la animación de la barra de progreso
+  const [isClearing, setIsClearing] = useState(false);
 
   const pathname = usePathname();
   const rutasPermitidas = ["/", "/coros", "/templos", "/directorio", "/directiva", "/album"];
@@ -85,6 +86,17 @@ export default function Chatbot() {
   if (!rutasPermitidas.includes(pathname)) {
     return null;
   }
+
+  // NUEVA FUNCIÓN: Limpia el chat con una animación visual sin pedir permisos
+  const limpiarChat = () => {
+    setIsClearing(true); // Activa la pantalla de carga
+    
+    // Simula un proceso de borrado de 1.5 segundos
+    setTimeout(() => {
+      setHistorial(mensajeInicial);
+      setIsClearing(false); // Quita la pantalla de carga
+    }, 1500);
+  };
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -104,14 +116,12 @@ export default function Chatbot() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Listen for external requests to open the chatbot (e.g., header mobile icon)
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
     window.addEventListener('open-chatbot', handleOpen as EventListener);
     return () => window.removeEventListener('open-chatbot', handleOpen as EventListener);
   }, []);
 
-  // Auto-scroll: when opening, jump to last message; when receiving new messages keep smooth scroll
   useEffect(() => {
     const el = messagesEndRef.current;
     const container = messagesContainerRef.current;
@@ -122,9 +132,9 @@ export default function Chatbot() {
       return;
     }
 
-    if (el) {
+    if (el && !isClearing) {
       el.scrollIntoView({ behavior: justOpened ? 'auto' : 'smooth', block: 'end' });
-    } else if (container) {
+    } else if (container && !isClearing) {
       if (justOpened) {
         container.scrollTop = container.scrollHeight;
       } else {
@@ -133,7 +143,7 @@ export default function Chatbot() {
     }
 
     prevIsOpenRef.current = isOpen;
-  }, [historial, isOpen]);
+  }, [historial, isOpen, isClearing]);
 
   useLockBodyScroll(isOpen);
 
@@ -154,22 +164,17 @@ export default function Chatbot() {
     return () => cancelAnimationFrame(raf);
   }, [isOpen]);
 
-  // Lógica principal unificada para texto manual o clic en opciones
   const procesarEntrada = (textoUsuario: string) => {
     setHistorial((prev) => [...prev, { rol: "usuario", texto: textoUsuario }]);
     
     const textoMinusculas = textoUsuario.toLowerCase();
     
-    // Objeto base para la respuesta del bot
     let respuesta: Mensaje = { 
       rol: "bot", 
       texto: "Lo siento, aún estoy aprendiendo y no tengo esa respuesta. Pero no te preocupes, puedes contactarnos directamente.",
       opciones: ["Otra consulta (WhatsApp)", "Volver al inicio"]
     };
 
-    // ---------------------------------------------------------
-    // 1. MENÚ PRINCIPAL Y SUBMENÚS DE NAVEGACIÓN
-    // ---------------------------------------------------------
     if (textoMinusculas === "volver al inicio" || textoMinusculas.includes("hola") || textoMinusculas.includes("buenos dias")) {
       respuesta = {
         rol: "bot",
@@ -191,9 +196,6 @@ export default function Chatbot() {
         opciones: ["Salvación y Bautismo", "Vestimenta y Apariencia", "La Biblia", "La Unicidad de Dios", "Volver al inicio"]
       };
     }
-    // ---------------------------------------------------------
-    // 2. RESPUESTAS SOBRE LA PÁGINA
-    // ---------------------------------------------------------
     else if (textoMinusculas.includes("eventos") || textoMinusculas.includes("recorrido")) {
       respuesta.texto = "Nuestro próximo gran evento es el Recorrido Regional Mayo en la calle Obregón 45, Navojoa. ¡No olvides registrarte en la página principal!";
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
@@ -204,13 +206,13 @@ export default function Chatbot() {
       respuesta.texto = (
         <span>
           Toda la información sobre los coros y pastores de la región la encuentras en nuestro directorio.<br /><br />
-          <a href="/directorio" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir ala seccion de pastores</a><br />
+          <a href="/directorio" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la seccion de pastores</a><br />
           <a href="/coros" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la sección de Coros</a>
         </span>
       );
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
     }
-    else if (textoMinusculas.includes("Directiva") || textoMinusculas.includes("directiva") || textoMinusculas.includes("quien dirige") || textoMinusculas.includes("Directiva local")) {
+    else if (textoMinusculas.includes("directiva") || textoMinusculas.includes("quien dirige") || textoMinusculas.includes("directiva local")) {
       respuesta.texto = (
         <span>
           La Directiva de la región se encuentra en nuestra sección de información institucional.<br /><br />
@@ -219,7 +221,7 @@ export default function Chatbot() {
       );
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
     }
-    else if (textoMinusculas.includes("Templos") || textoMinusculas.includes("templo") || textoMinusculas.includes("Lugares de reunión") || textoMinusculas.includes("donde se reúnen")) {
+    else if (textoMinusculas.includes("templos") || textoMinusculas.includes("templo") || textoMinusculas.includes("lugares de reunión") || textoMinusculas.includes("donde se reúnen")) {
      respuesta.texto = (
         <span>
           Tenemos diferentes iglesias ubicadas en nuestra región mayo.<br /><br />
@@ -231,7 +233,7 @@ export default function Chatbot() {
     else if (textoMinusculas.includes("album") || textoMinusculas.includes("fotos") || textoMinusculas.includes("imagenes")) {
       respuesta.texto = (
         <span>
-          Tenemos difetentes fotos en nuestro album de la región.<br /><br />
+          Tenemos diferentes fotos en nuestro album de la región.<br /><br />
           <a href="/album" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la sección de Album</a>
         </span>
       );
@@ -247,9 +249,6 @@ export default function Chatbot() {
       );
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
     }
-      // ---------------------------------------------------------
-    // 3. SUBMENÚS DOCTRINALES
-    // ---------------------------------------------------------
     else if (textoMinusculas === "salvación y bautismo") {
       respuesta = {
         rol: "bot", texto: "Selecciona una pregunta sobre Salvación y Bautismo:",
@@ -280,9 +279,6 @@ export default function Chatbot() {
         opciones: ["Salvación y Bautismo", "Vestimenta y Apariencia", "La Biblia", "La Unicidad de Dios", "Volver al inicio"]
       };
     }
-    // ---------------------------------------------------------
-    // 4. RESPUESTAS DOCTRINALES DIRECTAS CON ENLACES
-    // ---------------------------------------------------------
     else if (textoMinusculas.includes("necesita para salvarse") || textoMinusculas.includes("salvacion") || textoMinusculas.includes("salvo")) {
       respuesta.texto = <span>La Biblia enseña que debemos experimentar el nuevo nacimiento. Esto requiere: arrepentimiento genuino, bautismo en agua en el nombre de Jesucristo para el perdón de los pecados, y la llenura del Espíritu Santo.<br /><br /><b><LinkBiblico cita="Hechos 2:38" />, <LinkBiblico cita="Juan 3:5" />.</b></span>;
       respuesta.opciones = ["Salvación y Bautismo"];
@@ -347,9 +343,6 @@ export default function Chatbot() {
       respuesta.texto = <span>Se refiere a la humanidad de Jesucristo, el cuerpo engendrado. Dios preparó un cuerpo para derramar sangre. El "Hijo" tuvo principio en el tiempo, pero el Espíritu en Él es eterno.<br /><br /><b><LinkBiblico cita="Lucas 1:35" />, <LinkBiblico cita="Gálatas 4:4" />.</b></span>;
       respuesta.opciones = ["La Unicidad de Dios"];
     }
-    // ---------------------------------------------------------
-    // 5. CONTACTO DIRECTO (WHATSAPP) O FALLBACK
-    // ---------------------------------------------------------
     else if (textoMinusculas.includes("otra consulta (whatsapp)") || textoMinusculas.includes("whatsapp") || textoMinusculas.includes("otra pregunta")) {
       respuesta = {
         rol: "bot",
@@ -373,7 +366,6 @@ export default function Chatbot() {
       };
     }
 
-    // Agregar la respuesta del bot con un ligero retraso
     setTimeout(() => {
       setHistorial((prev) => [...prev, respuesta]);
     }, 600);
@@ -383,7 +375,7 @@ export default function Chatbot() {
     e.preventDefault();
     if (!mensaje.trim()) return;
     const textoActual = mensaje;
-    setMensaje(""); // Limpiar input
+    setMensaje(""); 
     procesarEntrada(textoActual);
   };
 
@@ -391,20 +383,31 @@ export default function Chatbot() {
     procesarEntrada(opcionText);
   };
 
+  const prefersReducedMotion = typeof window !== 'undefined' 
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+    : false;
+
   const modalContainerStyle: React.CSSProperties = isMobile
     ? { position: 'fixed', inset: 0, width: '100vw', height: '100dvh', minHeight: '100svh', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
     : { position: 'relative', width: 'min(600px, 92vw)', maxHeight: '72vh', backgroundColor: '#fff', borderRadius: 8, display: 'flex', flexDirection: 'column', overflow: 'hidden', margin: '0 auto' };
 
-  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const modalAnimationStyle: React.CSSProperties = prefersReducedMotion
     ? {}
     : { opacity: modalActive ? 1 : 0, transform: modalActive ? 'none' : 'scale(0.985) translateY(6px)', transition: 'transform 180ms ease, opacity 180ms ease' };
 
   return (
     <div style={{ position: "fixed", bottom: "calc(20px + env(safe-area-inset-bottom, 0px))", right: "20px", zIndex: 40, fontFamily: "system-ui, -apple-system, sans-serif" }} className="md:right-5">
+      
+      {/* Inyección de estilos para la animación de la barra de progreso */}
+      <style>{`
+        @keyframes clearProgress {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
+      `}</style>
+
       {!isOpen ? (
         <>
-          {/* Mensaje flotante de bienvenida */}
           <div style={{
             position: 'absolute', bottom: '100%', right: '0', marginBottom: '16px', backgroundColor: '#fff', border: '1px solid #e5e7eb',
             boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: '12px 16px', borderRadius: '8px', width: 'max-content', maxWidth: '220px',
@@ -420,8 +423,6 @@ export default function Chatbot() {
               <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-
-          {/* Mobile launcher removed — header will provide mobile entry point */}
         </>
       ) : (
         createPortal(
@@ -431,59 +432,91 @@ export default function Chatbot() {
             <div style={{ ...modalContainerStyle, ...modalAnimationStyle }} role="dialog" aria-modal="true" aria-labelledby="chatbot-title">
               <div style={{ backgroundColor: '#21252b', zIndex: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h3 id="chatbot-title" style={{ margin: 0, color: '#fff', fontSize: 16, fontWeight: 700, textTransform: 'uppercase' }}>ASISTENCIA VIRTUAL</h3>
-                <button onClick={toggleChat} aria-label="Cerrar Asistente" style={{ height: 40, width: 40, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
-                  <span style={{ fontSize: 22, lineHeight: 1 }}>×</span>
-                </button>
+                
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {historial.length > 1 && !isClearing && (
+                    <button 
+                      onClick={limpiarChat} 
+                      aria-label="Limpiar chat" 
+                      title="Limpiar chat"
+                      style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '6px' }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
+                    </button>
+                  )}
+                  <button onClick={toggleChat} aria-label="Cerrar Asistente" style={{ height: 40, width: 40, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <span style={{ fontSize: 22, lineHeight: 1 }}>×</span>
+                  </button>
+                </div>
               </div>
 
-              <div ref={messagesContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '14px', textAlign: 'left', color: '#111827', fontSize: isMobile ? 17 : 15 }}>
-                {historial.map((msg, index) => (
-                  <div key={index} style={{ alignSelf: 'stretch', marginBottom: 16 }}>
-                    <div style={{
-                      backgroundColor: msg.rol === 'usuario' ? '#2b4c7e' : '#f3f4f6',
-                      color: msg.rol === 'usuario' ? '#fff' : '#374151',
-                      padding: '10px 12px',
-                      borderRadius: 6,
-                      maxWidth: '100%',
-                      display: 'inline-block'
-                    }}>
-                      {msg.texto}
-                    </div>
-
-                    {/* Renderización de botones de opciones si el bot las proporciona */}
-                    {msg.opciones && msg.opciones.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
-                        {msg.opciones.map((opcion, i) => (
-                          <button
-                            key={i}
-                            onClick={() => handleOpcionClick(opcion)}
-                            style={{
-                              backgroundColor: '#fff', border: '1px solid #2b4c7e', color: '#2b4c7e',
-                              padding: '6px 12px', borderRadius: '16px', fontSize: '14px', fontWeight: 500,
-                              cursor: 'pointer', transition: 'all 0.2s'
-                            }}
-                            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#2b4c7e'; e.currentTarget.style.color = '#fff'; }}
-                            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.color = '#2b4c7e'; }}
-                          >
-                            {opcion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+              {/* LÓGICA DE RENDERIZADO: Mostrar barra de carga o mensajes */}
+              {isClearing ? (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>
+                  <span style={{ fontSize: '15px', color: '#4b5563', marginBottom: '16px', fontWeight: 500 }}>Borrando historial el contenido del chat</span>
+                  <div style={{ width: '180px', height: '6px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ 
+                      height: '100%', 
+                      backgroundColor: '#ff6b6b', 
+                      animation: 'clearProgress 1.4s ease-out forwards' 
+                    }} />
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
+                </div>
+              ) : (
+                <div ref={messagesContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '14px', textAlign: 'left', color: '#111827', fontSize: isMobile ? 17 : 15 }}>
+                  {historial.map((msg, index) => (
+                    <div key={index} style={{ alignSelf: 'stretch', marginBottom: 16 }}>
+                      <div style={{
+                        backgroundColor: msg.rol === 'usuario' ? '#2b4c7e' : '#f3f4f6',
+                        color: msg.rol === 'usuario' ? '#fff' : '#374151',
+                        padding: '10px 12px',
+                        borderRadius: 6,
+                        maxWidth: '100%',
+                        display: 'inline-block'
+                      }}>
+                        {msg.texto}
+                      </div>
+
+                      {msg.opciones && msg.opciones.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                          {msg.opciones.map((opcion, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleOpcionClick(opcion)}
+                              style={{
+                                backgroundColor: '#fff', border: '1px solid #2b4c7e', color: '#2b4c7e',
+                                padding: '6px 12px', borderRadius: '16px', fontSize: '14px', fontWeight: 500,
+                                cursor: 'pointer', transition: 'all 0.2s'
+                              }}
+                              onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#2b4c7e'; e.currentTarget.style.color = '#fff'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.color = '#2b4c7e'; }}
+                            >
+                              {opcion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
 
               <form onSubmit={enviarMensajeForm} style={{ display: 'flex', gap: 8, paddingTop: 12, paddingRight: 16, paddingLeft: 16, paddingBottom: isMobile ? 'calc(12px + env(safe-area-inset-bottom, 0px))' : 16, borderTop: '1px solid #e6e6e6', backgroundColor: '#fff' }}>
                 <input
                   type="text"
                   value={mensaje}
                   onChange={(e) => setMensaje(e.target.value)}
-                  placeholder="Escribe tu duda aquí..."
-                  style={{ flex: 1, padding: '10px 12px', borderRadius: 4, border: '1px solid #d1d5db', outline: 'none', fontSize: isMobile ? 17 : 15 }}
+                  disabled={isClearing}
+                  placeholder={isClearing ? "Borrando chat..." : "Escribe tu duda aquí..."}
+                  style={{ flex: 1, padding: '10px 12px', borderRadius: 4, border: '1px solid #d1d5db', outline: 'none', fontSize: isMobile ? 17 : 15, opacity: isClearing ? 0.6 : 1 }}
                 />
-                <button type="submit" aria-label="Enviar mensaje" style={{ width: 44, height: 40, backgroundColor: '#2b4c7e', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button type="submit" disabled={isClearing} aria-label="Enviar mensaje" style={{ width: 44, height: 40, backgroundColor: '#2b4c7e', color: '#fff', border: 'none', borderRadius: 4, cursor: isClearing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isClearing ? 0.6 : 1 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                     <path d="M22 2L11 13" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
