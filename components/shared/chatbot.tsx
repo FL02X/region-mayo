@@ -197,7 +197,7 @@ export default function Chatbot() {
       };
     }
     else if (textoMinusculas.includes("eventos") || textoMinusculas.includes("recorrido")) {
-      respuesta.texto = "Nuestro próximo gran evento es el Recorrido Regional Mayo en la calle Obregón 45, Navojoa. ¡No olvides registrarte en la página principal!";
+      respuesta.texto = "Nuestro próximo gran evento es la campaña regional de evangelismo en la localidad de la iglesia Bachantahui";
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
     } else if (textoMinusculas.includes("iglesia") || textoMinusculas.includes("ubicar") || textoMinusculas.includes("buscar iglesia")) {
       respuesta.texto = 'Puedes encontrar la iglesia más cercana a ti utilizando el buscador GPS en la sección de "Templos" del menú superior.';
