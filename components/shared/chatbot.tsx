@@ -66,18 +66,18 @@ export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [mensaje, setMensaje] = useState("");
   
+  // AÑADIDO: "Historia de la Iglesia" como opción principal
   const mensajeInicial: Mensaje[] = [
     { 
       rol: "bot", 
       texto: "¡Paz de Cristo! Bienvenido a la plataforma. Para darte un mejor servicio, por favor selecciona una de las siguientes opciones:",
-      opciones: ["Dudas sobre la página", "Dudas doctrinales", "Otra consulta (WhatsApp)"]
+      opciones: ["Historia de la Iglesia", "Dudas sobre la página", "Dudas doctrinales", "Otra consulta (WhatsApp)"]
     },
   ];
 
   const [historial, setHistorial] = useState<Mensaje[]>(mensajeInicial);
   const [mostrarAyuda, setMostrarAyuda] = useState(false);
   
-  // NUEVO: Estado para controlar la animación de la barra de progreso
   const [isClearing, setIsClearing] = useState(false);
 
   const pathname = usePathname();
@@ -87,14 +87,12 @@ export default function Chatbot() {
     return null;
   }
 
-  // NUEVA FUNCIÓN: Limpia el chat con una animación visual sin pedir permisos
   const limpiarChat = () => {
-    setIsClearing(true); // Activa la pantalla de carga
+    setIsClearing(true); 
     
-    // Simula un proceso de borrado de 1.5 segundos
     setTimeout(() => {
       setHistorial(mensajeInicial);
-      setIsClearing(false); // Quita la pantalla de carga
+      setIsClearing(false); 
     }, 1500);
   };
 
@@ -179,7 +177,7 @@ export default function Chatbot() {
       respuesta = {
         rol: "bot",
         texto: "¡Hola de nuevo! Elige qué tipo de información buscas:",
-        opciones: ["Dudas sobre la página", "Dudas doctrinales", "Otra consulta (WhatsApp)"]
+        opciones: ["Historia de la Iglesia", "Dudas sobre la página", "Dudas doctrinales", "Otra consulta (WhatsApp)"]
       };
     } 
     else if (textoMinusculas === "dudas sobre la página") {
@@ -196,7 +194,37 @@ export default function Chatbot() {
         opciones: ["Salvación y Bautismo", "Vestimenta y Apariencia", "La Biblia", "La Unicidad de Dios", "Volver al inicio"]
       };
     }
-    else if (textoMinusculas.includes("eventos") || textoMinusculas.includes("recorrido")) {
+    // ---------------------------------------------------------
+    // NUEVA SECCIÓN: HISTORIA DE LA IGLESIA POR AÑOS
+    // ---------------------------------------------------------
+    else if (textoMinusculas === "historia de la iglesia" || textoMinusculas === "historia") {
+      respuesta = {
+        rol: "bot",
+        texto: "Nuestra historia está llena de bendiciones y fe. Selecciona la etapa que deseas leer:",
+        opciones: ["1934-1937: Los Inicios", "1937-1940: Iglesia Naciente", "1941-1942: 1ra Convención", "1943-1945: 1er Templo y Coro", "Historia completa con fotos", "Volver al inicio"]
+      };
+    }
+    else if (textoMinusculas.includes("1934")) {
+      respuesta.texto = "📜 1934 - 1937: La semilla del evangelio llegó a la región a través del Hno. Misionero Gregorio Domínguez, procedente de Yuma, Arizona, quien comenzó a predicar en las márgenes del Río Mayo. En 1937 nació la primera congregación de la Iglesia Gentil de Cristo en Navojoa, reuniéndose inicialmente en el hogar de la familia Martínez.";
+      respuesta.opciones = ["1937-1940: Iglesia Naciente", "Historia de la Iglesia", "Volver al inicio"];
+    }
+    else if (textoMinusculas.includes("1937")) {
+      respuesta.texto = "📜 1937 - 1940: A pesar de las críticas de quienes los llamaban 'los que hacen ruido en el río', la iglesia creció y se mantuvo firme en su doctrina original. Los jóvenes de aquel entonces se aferraron a la fe bajo un hermoso lema que los identificaba: 'Por mi Doctrina, mi Iglesia y mi Rey'.";
+      respuesta.opciones = ["1941-1942: 1ra Convención", "Historia de la Iglesia", "Volver al inicio"];
+    }
+    else if (textoMinusculas.includes("1941")) {
+      respuesta.texto = "📜 1941 - 1942: Tras un periodo de esfuerzo misionero en la sierra de Chínipas, Chihuahua, los hermanos regresaron a Sonora. En abril de 1942, se celebró la Primera Convención en Bacobampo, Sonora, contando con la presencia de 44 hermanos y nombrando como Segundo Pastor al Hno. Ulpiano B. Alcántar. Fue el inicio de una estructura sólida.";
+      respuesta.opciones = ["1943-1945: 1er Templo y Coro", "Historia de la Iglesia", "Volver al inicio"];
+    }
+    else if (textoMinusculas.includes("1943")) {
+      respuesta.texto = "📜 1943 - 1945: Comenzó la construcción del primer templo en Bacobampo. Al mismo tiempo, nació el primer coro llamado 'Rey Salomón'. Como no había recursos para el transporte, viajaban a los pueblos vecinos pidiendo raite, ganándose el cariño como 'La Iglesia de los raiteros'. Inspirados en los aviadores de la época, los jóvenes adoptaron uniformes que marcaron a toda una generación.";
+      respuesta.opciones = ["Historia de la Iglesia", "Volver al inicio"];
+    }
+    else if (textoMinusculas.includes("historia completa") || textoMinusculas.includes("fotos") || textoMinusculas.includes("Historia completa con fotos")) {
+      respuesta.texto = <span><a href="https://www.facebook.com/share/p/18yJAysJpu/" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>📜 Con esta publicación podras ver toda la historia de nuestra amada iglesia con fotos ineditas</a></span>;
+      respuesta.opciones = ["Volver al inicio"];
+    }
+    else if (textoMinusculas.includes("eventos") || textoMinusculas.includes("recorrido") || textoMinusculas.includes("campaña")) {
       respuesta.texto = "Nuestro próximo gran evento es la campaña regional de evangelismo en la localidad de la iglesia Bachantahui";
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
     } else if (textoMinusculas.includes("iglesia") || textoMinusculas.includes("ubicar") || textoMinusculas.includes("buscar iglesia")) {
@@ -398,7 +426,6 @@ export default function Chatbot() {
   return (
     <div style={{ position: "fixed", bottom: "calc(20px + env(safe-area-inset-bottom, 0px))", right: "20px", zIndex: 40, fontFamily: "system-ui, -apple-system, sans-serif" }} className="md:right-5">
       
-      {/* Inyección de estilos para la animación de la barra de progreso */}
       <style>{`
         @keyframes clearProgress {
           0% { width: 0%; }
@@ -455,10 +482,9 @@ export default function Chatbot() {
                 </div>
               </div>
 
-              {/* LÓGICA DE RENDERIZADO: Mostrar barra de carga o mensajes */}
               {isClearing ? (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>
-                  <span style={{ fontSize: '15px', color: '#4b5563', marginBottom: '16px', fontWeight: 500 }}>Borrando historial el contenido del chat</span>
+                  <span style={{ fontSize: '15px', color: '#4b5563', marginBottom: '16px', fontWeight: 500 }}>Borrando el contenido del chat...</span>
                   <div style={{ width: '180px', height: '6px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ 
                       height: '100%', 
