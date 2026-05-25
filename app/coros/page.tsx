@@ -10,7 +10,7 @@ import { getCoros, getRegionConfig } from "@/lib/api"
 export const revalidate = false;
 
 export const metadata: Metadata = {
-  title: "Coros Locales - Región Mayo",
+  title: "Coros Locales | IGC Región Mayo",
   description: "Descubre los coros locales de la Región Mayo y contacta a sus presidentes.",
 }
 

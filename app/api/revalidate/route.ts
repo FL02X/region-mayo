@@ -51,13 +51,13 @@ export async function POST(request: NextRequest) {
       case "templo":
         pathsToRevalidate.push("/");
         pathsToRevalidate.push("/templos");
-        pathsToRevalidate.push("/directorio");
+        pathsToRevalidate.push("/pastores");
         pathsToRevalidate.push("/buscar");
         tagsToRevalidate.push("templos");
         break;
       case "pastor":
         pathsToRevalidate.push("/");
-        pathsToRevalidate.push("/directorio");
+        pathsToRevalidate.push("/pastores");
         pathsToRevalidate.push("/buscar");
         tagsToRevalidate.push("pastors");
         break;
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         pathsToRevalidate.push("/coros");
         pathsToRevalidate.push("/templos");
         pathsToRevalidate.push("/directiva");
-        pathsToRevalidate.push("/directorio");
+        pathsToRevalidate.push("/pastores");
         pathsToRevalidate.push("/album");
         pathsToRevalidate.push("/buscar");
         tagsToRevalidate.push("region", "siteSettings");

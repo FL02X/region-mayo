@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { PrayerCarousel } from "@/components/shared/prayer-carousel";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
+import { HighlightedText } from "@/components/shared/highlighted-text";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
 import { Search } from "lucide-react";
@@ -425,7 +426,7 @@ export function HeroSection({
                     >
                       Nuestro Próximo Evento
                     </p>
-                    <h3 className="text-[34px] font-bold text-[#1f2833] leading-[1.04] mb-2.5 line-clamp-2">
+                    <h3 className="text-[34px] font-bold text-[#1f2833] leading-[1.04] mb-2.5">
                       {spotlightEvent.title}
                     </h3>
                     <div className="space-y-1.5 text-[13px] text-[#425060] mb-3.5">
@@ -438,15 +439,19 @@ export function HeroSection({
                         {spotlightEvent.googleMapsUrl ? (
                           <button
                             onClick={() => window.open(spotlightEvent.googleMapsUrl!, "_blank")}
-                            className="inline-flex items-center gap-1 min-w-0 text-left transition-colors"
+                            className="inline-flex items-center gap-1 min-w-0 text-left hover:underline underline-offset-2 transition-colors"
                             style={{ color: spotlightAccent }}
                             aria-label="Abrir ubicación del próximo evento en Google Maps"
                           >
-                            <span className="truncate">{spotlightEvent.address || spotlightEvent.location}</span>
+                            <span className="truncate">
+                              <HighlightedText text={spotlightEvent.address || spotlightEvent.location} query="" />
+                            </span>
                             <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                           </button>
                         ) : (
-                          <span className="truncate">{spotlightEvent.address || spotlightEvent.location}</span>
+                          <span className="truncate">
+                            <HighlightedText text={spotlightEvent.address || spotlightEvent.location} query="" />
+                          </span>
                         )}
                       </div>
                     </div>

@@ -29,7 +29,7 @@ export const regionPresident: RegionPresident = { fullName: 'Hermano Pedro Casti
 export const eventsData: Event[] = [
   {
     id: '1',
-    title: 'Campaña de Marzo',
+    title: 'Lorem Ipsum Evento',
     eventType: 'campana',
     typeColor: 'worship',
     date: new Date("2026-03-29T07:00:00.000Z"),
@@ -37,20 +37,16 @@ export const eventsData: Event[] = [
     location: 'Santuario Principal',
     address: 'Av. Juárez 123, Navojoa, Sonora',
     googleMapsUrl: 'https://maps.google.com/?q=Av.+Juárez+123,+Navojoa,+Sonora',
-    description: 'Únete a nosotros para un tiempo especial de adoración y comunión. Tendremos alabanzas, predicación de la palabra y un momento de oración por las familias.',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     vestimenta: 'uniformeMGR',
-    image: '/images/event-worship.jpg',
+    image: '/images/coro-placeholder.jpg',
     status: 'past',
     albumEnabled: true,
     googleDriveAlbumUrl: 'https://drive.google.com/drive/folders/worship-march-29',
     facebookPostUrl: 'https://facebook.com/regionmayo/posts/123456',
     registrationEnabled: false,
     photos: [
-      '/images/event-worship.jpg',
-      '/images/event-tour.jpg',
-      '/images/event-conference.jpg',
-      '/images/event-youth.jpg',
-      '/images/hero-choir.jpg'
+      '/images/coro-placeholder.jpg'
     ],
     speakers: {
       pastorMensaje: 'Pastor Juan Carlos García',
@@ -59,7 +55,7 @@ export const eventsData: Event[] = [
   },
   {
     id: '2',
-    title: 'Convención General Regional',
+    title: 'Lorem Ipsum Evento',
     eventType: 'convencion',
     typeColor: 'conference',
     date: new Date("2026-04-05T07:00:00.000Z"),
@@ -68,56 +64,53 @@ export const eventsData: Event[] = [
     location: 'Centro de Convenciones',
     address: 'Blvd. Hidalgo 500, Hermosillo, Sonora',
     googleMapsUrl: 'https://maps.google.com/?q=Blvd.+Hidalgo+500,+Hermosillo,+Sonora',
-    description: 'Gran convención donde nos reuniremos con hermanos de diferentes regiones. Habrá transporte disponible desde Navojoa.',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     vestimenta: 'uniformeMGR',
-    image: '/images/event-tour.jpg',
+    image: '/images/coro-placeholder.jpg',
     status: 'upcoming',
     albumEnabled: true,
     googleDriveAlbumUrl: 'https://drive.google.com/drive/folders/example',
     registrationEnabled: true,
     photos: [
-      '/images/event-tour.jpg',
-      '/images/event-conference.jpg',
-      '/images/event-youth.jpg',
-      '/images/hero-choir.jpg'
+      '/images/coro-placeholder.jpg'
     ],
     alimentos: {
       enabled: true,
       location: 'Comedor Principal',
       googleMapsUrl: 'https://maps.google.com/?q=Comedor+Principal+Hermosillo',
-      description: 'Desayuno: 7:00-8:30 AM\nComida: 1:00-3:00 PM\nCena: 7:00-9:00 PM'
+      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
     },
     juntaJuvenil: {
       enabled: true,
       location: 'Salón Juvenil B',
       googleMapsUrl: 'https://maps.google.com/?q=Salon+Juvenil+Hermosillo',
-      description: 'Reunión especial para jóvenes después del servicio principal.'
+      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
     },
     speakers: {
       pastorMensaje: 'Pastor Miguel Ángel López',
       jovenPreside: 'Hermana Ana García'
     },
-    moreInfo: { enabled: true, imageUrl: '/images/event-conference.jpg' }
+    moreInfo: { enabled: true, imageUrl: '/images/coro-placeholder.jpg' }
   },
   {
     id: '3',
-    title: 'Culto Juvenil de Abril',
+    title: 'Lorem Ipsum Evento',
     eventType: 'cultoJuvenil',
     typeColor: 'youth',
     date: new Date("2026-04-19T07:00:00.000Z"),
     time: '7:00 PM',
     location: 'Santuario Principal',
     address: 'Av. Juárez 123, Navojoa, Sonora',
-    description: 'Una noche especial dedicada a la alabanza con la participación de varios coros de la región.',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     vestimenta: 'formalCasual',
-    image: '/images/event-youth.jpg',
+    image: '/images/coro-placeholder.jpg',
     status: 'upcoming',
     albumEnabled: true,
     speakers: { jovenPreside: 'Hermano Carlos Vega' }
   },
   {
     id: '4',
-    title: 'Recorrido Regional Mayo',
+    title: 'Lorem Ipsum Evento',
     eventType: 'recorrido',
     typeColor: 'tour',
     date: new Date("2026-05-15T07:00:00.000Z"),
@@ -125,31 +118,31 @@ export const eventsData: Event[] = [
     time: '9:00 AM',
     location: 'Salón Comunitario',
     address: 'Calle Obregón 45, Navojoa, Sonora',
-    description: 'Recorrido anual de la Región Mayo visitando varias iglesias de la región.',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     vestimenta: 'uniformeMGR',
-    image: '/images/event-conference.jpg',
+    image: '/images/coro-placeholder.jpg',
     status: 'upcoming',
     albumEnabled: true,
     speakers: { pastorMensaje: 'Pastor Roberto Hernández' }
   },
   {
     id: '5',
-    title: 'Estudio Bíblico Semanal',
+    title: 'Lorem Ipsum Evento',
     eventType: 'estudioBiblico',
     typeColor: 'worship',
     date: new Date("2026-06-20T07:00:00.000Z"),
     time: '4:00 PM',
     location: 'Templo Central',
     address: 'Plaza Principal, Cd. Obregón, Sonora',
-    description: 'Estudio profundo de las escrituras para todas las edades.',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     vestimenta: 'informal',
-    image: '/images/event-worship.jpg',
+    image: '/images/coro-placeholder.jpg',
     status: 'upcoming',
     albumEnabled: false
   },
   {
     id: '6',
-    title: 'Congreso Brilla 2026',
+    title: 'Lorem Ipsum Evento',
     eventType: 'congresoBrilla',
     typeColor: 'youth',
     date: new Date("2026-07-10T07:00:00.000Z"),
@@ -157,35 +150,35 @@ export const eventsData: Event[] = [
     time: '6:00 AM',
     location: 'Rancho El Refugio',
     address: 'Carretera Navojoa-Álamos Km 25',
-    description: 'Congreso especial para jóvenes con actividades al aire libre, talleres y momentos de adoración.',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     vestimenta: 'informal',
-    image: '/images/event-youth.jpg',
+    image: '/images/coro-placeholder.jpg',
     status: 'upcoming',
     albumEnabled: true,
     alimentos: {
       enabled: true,
       location: 'Área de Comedor',
-      description: 'Todas las comidas incluidas en el registro.'
+      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
     },
     juntaJuvenil: {
       enabled: true,
       location: 'Área de Fogata',
-      description: 'Cada noche tendremos un tiempo especial alrededor de la fogata.'
+      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
     },
-    moreInfo: { enabled: true, imageUrl: '/images/event-tour.jpg' }
+    moreInfo: { enabled: true, imageUrl: '/images/coro-placeholder.jpg' }
   },
   {
     id: '7',
-    title: 'Visita Pastoral',
+    title: 'Lorem Ipsum Evento',
     eventType: 'visita',
     typeColor: 'worship',
     date: new Date("2026-08-08T07:00:00.000Z"),
     time: '9:00 AM',
     location: 'Centro de Retiros Monte Sinaí',
     address: 'Sierra de Álamos, Sonora',
-    description: 'Visita especial del pastor regional a las iglesias locales.',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     vestimenta: 'formalCasual',
-    image: '/images/event-conference.jpg',
+    image: '/images/coro-placeholder.jpg',
     status: 'upcoming',
     albumEnabled: false,
     speakers: { pastorMensaje: 'Pastor Juan Carlos García' }
@@ -375,8 +368,8 @@ export const siteSettingsData: SiteSettings = {
     },
     { url: '/images/event-youth.jpg', alt: 'Encuentro Juvenil' }
   ],
-  heroTitle: 'Bienvenido a Región Mayo',
-  heroSubtitle: 'Vive la Comunidad'
+  heroTitle: 'Lorem Ipsum Region',
+  heroSubtitle: 'Dolor sit amet'
 };
 
 export const templosData: Templo[] = [
@@ -387,10 +380,8 @@ export const templosData: Templo[] = [
     address: 'Av. Juárez 123, Navojoa, Sonora',
     googleMapsUrl: 'https://maps.google.com/?q=Templo+Central+Navojoa',
     phone: '6441234567',
-    photo: '/images/event-worship.jpg',
-    description: 'Culto general: Domingos 10:00 AM y 7:00 PM\n' +
-      'Estudio bíblico: Miércoles 7:00 PM\n' +
-      'Reunión de jóvenes: Viernes 7:00 PM',
+    photo: '/images/coro-placeholder.jpg',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     presidenteJovenesName: 'Hno. Miguel Rodríguez',
     presidenteJovenesPhone: '6441111222',
     pastores: [
@@ -416,8 +407,7 @@ export const templosData: Templo[] = [
     address: 'Calle Obregón 45, Navojoa, Sonora',
     googleMapsUrl: 'https://maps.google.com/?q=Templo+Esperanza+Navojoa',
     phone: '6442345678',
-    description: 'Culto general: Domingos 9:00 AM y 6:00 PM\n' +
-      'Estudio bíblico: Jueves 7:00 PM',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     pastores: [
       {
         id: 'p2',
@@ -440,7 +430,7 @@ export const templosData: Templo[] = [
     churchNumber: '03',
     address: 'Blvd. Morelos 234, Cd. Obregón, Sonora',
     googleMapsUrl: 'https://maps.google.com/?q=Templo+Fe+y+Vida+Sonora',
-    description: 'Culto general: Domingos 11:00 AM\nEstudio bíblico: Lunes 7:30 PM',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     presidenteJovenesName: 'Hna. Ana García',
     presidenteJovenesPhone: '6443222111',
     pastores: [ { id: 'p3', fullName: 'Pastor Roberto Hernández' } ],
@@ -469,9 +459,7 @@ export const templosData: Templo[] = [
     address: 'Periférico Norte 567, Cd. Obregón, Sonora',
     googleMapsUrl: 'https://maps.google.com/?q=Templo+Nueva+Vida+Obregon',
     phone: '6443456789',
-    description: 'Culto general: Domingos 10:30 AM y 7:00 PM\n' +
-      'Estudio bíblico: Miércoles 7:00 PM\n' +
-      'Reunión de jóvenes: Sábados 5:00 PM',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     presidenteJovenesName: 'Hno. Carlos Mendoza',
     presidenteJovenesPhone: '6443456788',
     pastores: [

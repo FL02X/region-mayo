@@ -10,7 +10,7 @@ import { getEvents, getRegionConfig } from "@/lib/api"
 export const revalidate = false;
 
 export const metadata: Metadata = {
-  title: "Album de Actividades - Región Mayo",
+  title: "Album de Actividades | IGC Región Mayo",
   description: "Revive los momentos especiales de los eventos de la Región Mayo a través de nuestras fotos.",
 }
 

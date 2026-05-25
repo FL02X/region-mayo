@@ -18,6 +18,7 @@ import {
   X,
   CalendarDays,
   Church,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTime } from "@/lib/time-context";
@@ -266,14 +267,15 @@ export function EventCard({
           {(isPastEvent || canRegister) && (
             <div className="border-t border-border/70 pt-3 mt-1">
               {isPastEvent ? (
-              <div className="mt-3.5 flex gap-2">
+              <div className="mt-3.5 gap-2">
                 {hasAlbum && (
                   <Button
                     onClick={openAlbum}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-white text-sm"
+                    className="bg-primary hover:bg-primary/90 text-white "
                   >
                     <Images className="h-4 w-4 mr-2" aria-hidden="true" />
                     Ver Álbum
+                    <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
                   </Button>
                 )}
                 {hasFacebookPost && (
@@ -288,24 +290,27 @@ export function EventCard({
                   >
                     <Facebook className="h-4 w-4 mr-2" aria-hidden="true" />
                     Ver en Facebook
+                    <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
                   </Button>
                 )}
                 {!hasAlbum && !hasFacebookPost && (
                   <Button
                     disabled
                     variant="secondary"
-                    className="flex-1 text-sm"
+                    className="text-sm"
                   >
                     Evento finalizado
+                    <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
                   </Button>
                 )}
               </div>
               ) : (
                 <Button
                   onClick={() => onRegister(event)}
-                  className="mt-3.5 w-full text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
+                  className="mt-3.5 text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
                 >
                   REGISTRARSE
+                  <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
                 </Button>
               )}
             </div>

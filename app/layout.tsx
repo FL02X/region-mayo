@@ -18,9 +18,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Región Mayo - Tu Comunidad de Actividades",
+  title: "Iglesia Gentil de Cristo — Región Mayo | Sitio oficial regional",
   description:
-    "Catálogo digital de eventos y actividades de la Región Mayo. Vive la comunidad.",
+    "Consulte el calendario regional, templos, pastores, coros y actividades de la Iglesia Gentil de Cristo en la Región Mayo.",
   generator: "Next.js",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -33,8 +33,8 @@ export const metadata: Metadata = {
     apple: "/images/region-mayo-logo.jpg",
   },
   openGraph: {
-    title: "Región Mayo - Tu Comunidad de Actividades",
-    description: "Catálogo digital de eventos y actividades de la Región Mayo",
+    title: "Iglesia Gentil de Cristo — Región Mayo | Sitio oficial regional",
+    description: "Consulte el calendario regional, templos, pastores, coros y actividades de la Iglesia Gentil de Cristo en la Región Mayo.",
     type: "website",
   },
 };

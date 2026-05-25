@@ -1,11 +1,11 @@
 import { AppHeader } from "@/components/layout/app-header";
 import { LocationNotificationBar } from "@/components/layout/location-notification-bar";
-import { HeroSection } from "@/components/sections/home/hero-section";
-import { MobileHero } from "@/components/sections/home/mobile-hero";
-import { EventsFeed } from "@/components/sections/home/events-feed";
+import { HeroSection } from "@/components/sections/home/hero-section.desktop";
+import { MobileHero } from "@/components/sections/home/hero-section.mobile";
+import { EventsFeed } from "@/components/sections/home/calendar-feed";
 import { ActionDeck } from "@/components/sections/home/action-deck";
 import { Providers } from "@/components/layout/providers";
-import { GoToCalendar } from "@/components/sections/home/go-to-calendar";
+import { GoToCalendar } from "@/components/sections/home/go-to-calendar.mobile";
 import Chatbot from "@/components/shared/chatbot";
 import {
   getEvents,

@@ -246,7 +246,7 @@ function TemploCard({
                         {templo.pastores.length > 1 ? "Pastores a Cargo" : "Pastor a Cargo"}
                       </p>
                       <Link
-                        href={`/directorio#${pastor.id}`}
+                        href={`/pastores#${pastor.id}`}
                         className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
                         aria-label={`Ver información de ${pastor.fullName}`}
                       >

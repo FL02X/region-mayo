@@ -10,7 +10,7 @@ import { getTemplos, getRegionConfig } from "@/lib/api";
 export const revalidate = false;
 
 export const metadata: Metadata = {
-  title: "Templos - Región Mayo",
+  title: "Templos | IGC Región Mayo",
   description:
     "Directorio de iglesias locales de la Región Mayo. Encuentra horarios, pastores y coros de cada templo.",
 };

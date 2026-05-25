@@ -5,7 +5,7 @@ import { Calendar } from "lucide-react";
 import { MonthNavigator } from "@/components/shared/month-navigator";
 import { EventCard } from "@/components/shared/event-card";
 import { RegistrationModal } from "@/components/shared/registration-modal";
-import { CountdownSection } from "./countdown-section";
+import { CountdownSection } from "./countdown-section.mobile";
 import { ActionDeck } from "./action-deck";
 import { HomeInfoCards } from "./home-info-cards";
 import type {

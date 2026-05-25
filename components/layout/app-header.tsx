@@ -17,7 +17,7 @@ import {
   Search,
   MessageSquare,
 } from "lucide-react";
-import { MobileMenu } from "@/components/layout/mobile-menu";
+import { MobileMenu } from "@/components/layout/side-menu.mobile";
 import { DebugTimePicker } from "@/components/shared/debug-time-picker";
 
 interface AppHeaderProps {
@@ -29,7 +29,7 @@ interface AppHeaderProps {
 const navItems = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/templos", label: "Templos", icon: Church },
-  { href: "/directorio", label: "Pastores", icon: Users },
+  { href: "/pastores", label: "Pastores", icon: Users },
   { href: "/coros", label: "Coros", icon: Music },
   { href: "/album", label: "Álbum", icon: Images },
   { href: "/directiva", label: "Directiva", icon: UserCircle },

@@ -173,7 +173,7 @@ function SearchContentInner({ data }: SearchContentProps) {
     const pastoresMatches = searchMatches(
       data.pastores, 
       ["fullName", "temploName", "phone", "address"], 
-      "pastor", "PASTOR", "/directorio", "fullName"
+      "pastor", "PASTOR", "/pastores", "fullName"
     );
     
     const corosMatches = searchMatches(

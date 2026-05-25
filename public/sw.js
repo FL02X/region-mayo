@@ -1,4 +1,4 @@
-const VERSION = "v5";
+const VERSION = "v6";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
 const IMAGE_CACHE = `rm-images-${VERSION}`;
@@ -7,10 +7,13 @@ const PRECACHE_ROUTES = [
   "/",
   "/offline",
   "/templos",
+  "/pastores",
   "/coros",
   "/album",
-  "/directorio",
   "/directiva",
+  "/buscar",
+  "/configuracion",
+  "/instalar",
 ];
 const DEV_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const IS_DEV_HOST = DEV_HOSTS.has(self.location.hostname);
@@ -19,11 +22,18 @@ self.addEventListener("install", (event) => {
   if (!IS_DEV_HOST) {
     event.waitUntil(
       caches.open(STATIC_CACHE).then(async (cache) => {
-        try {
-          await cache.addAll(PRECACHE_ROUTES);
-        } catch (error) {
-          // Avoid blocking install if any precache request fails.
-        }
+        await Promise.allSettled(
+          PRECACHE_ROUTES.map(async (route) => {
+            try {
+              const response = await fetch(route, { credentials: "same-origin" });
+              if (isCacheableResponse(response)) {
+                await cache.put(route, response);
+              }
+            } catch (error) {
+              // Avoid blocking install if any single route fails.
+            }
+          }),
+        );
       }),
     );
   }
@@ -46,10 +56,19 @@ self.addEventListener("activate", (event) => {
 const isHtmlRequest = (request) =>
   request.mode === "navigate" || request.headers.get("accept")?.includes("text/html");
 
+const isCacheableResponse = (response) =>
+  response && (response.ok || response.type === "opaque");
+
 const isApiRequest = (url, request) =>
   url.pathname.startsWith("/api/") ||
   url.hostname.endsWith("sanity.io") ||
   request.headers.get("accept")?.includes("application/json");
+
+const isImageRequest = (url, request) =>
+  request.destination === "image" ||
+  url.pathname.startsWith("/_next/image") ||
+  /\.(?:avif|gif|jpe?g|png|svg|webp)$/i.test(url.pathname) ||
+  (url.hostname === "cdn.sanity.io" && url.pathname.includes("/images/"));
 
 const isBypassRequest = (url) =>
   url.pathname.startsWith("/api/prayers") ||
@@ -63,16 +82,25 @@ async function cacheFirst(request, cacheName) {
   if (cached) return cached;
 
   const response = await fetch(request);
-  if (response && response.ok) {
+  if (isCacheableResponse(response)) {
     cache.put(request, response.clone());
   }
   return response;
 }
 
-async function networkOnlyWithOfflineFallback(request, fallbackUrl) {
+async function networkFirstWithCacheFallback(request, cacheName, fallbackUrl) {
+  const cache = await caches.open(cacheName);
+
   try {
-    return await fetch(request, { cache: "no-store" });
+    const response = await fetch(request);
+    if (isCacheableResponse(response)) {
+      cache.put(request, response.clone());
+    }
+    return response;
   } catch (error) {
+    const cached = await cache.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+
     if (fallbackUrl) {
       const fallback = await caches.match(fallbackUrl, { ignoreSearch: true });
       if (fallback) return fallback;
@@ -87,7 +115,7 @@ async function staleWhileRevalidate(request, cacheName) {
 
   const fetchPromise = fetch(request)
     .then((response) => {
-      if (response && response.ok) {
+      if (isCacheableResponse(response)) {
         cache.put(request, response.clone());
       }
       return response;
@@ -116,11 +144,11 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (isHtmlRequest(request)) {
-    event.respondWith(networkOnlyWithOfflineFallback(request, OFFLINE_URL));
+    event.respondWith(networkFirstWithCacheFallback(request, STATIC_CACHE, OFFLINE_URL));
     return;
   }
 
-  if (request.destination === "image") {
+  if (isImageRequest(url, request)) {
     event.respondWith(cacheFirst(request, IMAGE_CACHE));
     return;
   }

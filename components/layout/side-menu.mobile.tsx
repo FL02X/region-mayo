@@ -45,7 +45,7 @@ const menuItems: MobileMenuItem[] = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/templos", label: "Templos", icon: Church },
   {
-    href: "/directorio",
+    href: "/pastores",
     label: "Pastores",
     icon: Users,
   },

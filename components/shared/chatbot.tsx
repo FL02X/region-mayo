@@ -81,7 +81,7 @@ export default function Chatbot() {
   const [isClearing, setIsClearing] = useState(false);
 
   const pathname = usePathname();
-  const rutasPermitidas = ["/", "/coros", "/templos", "/directorio", "/directiva", "/album"];
+  const rutasPermitidas = ["/", "/coros", "/templos", "/pastores", "/directiva", "/album"];
 
   if (!rutasPermitidas.includes(pathname)) {
     return null;
@@ -234,7 +234,7 @@ export default function Chatbot() {
       respuesta.texto = (
         <span>
           Toda la información sobre los coros y pastores de la región la encuentras en nuestro directorio.<br /><br />
-          <a href="/directorio" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la seccion de pastores</a><br />
+          <a href="/pastores" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la seccion de pastores</a><br />
           <a href="/coros" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la sección de Coros</a>
         </span>
       );

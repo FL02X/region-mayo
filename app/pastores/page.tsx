@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { AppHeader } from "@/components/layout/app-header"
-import { DirectorioContent } from "@/components/sections/directorio/directorio-content"
+import { DirectorioContent } from "@/components/sections/pastores/pastores-content"
 import Chatbot from "@/components/shared/chatbot"
 import { getPastors, getRegionConfig } from "@/lib/api"
 
@@ -10,7 +10,7 @@ import { getPastors, getRegionConfig } from "@/lib/api"
 export const revalidate = false;
 
 export const metadata: Metadata = {
-  title: "Directorio de Pastores - Región Mayo",
+  title: "Pastores | IGC Región Mayo",
   description: "Conoce a los pastores de la Región Mayo y las iglesias que sirven en nuestra comunidad.",
 }
 
