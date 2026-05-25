@@ -3,25 +3,49 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Newsletter skeuomorphism layer.
+ * Goal: subtle printed bulletin texture, not a full paper simulation.
+ *
+ * Revert instructions:
+ * 1. Restore the "previous digital values" listed below in :root.
+ * 2. Remove the blocks marked "Newsletter skeuomorphism layer" farther down:
+ *    body background texture, desktop paper pane/card treatments, utility
+ *    overrides for bg/border classes, and input paper shading.
+ * 3. To revert only the JW.org-style type, change --font-sans back to:
+ *    var(--font-inter), "Segoe UI", "Tahoma", "Arial", system-ui, sans-serif
+ *    and restore app/layout.tsx to load Inter with --font-inter.
+ *
+ * Previous digital values:
+ * --background: oklch(0.992 0.003 240);
+ * --card: oklch(0.998 0.001 240);
+ * --popover: oklch(1 0 0);
+ * --secondary: oklch(0.96 0.008 240);
+ * --muted: oklch(0.96 0.008 240);
+ * --border: oklch(0.88 0.012 240);
+ * --input: oklch(0.95 0.008 240);
+ * --surface-shell: #f1f1f1;
+ * --surface-pane: #ffffff;
+ */
 :root {
-  --background: oklch(0.992 0.003 240);
+  --background: oklch(0.982 0.006 92);
   --foreground: oklch(0.14 0.02 240);
-  --card: oklch(0.998 0.001 240);
+  --card: oklch(0.997 0.006 92);
   --card-foreground: oklch(0.14 0.02 240);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.997 0.006 92);
   --popover-foreground: oklch(0.14 0.02 240);
   --primary: oklch(0.45 0.13 245);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.96 0.008 240);
+  --secondary: oklch(0.958 0.012 92);
   --secondary-foreground: oklch(0.25 0.05 240);
-  --muted: oklch(0.96 0.008 240);
+  --muted: oklch(0.962 0.011 92);
   --muted-foreground: oklch(0.42 0.02 240);
   --accent: oklch(0.58 0.1 210);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.88 0.012 240);
-  --input: oklch(0.95 0.008 240);
+  --border: oklch(0.858 0.016 86);
+  --input: oklch(0.948 0.012 92);
   --ring: oklch(0.46 0.18 240);
   --chart-1: oklch(0.46 0.18 240);
   --chart-2: oklch(0.65 0.15 200);
@@ -40,9 +64,14 @@
   --sidebar-ring: oklch(0.46 0.18 240);
   --app-font-scale: 1;
 
-  /* Editorial palette helpers */
-  --surface-shell: #f1f1f1;
-  --surface-pane: #ffffff;
+  /* Newsletter skeuomorphism layer: paper/newsprint palette helpers. */
+  --surface-shell: #eeeeea;
+  --surface-pane: #fffefa;
+  --surface-pane-soft: #fbfaf5;
+  --surface-newsprint: #f7f5ed;
+  --paper-fiber: rgba(76, 59, 33, 0.05);
+  --paper-ink-soft: rgba(35, 42, 51, 0.08);
+  --paper-crease: rgba(108, 89, 56, 0.12);
   --brand-ink: #2f5e93;
   --brand-ink-strong: #264d79;
 }
@@ -83,7 +112,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), "Segoe UI", "Tahoma", "Arial", system-ui, sans-serif;
+  /* JW.org-style body stack from reference image. */
+  --font-sans: var(--font-noto-sans), "NotoSans", Arial, "Arial Unicode MS", sans-serif;
   --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
@@ -173,8 +203,17 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Newsletter skeuomorphism layer: off-white shell with faint paper fibers. */
+    background-color: var(--surface-shell);
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.72) 0 1px, transparent 1.4px),
+      radial-gradient(circle at 78% 36%, rgba(70, 56, 34, 0.055) 0 0.8px, transparent 1.2px),
+      linear-gradient(90deg, rgba(24, 31, 40, 0.035), transparent 18%, transparent 82%, rgba(24, 31, 40, 0.035)),
+      linear-gradient(180deg, #f3f3ef 0%, #ecebe6 100%);
+    background-size: 17px 17px, 23px 23px, 100% 100%, 100% 100%;
     font-size: calc(18px * var(--app-font-scale, 1));
     line-height: 1.58;
+    word-break: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -252,7 +291,7 @@
   h5,
   h6 {
     line-height: 1.25;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   p {
@@ -353,12 +392,24 @@ body:not([data-user-interacted="true"]) :target .availability-pill {
 }
 
 @media (min-width: 768px) {
+  /* Newsletter skeuomorphism layer: desktop page reads like one printed sheet.
+     Revert by restoring the old .desktop-content-pane, .desktop-card-lift,
+     and .desktop-next-event-lift declarations from git history or removing
+     the paper background-image/background-color additions below. */
   .desktop-content-pane {
     position: relative;
     isolation: isolate;
+    background-color: var(--surface-pane);
+    background-image:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.76), transparent 18%, transparent 82%, rgba(209, 197, 175, 0.22)),
+      repeating-linear-gradient(0deg, transparent 0 18px, rgba(63, 76, 91, 0.018) 18px 19px),
+      radial-gradient(circle at 14% 22%, var(--paper-fiber) 0 0.7px, transparent 1px),
+      radial-gradient(circle at 72% 48%, rgba(42, 35, 24, 0.04) 0 0.6px, transparent 1px);
+    background-size: 100% 100%, 100% 19px, 21px 21px, 29px 29px;
     box-shadow:
-      0 14px 30px -24px rgba(15, 25, 40, 0.34),
-      0 2px 8px rgba(15, 25, 40, 0.07);
+      0 22px 42px -30px rgba(15, 25, 40, 0.38),
+      0 6px 16px -12px rgba(15, 25, 40, 0.18),
+      0 0 0 1px rgba(122, 111, 91, 0.18);
   }
 
   .desktop-content-pane::before,
@@ -373,27 +424,53 @@ body:not([data-user-interacted="true"]) :target .availability-pill {
 
   .desktop-content-pane::before {
     left: 0;
-    box-shadow: 12px 0 16px -14px rgba(15, 25, 40, 0.45);
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(108, 89, 56, 0.18) 12%,
+      rgba(108, 89, 56, 0.1) 88%,
+      transparent
+    );
+    box-shadow: 12px 0 18px -14px rgba(15, 25, 40, 0.48);
   }
 
   .desktop-content-pane::after {
     right: 0;
-    box-shadow: -12px 0 16px -14px rgba(15, 25, 40, 0.45);
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(108, 89, 56, 0.12) 14%,
+      rgba(108, 89, 56, 0.08) 86%,
+      transparent
+    );
+    box-shadow: -12px 0 18px -14px rgba(15, 25, 40, 0.48);
   }
 
   .desktop-card-lift {
+    background-color: var(--surface-pane);
+    background-image:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.58), transparent 42%),
+      radial-gradient(circle at 16% 18%, rgba(73, 58, 34, 0.045) 0 0.7px, transparent 1px);
+    background-size: 100% 100%, 19px 19px;
     box-shadow:
-      0 10px 18px -18px rgba(15, 25, 40, 0.42),
-      0 1px 2px rgba(15, 25, 40, 0.1);
+      0 11px 20px -18px rgba(15, 25, 40, 0.48),
+      0 1px 0 rgba(255, 255, 255, 0.88) inset,
+      0 0 0 1px rgba(126, 113, 91, 0.08);
     transition: box-shadow 180ms ease;
   }
 
   .desktop-next-event-lift {
     position: relative;
+    background-color: rgba(255, 254, 250, 0.94);
+    background-image:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.54), transparent 48%),
+      radial-gradient(circle at 22% 28%, rgba(73, 58, 34, 0.05) 0 0.7px, transparent 1px);
+    background-size: 100% 100%, 18px 18px;
     box-shadow:
       0 18px 34px -22px rgba(11, 20, 34, 0.56),
       0 3px 10px rgba(11, 20, 34, 0.22),
-      0 0 0 1px rgba(88, 130, 182, 0.26);
+      0 0 0 1px rgba(88, 130, 182, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.86);
   }
 
   .desktop-next-event-lift::after {
@@ -505,6 +582,40 @@ body:not([data-user-interacted="true"]) :target .availability-pill {
   }
 }
 
+/* Newsletter skeuomorphism layer: map existing utility colors to paper tones.
+   Revert by deleting this utility override group. */
+.bg-\[\#f1f1f1\] {
+  background-color: var(--surface-shell);
+}
+
+.bg-\[\#ffffff\],
+.bg-white {
+  background-color: var(--surface-pane);
+}
+
+.bg-card,
+.bg-background,
+.bg-muted\/20 {
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.46), transparent 58%),
+    radial-gradient(circle at 12% 24%, rgba(76, 59, 33, 0.035) 0 0.65px, transparent 1px);
+  background-size: 100% 100%, 24px 24px;
+}
+
+.border-border,
+.border-\[\#dce2e9\] {
+  border-color: rgba(132, 119, 95, 0.28);
+}
+
+input,
+textarea,
+select,
+[cmdk-input] {
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(244, 242, 235, 0.52));
+  box-shadow: inset 0 1px 1px rgba(34, 42, 53, 0.055);
+}
+
 .dark .desktop-content-pane {
   box-shadow:
     0 16px 32px -26px rgba(0, 0, 0, 0.68),
@@ -560,5 +671,3 @@ body:not([data-user-interacted="true"]) :target .availability-pill {
     transform: rotate(0deg) scale(1);
   }
 }
-
-

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Noto_Sans } from "next/font/google";
 import { TimeProvider } from "@/lib/time-context";
 import { HighlightClearer } from "@/components/layout/highlight-clearer";
 import { RouteBodyFlags } from "@/components/layout/route-body-flags";
@@ -9,12 +9,13 @@ import { AnalyticsGate } from "@/components/pwa/analytics-gate";
 import { Suspense } from "react";
 import "./globals.css";
 
-const inter = Inter({
+const notoSans = Noto_Sans({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-noto-sans",
   preload: true,
-  fallback: ["Segoe UI", "Tahoma", "Arial", "sans-serif"],
+  fallback: ["Arial", "Arial Unicode MS", "sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -56,7 +57,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
-        className={`${inter.variable} font-sans antialiased`}
+        className={`${notoSans.variable} font-sans antialiased`}
       >
         <a href="#main-content" className="skip-link">
           Saltar al contenido principal
