@@ -133,8 +133,8 @@ function TemploCard({
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20"
     >
       {/* Photo Gallery */}
-      <div className={`relative w-full bg-muted shrink-0 ${!isOnline && templo.photos && templo.photos.length > 0 ? "h-[7.5rem]" : "h-60"}`}>
-        {!isOnline && templo.photos && templo.photos.length > 0 ? (
+      <div className={`relative w-full bg-muted shrink-0 ${!isOnline ? "h-[7.5rem]" : "h-60"}`}>
+        {!isOnline ? (
           <OfflineImagePlaceholder />
         ) : templo.photos && templo.photos.length > 0 ? (
           <TemploImageGallery

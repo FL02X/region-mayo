@@ -47,7 +47,7 @@ export function OfflineBanner() {
   return (
     <div
       className={cn(
-        "fixed left-1/2 bottom-4 z-[70] -translate-x-1/2 rounded-full border px-4 py-2 text-xs font-semibold shadow-lg",
+        "fixed left-1/2 bottom-4 z-[70] -translate-x-1/2 border px-4 py-2 text-xs font-semibold shadow-lg",
         isOffline
           ? "border-amber-200 bg-amber-50 text-amber-900"
           : "border-emerald-200 bg-emerald-50 text-emerald-900",
@@ -59,7 +59,7 @@ export function OfflineBanner() {
         {isOffline ? <WifiOff className="h-4 w-4" /> : <Wifi className="h-4 w-4" />}
         <span>
           {isOffline
-            ? "Sin conexion. Algunas funciones requieren internet."
+            ? "Sin conexion."
             : "Conexion restaurada."}
         </span>
       </div>

@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { useTime } from "@/lib/time-context";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
@@ -173,7 +174,11 @@ export function EventCard({
         className="desktop-card-lift bg-card border border-border/80 overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:min-h-[520px]"
       >
         {/* ── Image with date/time strip ── */}
-        {event.image ? (
+        {!isOnline ? (
+          <div className="relative h-40 w-full shrink-0 bg-muted">
+            <OfflineImagePlaceholder />
+          </div>
+        ) : event.image ? (
           <div className="relative h-40 w-full shrink-0">
             <Image
               src={event.image}

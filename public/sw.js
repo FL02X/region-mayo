@@ -1,4 +1,4 @@
-const VERSION = "v7";
+const VERSION = "v8";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
 const IMAGE_CACHE = `rm-images-${VERSION}`;
@@ -8,6 +8,7 @@ const PRECACHE_ROUTES = [
   "/",
   "/offline",
   IMAGE_FALLBACK_URL,
+  "/images/region-mayo-logo.jpg",
   "/templos",
   "/pastores",
   "/coros",

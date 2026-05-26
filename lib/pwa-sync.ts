@@ -11,6 +11,7 @@ export const WARM_CACHE_ROUTES = [
 
 export const LAST_SYNC_KEY = "rm-last-sync";
 export const OFFLINE_BUNDLE_FALLBACK_BYTES = 15 * 1024 * 1024;
+const CRITICAL_ASSET_URLS = ["/images/region-mayo-logo.jpg", "/placeholder.svg"];
 const MAX_MOBILE_IMAGE_WIDTH = 828;
 const UNKNOWN_IMAGE_BYTES = 120 * 1024;
 
@@ -26,6 +27,15 @@ export function writeLastSync(value: number) {
 }
 
 export async function warmCacheRoutes(routes: string[] = WARM_CACHE_ROUTES) {
+  await Promise.allSettled(
+    CRITICAL_ASSET_URLS.map((url) =>
+      fetch(url, {
+        cache: "reload",
+        credentials: "same-origin",
+      }),
+    ),
+  );
+
   const responses = await Promise.allSettled(
     routes.map(async (route) => {
       const response = await fetch(route, {
@@ -82,6 +92,13 @@ export async function estimateOfflineBundleBytes(routes: string[] = WARM_CACHE_R
   let total = 0;
   const imageUrls = new Set<string>();
   const assetUrls = new Set<string>();
+
+  const criticalAssetSizes = await Promise.allSettled(
+    CRITICAL_ASSET_URLS.map((url) => estimateResourceBytes(new URL(url, window.location.origin).href)),
+  );
+  for (const result of criticalAssetSizes) {
+    total += result.status === "fulfilled" ? result.value : UNKNOWN_IMAGE_BYTES;
+  }
 
   for (const result of responses) {
     if (result.status !== "fulfilled") continue;

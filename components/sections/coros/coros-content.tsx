@@ -59,8 +59,8 @@ function CoroCard({
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
-      <div className={`relative w-full bg-muted shrink-0 ${!isOnline && coro.photo ? "h-[7.5rem]" : "h-60"}`}>
-        {!isOnline && coro.photo ? (
+      <div className={`relative w-full bg-muted shrink-0 ${!isOnline ? "h-[7.5rem]" : "h-60"}`}>
+        {!isOnline ? (
           <OfflineImagePlaceholder />
         ) : coro.photo ? (
           <Image
