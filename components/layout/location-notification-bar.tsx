@@ -62,7 +62,7 @@ export function LocationNotificationBar({
       // Ignore storage failures (private mode, quota)
     }
 
-    if (geolocation.permissionDenied || geolocation.permissionGranted || dismissed) {
+    if (dismissed) {
       setBarState("dismissed");
       setIsVisible(false);
       return;
@@ -133,7 +133,6 @@ export function LocationNotificationBar({
       } catch {
         // Ignore storage failures (private mode, quota)
       }
-      setIsVisible(false); // Hide bar after click on success
       setTimeout(() => {
         window.location.href = `/templos#${nearestChurch.id}`;
       }, 500);

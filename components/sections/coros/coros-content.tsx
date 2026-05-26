@@ -12,14 +12,24 @@ import {
   Church,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
+import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { SearchBar } from "@/components/shared/search-bar";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Coro } from "@/lib/types";
 
-function CoroCard({ coro, searchQuery }: { coro: Coro; searchQuery: string }) {
+function CoroCard({
+  coro,
+  searchQuery,
+  isOnline,
+}: {
+  coro: Coro;
+  searchQuery: string;
+  isOnline: boolean;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const openGoogleMaps = () => {
@@ -49,8 +59,10 @@ function CoroCard({ coro, searchQuery }: { coro: Coro; searchQuery: string }) {
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
-      <div className="relative h-60 w-full bg-muted shrink-0">
-        {coro.photo ? (
+      <div className={`relative w-full bg-muted shrink-0 ${!isOnline && coro.photo ? "h-[7.5rem]" : "h-60"}`}>
+        {!isOnline && coro.photo ? (
+          <OfflineImagePlaceholder />
+        ) : coro.photo ? (
           <Image
             src={coro.photo}
             alt={coro.coroName}
@@ -200,6 +212,7 @@ interface CorosContentProps {
 export function CorosContent({ coros }: CorosContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const gridRef = useRef<HTMLDivElement>(null);
+  const { isOnline } = useConnectivity();
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -308,7 +321,7 @@ export function CorosContent({ coros }: CorosContentProps) {
             }`}
           >
             {filteredCoros.map((coro) => (
-              <CoroCard key={coro.id} coro={coro} searchQuery={searchQuery} />
+              <CoroCard key={coro.id} coro={coro} searchQuery={searchQuery} isOnline={isOnline} />
             ))}
           </div>
         )}

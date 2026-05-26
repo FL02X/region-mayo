@@ -13,7 +13,9 @@ import {
   Phone,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { Badge } from "@/components/ui/badge";
+import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
 import { SearchBar } from "@/components/shared/search-bar";
 import { HighlightedText } from "@/components/shared/highlighted-text";
@@ -21,7 +23,15 @@ import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { DirectivaMember } from "@/lib/types";
 
-function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searchQuery: string }) {
+function DirectivaCard({
+  member,
+  searchQuery,
+  isOnline,
+}: {
+  member: DirectivaMember;
+  searchQuery: string;
+  isOnline: boolean;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const openGoogleMaps = () => {
@@ -37,8 +47,10 @@ function DirectivaCard({ member, searchQuery }: { member: DirectivaMember; searc
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
-      <div className="relative h-60 w-full bg-muted shrink-0">
-        {member.photo ? (
+      <div className={`relative w-full bg-muted shrink-0 ${!isOnline && member.photo ? "h-[7.5rem]" : "h-60"}`}>
+        {!isOnline && member.photo ? (
+          <OfflineImagePlaceholder />
+        ) : member.photo ? (
           <Image
             src={member.photo}
             alt={member.fullName}
@@ -160,6 +172,7 @@ interface DirectivaContentProps {
 export function DirectivaContent({ members }: DirectivaContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const gridRef = useRef<HTMLDivElement>(null);
+  const { isOnline } = useConnectivity();
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -240,6 +253,7 @@ export function DirectivaContent({ members }: DirectivaContentProps) {
                 key={member.id}
                 member={member}
                 searchQuery={searchQuery}
+                isOnline={isOnline}
               />
             ))
           )}

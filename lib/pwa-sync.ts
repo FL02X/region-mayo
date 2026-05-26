@@ -38,11 +38,22 @@ export async function warmCacheRoutes(routes: string[] = WARM_CACHE_ROUTES) {
   );
 
   const imageUrls = new Set<string>();
+  const assetUrls = new Set<string>();
 
   for (const result of responses) {
     if (result.status !== "fulfilled") continue;
     collectImageUrls(result.value.html, result.value.route, imageUrls);
+    collectStaticAssetUrls(result.value.html, result.value.route, assetUrls);
   }
+
+  await Promise.allSettled(
+    Array.from(assetUrls).map((url) =>
+      fetch(url, {
+        cache: "reload",
+        credentials: isSameOrigin(url) ? "same-origin" : "omit",
+      }),
+    ),
+  );
 
   await Promise.allSettled(
     Array.from(imageUrls).map((url) =>
@@ -70,11 +81,18 @@ export async function estimateOfflineBundleBytes(routes: string[] = WARM_CACHE_R
 
   let total = 0;
   const imageUrls = new Set<string>();
+  const assetUrls = new Set<string>();
 
   for (const result of responses) {
     if (result.status !== "fulfilled") continue;
     total += result.value.bytes || new Blob([result.value.html]).size;
     collectImageUrls(result.value.html, result.value.route, imageUrls);
+    collectStaticAssetUrls(result.value.html, result.value.route, assetUrls);
+  }
+
+  const assetSizes = await Promise.allSettled(Array.from(assetUrls).map(estimateResourceBytes));
+  for (const result of assetSizes) {
+    total += result.status === "fulfilled" ? result.value : UNKNOWN_IMAGE_BYTES;
   }
 
   const imageSizes = await Promise.allSettled(Array.from(imageUrls).map(estimateResourceBytes));
@@ -120,12 +138,45 @@ function collectImageUrls(html: string, route: string, target: Set<string>) {
     });
 }
 
+function collectStaticAssetUrls(html: string, route: string, target: Set<string>) {
+  if (typeof window === "undefined" || !html) return;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  doc
+    .querySelectorAll(
+      [
+        "script[src]",
+        'link[rel="stylesheet"][href]',
+        'link[rel="preload"][href]',
+        'link[rel="modulepreload"][href]',
+      ].join(","),
+    )
+    .forEach((element) => {
+      const value = element.getAttribute("src") || element.getAttribute("href");
+      if (!value) return;
+      addStaticAssetUrl(value, route, target);
+    });
+}
+
 function addImageUrl(value: string, basePath: string, target: Set<string>) {
   try {
     const url = new URL(value, new URL(basePath, window.location.origin));
     if ((url.protocol === "http:" || url.protocol === "https:") && shouldCacheImageUrl(url, basePath)) {
       target.add(url.href);
     }
+  } catch {
+    // Ignore malformed URLs in generated or third-party markup.
+  }
+}
+
+function addStaticAssetUrl(value: string, basePath: string, target: Set<string>) {
+  try {
+    const url = new URL(value, new URL(basePath, window.location.origin));
+    if (url.origin !== window.location.origin) return;
+    if (!url.pathname.startsWith("/_next/static/")) return;
+    target.add(url.href);
   } catch {
     // Ignore malformed URLs in generated or third-party markup.
   }
