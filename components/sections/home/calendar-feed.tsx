@@ -185,7 +185,7 @@ export function EventsFeed({
     <div className="w-full relative bg-[#f1f1f1]" /* [#f1f1f1] */ data-events-feed="true">
       <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen pb-20 pt-[2px]">
         {/* Priority spotlight section (mobile only) */}
-        <div className="md:hidden">
+        <div className="offline-hide-when-offline md:hidden">
           <CountdownSection
             events={events}
             onRegister={handleRegister}
@@ -198,7 +198,7 @@ export function EventsFeed({
         </div>
 
         {/* ActionDeck (mobile only; desktop renders in page.tsx) */}
-        <div className="md:hidden">
+        <div className="offline-hide-when-offline md:hidden">
           <ActionDeck
             events={events}
             instagramUrl={instagramUrl}

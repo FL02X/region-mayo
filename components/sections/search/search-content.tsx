@@ -381,7 +381,7 @@ function SearchContentInner({ data }: SearchContentProps) {
                   href={`${pathPrefix}#${item.id}`}
                   className="desktop-card-lift group flex flex-col sm:flex-row bg-card border border-border/80 overflow-hidden hover:border-[#2f5e93] hover:shadow-[0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-200 relative active:scale-[0.997]"
                 >
-                  <div className="w-full sm:w-[120px] h-[160px] sm:h-auto bg-muted shrink-0 relative flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border pointer-events-none">
+                  <div className="offline-hide-when-offline w-full sm:w-[120px] h-[160px] sm:h-auto bg-muted shrink-0 relative flex items-center justify-center border-b sm:border-b-0 sm:border-r border-border pointer-events-none">
                     {photo ? (
                       <Image 
                         src={photo} 

@@ -24,7 +24,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
-import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { useTime } from "@/lib/time-context";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
@@ -174,29 +173,25 @@ export function EventCard({
         className="desktop-card-lift bg-card border border-border/80 overflow-hidden flex flex-col scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:min-h-[520px]"
       >
         {/* ── Image with date/time strip ── */}
-        {!isOnline ? (
-          <div className="relative h-40 w-full shrink-0 bg-muted">
-            <OfflineImagePlaceholder />
-          </div>
-        ) : event.image ? (
-          <div className="relative h-40 w-full shrink-0">
+        <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
+          {event.image ? (
             <Image
               src={event.image}
               alt={event.title}
               fill
-              className="object-cover"
+              className="offline-image-online object-cover"
               loading="eager"
               priority
             />
-          </div>
-        ) : (
-          <div className="h-16 w-full bg-muted flex items-center justify-center shrink-0">
-            <Church
-              className="h-6 w-6 text-muted-foreground/25"
-              aria-hidden="true"
-            />
-          </div>
-        )}
+          ) : (
+            <div className="offline-image-online absolute inset-0 flex items-center justify-center">
+              <Church
+                className="h-6 w-6 text-muted-foreground/25"
+                aria-hidden="true"
+              />
+            </div>
+          )}
+        </div>
 
         <div className="flex h-10 w-full items-center justify-between gap-3 border-b border-border/80 bg-muted/55 px-4 text-[14px] font-bold text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
           <div className="flex min-w-0 items-center gap-1.5">

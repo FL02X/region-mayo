@@ -16,7 +16,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
-import { useConnectivity } from "@/hooks/use-connectivity";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { useNearbyChurchDistances } from "@/hooks/use-nearby-church-distances";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
@@ -60,13 +59,11 @@ function TemploCard({
   searchQuery,
   distance,
   showDistance,
-  isOnline,
 }: { 
   templo: Templo; 
   searchQuery: string;
   distance?: any;
   showDistance?: boolean;
-  isOnline: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -133,22 +130,21 @@ function TemploCard({
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20"
     >
       {/* Photo Gallery */}
-      <div className={`relative w-full bg-muted shrink-0 ${!isOnline ? "h-[7.5rem]" : "h-60"}`}>
-        {!isOnline ? (
-          <OfflineImagePlaceholder />
-        ) : templo.photos && templo.photos.length > 0 ? (
+      <div className="offline-aware-image relative w-full bg-muted shrink-0">
+        {templo.photos && templo.photos.length > 0 ? (
           <TemploImageGallery
             images={templo.photos}
             alt={templo.temploName}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="offline-image-online absolute inset-0 flex items-center justify-center">
             <Church
               className="h-8 w-8 text-muted-foreground/30"
               aria-hidden="true"
             />
           </div>
         )}
+        <OfflineImagePlaceholder />
         <DistanceBadge distance={distance} show={showDistance ?? false} />
       </div>
 
@@ -368,7 +364,6 @@ interface TemploContentProps {
 
 export function TemplosContent({ templos }: TemploContentProps) {
   const geolocation = useGeolocationState();
-  const { isOnline } = useConnectivity();
   const [searchQuery, setSearchQuery] = useState("");
   const [distanceOrderIds, setDistanceOrderIds] = useState<string[] | null>(
     null,
@@ -833,7 +828,6 @@ export function TemplosContent({ templos }: TemploContentProps) {
                 showDistance={
                   showDistanceBadges && !!visibleDistances[templo.id]
                 }
-                isOnline={isOnline}
               />
             ))}
           </div>

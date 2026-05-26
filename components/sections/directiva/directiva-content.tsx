@@ -13,7 +13,6 @@ import {
   Phone,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
-import { useConnectivity } from "@/hooks/use-connectivity";
 import { Badge } from "@/components/ui/badge";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
@@ -26,11 +25,9 @@ import type { DirectivaMember } from "@/lib/types";
 function DirectivaCard({
   member,
   searchQuery,
-  isOnline,
 }: {
   member: DirectivaMember;
   searchQuery: string;
-  isOnline: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -47,24 +44,23 @@ function DirectivaCard({
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
-      <div className={`relative w-full bg-muted shrink-0 ${!isOnline ? "h-[7.5rem]" : "h-60"}`}>
-        {!isOnline ? (
-          <OfflineImagePlaceholder />
-        ) : member.photo ? (
+      <div className="offline-aware-image relative w-full bg-muted shrink-0">
+        {member.photo ? (
           <Image
             src={member.photo}
             alt={member.fullName}
             fill
-            className="object-cover object-center"
+            className="offline-image-online object-cover object-center"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="offline-image-online absolute inset-0 flex items-center justify-center">
             <UserCircle
               className="h-10 w-10 text-muted-foreground/30"
               aria-hidden="true"
             />
           </div>
         )}
+        <OfflineImagePlaceholder />
         {member.role && (
           <div className="absolute top-3 left-3">
             <Badge className="bg-foreground/85 text-background text-xs font-medium">
@@ -172,7 +168,6 @@ interface DirectivaContentProps {
 export function DirectivaContent({ members }: DirectivaContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const gridRef = useRef<HTMLDivElement>(null);
-  const { isOnline } = useConnectivity();
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -253,7 +248,6 @@ export function DirectivaContent({ members }: DirectivaContentProps) {
                 key={member.id}
                 member={member}
                 searchQuery={searchQuery}
-                isOnline={isOnline}
               />
             ))
           )}

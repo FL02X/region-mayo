@@ -12,6 +12,7 @@ const PRECACHE_ROUTES = [
   "/templos",
   "/pastores",
   "/coros",
+  "/album",
   "/directiva",
   "/buscar",
   "/configuracion",
@@ -195,8 +196,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (isAlbumRoute(url) || isFromAlbum(request)) {
-    event.respondWith(networkOnlyWithFallback(request, isHtmlRequest(request) ? OFFLINE_URL : undefined));
+  if (!isHtmlRequest(request) && isImageRequest(url, request) && (isAlbumRoute(url) || isFromAlbum(request))) {
+    event.respondWith(networkOnlyWithFallback(request));
     return;
   }
 

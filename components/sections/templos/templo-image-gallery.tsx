@@ -34,7 +34,7 @@ export function TemploImageGallery({ images, alt }: TemploImageGalleryProps) {
           setCurrentIndex(0)
           setIsGalleryOpen(true)
         }}
-        className="relative w-full h-full group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        className="offline-image-online relative w-full h-full group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
         aria-label={`Ver aviso de imagenes del ${alt}`}
       >
         <Image

@@ -52,6 +52,12 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <script
+          id="connection-state"
+          dangerouslySetInnerHTML={{
+            __html: `!function(){function s(){document.documentElement.dataset.connection=navigator.onLine?"online":"offline"}s();window.addEventListener("online",s);window.addEventListener("offline",s)}();`,
+          }}
+        />
         <link rel="preconnect" href="https://cdn.sanity.io" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

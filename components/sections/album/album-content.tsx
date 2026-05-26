@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Images, ExternalLink, Calendar, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import type { Event } from "@/lib/types";
 import { ALBUM_SHARING_ENABLED } from "@/lib/countdown-utils";
 
@@ -37,13 +38,21 @@ function AlbumCard({ event }: { event: Event }) {
   return (
     <article className="desktop-card-lift bg-card border border-border overflow-hidden">
       {/* Image */}
-      <div className="relative h-40 w-full bg-muted">
-        <Image
-          src={event.image}
-          alt={event.title}
-          fill
-          className="object-cover"
-        />
+      <div className="offline-aware-image offline-aware-image--fixed relative h-40 w-full bg-muted">
+        {event.image ? (
+          <Image
+            src={event.image}
+            alt={event.title}
+            fill
+            className="offline-image-online object-cover"
+          />
+        ) : (
+          <Images
+            className="offline-image-online absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/30"
+            aria-hidden="true"
+          />
+        )}
+        <OfflineImagePlaceholder />
         {/* Status label */}
         <div className="absolute top-3 right-3">
           <span

@@ -3,6 +3,7 @@ export const WARM_CACHE_ROUTES = [
   "/templos",
   "/pastores",
   "/coros",
+  "/album",
   "/directiva",
   "/buscar",
   "/configuracion",

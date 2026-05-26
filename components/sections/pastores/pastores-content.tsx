@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Users, MapPin, Church, Phone, ExternalLink } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
-import { useConnectivity } from "@/hooks/use-connectivity";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { SearchBar } from "@/components/shared/search-bar";
@@ -17,11 +16,9 @@ import type { Pastor } from "@/lib/types";
 function PastorCard({
   pastor,
   searchQuery,
-  isOnline,
 }: {
   pastor: Pastor;
   searchQuery: string;
-  isOnline: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -38,24 +35,23 @@ function PastorCard({
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
-      <div className={`relative w-full bg-muted shrink-0 ${!isOnline ? "h-[7.5rem]" : "h-60"}`}>
-        {!isOnline ? (
-          <OfflineImagePlaceholder />
-        ) : pastor.photo ? (
+      <div className="offline-aware-image relative w-full bg-muted shrink-0">
+        {pastor.photo ? (
           <Image
             src={pastor.photo}
             alt={pastor.fullName}
             fill
-            className="object-cover object-center"
+            className="offline-image-online object-cover object-center"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="offline-image-online absolute inset-0 flex items-center justify-center">
             <Users
               className="h-8 w-8 text-muted-foreground/30"
               aria-hidden="true"
             />
           </div>
         )}
+        <OfflineImagePlaceholder />
       </div>
 
       {/* Content */}
@@ -159,7 +155,6 @@ interface DirectorioContentProps {
 export function DirectorioContent({ pastors }: DirectorioContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const gridRef = useRef<HTMLDivElement>(null);
-  const { isOnline } = useConnectivity();
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -236,7 +231,6 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
                 key={pastor.id}
                 pastor={pastor}
                 searchQuery={searchQuery}
-                isOnline={isOnline}
               />
             ))}
           </div>

@@ -76,7 +76,7 @@ export default async function Home() {
         </div>
 
         {/* Desktop only: ActionDeck below hero — keep tight to hero, decorative bottom rules in component */}
-        <div className="hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white mt-0 mb-0">
+        <div className="offline-hide-when-offline hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white mt-0 mb-0">
           <ActionDeck
             events={events}
             instagramUrl={region?.socialLinks.instagram}

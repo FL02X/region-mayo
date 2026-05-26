@@ -636,6 +636,30 @@ select,
     0 1px 2px rgba(0, 0, 0, 0.42);
 }
 
+.offline-aware-image:not(.offline-aware-image--fixed) {
+  height: 15rem;
+}
+
+.offline-image-placeholder {
+  display: none;
+}
+
+html[data-connection="offline"] .offline-aware-image:not(.offline-aware-image--fixed) {
+  height: 7.5rem;
+}
+
+html[data-connection="offline"] .offline-aware-image .offline-image-online {
+  display: none !important;
+}
+
+html[data-connection="offline"] .offline-aware-image .offline-image-placeholder {
+  display: flex;
+}
+
+html[data-connection="offline"] .offline-hide-when-offline {
+  display: none !important;
+}
+
 @keyframes headerIconShake {
   0% {
     transform: translateY(0) rotate(0deg);

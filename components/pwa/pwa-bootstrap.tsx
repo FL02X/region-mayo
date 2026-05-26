@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { WifiOff, X } from "lucide-react";
 import { applyFontScale, onPreferenceChange, readFontScale } from "@/lib/preferences";
 import { readLastSync, warmCacheRoutes, writeLastSync } from "@/lib/pwa-sync";
 import { useConnectivity } from "@/hooks/use-connectivity";
@@ -11,6 +12,7 @@ const SYNC_INTERVAL_SLOW_MS = 12 * 60 * 60 * 1000;
 
 export function PwaBootstrap() {
   const { isOnline, connection } = useConnectivity();
+  const [isAlbumOfflineModalOpen, setIsAlbumOfflineModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -82,12 +84,6 @@ export function PwaBootstrap() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
-
-    if (!isStandalone) return;
-
     const handleClick = (event: MouseEvent) => {
       if (event.defaultPrevented) return;
       if (event.button !== 0) return;
@@ -103,7 +99,17 @@ export function PwaBootstrap() {
       const url = new URL(anchor.href);
       if (url.origin !== window.location.origin) return;
 
-      if (!navigator.onLine) {
+      if (!navigator.onLine && url.pathname === "/album") {
+        event.preventDefault();
+        setIsAlbumOfflineModalOpen(true);
+        return;
+      }
+
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+
+      if (isStandalone && !navigator.onLine) {
         event.preventDefault();
         window.location.href = url.href;
       }
@@ -135,5 +141,36 @@ export function PwaBootstrap() {
     };
   }, []);
 
-  return null;
+  return (
+    <>
+      {isAlbumOfflineModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 px-4" role="presentation">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pwa-album-offline-title"
+            className="relative w-full max-w-[360px] border border-border bg-background p-5 text-center shadow-xl"
+          >
+            <button
+              type="button"
+              onClick={() => setIsAlbumOfflineModalOpen(false)}
+              className="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center text-muted-foreground hover:text-foreground"
+              aria-label="Cerrar aviso"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-primary/10 text-primary">
+              <WifiOff className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <h2 id="pwa-album-offline-title" className="text-sm font-bold uppercase tracking-wide text-foreground">
+              Requiere conexion
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              El album de actividades usa contenido pesado y necesita internet para abrirse.
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

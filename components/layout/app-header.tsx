@@ -157,6 +157,7 @@ export function AppHeader({
                 className="rounded-full shrink-0"
                 loading="eager"
                 priority
+                unoptimized
               />
             </Link>
 
@@ -256,6 +257,7 @@ export function AppHeader({
                   className="rounded-full shrink-0"
                   loading="eager"
                   priority
+                  unoptimized
                 />
               </Link>
 
@@ -318,6 +320,7 @@ export function AppHeader({
                   className="rounded-full shrink-0"
                   loading="eager"
                   priority
+                  unoptimized
                 />
               </Link>
             </div>
@@ -362,6 +365,7 @@ export function AppHeader({
           <DebugTimePicker />
         </div>
       )}
+
     </>
   );
 }

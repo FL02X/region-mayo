@@ -12,7 +12,6 @@ import {
   Church,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
-import { useConnectivity } from "@/hooks/use-connectivity";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { SearchBar } from "@/components/shared/search-bar";
@@ -24,11 +23,9 @@ import type { Coro } from "@/lib/types";
 function CoroCard({
   coro,
   searchQuery,
-  isOnline,
 }: {
   coro: Coro;
   searchQuery: string;
-  isOnline: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -59,24 +56,23 @@ function CoroCard({
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
-      <div className={`relative w-full bg-muted shrink-0 ${!isOnline ? "h-[7.5rem]" : "h-60"}`}>
-        {!isOnline ? (
-          <OfflineImagePlaceholder />
-        ) : coro.photo ? (
+      <div className="offline-aware-image relative w-full bg-muted shrink-0">
+        {coro.photo ? (
           <Image
             src={coro.photo}
             alt={coro.coroName}
             fill
-            className="object-cover object-center"
+            className="offline-image-online object-cover object-center"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="offline-image-online absolute inset-0 flex items-center justify-center">
             <Music
               className="h-8 w-8 text-muted-foreground/30"
               aria-hidden="true"
             />
           </div>
         )}
+        <OfflineImagePlaceholder />
       </div>
 
       {/* Content */}
@@ -212,7 +208,6 @@ interface CorosContentProps {
 export function CorosContent({ coros }: CorosContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const gridRef = useRef<HTMLDivElement>(null);
-  const { isOnline } = useConnectivity();
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -321,7 +316,7 @@ export function CorosContent({ coros }: CorosContentProps) {
             }`}
           >
             {filteredCoros.map((coro) => (
-              <CoroCard key={coro.id} coro={coro} searchQuery={searchQuery} isOnline={isOnline} />
+              <CoroCard key={coro.id} coro={coro} searchQuery={searchQuery} />
             ))}
           </div>
         )}
