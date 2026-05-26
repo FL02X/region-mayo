@@ -1,28 +1,29 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
+  AlertTriangle,
   ChevronDown,
   MapPin,
   ExternalLink,
-  Phone,
   Church,
-  Mic,
-  Music,
+  LoaderCircle,
   Users,
   User,
   Clock,
   FileText,
+  XCircle,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
+import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { useNearbyChurchDistances } from "@/hooks/use-nearby-church-distances";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { TemploImageGallery } from "./templo-image-gallery";
 import { DistanceBadge } from "./distance-badge";
 import { SearchBar } from "@/components/shared/search-bar";
 import { HighlightedText } from "@/components/shared/highlighted-text";
+import { findNearestChurches } from "@/lib/location-service";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import {
@@ -32,12 +33,17 @@ import {
 } from "@/lib/templo-schedule";
 import { useTime } from "@/lib/time-context";
 import type { Templo } from "@/lib/types";
+import type { DistanceResult } from "@/lib/location-service";
 
 const DISTANCE_ORDER_STORAGE_KEY = "region-mayo-templos-distance-order";
 const DISTANCE_ORDER_ENABLED_KEY = "region-mayo-templos-distance-order-enabled";
 const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
 const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
 const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
+const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
+
+type LocationSearchState = "idle" | "searching" | "warning" | "error";
+type DistanceMap = Record<string, DistanceResult>;
 
 const formatPresidentShortName = (name: string) => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -355,12 +361,20 @@ interface TemploContentProps {
 }
 
 export function TemplosContent({ templos }: TemploContentProps) {
+  const geolocation = useGeolocationState();
   const [searchQuery, setSearchQuery] = useState("");
   const [distanceOrderIds, setDistanceOrderIds] = useState<string[] | null>(
     null,
   );
   const [distanceOrderEnabled, setDistanceOrderEnabled] = useState(false);
   const [showDistanceBadges, setShowDistanceBadges] = useState(false);
+  const [locationSearchState, setLocationSearchState] =
+    useState<LocationSearchState>("idle");
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [locationIssueMessage, setLocationIssueMessage] = useState("");
+  const [locationSearchDistances, setLocationSearchDistances] =
+    useState<DistanceMap>({});
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const highlightedHashRef = useRef<string | null>(null);
@@ -370,6 +384,119 @@ export function TemplosContent({ templos }: TemploContentProps) {
   const { distances, hasPermission, loading } = useNearbyChurchDistances(
     templos,
   );
+  const visibleDistances = useMemo(
+    () => ({ ...distances, ...locationSearchDistances }),
+    [distances, locationSearchDistances],
+  );
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!geolocation.permissionDenied) return;
+
+    setLocationSearchState("warning");
+    setLocationIssueMessage(
+      geolocation.error ||
+        "No tenemos permiso para acceder a tu ubicacion. Puedes reintentarlo y permitir el acceso desde el navegador.",
+    );
+  }, [geolocation.permissionDenied, geolocation.error]);
+
+  const runNearestTempleSearch = async () => {
+    setLocationModalOpen(false);
+    setLocationSearchState("searching");
+    setLocationIssueMessage("");
+
+    try {
+      const location = await geolocation.requestGeolocation();
+
+      try {
+        sessionStorage.setItem(SKIP_ONLINE_TOAST_KEY, "true");
+      } catch {
+        // Ignore storage failures (private mode, quota)
+      }
+
+      const nearestChurches = await findNearestChurches(
+        location.lat,
+        location.lng,
+        templos,
+        templos.length,
+      );
+
+      if (nearestChurches.length === 0) {
+        setLocationSearchState("error");
+        setLocationIssueMessage(
+          "No encontramos templos con coordenadas configuradas para calcular el mas cercano.",
+        );
+        return;
+      }
+
+      const orderedIds = nearestChurches.map(({ church }) => church.id);
+      const distanceMap: DistanceMap = {};
+      nearestChurches.forEach(({ church, distance }) => {
+        distanceMap[church.id] = distance;
+      });
+      const nearest = nearestChurches[0];
+
+      try {
+        localStorage.setItem(DISTANCE_ORDER_ENABLED_KEY, "true");
+        localStorage.setItem(
+          DISTANCE_ORDER_STORAGE_KEY,
+          JSON.stringify(orderedIds),
+        );
+        sessionStorage.setItem(SHOW_DISTANCE_BADGES_KEY, "true");
+        sessionStorage.setItem(GPS_HIGHLIGHT_KEY, nearest.church.id);
+        sessionStorage.removeItem(GPS_HIGHLIGHT_USED_KEY);
+      } catch {
+        // Ignore storage failures (private mode, quota)
+      }
+
+      setSearchQuery("");
+      setLocationSearchDistances(distanceMap);
+      setDistanceOrderEnabled(true);
+      setDistanceOrderIds(orderedIds);
+      setShowDistanceBadges(true);
+      setIsClientReady(true);
+
+      window.setTimeout(() => {
+        const id = nearest.church.id;
+        const el = document.getElementById(id);
+        if (!el) {
+          setLocationSearchState("idle");
+          return;
+        }
+
+        history.replaceState(null, "", `${window.location.pathname}#${id}`);
+        highlightedHashRef.current = id;
+        el.classList.add("global-highlight");
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        try {
+          sessionStorage.setItem(GPS_HIGHLIGHT_USED_KEY, "true");
+        } catch {
+          // Ignore storage failures (private mode, quota)
+        }
+
+        window.setTimeout(() => {
+          setLocationSearchState("idle");
+        }, 500);
+      }, 150);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No fue posible determinar tu ubicacion actual. Revisa si tu GPS esta encendido.";
+
+      setLocationSearchState("warning");
+      setLocationIssueMessage(message);
+    }
+  };
+
+  const handleLocationButtonClick = () => {
+    if (locationSearchState === "searching") return;
+    setLocationModalOpen(true);
+  };
 
   useEffect(() => {
     let storedOrderIds: string[] | null = null;
@@ -416,11 +543,11 @@ export function TemplosContent({ templos }: TemploContentProps) {
 
   useEffect(() => {
     if (!distanceOrderEnabled || !hasPermission) return;
-    if (!templos.length || Object.keys(distances).length === 0) return;
+    if (!templos.length || Object.keys(visibleDistances).length === 0) return;
 
     const orderedByDistance = [...templos].sort((a, b) => {
-      const distanceA = distances[a.id];
-      const distanceB = distances[b.id];
+      const distanceA = visibleDistances[a.id];
+      const distanceB = visibleDistances[b.id];
 
       if (distanceA && distanceB) return distanceA.km - distanceB.km;
       if (distanceA) return -1;
@@ -447,7 +574,7 @@ export function TemplosContent({ templos }: TemploContentProps) {
 
     setDistanceOrderIds(orderedIds);
     setIsClientReady(true);
-  }, [distanceOrderEnabled, hasPermission, distances, templos, distanceOrderIds]);
+  }, [distanceOrderEnabled, hasPermission, visibleDistances, templos, distanceOrderIds]);
 
   useEffect(() => {
     if (!distanceOrderEnabled) return;
@@ -486,15 +613,15 @@ export function TemplosContent({ templos }: TemploContentProps) {
     if (!distanceOrderEnabled || !hasPermission) return base;
 
     return base.sort((a, b) => {
-      const distanceA = distances[a.id];
-      const distanceB = distances[b.id];
+      const distanceA = visibleDistances[a.id];
+      const distanceB = visibleDistances[b.id];
 
       if (distanceA && distanceB) return distanceA.km - distanceB.km;
       if (distanceA) return -1;
       if (distanceB) return 1;
       return 0;
     });
-  }, [filteredTemplos, distances, hasPermission, distanceOrderIds, distanceOrderEnabled]);
+  }, [filteredTemplos, visibleDistances, hasPermission, distanceOrderIds, distanceOrderEnabled]);
 
   useEffect(() => {
     if (!isClientReady) return;
@@ -533,8 +660,22 @@ export function TemplosContent({ templos }: TemploContentProps) {
     };
   }, [isClientReady, sortedTemplos.map((t) => t.id).join(",")]);
 
-  const shouldHideList = !isClientReady;
-  const shouldShowLoader = !isClientReady;
+  const shouldHideList = hasHydrated && !isClientReady;
+  const shouldShowLoader = hasHydrated && !isClientReady;
+  const locationModalTitle =
+    locationSearchState === "error"
+      ? "No se pudo encontrar el templo cercano"
+      : locationSearchState === "warning"
+        ? "Revisar acceso a ubicacion"
+        : "Usar tu ubicacion";
+  const locationModalMessage =
+    locationSearchState === "error" || locationSearchState === "warning"
+      ? locationIssueMessage
+      : "Permite el acceso a tu ubicacion para ordenar los templos por cercania y abrir automaticamente el templo mas cercano.";
+  const locationButtonLabel =
+    locationSearchState === "searching"
+      ? "Buscando templo cercano"
+      : "Buscar templo cercano a mi ubicacion";
 
   return (
     <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
@@ -563,8 +704,89 @@ export function TemplosContent({ templos }: TemploContentProps) {
           <SearchBar
             onSearchChange={setSearchQuery}
             placeholder="Buscar por nombre, dirección, pastor o coro..."
+            rightAction={
+              <button
+                type="button"
+                onClick={handleLocationButtonClick}
+                disabled={locationSearchState === "searching"}
+                className="relative inline-flex h-full w-[42px] items-center justify-center rounded-r-[2px] border border-[#244b76] bg-[#2f5e93] text-white shadow-sm transition-colors hover:bg-[#284f7c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] focus-visible:ring-offset-1 disabled:cursor-wait disabled:bg-[#2f5e93]"
+                aria-label={locationButtonLabel}
+                title={locationButtonLabel}
+              >
+                {locationSearchState === "searching" ? (
+                  <LoaderCircle className="h-[18px] w-[18px] animate-spin" aria-hidden="true" />
+                ) : (
+                  <MapPin className="h-[18px] w-[18px]" aria-hidden="true" />
+                )}
+                {locationSearchState === "warning" && (
+                  <AlertTriangle
+                    className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 fill-amber-400 text-amber-700"
+                    aria-hidden="true"
+                  />
+                )}
+                {locationSearchState === "error" && (
+                  <XCircle
+                    className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 fill-red-50 text-red-600"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            }
           />
         </div>
+
+        {locationModalOpen && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4" role="presentation">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="location-search-title"
+              className="w-full max-w-[360px] border border-border bg-background shadow-xl"
+            >
+              <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+                <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2f5e93]/10 text-[#2f5e93]">
+                  <MapPin className="h-[18px] w-[18px]" aria-hidden="true" />
+                  {locationSearchState === "warning" && (
+                    <AlertTriangle
+                      className="absolute -right-1 -top-1 h-3.5 w-3.5 fill-amber-400 text-amber-700"
+                      aria-hidden="true"
+                    />
+                  )}
+                  {locationSearchState === "error" && (
+                    <XCircle
+                      className="absolute -right-1 -top-1 h-3.5 w-3.5 fill-red-50 text-red-600"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
+                <h2 id="location-search-title" className="text-sm font-semibold text-foreground">
+                  {locationModalTitle}
+                </h2>
+              </div>
+              <div className="px-4 py-4">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {locationModalMessage}
+                </p>
+              </div>
+              <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => setLocationModalOpen(false)}
+                  className="h-9 px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={runNearestTempleSearch}
+                  className="h-9 bg-[#2f5e93] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#284f7c]"
+                >
+                  {locationSearchState === "idle" ? "Permitir" : "Reintentar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {filteredTemplos.length === 0 ? (
           <div className="bg-card border border-border p-8 text-center">
@@ -600,9 +822,9 @@ export function TemplosContent({ templos }: TemploContentProps) {
                 key={templo.id}
                 templo={templo}
                 searchQuery={searchQuery}
-                distance={distances[templo.id]}
+                distance={visibleDistances[templo.id]}
                 showDistance={
-                  showDistanceBadges && hasPermission && !!distances[templo.id]
+                  showDistanceBadges && !!visibleDistances[templo.id]
                 }
               />
             ))}

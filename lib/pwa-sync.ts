@@ -3,7 +3,6 @@ export const WARM_CACHE_ROUTES = [
   "/templos",
   "/pastores",
   "/coros",
-  "/album",
   "/directiva",
   "/buscar",
   "/configuracion",
@@ -11,6 +10,9 @@ export const WARM_CACHE_ROUTES = [
 ];
 
 export const LAST_SYNC_KEY = "rm-last-sync";
+export const OFFLINE_BUNDLE_FALLBACK_BYTES = 15 * 1024 * 1024;
+const MAX_MOBILE_IMAGE_WIDTH = 828;
+const UNKNOWN_IMAGE_BYTES = 120 * 1024;
 
 export function readLastSync(): number {
   if (typeof window === "undefined") return 0;
@@ -44,17 +46,55 @@ export async function warmCacheRoutes(routes: string[] = WARM_CACHE_ROUTES) {
 
   await Promise.allSettled(
     Array.from(imageUrls).map((url) =>
-      fetch(url, {
-        cache: "reload",
-        credentials: isSameOrigin(url) ? "same-origin" : "omit",
-        mode: isSameOrigin(url) ? "same-origin" : "no-cors",
-      }),
+      fetchImageIfMissing(url),
     ),
   );
 }
 
+export async function estimateOfflineBundleBytes(routes: string[] = WARM_CACHE_ROUTES): Promise<number> {
+  if (typeof window === "undefined") return OFFLINE_BUNDLE_FALLBACK_BYTES;
+
+  const responses = await Promise.allSettled(
+    routes.map(async (route) => {
+      const estimateUrl = new URL(route, window.location.origin);
+      estimateUrl.searchParams.set("pwa-estimate", "1");
+      const response = await fetch(estimateUrl.href, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      const html = await response.clone().text().catch(() => "");
+      const contentLength = Number(response.headers.get("content-length") || 0);
+      return { route, html, bytes: Number.isFinite(contentLength) ? contentLength : 0 };
+    }),
+  );
+
+  let total = 0;
+  const imageUrls = new Set<string>();
+
+  for (const result of responses) {
+    if (result.status !== "fulfilled") continue;
+    total += result.value.bytes || new Blob([result.value.html]).size;
+    collectImageUrls(result.value.html, result.value.route, imageUrls);
+  }
+
+  const imageSizes = await Promise.allSettled(Array.from(imageUrls).map(estimateResourceBytes));
+  for (const result of imageSizes) {
+    total += result.status === "fulfilled" ? result.value : UNKNOWN_IMAGE_BYTES;
+  }
+
+  return total || OFFLINE_BUNDLE_FALLBACK_BYTES;
+}
+
+export function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "15 MB";
+  const mb = bytes / 1024 / 1024;
+  if (mb < 1) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${Math.ceil(mb)} MB`;
+}
+
 function collectImageUrls(html: string, route: string, target: Set<string>) {
   if (typeof window === "undefined" || !html) return;
+  if (isExcludedRoute(route)) return;
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
@@ -83,7 +123,7 @@ function collectImageUrls(html: string, route: string, target: Set<string>) {
 function addImageUrl(value: string, basePath: string, target: Set<string>) {
   try {
     const url = new URL(value, new URL(basePath, window.location.origin));
-    if (url.protocol === "http:" || url.protocol === "https:") {
+    if ((url.protocol === "http:" || url.protocol === "https:") && shouldCacheImageUrl(url, basePath)) {
       target.add(url.href);
     }
   } catch {
@@ -97,4 +137,62 @@ function isSameOrigin(value: string) {
   } catch {
     return false;
   }
+}
+
+function isExcludedRoute(route: string) {
+  try {
+    const url = new URL(route, window.location.origin);
+    return url.pathname === "/album" || url.pathname.startsWith("/album/");
+  } catch {
+    return route === "/album" || route.startsWith("/album/");
+  }
+}
+
+function shouldCacheImageUrl(url: URL, basePath: string) {
+  if (isExcludedRoute(basePath)) return false;
+  if (isDesktopSizedImage(url)) return false;
+  return true;
+}
+
+function isDesktopSizedImage(url: URL) {
+  const nextImageUrl = url.pathname.startsWith("/_next/image") ? url.searchParams.get("url") : null;
+  const width = Number(url.searchParams.get("w") || getNestedWidth(nextImageUrl));
+  return Number.isFinite(width) && width > MAX_MOBILE_IMAGE_WIDTH;
+}
+
+function getNestedWidth(value: string | null) {
+  if (!value) return "";
+  try {
+    return new URL(value).searchParams.get("w") || "";
+  } catch {
+    return "";
+  }
+}
+
+async function estimateResourceBytes(url: string) {
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+      cache: "no-store",
+      credentials: isSameOrigin(url) ? "same-origin" : "omit",
+      mode: isSameOrigin(url) ? "same-origin" : "cors",
+    });
+    const contentLength = Number(response.headers.get("content-length") || 0);
+    return Number.isFinite(contentLength) && contentLength > 0 ? contentLength : UNKNOWN_IMAGE_BYTES;
+  } catch {
+    return UNKNOWN_IMAGE_BYTES;
+  }
+}
+
+async function fetchImageIfMissing(url: string) {
+  if (typeof window !== "undefined" && "caches" in window) {
+    const cached = await caches.match(url, { ignoreSearch: false });
+    if (cached) return cached;
+  }
+
+  return fetch(url, {
+    cache: "reload",
+    credentials: isSameOrigin(url) ? "same-origin" : "omit",
+    mode: isSameOrigin(url) ? "same-origin" : "no-cors",
+  });
 }

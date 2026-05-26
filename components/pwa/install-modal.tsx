@@ -5,6 +5,13 @@ import { createPortal } from "react-dom";
 import { Download, Smartphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import {
+  estimateOfflineBundleBytes,
+  formatBytes,
+  OFFLINE_BUNDLE_FALLBACK_BYTES,
+  warmCacheRoutes,
+  writeLastSync,
+} from "@/lib/pwa-sync";
 
 interface InstallModalProps {
   isOpen: boolean;
@@ -16,6 +23,8 @@ export function InstallModal({ isOpen, onClose }: InstallModalProps) {
   const [installMessage, setInstallMessage] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [bundleBytes, setBundleBytes] = useState(OFFLINE_BUNDLE_FALLBACK_BYTES);
+  const [isPreparingOffline, setIsPreparingOffline] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -31,6 +40,21 @@ export function InstallModal({ isOpen, onClose }: InstallModalProps) {
     return () => cancelAnimationFrame(raf);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    estimateOfflineBundleBytes()
+      .then((bytes) => {
+        if (!cancelled) setBundleBytes(bytes);
+      })
+      .catch(() => {
+        if (!cancelled) setBundleBytes(OFFLINE_BUNDLE_FALLBACK_BYTES);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
   if (!isOpen || !isMounted) return null;
 
   const handleInstall = async () => {
@@ -41,11 +65,23 @@ export function InstallModal({ isOpen, onClose }: InstallModalProps) {
     }
 
     if (choice.outcome === "accepted") {
-      setInstallMessage("Instalacion iniciada. Busca el icono en tu pantalla de inicio.");
+      setIsPreparingOffline(true);
+      setInstallMessage("Instalacion iniciada. Preparando contenido para usar sin conexion...");
+      try {
+        await warmCacheRoutes();
+        writeLastSync(Date.now());
+        setInstallMessage("App instalada y contenido principal disponible sin conexion.");
+      } catch {
+        setInstallMessage("La app se instalo, pero no se pudo preparar todo el contenido sin conexion.");
+      } finally {
+        setIsPreparingOffline(false);
+      }
     } else {
       setInstallMessage("Instalacion cancelada. Puedes intentarlo mas tarde.");
     }
   };
+
+  const bundleLabel = formatBytes(bundleBytes);
 
   const modal = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" role="presentation">
@@ -89,17 +125,20 @@ export function InstallModal({ isOpen, onClose }: InstallModalProps) {
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Puedes instalar Region Mayo para abrirla rapido desde tu pantalla de inicio.
+                Agrega la app a tu celular y descarga el contenido principal para usarla sin conexion.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Algunas secciones pueden requerir conexion.
               </p>
 
               {!isIos && (
                 <Button
                   onClick={handleInstall}
                   className="rounded-none h-12 px-5 uppercase tracking-wider font-semibold"
-                  disabled={!canInstall}
+                  disabled={!canInstall || isPreparingOffline}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Instalar ahora
+                  {isPreparingOffline ? "Preparando..." : `Instalar ahora (${bundleLabel})`}
                 </Button>
               )}
 

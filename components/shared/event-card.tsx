@@ -16,11 +16,14 @@ import {
   Mic,
   Info,
   X,
+  Wifi,
   CalendarDays,
   Church,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useConnectivity } from "@/hooks/use-connectivity";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useTime } from "@/lib/time-context";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
@@ -61,6 +64,9 @@ export function EventCard({
 }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showMoreInfoImage, setShowMoreInfoImage] = useState(false);
+  const { isStandalone } = useInstallPrompt();
+  const { isOnline } = useConnectivity();
+  const shouldShowOfflineNotice = isStandalone && !isOnline;
   const { currentTime } = useTime();
 
   /* ── date helpers (UTC to avoid hydration drift) ── */
@@ -517,25 +523,51 @@ export function EventCard({
           aria-modal="true"
           aria-label="Información adicional del evento"
         >
-          <div className="relative max-w-lg w-full max-h-[90vh]">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowMoreInfoImage(false)}
-              className="absolute -top-12 right-0 text-white hover:bg-white/20 rounded-full"
-              aria-label="Cerrar imagen de información"
+          {shouldShowOfflineNotice ? (
+            <div
+              className="relative w-full max-w-[360px] border border-border bg-background p-5 text-center shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="h-6 w-6" />
-            </Button>
-            <div className="relative aspect-[3/4] w-full overflow-hidden">
-              <Image
-                src={event.moreInfo.imageUrl}
-                alt="Más información del evento"
-                fill
-                className="object-contain"
-              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowMoreInfoImage(false)}
+                className="absolute right-2 top-2 h-9 w-9 rounded-none"
+                aria-label="Cerrar aviso"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-primary/10">
+                <Wifi className="h-6 w-6 text-primary" aria-hidden="true" />
+              </div>
+              <p className="text-sm font-bold uppercase tracking-wide text-foreground">
+                Requiere conexion a internet
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Para ahorrar datos y almacenamiento, las imagenes ampliadas no se descargan para uso sin conexion.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="relative max-w-lg w-full max-h-[90vh]">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowMoreInfoImage(false)}
+                className="absolute -top-12 right-0 text-white hover:bg-white/20 rounded-full"
+                aria-label="Cerrar imagen de informacion"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+              <div className="relative aspect-[3/4] w-full overflow-hidden">
+                <Image
+                  src={event.moreInfo.imageUrl}
+                  alt="Mas informacion del evento"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>

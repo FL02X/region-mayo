@@ -1,15 +1,16 @@
-const VERSION = "v6";
+const VERSION = "v7";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
 const IMAGE_CACHE = `rm-images-${VERSION}`;
 const OFFLINE_URL = "/offline";
+const IMAGE_FALLBACK_URL = "/placeholder.svg";
 const PRECACHE_ROUTES = [
   "/",
   "/offline",
+  IMAGE_FALLBACK_URL,
   "/templos",
   "/pastores",
   "/coros",
-  "/album",
   "/directiva",
   "/buscar",
   "/configuracion",
@@ -17,6 +18,7 @@ const PRECACHE_ROUTES = [
 ];
 const DEV_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const IS_DEV_HOST = DEV_HOSTS.has(self.location.hostname);
+const MAX_MOBILE_IMAGE_WIDTH = 828;
 
 self.addEventListener("install", (event) => {
   if (!IS_DEV_HOST) {
@@ -71,21 +73,70 @@ const isImageRequest = (url, request) =>
   (url.hostname === "cdn.sanity.io" && url.pathname.includes("/images/"));
 
 const isBypassRequest = (url) =>
+  url.searchParams.has("pwa-estimate") ||
   url.pathname.startsWith("/api/prayers") ||
   url.pathname.startsWith("/api/register") ||
   url.pathname.startsWith("/api/download-himnario") ||
   url.pathname.startsWith("/studio");
+
+const isAlbumRoute = (url) => url.pathname === "/album" || url.pathname.startsWith("/album/");
+
+const getReferrerUrl = (request) => {
+  try {
+    return request.referrer ? new URL(request.referrer) : null;
+  } catch {
+    return null;
+  }
+};
+
+const isFromAlbum = (request) => {
+  const referrerUrl = getReferrerUrl(request);
+  return !!referrerUrl && referrerUrl.origin === self.location.origin && isAlbumRoute(referrerUrl);
+};
+
+const isDesktopSizedImage = (url) => {
+  const width = Number(url.searchParams.get("w") || "");
+  return Number.isFinite(width) && width > MAX_MOBILE_IMAGE_WIDTH;
+};
+
+async function imageFallbackResponse() {
+  const fallback = await caches.match(IMAGE_FALLBACK_URL, { ignoreSearch: true });
+  if (fallback) return fallback;
+  return new Response("", { status: 204 });
+}
 
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   if (cached) return cached;
 
-  const response = await fetch(request);
-  if (isCacheableResponse(response)) {
-    cache.put(request, response.clone());
+  try {
+    const response = await fetch(request);
+    if (isCacheableResponse(response)) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    if (cacheName === IMAGE_CACHE) {
+      return imageFallbackResponse();
+    }
+    throw error;
   }
-  return response;
+}
+
+async function networkOnlyWithFallback(request, fallbackUrl) {
+  try {
+    return await fetch(request);
+  } catch (error) {
+    if (isImageRequest(new URL(request.url), request)) {
+      return imageFallbackResponse();
+    }
+    if (fallbackUrl) {
+      const fallback = await caches.match(fallbackUrl, { ignoreSearch: true });
+      if (fallback) return fallback;
+    }
+    throw error;
+  }
 }
 
 async function networkFirstWithCacheFallback(request, cacheName, fallbackUrl) {
@@ -143,12 +194,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (isAlbumRoute(url) || isFromAlbum(request)) {
+    event.respondWith(networkOnlyWithFallback(request, isHtmlRequest(request) ? OFFLINE_URL : undefined));
+    return;
+  }
+
   if (isHtmlRequest(request)) {
     event.respondWith(networkFirstWithCacheFallback(request, STATIC_CACHE, OFFLINE_URL));
     return;
   }
 
   if (isImageRequest(url, request)) {
+    if (isDesktopSizedImage(url)) {
+      event.respondWith(networkOnlyWithFallback(request));
+      return;
+    }
     event.respondWith(cacheFirst(request, IMAGE_CACHE));
     return;
   }

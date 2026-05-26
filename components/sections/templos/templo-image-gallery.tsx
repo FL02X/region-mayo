@@ -16,7 +16,7 @@ interface TemploImageGalleryProps {
  * - Muestra la primera imagen
  * - Desktop: hover muestra lupa centrada
  * - Mobile: muestra lupa en esquina inferior derecha
- * - Click abre modal de galería completa
+ * - Click abre aviso de conexion para no descargar galeria completa
  */
 export function TemploImageGallery({ images, alt }: TemploImageGalleryProps) {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
@@ -35,7 +35,7 @@ export function TemploImageGallery({ images, alt }: TemploImageGalleryProps) {
           setIsGalleryOpen(true)
         }}
         className="relative w-full h-full group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-        aria-label={`Abrir galería de imágenes del ${alt}`}
+        aria-label={`Ver aviso de imagenes del ${alt}`}
       >
         <Image
           src={sanityImageVariantUrl(images[0], {

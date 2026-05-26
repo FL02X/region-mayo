@@ -12,6 +12,7 @@ const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
 const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
 const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
 const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
+const LOCATION_BAR_DISMISSED_KEY = "region-mayo-location-bar-dismissed";
 
 type BarState =
   | "initial" 
@@ -28,6 +29,7 @@ export function LocationNotificationBar({
   templos,
 }: LocationNotificationBarProps) {
   const geolocation = useGeolocationState();
+  const [isMounted, setIsMounted] = useState(false);
   const [barState, setBarState] = useState<BarState>("initial");
   const [isVisible, setIsVisible] = useState(false);
   const [nearestChurch, setNearestChurch] = useState<Templo | null>(null);
@@ -35,6 +37,10 @@ export function LocationNotificationBar({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState<number>(0);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Resize observer to get accurate height for smooth transition
   useEffect(() => {
@@ -47,27 +53,28 @@ export function LocationNotificationBar({
   }, [barState, errorMessage]);
 
   useEffect(() => {
-    // DEBUG: Comentadas todas las verificaciones para que la barra siempre aparezca durante las demostraciones a clientes
-    /*
-    const dismissedThisSession = sessionStorage.getItem("region-mayo-location-bar-dismissed");
-    
-    if (geolocation.permissionDenied || geolocation.permissionGranted || dismissedThisSession === "true") {
+    if (!isMounted) return;
+
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem(LOCATION_BAR_DISMISSED_KEY) === "true";
+    } catch {
+      // Ignore storage failures (private mode, quota)
+    }
+
+    if (geolocation.permissionDenied || geolocation.permissionGranted || dismissed) {
       setBarState("dismissed");
       setIsVisible(false);
       return;
     }
-    */
 
-    // Resetear el estado en caso de que cambien los props y queremos que reaparezca (modo debug)
-    // Solo ejecutamos esto al cargar el componente (montaje inicial) para evitar que
-    // se formatee el estado de error cuando hook cambia sus valores de permiso.
     const timer = setTimeout(() => {
       setBarState(prev => prev === "initial" ? "initial" : prev);
       setIsVisible(true);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []); // <-- Removidas dependencias problemáticas que reseteaban el error
+  }, [isMounted]);
 
   const handleRequestPermission = async () => {
     setBarState("loading");
@@ -106,8 +113,11 @@ export function LocationNotificationBar({
 
   const handleDismiss = () => {
     setIsVisible(false);
-    // DEBUG: Comentado el guardado en sessionStorage para seguir probando la barra
-    // sessionStorage.setItem("region-mayo-location-bar-dismissed", "true");
+    try {
+      localStorage.setItem(LOCATION_BAR_DISMISSED_KEY, "true");
+    } catch {
+      // Ignore storage failures (private mode, quota)
+    }
     setTimeout(() => {
       setBarState("dismissed");
     }, 500); // Wait for transition
@@ -130,7 +140,7 @@ export function LocationNotificationBar({
     }
   };
 
-  if (barState === "dismissed") {
+  if (!isMounted || barState === "dismissed") {
     return null;
   }
 
@@ -223,7 +233,14 @@ export function LocationNotificationBar({
               )}
             </div>
 
-            {/* Close button intentionally removed per request */}
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="shrink-0 inline-flex h-9 w-9 items-center justify-center text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              aria-label="Cerrar aviso de ubicacion"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
           </div>
         </div>
       </div>

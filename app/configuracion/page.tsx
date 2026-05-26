@@ -8,7 +8,14 @@ import { PermissionsPanel } from "@/components/pwa/permissions-panel";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { readAnalyticsOptIn, writeAnalyticsOptIn } from "@/lib/preferences";
-import { readLastSync, warmCacheRoutes, writeLastSync } from "@/lib/pwa-sync";
+import {
+  estimateOfflineBundleBytes,
+  formatBytes,
+  OFFLINE_BUNDLE_FALLBACK_BYTES,
+  readLastSync,
+  warmCacheRoutes,
+  writeLastSync,
+} from "@/lib/pwa-sync";
 
 export default function ConfiguracionPage() {
   const { isInstalled } = useInstallPrompt();
@@ -18,6 +25,8 @@ export default function ConfiguracionPage() {
   const [analyticsOptIn, setAnalyticsOptIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(0);
+  const [storageUsed, setStorageUsed] = useState<number | null>(null);
+  const [offlineBundleBytes, setOfflineBundleBytes] = useState(OFFLINE_BUNDLE_FALLBACK_BYTES);
   const [syncFeedback, setSyncFeedback] = useState<
     | { tone: "success" | "error"; message: string }
     | null
@@ -26,7 +35,17 @@ export default function ConfiguracionPage() {
   useEffect(() => {
     setAnalyticsOptIn(readAnalyticsOptIn());
     setLastSync(readLastSync());
+    refreshStorageEstimate();
+    estimateOfflineBundleBytes()
+      .then(setOfflineBundleBytes)
+      .catch(() => setOfflineBundleBytes(OFFLINE_BUNDLE_FALLBACK_BYTES));
   }, []);
+
+  const refreshStorageEstimate = async () => {
+    if (!navigator.storage?.estimate) return;
+    const estimate = await navigator.storage.estimate();
+    setStorageUsed(typeof estimate.usage === "number" ? estimate.usage : null);
+  };
 
   const handleAnalytics = (checked: boolean) => {
     setAnalyticsOptIn(checked);
@@ -41,6 +60,7 @@ export default function ConfiguracionPage() {
       const now = Date.now();
       writeLastSync(now);
       setLastSync(now);
+      await refreshStorageEstimate();
       setSyncFeedback({
         tone: "success",
         message: "Sincronizacion completada.",
@@ -97,6 +117,12 @@ export default function ConfiguracionPage() {
                 {connection?.effectiveType ? ` · ${connection.effectiveType}` : ""}
               </p>
               <p className="text-xs text-muted-foreground">Ultima sincronizacion: {lastSyncLabel}</p>
+              <p className="text-xs text-muted-foreground">
+                Almacenamiento usado: {storageUsed === null ? "No disponible" : formatBytes(storageUsed)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Descarga offline estimada: {formatBytes(offlineBundleBytes)}
+              </p>
             </div>
             <div className="flex flex-col gap-2">
               <Button
