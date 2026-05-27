@@ -3,12 +3,13 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Users, MapPin, Church, Phone, ExternalLink } from "lucide-react";
+import { Users, MapPin, Church, Phone, ChevronDown } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
-import { SearchBar } from "@/components/shared/search-bar";
+import { SearchBar } from "@/components/shared/search-bar-sections";
 import { HighlightedText } from "@/components/shared/highlighted-text";
+import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Pastor } from "@/lib/types";
@@ -16,9 +17,11 @@ import type { Pastor } from "@/lib/types";
 function PastorCard({
   pastor,
   searchQuery,
+  variant = "grid",
 }: {
   pastor: Pastor;
   searchQuery: string;
+  variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -27,6 +30,153 @@ function PastorCard({
       window.open(pastor.googleMapsUrl, "_blank");
     }
   };
+
+  const hasDetails = Boolean(pastor.temploName || pastor.phone);
+  const detailsContent = (
+    <div className="space-y-5">
+      {pastor.temploName && (
+        <div className="flex items-start gap-3">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <Church className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[0px]">
+              Iglesia Sede
+            </p>
+            {pastor.temploId ? (
+              <Link
+                href={`/templos#${pastor.temploId}`}
+                className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
+                aria-label={`Ver información de ${pastor.temploName}`}
+              >
+                <span className="inline-block">
+                  <HighlightedText text={pastor.temploName} query={searchQuery} />
+                </span>
+              </Link>
+            ) : (
+              <p className="text-sm font-medium text-foreground leading-[1.15] mb-2">
+                <HighlightedText text={pastor.temploName} query={searchQuery} />
+              </p>
+            )}
+            {pastor.churchNumber && (
+              <p className="text-xs text-muted-foreground mb-1.5">
+                Pastor Local de Iglesia #<HighlightedText text={pastor.churchNumber.toString()} query={searchQuery} />
+              </p>
+            )}
+            {pastor.address && (
+              <div className="flex items-start gap-1.5 mb-1.5">
+                <MapPin className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                <p className="text-sm text-foreground/80 leading-tight">
+                  <HighlightedText text={pastor.address} query={searchQuery} />
+                </p>
+              </div>
+            )}
+            {pastor.googleMapsUrl && (
+              <button
+                onClick={openGoogleMaps}
+                className="text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 transition-colors flex items-center gap-1.5"
+                aria-label={`Ver ubicación de ${pastor.temploName} en Maps`}
+              >
+                <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>Ver ubicación</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {pastor.phone && (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <Phone className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+              Número de Teléfono
+            </p>
+            <p className="text-sm font-medium text-foreground leading-tight">
+              <HighlightedText text={pastor.phone} query={searchQuery} />
+            </p>
+          </div>
+          <WhatsAppIconButton
+            phone={pastor.phone}
+            message={`Hola ${pastor.fullName}, me comunico del sitio web de Región Mayo.`}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  if (variant === "compact") {
+    return (
+      <article
+        id={pastor.id}
+        className="bg-card border-y border-border/80 scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:border-x md:transition-all md:duration-700"
+      >
+        <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-4 md:py-5">
+          <div className="offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
+            {pastor.photo ? (
+              <Image
+                src={pastor.photo}
+                alt={pastor.fullName}
+                fill
+                className="offline-image-online object-cover object-center"
+                sizes="(min-width: 768px) 112px, 72px"
+              />
+            ) : (
+              <div className="offline-image-online absolute inset-0 flex items-center justify-center">
+                <Users className="h-5 w-5 text-muted-foreground/30" aria-hidden="true" />
+              </div>
+            )}
+            <OfflineImagePlaceholder />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px]">
+              <HighlightedText text={pastor.fullName} query={searchQuery} />
+            </h3>
+            {pastor.temploName && (
+              <p className="mt-3 flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground/80">
+                <Church className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="min-w-0 line-clamp-2">
+                  <HighlightedText text={pastor.temploName} query={searchQuery} />
+                </span>
+              </p>
+            )}
+
+            {hasDetails && (
+              <div className="mt-3 flex flex-col items-start gap-2 md:mt-5 md:flex-row md:flex-wrap md:items-center">
+                <button
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-expanded={isExpanded}
+                  aria-controls={`pastor-details-${pastor.id}`}
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <span>{isExpanded ? "Ocultar información" : "Ver información"}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {hasDetails && isExpanded && (
+          <div
+            id={`pastor-details-${pastor.id}`}
+            className="border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5"
+          >
+            {detailsContent}
+          </div>
+        )}
+      </article>
+    );
+  }
 
   return (
     <div 
@@ -154,6 +304,7 @@ interface DirectorioContentProps {
 
 export function DirectorioContent({ pastors }: DirectorioContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const gridRef = useRef<HTMLDivElement>(null);
   useEqualizeCardRowHeads(gridRef);
 
@@ -198,6 +349,14 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
           />
         </div>
 
+        <div className="mb-4 flex justify-end">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Cambiar vista de pastores"
+          />
+        </div>
+
         {filteredPastors.length === 0 ? (
           <div className="bg-card border border-border p-8 text-center">
             <Users
@@ -214,6 +373,17 @@ export function DirectorioContent({ pastors }: DirectorioContentProps) {
                 ? "El directorio se actualizará pronto."
                 : "Intenta con otros términos de búsqueda."}
             </p>
+          </div>
+        ) : viewMode === "compact" ? (
+          <div className="mx-0 flex flex-col gap-3 md:gap-3 pb-14">
+            {filteredPastors.map((pastor) => (
+              <PastorCard
+                key={pastor.id}
+                pastor={pastor}
+                searchQuery={searchQuery}
+                variant="compact"
+              />
+            ))}
           </div>
         ) : (
           <div

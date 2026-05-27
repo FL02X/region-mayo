@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Home,
@@ -59,15 +58,16 @@ export function MobileMenu({
   facebookUrl = "https://facebook.com/regionmayo",
 }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [touchFeedbackHref, setTouchFeedbackHref] = useState<string | null>(null);
   const touchFeedbackTimerRef = useRef<number | null>(null);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
-  const pathname = usePathname();
+  const [activePath, setActivePath] = useState("");
   const isMobile = useIsMobile();
   const { isInstalled } = useInstallPrompt();
 
-  const showSettings = isMobile && isInstalled;
-  const showInstall = isMobile && !isInstalled;
+  const showSettings = isMounted && isMobile && isInstalled;
+  const showInstall = isMounted && isMobile && !isInstalled;
   const pwaItem = showSettings
     ? { href: "/configuracion", label: "Configuracion", icon: Settings }
     : showInstall
@@ -75,6 +75,8 @@ export function MobileMenu({
       : null;
 
   useEffect(() => {
+    setIsMounted(true);
+    setActivePath(window.location.pathname);
     return () => {
       if (touchFeedbackTimerRef.current !== null) {
         window.clearTimeout(touchFeedbackTimerRef.current);
@@ -177,7 +179,7 @@ export function MobileMenu({
         <nav className="flex-1 overflow-y-auto" aria-label="Menú principal">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href && item.href !== "/";
+            const isActive = activePath === item.href && item.href !== "/";
             const isTouchFeedback = touchFeedbackHref === item.href;
             const showLeftAccent = isActive || isTouchFeedback;
             
@@ -245,7 +247,7 @@ export function MobileMenu({
 
           {pwaItem && (() => {
             const PwaIcon = pwaItem.icon;
-            const isActive = pathname === pwaItem.href;
+            const isActive = activePath === pwaItem.href;
             const isInstallItem = pwaItem.label === "Instalar app";
 
             return (

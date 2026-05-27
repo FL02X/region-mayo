@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Home,
@@ -40,8 +40,9 @@ export function AppHeader({
   facebookUrl = "https://facebook.com/regionmayo",
   behavior = "fixed",
 }: AppHeaderProps) {
-  const pathname = usePathname();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+  const [activePath, setActivePath] = useState<string>("");
   const desktopTrackRef = useRef<HTMLDivElement | null>(null);
   const desktopHoveredItemRef = useRef<HTMLElement | null>(null);
   const [desktopHoverState, setDesktopHoverState] = useState({
@@ -90,6 +91,11 @@ export function AppHeader({
     desktopHoveredItemRef.current = null;
     setDesktopHoverState((prev) => ({ ...prev, opacity: 0 }));
   };
+
+  useEffect(() => {
+    setIsMounted(true);
+    setActivePath(window.location.pathname);
+  }, []);
 
   const handleDesktopTrackMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const track = desktopTrackRef.current;
@@ -167,7 +173,7 @@ export function AppHeader({
             >
               {navItems.map(({ href, label, icon: Icon }) => {
                 const isInicio = href === "/";
-                const isActive = pathname === href && !isInicio;
+                const isActive = isMounted && activePath === href && !isInicio;
                 return (
                   <Link
                     key={href}
@@ -177,7 +183,7 @@ export function AppHeader({
                       "desktop-header-item flex items-center gap-1.5 h-full px-2.5 lg:px-3 max-[914px]:w-12 max-[914px]:justify-center max-[914px]:gap-0 max-[914px]:px-0 max-[914px]:text-[0px] min-[915px]:px-3 min-[915px]:gap-0 min-[915px]:justify-center min-[915px]:text-[11px] min-[1101px]:justify-start min-[1101px]:gap-1.5 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
                       isActive
                         ? "text-white border-[#2f5e93] bg-[#2f5e93]"
-                        : "text-white/90 hover:text-white hover:border-white/30"
+                        : "text-white hover:text-white hover:border-white/30"
                     )}
                     aria-label={label}
                     aria-current={isActive ? "page" : undefined}
@@ -217,24 +223,24 @@ export function AppHeader({
             </div>
 
             <div className="flex items-center gap-0.5 shrink-0 max-[914px]:gap-1.5">
-              <a
-                href={instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="desktop-header-item flex items-center justify-center h-9 w-9 max-[914px]:h-11 max-[914px]:w-11 text-white/90 hover:text-white transition-colors"
-                aria-label="Síguenos en Instagram"
-                onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
-              >
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="desktop-header-item flex items-center justify-center h-9 w-9 max-[914px]:h-11 max-[914px]:w-11 text-white hover:text-white transition-colors"
+                  aria-label="Síguenos en Instagram"
+                  onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
+                >
                 <Instagram className="desktop-header-icon h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
               </a>
-              <a
-                href={facebookUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="desktop-header-item flex items-center justify-center h-9 w-9 max-[914px]:h-11 max-[914px]:w-11 text-white/90 hover:text-white transition-colors"
-                aria-label="Síguenos en Facebook"
-                onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
-              >
+                <a
+                  href={facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="desktop-header-item flex items-center justify-center h-9 w-9 max-[914px]:h-11 max-[914px]:w-11 text-white hover:text-white transition-colors"
+                  aria-label="Síguenos en Facebook"
+                  onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
+                >
                 <Facebook className="desktop-header-icon h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
               </a>
             </div>
@@ -271,15 +277,15 @@ export function AppHeader({
             <div className="flex-1" />
 
             {/* Asistente link */}
-            <button
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('open-chatbot'));
-                }
-              }}
-              aria-label="Abrir Asistente"
-              className="mr-2 mb-1 relative flex items-center justify-center h-9 w-9 shrink-0 text-white/90 hover:text-white transition-colors md:hidden"
-            >
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('open-chatbot'));
+                  }
+                }}
+                aria-label="Abrir Asistente"
+                className="mr-2 mb-1 relative flex items-center justify-center h-9 w-9 shrink-0 text-white hover:text-white transition-colors md:hidden"
+              >
               <MessageSquare className="h-[22px] w-[22px]" strokeWidth={1.6} />
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <span className="text-[10px] font-semibold text-white">?</span>
@@ -289,7 +295,7 @@ export function AppHeader({
           {/* Search icon link */}
             <Link
               href="/buscar"
-              className="mr-2 mb-1 flex items-center justify-center h-9 w-9 shrink-0 text-white/90 hover:text-white transition-colors"
+              className="mr-2 mb-1 flex items-center justify-center h-9 w-9 shrink-0 text-white hover:text-white transition-colors"
               aria-label="Ir a búsqueda"
             >
               <Search className="h-[23px] w-[23px]" strokeWidth={1.75} />

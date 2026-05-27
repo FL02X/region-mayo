@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Calendar, Grid2X2, List } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { MonthNavigator } from "@/components/shared/month-navigator";
 import { EventCard } from "@/components/shared/event-card";
 import { RegistrationModal } from "@/components/shared/registration-modal";
+import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { CountdownSection } from "./countdown-section.mobile";
 import { ActionDeck } from "./action-deck";
 import { HomeInfoCards } from "./home-info-cards";
@@ -31,7 +32,7 @@ const months = [
   "Diciembre",
 ];
 
-type CalendarViewMode = "grid" | "compact";
+type CalendarViewMode = ViewMode;
 
 function getMonthStart(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
@@ -106,7 +107,6 @@ export function EventsFeed({
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const eventsListRef = useRef<HTMLDivElement>(null);
-  const [viewModeFeedbackVisible, setViewModeFeedbackVisible] = useState(false);
 
   const eventDates = useMemo(() => events.map((e) => e.date), [events]);
 
@@ -189,23 +189,6 @@ export function EventsFeed({
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
-
-  const handleViewModeChange = (mode: CalendarViewMode) => {
-    setViewMode(mode);
-    setViewModeFeedbackVisible(true);
-  };
-
-  useEffect(() => {
-    if (!viewModeFeedbackVisible) return;
-
-    const clearFeedback = () => setViewModeFeedbackVisible(false);
-
-    document.addEventListener("pointerdown", clearFeedback, true);
-
-    return () => {
-      document.removeEventListener("pointerdown", clearFeedback, true);
-    };
-  }, [viewModeFeedbackVisible]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -291,43 +274,11 @@ export function EventsFeed({
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="hidden text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-foreground sm:inline">
-                Cambiar vista
-              </span>
-              <div className="flex border border-border bg-card" role="group" aria-label="Cambiar vista del calendario">
-                <button
-                  type="button"
-                  onClick={() => handleViewModeChange("grid")}
-                  className={`inline-flex h-9 w-9 items-center justify-center border-r border-border transition-none ${
-                    renderedViewMode === "grid"
-                      ? "bg-[#757575] text-background"
-                      : "bg-card text-muted-foreground"
-                  } ${viewModeFeedbackVisible && renderedViewMode === "grid" ? "ring-2 ring-[#3b82f6] ring-inset" : ""}`}
-                  aria-label="Vista en cuadrícula"
-                  aria-pressed={renderedViewMode === "grid"}
-                  title="Vista en cuadrícula"
-                  style={{ minHeight: "unset", minWidth: "unset" }}
-                >
-                  <Grid2X2 className="h-4 w-4" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleViewModeChange("compact")}
-                  className={`inline-flex h-9 w-9 items-center justify-center transition-none ${
-                    renderedViewMode === "compact"
-                      ? "bg-[#757575] text-background"
-                      : "bg-card text-muted-foreground"
-                  } ${viewModeFeedbackVisible && renderedViewMode === "compact" ? "ring-2 ring-[#3b82f6] ring-inset" : ""}`}
-                  aria-label="Vista compacta en lista"
-                  aria-pressed={renderedViewMode === "compact"}
-                  title="Vista compacta"
-                  style={{ minHeight: "unset", minWidth: "unset" }}
-                >
-                  <List className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
+            <ViewModeToggle
+              value={renderedViewMode}
+              onChange={setViewMode}
+              ariaLabel="Cambiar vista del calendario"
+            />
           </div>
 
           {/* Cards layout:

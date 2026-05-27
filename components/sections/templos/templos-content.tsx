@@ -14,15 +14,17 @@ import {
   Clock,
   FileText,
   XCircle,
+  Maximize2,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { useNearbyChurchDistances } from "@/hooks/use-nearby-church-distances";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
+import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { TemploImageGallery } from "./templo-image-gallery";
 import { DistanceBadge } from "./distance-badge";
-import { SearchBar } from "@/components/shared/search-bar";
+import { SearchBar } from "@/components/shared/search-bar-sections";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { findNearestChurches } from "@/lib/location-service";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
@@ -59,11 +61,13 @@ function TemploCard({
   searchQuery,
   distance,
   showDistance,
+  variant = "grid",
 }: { 
   templo: Templo; 
   searchQuery: string;
   distance?: any;
   showDistance?: boolean;
+  variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -122,6 +126,240 @@ function TemploCard({
     scheduleServices.length > 0 ||
     !!templo.description ||
     !!templo.googleMapsUrl;
+
+  const detailsContent = (
+    <>
+      {templo.pastores.length > 0 && templo.pastores.map((pastor) => (
+        <div key={pastor.id} className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[0px]">
+              {templo.pastores.length > 1 ? "Pastores a Cargo" : "Pastor a Cargo"}
+            </p>
+            <Link
+              href={`/pastores#${pastor.id}`}
+              className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
+              aria-label={`Ver información de ${pastor.fullName}`}
+            >
+              <span className="inline-block">
+                <HighlightedText text={pastor.fullName} query={searchQuery} />
+              </span>
+            </Link>
+            {pastor.phone && (
+              <p className="text-sm text-foreground/60 -mt-[1px]">
+                {formatPhoneForDisplay(pastor.phone)}
+              </p>
+            )}
+          </div>
+          {pastor.phone && (
+            <WhatsAppIconButton
+              phone={pastor.phone}
+              message={`Hola ${pastor.fullName}, me comunico del sitio web de Region Mayo.`}
+            />
+          )}
+        </div>
+      ))}
+
+      {templo.coros.length > 0 && templo.coros.map((coro) => (
+        <div key={coro.id} className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[0px]">
+              {templo.coros.length > 1 ? "Coros Locales" : "Coro Local"}
+            </p>
+            <Link
+              href={`/coros#${coro.id}`}
+              className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-0 transition-colors"
+              aria-label={`Ver información de ${coro.coroName}`}
+            >
+              <span className="block">
+                <HighlightedText text={coro.coroName} query={searchQuery} />
+              </span>
+            </Link>
+            <p className="text-sm text-foreground/70 mt-0.5">
+              Presidente: <HighlightedText text={formatPresidentShortName(coro.presidentName)} query={searchQuery} />
+              {coro.presidentPhone ? ` · ${formatPhoneForDisplay(coro.presidentPhone)}` : ""}
+            </p>
+          </div>
+          {coro.presidentPhone && (
+            <WhatsAppIconButton
+              phone={coro.presidentPhone}
+              message={`Hola, me comunico del sitio web de Region Mayo respecto al ${coro.coroName}`}
+            />
+          )}
+        </div>
+      ))}
+
+      {scheduleServices.length > 0 && (
+        <div className="flex items-start gap-3">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+              Horarios de Reunión
+            </p>
+            <ul className="space-y-1">
+              {scheduleServices.map((service, idx) => (
+                <li
+                  key={`${service.day}-${service.startTime}-${idx}`}
+                  className="text-sm text-foreground leading-relaxed"
+                >
+                  {formatTempleServiceLine(service)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {templo.description && (
+        <div className="flex items-start gap-3 mt-2">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <FileText className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+              Notas adicionales
+            </p>
+            <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+              {templo.description}
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  if (variant === "compact") {
+    return (
+      <article
+        id={templo.id}
+        className="bg-card border-y border-border/80 scroll-mt-[100px] transition-none target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20 md:border-x md:transition-all md:duration-700"
+      >
+        <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-4 md:py-5">
+          <div className="flex shrink-0 flex-col">
+            <div className="offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] bg-muted md:h-[108px] md:w-[112px]">
+              {templo.photos && templo.photos.length > 0 ? (
+                <>
+                  <TemploImageGallery images={templo.photos} alt={templo.temploName} hideCountBadge />
+                  <span className="pointer-events-none absolute left-2 bottom-2 inline-flex h-6 w-6 items-center justify-center border border-white/15 bg-black/45 text-white shadow-sm backdrop-blur-[8px]">
+                    <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  </span>
+                </>
+              ) : (
+                <div className="offline-image-online absolute inset-0 flex items-center justify-center">
+                  <Church
+                    className="h-5 w-5 text-muted-foreground/30"
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
+              <OfflineImagePlaceholder />
+              <div className="hidden md:block">
+                <DistanceBadge distance={distance} show={showDistance ?? false} />
+              </div>
+            </div>
+            <div className="relative mt-2 h-[36px] md:hidden">
+              <DistanceBadge distance={distance} show={showDistance ?? false} />
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="min-w-0 text-left">
+              <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px]">
+                <HighlightedText text={templo.temploName} query={searchQuery} />
+              </h3>
+
+              {availability && (
+                <div className="mt-2">
+                  <span className={`availability-pill inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
+                    <Clock className="h-3.5 w-3.5 opacity-80" aria-hidden="true" />
+                    {(availability.tone === "open" || availability.tone === "opening-soon") ? (
+                      <span className="font-semibold text-xs">{availability.title}</span>
+                    ) : (
+                      <>
+                        <span className="font-semibold text-xs">Próximo culto</span>
+                        <span className="opacity-80">·</span>
+                        <span className="text-xs opacity-90">{(() => {
+                          const sub = availability.subtitle || availability.title || "";
+                          let cleaned = String(sub)
+                            .replace(/^\s*Abre\s+/i, "")
+                            .replace(/\ba las\s*/i, "")
+                            .replace(/^\s*(el|la)\s+/i, "")
+                            .trim();
+                          if (!cleaned) cleaned = availability.title;
+                          cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                          return cleaned;
+                        })()}</span>
+                      </>
+                    )}
+                  </span>
+                </div>
+              )}
+
+              {templo.address && (
+                <p className="mt-3 flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground/80">
+                  <MapPin
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 line-clamp-2">
+                    <HighlightedText text={templo.address} query={searchQuery} />
+                  </span>
+                </p>
+              )}
+            </div>
+
+            <div className="mt-3 flex flex-col items-start gap-2 md:mt-5 md:flex-row md:flex-wrap md:items-center">
+              {templo.googleMapsUrl && (
+                <button
+                  onClick={openGoogleMaps}
+                  className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-2.5 text-sm font-medium text-[#2f5e93] transition-colors hover:bg-muted"
+                  aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <MapPin className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  Ver ubicación en Maps
+                </button>
+              )}
+
+              {hasExpandableContent && (
+                <button
+                  onClick={handleToggle}
+                  className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-expanded={isExpanded}
+                  aria-controls={`templo-details-${templo.id}`}
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <span>{isExpanded ? "Ocultar información" : "Ver información"}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {hasExpandableContent && isExpanded && (
+          <div
+            id={`templo-details-${templo.id}`}
+            className="space-y-5 border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5"
+          >
+            {detailsContent}
+          </div>
+        )}
+      </article>
+    );
+  }
 
   return (
     <div 
@@ -365,6 +603,7 @@ interface TemploContentProps {
 export function TemplosContent({ templos }: TemploContentProps) {
   const geolocation = useGeolocationState();
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [distanceOrderIds, setDistanceOrderIds] = useState<string[] | null>(
     null,
   );
@@ -393,6 +632,24 @@ export function TemplosContent({ templos }: TemploContentProps) {
 
   useEffect(() => {
     setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    const clearDistanceBadgeFlag = () => {
+      try {
+        sessionStorage.removeItem(SHOW_DISTANCE_BADGES_KEY);
+      } catch {
+        // Ignore storage failures (private mode, quota)
+      }
+    };
+
+    window.addEventListener("pagehide", clearDistanceBadgeFlag);
+    window.addEventListener("beforeunload", clearDistanceBadgeFlag);
+
+    return () => {
+      window.removeEventListener("pagehide", clearDistanceBadgeFlag);
+      window.removeEventListener("beforeunload", clearDistanceBadgeFlag);
+    };
   }, []);
 
   useEffect(() => {
@@ -538,10 +795,32 @@ export function TemplosContent({ templos }: TemploContentProps) {
     }
     setShowDistanceBadges(shouldShowBadges);
 
-    if (!storedEnabled || (storedOrderIds && storedOrderIds.length > 0)) {
+    if (!storedEnabled) {
       setIsClientReady(true);
+      return;
     }
-  }, []);
+
+    if (!storedOrderIds || storedOrderIds.length === 0 || templos.length === 0) {
+      setIsClientReady(true);
+      return;
+    }
+
+    const initialOrderIds = templos.map((templo) => templo.id);
+    const isSameInitialOrder =
+      initialOrderIds.length === storedOrderIds.length &&
+      initialOrderIds.every((id, index) => id === storedOrderIds[index]);
+
+    if (isSameInitialOrder) {
+      setIsClientReady(true);
+      return;
+    }
+
+    const readyTimer = window.setTimeout(() => {
+      setIsClientReady(true);
+    }, 180);
+
+    return () => window.clearTimeout(readyTimer);
+  }, [templos]);
 
   useEffect(() => {
     if (!distanceOrderEnabled || !hasPermission) return;
@@ -737,6 +1016,14 @@ export function TemplosContent({ templos }: TemploContentProps) {
           />
         </div>
 
+        <div className="mb-4 flex justify-end">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Cambiar vista de templos"
+          />
+        </div>
+
         {locationModalOpen && (
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4" role="presentation">
             <div
@@ -790,7 +1077,25 @@ export function TemplosContent({ templos }: TemploContentProps) {
           </div>
         )}
 
-        {filteredTemplos.length === 0 ? (
+        {locationSearchState === "searching" ? (
+          <div className={viewMode === "compact" ? "flex flex-col gap-0 md:gap-4 pb-8" : "grid gap-4 grid-cols-1 sm:grid-cols-2 templos-grid-3cols pb-8"}>
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className={`bg-card animate-pulse border-y border-border/80 border-x ${viewMode === "compact" ? "flex gap-3 px-3 py-4 md:gap-5 md:px-4 md:py-5" : "flex flex-col h-[380px]"}`}>
+                <div className={`bg-muted shrink-0 ${viewMode === "compact" ? "h-[72px] w-[72px] md:h-[108px] md:w-[112px]" : "h-[200px] w-full"}`} />
+                <div className={`flex flex-col flex-1 ${viewMode === "compact" ? "py-1 pr-4 md:py-2 md:pr-0" : "p-4"} space-y-3`}>
+                  <div className="h-5 w-3/4 bg-muted rounded mt-2" />
+                  <div className="h-4 w-1/2 bg-muted/60 rounded mt-1" />
+                  {viewMode !== "compact" && (
+                    <div className="mt-4 space-y-2 pt-4">
+                       <div className="h-4 w-full bg-muted/40 rounded" />
+                       <div className="h-4 w-5/6 bg-muted/40 rounded" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredTemplos.length === 0 ? (
           <div className="bg-card border border-border p-8 text-center">
             <Church
               className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3"
@@ -806,6 +1111,26 @@ export function TemplosContent({ templos }: TemploContentProps) {
                 ? "Los templos de la región se mostrarán aquí cuando estén disponibles."
                 : "Intenta con otros términos de búsqueda."}
             </p>
+          </div>
+        ) : viewMode === "compact" ? (
+          <div
+            className={`mx-0 flex flex-col gap-3 md:gap-3 pb-14 ${
+              shouldHideList ? "opacity-0 pointer-events-none" : "opacity-100"
+            }`}
+            aria-hidden={shouldHideList}
+          >
+            {sortedTemplos.map((templo) => (
+              <TemploCard
+                key={templo.id}
+                templo={templo}
+                searchQuery={searchQuery}
+                distance={visibleDistances[templo.id]}
+                showDistance={
+                  showDistanceBadges && !!visibleDistances[templo.id]
+                }
+                variant="compact"
+              />
+            ))}
           </div>
         ) : (
           <div

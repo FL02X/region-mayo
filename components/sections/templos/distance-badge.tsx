@@ -11,7 +11,7 @@ interface DistanceBadgeProps {
 
 /**
  * Small badge showing distance and travel time
- * Positioned bottom-left on mobile and top-left on desktop
+ * Positioned top-left by default
  * Only shows if user has granted GPS permission
  */
 export function DistanceBadge({ distance, show }: DistanceBadgeProps) {

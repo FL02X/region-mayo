@@ -81,10 +81,28 @@ function SearchContentInner({ data }: SearchContentProps) {
   const [localQuery, setLocalQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<SearchResultType | "all">("all");
   const [isRefreshingResults, setIsRefreshingResults] = useState(false);
+  const [isEntering, setIsEntering] = useState(true);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   useEffect(() => {
     setLocalQuery(queryFromUrl);
   }, [queryFromUrl]);
+
+  useEffect(() => {
+    const matchesMobile = window.matchMedia("(max-width: 767px)").matches;
+    setIsMobile(matchesMobile);
+
+    if (!matchesMobile) {
+      setIsEntering(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setIsEntering(false);
+    }, 260);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!localQuery.trim()) {
@@ -247,6 +265,20 @@ function SearchContentInner({ data }: SearchContentProps) {
       </span>
     );
   };
+
+  if (isEntering && isMobile) {
+    return (
+      <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
+        <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
+          <div className="max-w-4xl mx-auto">
+            <div className="py-14 flex items-center justify-center" aria-live="polite" aria-label="Cargando resultados">
+              <Loader2 className="h-16 w-16 text-[#9ca3af] animate-spin" strokeWidth={2.25} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">

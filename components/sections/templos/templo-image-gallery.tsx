@@ -9,6 +9,7 @@ import { sanityImageVariantUrl } from "@/lib/sanity/image"
 interface TemploImageGalleryProps {
   images: string[]
   alt: string
+  hideCountBadge?: boolean
 }
 
 /**
@@ -18,7 +19,7 @@ interface TemploImageGalleryProps {
  * - Mobile: muestra lupa en esquina inferior derecha
  * - Click abre aviso de conexion para no descargar galeria completa
  */
-export function TemploImageGallery({ images, alt }: TemploImageGalleryProps) {
+export function TemploImageGallery({ images, alt, hideCountBadge = false }: TemploImageGalleryProps) {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -55,7 +56,7 @@ export function TemploImageGallery({ images, alt }: TemploImageGalleryProps) {
         <div className="hidden md:block pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-200" />
 
         {/* Count badge (responsive position) */}
-        {images.length > 1 && (
+        {images.length > 1 && !hideCountBadge && (
           <div
             className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center gap-2.5 rounded-[6px] border border-white/10 bg-black/45 px-3 py-2 text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] backdrop-blur-[8px] md:bottom-auto md:top-2 md:right-2"
             aria-label={`${images.length} imágenes`}

@@ -950,7 +950,7 @@ export function EventCard({
 
               {/* ── Expanded details ── */}
               {isExpanded && (
-                <div id={`details-${event.id}`} className="space-y-2 pb-5 pt-5 px-5">
+                <div id={`details-${event.id}`} className="space-y-2 pb-5 pt-2.5 md:pt-2.5 px-5">
                   {/* Vestimenta */}
                   {event.vestimenta && (
                     <div className="flex items-start gap-2.5">
@@ -987,7 +987,7 @@ export function EventCard({
                             aria-expanded={showVestimentaHelp}
                             style={{ minHeight: "unset", minWidth: "unset" }}
                           >
-                            <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                            <HelpCircle className="h-3.5 w-3.5 mt-1 md:mt-0.5" aria-hidden="true" />
                           </button>
                         </p>
                       </div>
