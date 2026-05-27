@@ -18,5 +18,24 @@ export function RouteBodyFlags() {
     }
   }, [pathname])
 
+  useEffect(() => {
+    const syncConnectionState = () => {
+      const isOnline = navigator.onLine
+      document.documentElement.dataset.connection = isOnline ? 'online' : 'offline'
+      document.body.dataset.connection = isOnline ? 'online' : 'offline'
+    }
+
+    syncConnectionState()
+    window.addEventListener('online', syncConnectionState)
+    window.addEventListener('offline', syncConnectionState)
+
+    return () => {
+      window.removeEventListener('online', syncConnectionState)
+      window.removeEventListener('offline', syncConnectionState)
+      delete document.documentElement.dataset.connection
+      delete document.body.dataset.connection
+    }
+  }, [])
+
   return null
 }

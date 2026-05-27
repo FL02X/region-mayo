@@ -24,6 +24,8 @@ import {
 export const revalidate = false;
 
 export default async function Home() {
+  const now = Date.now();
+
   const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts, templos] =
     await Promise.all([
       getRegionConfig("region-mayo"),
@@ -40,7 +42,7 @@ export default async function Home() {
 
   const nextUpcomingEvent =
     events
-      .filter((event) => event.date.getTime() > Date.now())
+      .filter((event) => event.date.getTime() > now)
       .sort((a, b) => a.date.getTime() - b.date.getTime())[0] ?? null;
 
   return (
@@ -84,7 +86,7 @@ export default async function Home() {
             customHeroCard={heroCard}
             prayerWall={prayerWall}
             socialPosts={socialPosts}
-            now={Date.now()}
+            now={now}
           />
         </div>
 
@@ -96,10 +98,10 @@ export default async function Home() {
               instagramUrl={region?.socialLinks.instagram}
               facebookUrl={region?.socialLinks.facebook}
               customHeroCard={heroCard}
-              prayerWall={prayerWall}
-              socialPosts={socialPosts}
-              now={Date.now()}
-            />
+            prayerWall={prayerWall}
+            socialPosts={socialPosts}
+            now={now}
+          />
           ) : (
             <div className="flex items-center justify-center min-h-[400px]">
               <p className="text-lg text-gray-500">

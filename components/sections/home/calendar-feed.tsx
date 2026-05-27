@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, Grid2X2, List } from "lucide-react";
 import { MonthNavigator } from "@/components/shared/month-navigator";
 import { EventCard } from "@/components/shared/event-card";
 import { RegistrationModal } from "@/components/shared/registration-modal";
@@ -31,8 +31,20 @@ const months = [
   "Diciembre",
 ];
 
-const now = new Date();
-const INITIAL_DATE = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+type CalendarViewMode = "grid" | "compact";
+
+function getMonthStart(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+function getInitialCalendarMonth(events: Event[], nowMs?: number) {
+  const referenceTime = nowMs ?? Date.now();
+  const nextEvent = [...events]
+    .filter((event) => event.date.getTime() >= referenceTime)
+    .sort((a, b) => a.date.getTime() - b.date.getTime())[0];
+
+  return getMonthStart(nextEvent?.date ?? new Date(referenceTime));
+}
 
 interface EventsFeedProps {
   events: Event[];
@@ -55,13 +67,14 @@ export function EventsFeed({
   socialPosts,
   now: nowProp,
 }: EventsFeedProps) {
-  const [selectedMonth, setSelectedMonth] = useState(INITIAL_DATE);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() =>
+    getInitialCalendarMonth(events, nowProp),
+  );
   const [pendingHashEventId, setPendingHashEventId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("grid");
+  const renderedViewMode = viewMode;
 
   useEffect(() => {
-    setIsHydrated(true);
-
     let isSubscribed = true;
 
     const syncHashTarget = () => {
@@ -93,6 +106,7 @@ export function EventsFeed({
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const eventsListRef = useRef<HTMLDivElement>(null);
+  const [viewModeFeedbackVisible, setViewModeFeedbackVisible] = useState(false);
 
   const eventDates = useMemo(() => events.map((e) => e.date), [events]);
 
@@ -176,6 +190,23 @@ export function EventsFeed({
     setIsModalOpen(true);
   };
 
+  const handleViewModeChange = (mode: CalendarViewMode) => {
+    setViewMode(mode);
+    setViewModeFeedbackVisible(true);
+  };
+
+  useEffect(() => {
+    if (!viewModeFeedbackVisible) return;
+
+    const clearFeedback = () => setViewModeFeedbackVisible(false);
+
+    document.addEventListener("pointerdown", clearFeedback, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", clearFeedback, true);
+    };
+  }, [viewModeFeedbackVisible]);
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedEvent(null);
@@ -246,17 +277,57 @@ export function EventsFeed({
       >
         <div className="mt-0 max-w-4xl mx-auto w-full">
           {/* Month label */}
-          <div className="mb-6">
-            <h3 className="font-semibold text-[1.200rem] text-foreground tracking-tight">
-              {months[selectedMonth.getUTCMonth()]} {selectedMonth.getUTCFullYear()}
-            </h3>
-            <p className="text-[15px] text-muted-foreground mt-0.5">
-              {filteredEvents.length === 0
-                ? "No hay eventos programados"
-                : `${filteredEvents.length} ${
-                    filteredEvents.length === 1 ? "evento" : "eventos"
-                  } programados`}
-            </p>
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-[1.200rem] text-foreground tracking-tight">
+                {months[selectedMonth.getUTCMonth()]} {selectedMonth.getUTCFullYear()}
+              </h3>
+              <p className="text-[15px] text-muted-foreground mt-0.5">
+                {filteredEvents.length === 0
+                  ? "No hay eventos programados"
+                  : `${filteredEvents.length} ${
+                      filteredEvents.length === 1 ? "evento" : "eventos"
+                    } programados`}
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="hidden text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-foreground sm:inline">
+                Cambiar vista
+              </span>
+              <div className="flex border border-border bg-card" role="group" aria-label="Cambiar vista del calendario">
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("grid")}
+                  className={`inline-flex h-9 w-9 items-center justify-center border-r border-border transition-none ${
+                    renderedViewMode === "grid"
+                      ? "bg-[#757575] text-background"
+                      : "bg-card text-muted-foreground"
+                  } ${viewModeFeedbackVisible && renderedViewMode === "grid" ? "ring-2 ring-[#3b82f6] ring-inset" : ""}`}
+                  aria-label="Vista en cuadrícula"
+                  aria-pressed={renderedViewMode === "grid"}
+                  title="Vista en cuadrícula"
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <Grid2X2 className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange("compact")}
+                  className={`inline-flex h-9 w-9 items-center justify-center transition-none ${
+                    renderedViewMode === "compact"
+                      ? "bg-[#757575] text-background"
+                      : "bg-card text-muted-foreground"
+                  } ${viewModeFeedbackVisible && renderedViewMode === "compact" ? "ring-2 ring-[#3b82f6] ring-inset" : ""}`}
+                  aria-label="Vista compacta en lista"
+                  aria-pressed={renderedViewMode === "compact"}
+                  title="Vista compacta"
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <List className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Cards layout:
@@ -273,6 +344,18 @@ export function EventsFeed({
               <p className="text-xs text-muted-foreground">
                 Selecciona otro mes en el calendario para ver más actividades.
               </p>
+            </div>
+          ) : renderedViewMode === "compact" ? (
+            <div className="mx-0 flex flex-col gap-3 md:gap-3 pb-14">
+              {filteredEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onRegister={handleRegister}
+                  showAlbumButton={event.status === "past"}
+                  variant="compact"
+                />
+              ))}
             </div>
           ) : filteredEvents.length === 1 ? (
             <div className="max-w-md mx-auto">
