@@ -309,12 +309,16 @@ function DirectivaCard({
 
 interface DirectivaContentProps {
   members: DirectivaMember[];
+  initialViewMode?: ViewMode;
 }
 
-export function DirectivaContent({ members }: DirectivaContentProps) {
+export function DirectivaContent({ members, initialViewMode }: DirectivaContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const resolvedInitialViewMode = initialViewMode ?? "grid";
+  const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
+  const [isOfflinePwa, setIsOfflinePwa] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+  const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -330,10 +334,48 @@ export function DirectivaContent({ members }: DirectivaContentProps) {
     }
   }, []);
 
+  useEffect(() => {
+    const isStandalone = () =>
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+
+    const syncOfflineMode = () => {
+      const shouldForceCompact = !navigator.onLine && isStandalone();
+      setIsOfflinePwa(shouldForceCompact);
+
+      if (shouldForceCompact) {
+        setViewMode("compact");
+        return;
+      }
+
+      setViewMode(lastOnlineViewModeRef.current);
+    };
+
+    syncOfflineMode();
+    window.addEventListener("online", syncOfflineMode);
+    window.addEventListener("offline", syncOfflineMode);
+
+    return () => {
+      window.removeEventListener("online", syncOfflineMode);
+      window.removeEventListener("offline", syncOfflineMode);
+    };
+  }, []);
+
   const filteredMembers = useMemo(
     () => searchItems(members, searchQuery, SEARCH_CONFIGS.directiva),
     [members, searchQuery],
   );
+
+  const handleViewModeChange = (next: ViewMode) => {
+    if (isOfflinePwa) return;
+    lastOnlineViewModeRef.current = next;
+    setViewMode(next);
+    try {
+      document.cookie = `rm-view-mode-directiva=${next}; path=/; max-age=31536000; samesite=lax`;
+    } catch {
+      // Ignore cookie write failures
+    }
+  };
 
   return (
     <div className="w-full relative pb-16 bg-[#f1f1f1]" id="main-content">
@@ -358,7 +400,7 @@ export function DirectivaContent({ members }: DirectivaContentProps) {
         <div className="mb-4 flex justify-end">
           <ViewModeToggle
             value={viewMode}
-            onChange={setViewMode}
+            onChange={handleViewModeChange}
             ariaLabel="Cambiar vista de directiva"
           />
         </div>

@@ -277,8 +277,8 @@ function TemploCard({
 
               {availability && (
                 <div className="mt-2">
-                  <span className={`availability-pill inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
-                    <Clock className="h-3.5 w-3.5 opacity-80" aria-hidden="true" />
+                  <span className={`availability-pill inline-flex max-w-full items-center gap-2 text-[clamp(10px,2.8vw,12px)] px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
+                    <Clock className="h-3.5 w-3.5 opacity-80 max-[385px]:hidden" aria-hidden="true" />
                     {(availability.tone === "open" || availability.tone === "opening-soon") ? (
                       <span className="font-semibold text-xs">{availability.title}</span>
                     ) : (
@@ -598,12 +598,15 @@ function TemploCard({
 
 interface TemploContentProps {
   templos: Templo[];
+  initialViewMode?: ViewMode;
 }
 
-export function TemplosContent({ templos }: TemploContentProps) {
+export function TemplosContent({ templos, initialViewMode }: TemploContentProps) {
   const geolocation = useGeolocationState();
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const resolvedInitialViewMode = initialViewMode ?? "grid";
+  const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
+  const [isOfflinePwa, setIsOfflinePwa] = useState(false);
   const [distanceOrderIds, setDistanceOrderIds] = useState<string[] | null>(
     null,
   );
@@ -619,6 +622,7 @@ export function TemplosContent({ templos }: TemploContentProps) {
   const [isClientReady, setIsClientReady] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const highlightedHashRef = useRef<string | null>(null);
+  const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
   useEqualizeCardRowHeads(gridRef);
   
   // Calculate distances to nearby churches if user has granted permission
@@ -632,6 +636,33 @@ export function TemplosContent({ templos }: TemploContentProps) {
 
   useEffect(() => {
     setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    const isStandalone = () =>
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+
+    const syncOfflineMode = () => {
+      const shouldForceCompact = !navigator.onLine && isStandalone();
+      setIsOfflinePwa(shouldForceCompact);
+
+      if (shouldForceCompact) {
+        setViewMode("compact");
+        return;
+      }
+
+      setViewMode(lastOnlineViewModeRef.current);
+    };
+
+    syncOfflineMode();
+    window.addEventListener("online", syncOfflineMode);
+    window.addEventListener("offline", syncOfflineMode);
+
+    return () => {
+      window.removeEventListener("online", syncOfflineMode);
+      window.removeEventListener("offline", syncOfflineMode);
+    };
   }, []);
 
   useEffect(() => {
@@ -958,6 +989,17 @@ export function TemplosContent({ templos }: TemploContentProps) {
       ? "Buscando templo cercano"
       : "Buscar templo cercano a mi ubicacion";
 
+  const handleViewModeChange = (next: ViewMode) => {
+    if (isOfflinePwa) return;
+    lastOnlineViewModeRef.current = next;
+    setViewMode(next);
+    try {
+      document.cookie = `rm-view-mode-templos=${next}; path=/; max-age=31536000; samesite=lax`;
+    } catch {
+      // Ignore cookie write failures
+    }
+  };
+
   return (
     <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
       {shouldShowLoader && (
@@ -1019,7 +1061,7 @@ export function TemplosContent({ templos }: TemploContentProps) {
         <div className="mb-4 flex justify-end">
           <ViewModeToggle
             value={viewMode}
-            onChange={setViewMode}
+            onChange={handleViewModeChange}
             ariaLabel="Cambiar vista de templos"
           />
         </div>

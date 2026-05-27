@@ -56,6 +56,7 @@ interface EventsFeedProps {
   prayerWall?: PrayerWallConfig | null;
   socialPosts?: SocialPost[];
   now?: number;
+  initialViewMode?: CalendarViewMode;
 }
 
 export function EventsFeed({
@@ -67,13 +68,17 @@ export function EventsFeed({
   prayerWall,
   socialPosts,
   now: nowProp,
+  initialViewMode,
 }: EventsFeedProps) {
   const [selectedMonth, setSelectedMonth] = useState(() =>
     getInitialCalendarMonth(events, nowProp),
   );
   const [pendingHashEventId, setPendingHashEventId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<CalendarViewMode>("grid");
+  const resolvedInitialViewMode = initialViewMode ?? "grid";
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(() => resolvedInitialViewMode);
+  const [isOfflinePwa, setIsOfflinePwa] = useState(false);
   const renderedViewMode = viewMode;
+  const lastOnlineViewModeRef = useRef<CalendarViewMode>(resolvedInitialViewMode);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -195,6 +200,44 @@ export function EventsFeed({
     setSelectedEvent(null);
   };
 
+  useEffect(() => {
+    const isStandalone = () =>
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+
+    const syncOfflineMode = () => {
+      const shouldForceCompact = !navigator.onLine && isStandalone();
+      setIsOfflinePwa(shouldForceCompact);
+
+      if (shouldForceCompact) {
+        setViewMode("compact");
+        return;
+      }
+
+      setViewMode(lastOnlineViewModeRef.current);
+    };
+
+    syncOfflineMode();
+    window.addEventListener("online", syncOfflineMode);
+    window.addEventListener("offline", syncOfflineMode);
+
+    return () => {
+      window.removeEventListener("online", syncOfflineMode);
+      window.removeEventListener("offline", syncOfflineMode);
+    };
+  }, []);
+
+  const handleViewModeChange = (next: CalendarViewMode) => {
+    if (isOfflinePwa) return;
+    lastOnlineViewModeRef.current = next;
+    setViewMode(next);
+    try {
+      document.cookie = `rm-view-mode-calendar=${next}; path=/; max-age=31536000; samesite=lax`;
+    } catch {
+      // Ignore cookie write failures
+    }
+  };
+
   return (
     <div className="w-full relative bg-[#f1f1f1]" /* [#f1f1f1] */ data-events-feed="true">
       <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen pb-20 pt-[2px]">
@@ -276,7 +319,7 @@ export function EventsFeed({
 
             <ViewModeToggle
               value={renderedViewMode}
-              onChange={setViewMode}
+              onChange={handleViewModeChange}
               ariaLabel="Cambiar vista del calendario"
             />
           </div>

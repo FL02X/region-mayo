@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import { readCookieValue } from "@/lib/cookie-utils"
 import { AppHeader } from "@/components/layout/app-header"
 import { DirectivaContent } from "@/components/sections/directiva/directiva-content"
 import Chatbot from "@/components/shared/chatbot"
@@ -15,6 +16,8 @@ export const metadata: Metadata = {
 }
 
 export default async function DirectivaPage() {
+  const viewModeCookie = await readCookieValue("rm-view-mode-directiva")
+  const initialViewMode = viewModeCookie === "compact" ? "compact" : "grid"
   const [region, members] = await Promise.all([
     getRegionConfig("region-mayo"),
     getDirectiva("region-mayo"),
@@ -28,7 +31,7 @@ export default async function DirectivaPage() {
       />
       <div>
         {region ? (
-          <DirectivaContent members={members} />
+          <DirectivaContent members={members} initialViewMode={initialViewMode} />
         ) : (
           <div className="flex items-center justify-center min-h-[400px]">
             <p className="text-lg text-gray-500">

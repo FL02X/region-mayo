@@ -176,7 +176,14 @@ function CoroCard({
                 aria-controls={`coro-details-${coro.id}`}
                 style={{ minHeight: "unset", minWidth: "unset" }}
               >
-                <span>{isExpanded ? "Ocultar información" : "Ver información de contacto"}</span>
+                  {isExpanded ? (
+                    <span>Ocultar información</span>
+                  ) : (
+                    <>
+                      <span className="md:hidden">Ver información</span>
+                      <span className="hidden md:inline">Ver información de contacto</span>
+                    </>
+                  )}
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
                     isExpanded ? "rotate-180" : ""
@@ -354,12 +361,16 @@ function CoroCard({
 
 interface CorosContentProps {
   coros: Coro[];
+  initialViewMode?: ViewMode;
 }
 
-export function CorosContent({ coros }: CorosContentProps) {
+export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const resolvedInitialViewMode = initialViewMode ?? "grid";
+  const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
+  const [isOfflinePwa, setIsOfflinePwa] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+  const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -418,10 +429,48 @@ export function CorosContent({ coros }: CorosContentProps) {
     };
   }, []);
 
+  useEffect(() => {
+    const isStandalone = () =>
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+
+    const syncOfflineMode = () => {
+      const shouldForceCompact = !navigator.onLine && isStandalone();
+      setIsOfflinePwa(shouldForceCompact);
+
+      if (shouldForceCompact) {
+        setViewMode("compact");
+        return;
+      }
+
+      setViewMode(lastOnlineViewModeRef.current);
+    };
+
+    syncOfflineMode();
+    window.addEventListener("online", syncOfflineMode);
+    window.addEventListener("offline", syncOfflineMode);
+
+    return () => {
+      window.removeEventListener("online", syncOfflineMode);
+      window.removeEventListener("offline", syncOfflineMode);
+    };
+  }, []);
+
   const filteredCoros = useMemo(
     () => searchItems(coros, searchQuery, SEARCH_CONFIGS.coros),
     [coros, searchQuery],
   );
+
+  const handleViewModeChange = (next: ViewMode) => {
+    if (isOfflinePwa) return;
+    lastOnlineViewModeRef.current = next;
+    setViewMode(next);
+    try {
+      document.cookie = `rm-view-mode-coros=${next}; path=/; max-age=31536000; samesite=lax`;
+    } catch {
+      // Ignore cookie write failures
+    }
+  };
 
   return (
     <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
@@ -446,7 +495,7 @@ export function CorosContent({ coros }: CorosContentProps) {
         <div className="mb-4 flex justify-end">
           <ViewModeToggle
             value={viewMode}
-            onChange={setViewMode}
+            onChange={handleViewModeChange}
             ariaLabel="Cambiar vista de coros"
           />
         </div>
