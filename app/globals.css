@@ -660,6 +660,11 @@ html[data-connection="offline"] .offline-hide-when-offline {
   display: none !important;
 }
 
+html[data-connection="offline"] [data-view-mode="compact"] .offline-aware-image,
+html[data-connection="offline"] [data-view-mode="compact"] .offline-image-placeholder {
+  visibility: hidden;
+}
+
 @keyframes headerIconShake {
   0% {
     transform: translateY(0) rotate(0deg);

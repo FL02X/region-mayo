@@ -321,6 +321,7 @@ export function EventsFeed({
               value={renderedViewMode}
               onChange={handleViewModeChange}
               ariaLabel="Cambiar vista del calendario"
+              disableGrid={isOfflinePwa}
             />
           </div>
 

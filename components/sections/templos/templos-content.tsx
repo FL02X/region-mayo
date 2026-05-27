@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -638,7 +638,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
     setHasHydrated(true);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const isStandalone = () =>
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as { standalone?: boolean }).standalone === true;
@@ -1001,7 +1001,11 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
   };
 
   return (
-    <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
+    <div
+      className="w-full relative pb-20 bg-[#f1f1f1]"
+      id="main-content"
+      data-view-mode={viewMode}
+    >
       {shouldShowLoader && (
         <div className="fixed inset-0 z-[60] bg-white/90 backdrop-blur-[1px] flex items-center justify-center">
           <div className="flex flex-col items-center gap-3" role="status" aria-label="Cargando templos">
@@ -1063,6 +1067,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
             value={viewMode}
             onChange={handleViewModeChange}
             ariaLabel="Cambiar vista de templos"
+            disableGrid={isOfflinePwa}
           />
         </div>
 

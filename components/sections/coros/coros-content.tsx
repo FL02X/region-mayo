@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -429,7 +429,7 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const isStandalone = () =>
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as { standalone?: boolean }).standalone === true;
@@ -473,7 +473,11 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
   };
 
   return (
-    <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
+    <div
+      className="w-full relative pb-20 bg-[#f1f1f1]"
+      id="main-content"
+      data-view-mode={viewMode}
+    >
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -497,6 +501,7 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
             value={viewMode}
             onChange={handleViewModeChange}
             ariaLabel="Cambiar vista de coros"
+            disableGrid={isOfflinePwa}
           />
         </div>
 

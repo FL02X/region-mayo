@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -334,7 +334,7 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
     }
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const isStandalone = () =>
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as { standalone?: boolean }).standalone === true;
@@ -378,7 +378,11 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
   };
 
   return (
-    <div className="w-full relative pb-16 bg-[#f1f1f1]" id="main-content">
+    <div
+      className="w-full relative pb-16 bg-[#f1f1f1]"
+      id="main-content"
+      data-view-mode={viewMode}
+    >
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-[#ffffff] md:border-x border-[#e5e7eb] dark:border-[#27272a] min-h-screen focus:outline-none">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -402,6 +406,7 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
             value={viewMode}
             onChange={handleViewModeChange}
             ariaLabel="Cambiar vista de directiva"
+            disableGrid={isOfflinePwa}
           />
         </div>
 

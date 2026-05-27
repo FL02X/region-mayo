@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Users, MapPin, Church, Phone, ChevronDown } from "lucide-react";
@@ -325,7 +325,7 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
     }
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const isStandalone = () =>
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as { standalone?: boolean }).standalone === true;
@@ -369,7 +369,11 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
   };
 
   return (
-    <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
+    <div
+      className="w-full relative pb-20 bg-[#f1f1f1]"
+      id="main-content"
+      data-view-mode={viewMode}
+    >
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
         {/* Main Content Area */}
         <div className="max-w-4xl mx-auto">
@@ -396,6 +400,7 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
             value={viewMode}
             onChange={handleViewModeChange}
             ariaLabel="Cambiar vista de pastores"
+            disableGrid={isOfflinePwa}
           />
         </div>
 

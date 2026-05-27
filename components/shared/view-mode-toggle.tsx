@@ -9,12 +9,14 @@ interface ViewModeToggleProps {
   value: ViewMode;
   onChange: (mode: ViewMode) => void;
   ariaLabel: string;
+  disableGrid?: boolean;
 }
 
-export function ViewModeToggle({ value, onChange, ariaLabel }: ViewModeToggleProps) {
+export function ViewModeToggle({ value, onChange, ariaLabel, disableGrid = false }: ViewModeToggleProps) {
   const [feedbackVisible, setFeedbackVisible] = useState(false);
 
   const handleChange = (mode: ViewMode) => {
+    if (disableGrid && mode === "grid") return;
     onChange(mode);
     setFeedbackVisible(true);
   };
@@ -39,11 +41,15 @@ export function ViewModeToggle({ value, onChange, ariaLabel }: ViewModeTogglePro
         <button
           type="button"
           onClick={() => handleChange("grid")}
+          disabled={disableGrid}
           className={`inline-flex h-9 w-9 items-center justify-center border-r border-border transition-none ${
             value === "grid" ? "bg-[#757575] text-background" : "bg-card text-muted-foreground"
-          } ${feedbackVisible && value === "grid" ? "ring-2 ring-[#3b82f6] ring-inset" : ""}`}
+          } ${feedbackVisible && value === "grid" ? "ring-2 ring-[#3b82f6] ring-inset" : ""} ${
+            disableGrid ? "cursor-not-allowed opacity-40" : ""
+          }`}
           aria-label="Vista en cuadrícula"
           aria-pressed={value === "grid"}
+          aria-disabled={disableGrid}
           title="Vista en cuadrícula"
           style={{ minHeight: "unset", minWidth: "unset" }}
         >
