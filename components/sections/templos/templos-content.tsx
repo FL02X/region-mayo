@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   AlertTriangle,
   ChevronDown,
+  Check,
+  Copy,
+  Printer,
   MapPin,
   ExternalLink,
   Church,
@@ -28,6 +32,7 @@ import { SearchBar } from "@/components/shared/search-bar-sections";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { findNearestChurches } from "@/lib/location-service";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
+import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import {
   formatTempleServiceLine,
@@ -56,21 +61,338 @@ const formatPresidentShortName = (name: string) => {
   return `${parts[0]} ${parts[1]}`;
 };
 
+const buildGoogleMapsLink = (templo: Templo) => {
+  if (templo.googleMapsUrl) return templo.googleMapsUrl;
+  if (
+    typeof templo.latitude === "number" &&
+    typeof templo.longitude === "number"
+  ) {
+    return `https://www.google.com/maps?q=${templo.latitude},${templo.longitude}`;
+  }
+  return "";
+};
+
+const buildTempleCopyText = (templo: Templo, scheduleLines: string[]) => {
+  const templePhone = templo.phone ? formatPhoneForDisplay(templo.phone) : "";
+  const pastorPhone = templo.pastores[0]?.phone
+    ? formatPhoneForDisplay(templo.pastores[0].phone)
+    : "";
+  const googleMapsLink = buildGoogleMapsLink(templo);
+  const sections = [
+    [templo.temploName],
+    scheduleLines,
+    templo.address ? [templo.address] : [],
+    templePhone || pastorPhone ? [templePhone || pastorPhone] : [],
+    typeof templo.latitude === "number" && typeof templo.longitude === "number"
+      ? [`${templo.latitude}, ${templo.longitude}`]
+      : [],
+    googleMapsLink ? [googleMapsLink] : [],
+  ].filter((section) => section.length > 0);
+
+  return sections.map((section) => section.join("\n")).join("\n\n");
+};
+
+const getPrintableTemplePhotoUrl = (templo: Templo) => {
+  const firstPhoto = templo.photos?.[0];
+  if (!firstPhoto) return "";
+
+  return sanityImageVariantUrl(firstPhoto, {
+    width: 1200,
+    quality: 82,
+    format: "webp",
+    fit: "max",
+  });
+};
+
+const waitForImageReady = (src: string) => {
+  if (!src) return Promise.resolve();
+
+  return new Promise<void>((resolve) => {
+    const image = new Image();
+    const timeout = window.setTimeout(resolve, 2500);
+    const finish = () => {
+      window.clearTimeout(timeout);
+      resolve();
+    };
+
+    image.onload = async () => {
+      try {
+        if (image.decode) {
+          await image.decode();
+        }
+      } catch {
+        // Loading is enough for print; decode can fail on some browsers.
+      }
+      finish();
+    };
+    image.onerror = finish;
+    image.src = src;
+
+    if (image.complete) {
+      finish();
+    }
+  });
+};
+
+const waitForNextPaint = () =>
+  new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => resolve());
+    });
+  });
+
+function PrintableTemploSheet({ templo }: { templo: Templo }) {
+  const scheduleServices = getSortedTempleServices(templo.schedule);
+  const firstPhotoUrl = getPrintableTemplePhotoUrl(templo);
+
+  return (
+    <div className="templo-print-sheet">
+      <style>{`
+        @media screen {
+          .templo-print-root {
+            position: fixed;
+            inset: 0;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+          }
+        }
+
+        @media print {
+          @page {
+            size: landscape;
+            margin: 12mm;
+          }
+
+          body > *:not(.templo-print-root) {
+            display: none !important;
+          }
+
+          .templo-print-root {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            color: #1f2933;
+            background: white;
+          }
+
+          .templo-print-sheet {
+            width: 100%;
+            font-family: var(--font-sans);
+          }
+
+          .templo-print-card {
+            display: grid;
+            grid-template-columns: minmax(220px, 32%) 1fr;
+            gap: 22px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            break-inside: avoid;
+          }
+
+          .templo-print-photo {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            background: var(--muted);
+          }
+
+          .templo-print-placeholder {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--muted);
+            color: var(--muted-foreground);
+          }
+
+          .templo-print-title {
+            margin: 0 0 10px;
+            font-size: 24px;
+            line-height: 1.2;
+            font-weight: 700;
+          }
+
+          .templo-print-sections {
+            display: grid;
+            gap: 14px;
+          }
+
+          .templo-print-section {
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            gap: 10px;
+            align-items: start;
+          }
+
+          .templo-print-label {
+            margin: 0 0 2px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted-foreground);
+          }
+
+          .templo-print-text {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.45;
+            white-space: pre-line;
+          }
+
+          .templo-print-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 3px;
+          }
+
+          .templo-print-icon {
+            width: 18px;
+            height: 18px;
+            color: var(--muted-foreground);
+            margin-top: 2px;
+          }
+        }
+      `}</style>
+      <article className="templo-print-card">
+        <div>
+          {firstPhotoUrl ? (
+            <img
+              className="templo-print-photo"
+              src={firstPhotoUrl}
+              alt={templo.temploName}
+            />
+          ) : (
+            <div className="templo-print-placeholder">
+              <Church className="h-10 w-10" aria-hidden="true" />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h1 className="templo-print-title">{templo.temploName}</h1>
+          <div className="templo-print-sections">
+            {scheduleServices.length > 0 && (
+              <section className="templo-print-section">
+                <Clock className="templo-print-icon" aria-hidden="true" />
+                <div>
+                  <p className="templo-print-label">Horarios de Reunión</p>
+                  <ul className="templo-print-list">
+                    {scheduleServices.map((service, idx) => (
+                      <li
+                        key={`${service.day}-${service.startTime}-${idx}`}
+                        className="templo-print-text"
+                      >
+                        {formatTempleServiceLine(service)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            )}
+
+            {templo.address && (
+              <section className="templo-print-section">
+                <MapPin className="templo-print-icon" aria-hidden="true" />
+                <div>
+                  <p className="templo-print-label">Dirección</p>
+                  <p className="templo-print-text">{templo.address}</p>
+                </div>
+              </section>
+            )}
+
+            {templo.pastores.length > 0 && templo.pastores.map((pastor) => (
+              <section key={pastor.id} className="templo-print-section">
+                <User className="templo-print-icon" aria-hidden="true" />
+                <div>
+                  <p className="templo-print-label">
+                    {templo.pastores.length > 1 ? "Pastores a Cargo" : "Pastor a Cargo"}
+                  </p>
+                  <p className="templo-print-text">
+                    {pastor.fullName}
+                    {pastor.phone ? `\n${formatPhoneForDisplay(pastor.phone)}` : ""}
+                  </p>
+                </div>
+              </section>
+            ))}
+
+            {templo.coros.length > 0 && templo.coros.map((coro) => (
+              <section key={coro.id} className="templo-print-section">
+                <Users className="templo-print-icon" aria-hidden="true" />
+                <div>
+                  <p className="templo-print-label">
+                    {templo.coros.length > 1 ? "Coros Locales" : "Coro Local"}
+                  </p>
+                  <p className="templo-print-text">
+                    {coro.coroName}
+                    {`\nPresidente: ${formatPresidentShortName(coro.presidentName)}`}
+                    {coro.presidentPhone ? ` · ${formatPhoneForDisplay(coro.presidentPhone)}` : ""}
+                  </p>
+                </div>
+              </section>
+            ))}
+
+            {typeof templo.latitude === "number" && typeof templo.longitude === "number" && (
+              <section className="templo-print-section">
+                <MapPin className="templo-print-icon" aria-hidden="true" />
+                <div>
+                  <p className="templo-print-label">Coordenadas GPS</p>
+                  <p className="templo-print-text">
+                    {templo.latitude}, {templo.longitude}
+                  </p>
+                </div>
+              </section>
+            )}
+
+            {templo.description && (
+              <section className="templo-print-section">
+                <FileText className="templo-print-icon" aria-hidden="true" />
+                <div>
+                  <p className="templo-print-label">Notas adicionales</p>
+                  <p className="templo-print-text">{templo.description}</p>
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
+      </article>
+    </div>
+  );
+}
+
 function TemploCard({ 
   templo, 
   searchQuery,
   distance,
   showDistance,
+  onCopied,
+  onPrint,
   variant = "grid",
 }: { 
   templo: Templo; 
   searchQuery: string;
   distance?: any;
   showDistance?: boolean;
+  onCopied: () => void;
+  onPrint: (templo: Templo) => void;
   variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isCopyActive, setIsCopyActive] = useState(false);
+  const [isCopyHovered, setIsCopyHovered] = useState(false);
+  const [isPrintHovered, setIsPrintHovered] = useState(false);
+  const copyButtonRef = useRef<HTMLButtonElement | null>(null);
   const { currentTime } = useTime();
   const scheduleServices = useMemo(
     () => getSortedTempleServices(templo.schedule),
@@ -102,9 +424,52 @@ function TemploCard({
     return "bg-white border border-border text-slate-700";
   }, [availability]);
 
+  const copyText = useMemo(
+    () => buildTempleCopyText(templo, scheduleServices.map((service) => formatTempleServiceLine(service))),
+    [scheduleServices, templo]
+  );
+
   const openGoogleMaps = () => {
-    if (templo.googleMapsUrl) window.open(templo.googleMapsUrl, "_blank");
+    const url = buildGoogleMapsLink(templo);
+    if (url) window.open(url, "_blank");
   };
+
+  const handleCopyTempleInfo = async () => {
+    try {
+      await navigator.clipboard.writeText(copyText);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = copyText;
+      textarea.setAttribute("readonly", "true");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+
+    setIsCopyActive(true);
+    onCopied();
+  };
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (
+        copyButtonRef.current &&
+        target instanceof Node &&
+        !copyButtonRef.current.contains(target)
+      ) {
+        setIsCopyActive(false);
+        setIsCopyHovered(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, []);
 
   const handleToggle = () => {
     setIsExpanded((prev) => {
@@ -125,7 +490,49 @@ function TemploCard({
     templo.coros.length > 0 ||
     scheduleServices.length > 0 ||
     !!templo.description ||
-    !!templo.googleMapsUrl;
+    !!templo.googleMapsUrl ||
+    !!templo.phone ||
+    typeof templo.latitude === "number" ||
+    typeof templo.longitude === "number";
+
+  const actionButtons = (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <button
+        ref={copyButtonRef}
+        onClick={handleCopyTempleInfo}
+        onMouseEnter={() => setIsCopyHovered(true)}
+        onMouseLeave={() => setIsCopyHovered(false)}
+        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
+        style={{
+          backgroundColor: isCopyActive || isCopyHovered
+            ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"
+            : "var(--surface-pane)",
+          borderColor: isCopyActive ? "var(--brand-ink)" : "var(--border)",
+        }}
+        aria-label={`Copiar información de ${templo.temploName}`}
+      >
+        <Copy className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span>Copiar</span>
+      </button>
+
+      <button
+        onClick={() => onPrint(templo)}
+        onMouseEnter={() => setIsPrintHovered(true)}
+        onMouseLeave={() => setIsPrintHovered(false)}
+        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
+        style={{
+          backgroundColor: isPrintHovered
+            ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"
+            : "var(--surface-pane)",
+          borderColor: "var(--border)",
+        }}
+        aria-label={`Imprimir información de ${templo.temploName}`}
+      >
+        <Printer className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span>Imprimir</span>
+      </button>
+    </div>
+  );
 
   const detailsContent = (
     <>
@@ -232,6 +639,8 @@ function TemploCard({
           </div>
         </div>
       )}
+
+      {actionButtons}
     </>
   );
 
@@ -387,7 +796,7 @@ function TemploCard({
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-4 pb-0 flex flex-col flex-1">
         <div data-eq-head>
           <h3 className="font-semibold text-lg text-foreground leading-snug mb-3">
             <HighlightedText text={templo.temploName} query={searchQuery} />
@@ -402,9 +811,9 @@ function TemploCard({
                   <span className="font-semibold text-xs">{availability.title}</span>
                 ) : (
                   <>
-                    <span className="font-semibold text-xs">Próximo culto</span>
+                    <span className="font-semibold text-xs md:text-[12px]">Próximo culto</span>
                     <span className="opacity-80">·</span>
-                    <span className="text-xs opacity-90">{(() => {
+                    <span className="text-xs md:text-[12px] opacity-90">{(() => {
                       const sub = availability.subtitle || availability.title || "";
                       let cleaned = String(sub)
                         .replace(/^\s*Abre\s+/i, "")
@@ -423,7 +832,7 @@ function TemploCard({
 
           {/* Address preview (always visible if present) */}
           {templo.address && (
-            <div className="flex items-start gap-2 mb-1.5">
+            <div className="flex items-start gap-2 mb-0 mt-4">
               <MapPin
                 className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
                 aria-hidden="true"
@@ -454,7 +863,7 @@ function TemploCard({
 
           {/* Toggle — only shown if there is expandable content */}
           {hasExpandableContent && (
-            <div className="-mx-4 border-t border-border">
+            <div className="-mx-4 mb-2 border-t border-border">
               <button
                 onClick={handleToggle}
                 className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/70 transition-colors"
@@ -588,6 +997,8 @@ function TemploCard({
                     </div>
                   </div>
                 )}
+
+                {actionButtons}
               </div>
             )}
           </div>
@@ -620,9 +1031,15 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
     useState<DistanceMap>({});
   const [hasHydrated, setHasHydrated] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
+  const [printTemplo, setPrintTemplo] = useState<Templo | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const highlightedHashRef = useRef<string | null>(null);
   const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
+  const copyToastTimerRef = useRef<number | null>(null);
+  const copyToastExitTimerRef = useRef<number | null>(null);
+  const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
   
   // Calculate distances to nearby churches if user has granted permission
@@ -1000,12 +1417,88 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
     }
   };
 
+  const showCopiedToast = () => {
+    setShowCopyToast(true);
+    window.requestAnimationFrame(() => setIsCopyToastVisible(true));
+
+    if (copyToastTimerRef.current) {
+      window.clearTimeout(copyToastTimerRef.current);
+    }
+    if (copyToastExitTimerRef.current) {
+      window.clearTimeout(copyToastExitTimerRef.current);
+    }
+
+    copyToastTimerRef.current = window.setTimeout(() => {
+      setIsCopyToastVisible(false);
+      copyToastExitTimerRef.current = window.setTimeout(() => {
+        setShowCopyToast(false);
+      }, 240);
+    }, 1600);
+  };
+
+  const handlePrintTemplo = async (templo: Templo) => {
+    if (printInFlightRef.current) return;
+
+    printInFlightRef.current = true;
+    setPrintTemplo(templo);
+
+    try {
+      await waitForImageReady(getPrintableTemplePhotoUrl(templo));
+      await waitForNextPaint();
+      window.print();
+    } finally {
+      printInFlightRef.current = false;
+    }
+  };
+
+  useEffect(
+    () => () => {
+      if (copyToastTimerRef.current) {
+        window.clearTimeout(copyToastTimerRef.current);
+      }
+      if (copyToastExitTimerRef.current) {
+        window.clearTimeout(copyToastExitTimerRef.current);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const clearPrintTemplo = () => setPrintTemplo(null);
+
+    window.addEventListener("afterprint", clearPrintTemplo);
+    return () => window.removeEventListener("afterprint", clearPrintTemplo);
+  }, []);
+
   return (
     <div
-      className="w-full relative pb-20 bg-[#f1f1f1]"
+      className="w-full relative pb-15 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
     >
+      {hasHydrated && showCopyToast && createPortal(
+        <div className="fixed bottom-4 left-1/2 z-[9999] pointer-events-none -translate-x-1/2 sm:bottom-6">
+          <div
+            className={`inline-flex min-w-[168px] items-center gap-2 rounded-sm bg-emerald-700 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)] transition-all duration-200 ease-out ${
+              isCopyToastVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-3 opacity-0"
+            }`}
+          >
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/15">
+              <Check className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span>Copiado</span>
+          </div>
+        </div>,
+        document.body
+      )}
+      {hasHydrated && printTemplo && createPortal(
+        <div className="templo-print-root">
+          <PrintableTemploSheet templo={printTemplo} />
+        </div>,
+        document.body
+      )}
       {shouldShowLoader && (
         <div className="fixed inset-0 z-[60] bg-white/90 backdrop-blur-[1px] flex items-center justify-center">
           <div className="flex flex-col items-center gap-3" role="status" aria-label="Cargando templos">
@@ -1017,7 +1510,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
         </div>
       )}
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
           <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Asista a nuestros templos</h1>
@@ -1175,6 +1668,8 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
                 showDistance={
                   showDistanceBadges && !!visibleDistances[templo.id]
                 }
+                onCopied={showCopiedToast}
+                onPrint={handlePrintTemplo}
                 variant="compact"
               />
             ))}
@@ -1200,6 +1695,8 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
                 showDistance={
                   showDistanceBadges && !!visibleDistances[templo.id]
                 }
+                onCopied={showCopiedToast}
+                onPrint={handlePrintTemplo}
               />
             ))}
           </div>
