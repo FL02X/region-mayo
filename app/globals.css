@@ -665,6 +665,176 @@ html[data-connection="offline"] [data-view-mode="compact"] .offline-image-placeh
   visibility: hidden;
 }
 
+@media screen {
+  .rm-print-root,
+  .templo-print-root {
+    position: fixed;
+    inset: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 12mm;
+  }
+
+  body.rm-printing > *:not(.rm-print-root):not(.templo-print-root) {
+    display: none !important;
+  }
+
+  body.rm-printing .rm-print-root,
+  body.rm-printing .templo-print-root {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    color: #1f2933;
+    background: white;
+  }
+
+  .rm-print-sheet,
+  .templo-print-sheet {
+    width: 100%;
+    font-family: var(--font-sans);
+  }
+
+  .rm-print-card {
+    display: grid;
+    grid-template-columns: minmax(220px, 34%) 1fr;
+    gap: 20px;
+    border: 1px solid var(--border);
+    padding: 16px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+
+  .rm-print-media {
+    max-height: 158mm;
+    overflow: hidden;
+    background: var(--muted);
+  }
+
+  .rm-print-photo {
+    width: 100%;
+    height: auto;
+    max-height: 158mm;
+    object-fit: cover;
+    background: var(--muted);
+  }
+
+  .rm-print-placeholder {
+    width: 100%;
+    min-height: 70mm;
+    max-height: 158mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--muted);
+    color: var(--muted-foreground);
+  }
+
+  .rm-print-title {
+    margin: 0 0 12px;
+    font-size: 28px;
+    line-height: 1.15;
+    font-weight: 700;
+  }
+
+  .rm-print-sections {
+    display: grid;
+    gap: 14px;
+  }
+
+  .rm-print-section {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .rm-print-label {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  .rm-print-text {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.45;
+    white-space: pre-line;
+  }
+
+  .rm-print-text > * {
+    margin: 0;
+  }
+
+  .rm-print-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--muted-foreground);
+    margin-top: 3px;
+  }
+
+  .rm-event-print-root .rm-print-card {
+    grid-template-columns: minmax(160px, 24%) 1fr;
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .rm-event-print-root .rm-print-media {
+    max-height: 118mm;
+  }
+
+  .rm-event-print-root .rm-print-photo {
+    max-height: 118mm;
+  }
+
+  .rm-event-print-root .rm-print-title {
+    margin-bottom: 7px;
+    font-size: 21px;
+    line-height: 1.12;
+  }
+
+  .rm-event-print-root .rm-print-sections {
+    gap: 6px;
+  }
+
+  .rm-event-print-root .rm-print-section {
+    grid-template-columns: 21px 1fr;
+    gap: 7px;
+  }
+
+  .rm-event-print-root .rm-print-label {
+    margin-bottom: 1px;
+    font-size: 10px;
+  }
+
+  .rm-event-print-root .rm-print-text {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .rm-event-print-root .rm-print-icon {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+  }
+}
+
 @keyframes headerIconShake {
   0% {
     transform: translateY(0) rotate(0deg);

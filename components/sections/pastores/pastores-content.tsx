@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { Users, MapPin, Church, Phone, ChevronDown } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
+import {
+  CopyPrintActions,
+  CopyToast,
+  PrintableInfoSheet,
+  waitForImageReady,
+  waitForNextPaint,
+} from "@/components/shared/copy-print-actions";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { SearchBar } from "@/components/shared/search-bar-sections";
@@ -14,13 +22,65 @@ import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Pastor } from "@/lib/types";
 
+const buildPastorCopyText = (pastor: Pastor) => {
+  const sections = [
+    [pastor.fullName],
+    pastor.temploName ? [pastor.temploName] : [],
+    pastor.churchNumber ? [`Iglesia #${pastor.churchNumber}`] : [],
+    pastor.address ? [pastor.address] : [],
+    pastor.phone ? [formatPhoneForDisplay(pastor.phone)] : [],
+    pastor.googleMapsUrl ? [pastor.googleMapsUrl] : [],
+  ].filter((section) => section.length > 0);
+
+  return sections.map((section) => section.join("\n")).join("\n\n");
+};
+
+function PrintablePastorSheet({ pastor }: { pastor: Pastor }) {
+  return (
+    <PrintableInfoSheet
+      title={pastor.fullName}
+      imageUrl={pastor.photo}
+      imageAlt={pastor.fullName}
+      fallbackIcon={<Users className="h-10 w-10" aria-hidden="true" />}
+      sections={[
+        ...(pastor.temploName
+          ? [{
+              id: "templo",
+              label: "Iglesia Sede",
+              icon: <Church className="rm-print-icon" aria-hidden="true" />,
+              content: (
+                <p>
+                  {pastor.temploName}
+                  {pastor.churchNumber ? `\nPastor Local de Iglesia #${pastor.churchNumber}` : ""}
+                  {pastor.address ? `\n${pastor.address}` : ""}
+                </p>
+              ),
+            }]
+          : []),
+        ...(pastor.phone
+          ? [{
+              id: "phone",
+              label: "Número de Teléfono",
+              icon: <Phone className="rm-print-icon" aria-hidden="true" />,
+              content: <p>{formatPhoneForDisplay(pastor.phone)}</p>,
+            }]
+          : []),
+      ]}
+    />
+  );
+}
+
 function PastorCard({
   pastor,
   searchQuery,
+  onCopied,
+  onPrint,
   variant = "grid",
 }: {
   pastor: Pastor;
   searchQuery: string;
+  onCopied: () => void;
+  onPrint: (pastor: Pastor) => void;
   variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -30,8 +90,20 @@ function PastorCard({
       window.open(pastor.googleMapsUrl, "_blank");
     }
   };
+  const compactUtilityButtonClass =
+    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
 
-  const hasDetails = Boolean(pastor.temploName || pastor.phone);
+  const hasDetails = true;
+  const actionButtons = (
+    <CopyPrintActions
+      copyText={buildPastorCopyText(pastor)}
+      copyLabel={`Copiar información de ${pastor.fullName}`}
+      printLabel={`Imprimir información de ${pastor.fullName}`}
+      onCopied={onCopied}
+      onPrint={() => onPrint(pastor)}
+    />
+  );
+
   const detailsContent = (
     <div className="space-y-5">
       {pastor.temploName && (
@@ -104,6 +176,8 @@ function PastorCard({
           />
         </div>
       )}
+
+      {actionButtons}
     </div>
   );
 
@@ -148,7 +222,7 @@ function PastorCard({
               <div className="mt-3 flex flex-col items-start gap-2 md:mt-5 md:flex-row md:flex-wrap md:items-center">
                 <button
                   onClick={() => setIsExpanded((prev) => !prev)}
-                  className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className={compactUtilityButtonClass}
                   aria-expanded={isExpanded}
                   aria-controls={`pastor-details-${pastor.id}`}
                   style={{ minHeight: "unset", minWidth: "unset" }}
@@ -292,6 +366,7 @@ function PastorCard({
                 />
               </div>
             )}
+            {actionButtons}
         </div>
       </div>
     </div>
@@ -308,8 +383,14 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
   const resolvedInitialViewMode = initialViewMode ?? "grid";
   const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
   const [isOfflinePwa, setIsOfflinePwa] = useState(false);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
+  const [printPastor, setPrintPastor] = useState<Pastor | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
+  const copyToastTimerRef = useRef<number | null>(null);
+  const copyToastExitTimerRef = useRef<number | null>(null);
+  const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -368,12 +449,82 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
     }
   };
 
+  const showCopiedToast = () => {
+    setShowCopyToast(true);
+    window.requestAnimationFrame(() => setIsCopyToastVisible(true));
+
+    if (copyToastTimerRef.current) {
+      window.clearTimeout(copyToastTimerRef.current);
+    }
+    if (copyToastExitTimerRef.current) {
+      window.clearTimeout(copyToastExitTimerRef.current);
+    }
+
+    copyToastTimerRef.current = window.setTimeout(() => {
+      setIsCopyToastVisible(false);
+      copyToastExitTimerRef.current = window.setTimeout(() => {
+        setShowCopyToast(false);
+      }, 240);
+    }, 1600);
+  };
+
+  const handlePrintPastor = async (pastor: Pastor) => {
+    if (printInFlightRef.current) return;
+
+    printInFlightRef.current = true;
+    document.body.classList.add("rm-printing");
+    setPrintPastor(pastor);
+
+    try {
+      await waitForImageReady(pastor.photo);
+      await waitForNextPaint();
+      window.print();
+    } finally {
+      printInFlightRef.current = false;
+    }
+  };
+
+  useEffect(
+    () => () => {
+      if (copyToastTimerRef.current) {
+        window.clearTimeout(copyToastTimerRef.current);
+      }
+      if (copyToastExitTimerRef.current) {
+        window.clearTimeout(copyToastExitTimerRef.current);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const clearPrintPastor = () => {
+      document.body.classList.remove("rm-printing");
+      setPrintPastor(null);
+    };
+
+    window.addEventListener("afterprint", clearPrintPastor);
+    return () => {
+      document.body.classList.remove("rm-printing");
+      window.removeEventListener("afterprint", clearPrintPastor);
+    };
+  }, []);
+
   return (
     <div
       className="w-full relative pb-20 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
     >
+      {showCopyToast && createPortal(
+        <CopyToast visible={isCopyToastVisible} />,
+        document.body
+      )}
+      {printPastor && createPortal(
+        <div className="rm-print-root">
+          <PrintablePastorSheet pastor={printPastor} />
+        </div>,
+        document.body
+      )}
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
         {/* Main Content Area */}
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
@@ -428,6 +579,8 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
                 key={pastor.id}
                 pastor={pastor}
                 searchQuery={searchQuery}
+                onCopied={showCopiedToast}
+                onPrint={handlePrintPastor}
                 variant="compact"
               />
             ))}
@@ -448,6 +601,8 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
                 key={pastor.id}
                 pastor={pastor}
                 searchQuery={searchQuery}
+                onCopied={showCopiedToast}
+                onPrint={handlePrintPastor}
               />
             ))}
           </div>

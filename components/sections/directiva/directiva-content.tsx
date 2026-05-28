@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,6 +13,13 @@ import {
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { Badge } from "@/components/ui/badge";
+import {
+  CopyPrintActions,
+  CopyToast,
+  PrintableInfoSheet,
+  waitForImageReady,
+  waitForNextPaint,
+} from "@/components/shared/copy-print-actions";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
 import { SearchBar } from "@/components/shared/search-bar-sections";
@@ -21,13 +29,70 @@ import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { DirectivaMember } from "@/lib/types";
 
+const buildDirectivaCopyText = (member: DirectivaMember) => {
+  const sections = [
+    [member.fullName],
+    member.role ? [member.role] : [],
+    member.temploName ? [member.temploName] : [],
+    member.address ? [member.address] : [],
+    [formatPhoneForDisplay(member.phone)],
+    member.googleMapsUrl ? [member.googleMapsUrl] : [],
+  ].filter((section) => section.length > 0);
+
+  return sections.map((section) => section.join("\n")).join("\n\n");
+};
+
+function PrintableDirectivaSheet({ member }: { member: DirectivaMember }) {
+  return (
+    <PrintableInfoSheet
+      title={member.fullName}
+      imageUrl={member.photo}
+      imageAlt={member.fullName}
+      fallbackIcon={<UserCircle className="h-10 w-10" aria-hidden="true" />}
+      sections={[
+        ...(member.role
+          ? [{
+              id: "role",
+              label: "Cargo",
+              icon: <UserCircle className="rm-print-icon" aria-hidden="true" />,
+              content: <p>{member.role}</p>,
+            }]
+          : []),
+        ...(member.temploName
+          ? [{
+              id: "templo",
+              label: "Iglesia Sede",
+              icon: <Church className="rm-print-icon" aria-hidden="true" />,
+              content: (
+                <p>
+                  {member.temploName}
+                  {member.address ? `\n${member.address}` : ""}
+                </p>
+              ),
+            }]
+          : []),
+        {
+          id: "phone",
+          label: "Contacto",
+          icon: <Phone className="rm-print-icon" aria-hidden="true" />,
+          content: <p>{formatPhoneForDisplay(member.phone)}</p>,
+        },
+      ]}
+    />
+  );
+}
+
 function DirectivaCard({
   member,
   searchQuery,
+  onCopied,
+  onPrint,
   variant = "grid",
 }: {
   member: DirectivaMember;
   searchQuery: string;
+  onCopied: () => void;
+  onPrint: (member: DirectivaMember) => void;
   variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -37,6 +102,18 @@ function DirectivaCard({
       window.open(member.googleMapsUrl, "_blank");
     }
   };
+  const compactUtilityButtonClass =
+    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+
+  const actionButtons = (
+    <CopyPrintActions
+      copyText={buildDirectivaCopyText(member)}
+      copyLabel={`Copiar información de ${member.fullName}`}
+      printLabel={`Imprimir información de ${member.fullName}`}
+      onCopied={onCopied}
+      onPrint={() => onPrint(member)}
+    />
+  );
 
   const detailsContent = (
     <div className="space-y-5">
@@ -105,6 +182,8 @@ function DirectivaCard({
         message={`Hola ${member.fullName}, me comunico del sitio web de Región Mayo.`}
         className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white"
       />
+
+      {actionButtons}
     </div>
   );
 
@@ -154,7 +233,7 @@ function DirectivaCard({
             <div className="mt-3 flex flex-col items-start gap-2 md:mt-5 md:flex-row md:flex-wrap md:items-center">
               <button
                 onClick={() => setIsExpanded((prev) => !prev)}
-                className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className={compactUtilityButtonClass}
                 aria-expanded={isExpanded}
                 aria-controls={`directiva-details-${member.id}`}
                 style={{ minHeight: "unset", minWidth: "unset" }}
@@ -301,6 +380,8 @@ function DirectivaCard({
               message={`Hola ${member.fullName}, me comunico del sitio web de Región Mayo.`}
               className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white"
             />
+
+            {actionButtons}
         </div>
       </div>
     </div>
@@ -317,8 +398,14 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
   const resolvedInitialViewMode = initialViewMode ?? "grid";
   const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
   const [isOfflinePwa, setIsOfflinePwa] = useState(false);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
+  const [printMember, setPrintMember] = useState<DirectivaMember | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
+  const copyToastTimerRef = useRef<number | null>(null);
+  const copyToastExitTimerRef = useRef<number | null>(null);
+  const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -377,12 +464,82 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
     }
   };
 
+  const showCopiedToast = () => {
+    setShowCopyToast(true);
+    window.requestAnimationFrame(() => setIsCopyToastVisible(true));
+
+    if (copyToastTimerRef.current) {
+      window.clearTimeout(copyToastTimerRef.current);
+    }
+    if (copyToastExitTimerRef.current) {
+      window.clearTimeout(copyToastExitTimerRef.current);
+    }
+
+    copyToastTimerRef.current = window.setTimeout(() => {
+      setIsCopyToastVisible(false);
+      copyToastExitTimerRef.current = window.setTimeout(() => {
+        setShowCopyToast(false);
+      }, 240);
+    }, 1600);
+  };
+
+  const handlePrintMember = async (member: DirectivaMember) => {
+    if (printInFlightRef.current) return;
+
+    printInFlightRef.current = true;
+    document.body.classList.add("rm-printing");
+    setPrintMember(member);
+
+    try {
+      await waitForImageReady(member.photo);
+      await waitForNextPaint();
+      window.print();
+    } finally {
+      printInFlightRef.current = false;
+    }
+  };
+
+  useEffect(
+    () => () => {
+      if (copyToastTimerRef.current) {
+        window.clearTimeout(copyToastTimerRef.current);
+      }
+      if (copyToastExitTimerRef.current) {
+        window.clearTimeout(copyToastExitTimerRef.current);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const clearPrintMember = () => {
+      document.body.classList.remove("rm-printing");
+      setPrintMember(null);
+    };
+
+    window.addEventListener("afterprint", clearPrintMember);
+    return () => {
+      document.body.classList.remove("rm-printing");
+      window.removeEventListener("afterprint", clearPrintMember);
+    };
+  }, []);
+
   return (
     <div
       className="w-full relative pb-16 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
     >
+      {showCopyToast && createPortal(
+        <CopyToast visible={isCopyToastVisible} />,
+        document.body
+      )}
+      {printMember && createPortal(
+        <div className="rm-print-root">
+          <PrintableDirectivaSheet member={printMember} />
+        </div>,
+        document.body
+      )}
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-[#ffffff] md:border-x border-[#e5e7eb] dark:border-[#27272a] min-h-screen focus:outline-none">
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
@@ -440,6 +597,8 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
                 key={member.id}
                 member={member}
                 searchQuery={searchQuery}
+                onCopied={showCopiedToast}
+                onPrint={handlePrintMember}
                 variant="compact"
               />
             ))}
@@ -460,6 +619,8 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
                 key={member.id}
                 member={member}
                 searchQuery={searchQuery}
+                onCopied={showCopiedToast}
+                onPrint={handlePrintMember}
               />
             ))}
           </div>

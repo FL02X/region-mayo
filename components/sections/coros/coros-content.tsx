@@ -1,17 +1,24 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import {
   Music,
   MapPin,
-  ExternalLink,
   ChevronDown,
   User,
   Church,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
+import {
+  CopyPrintActions,
+  CopyToast,
+  PrintableInfoSheet,
+  waitForImageReady,
+  waitForNextPaint,
+} from "@/components/shared/copy-print-actions";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { SearchBar } from "@/components/shared/search-bar-sections";
@@ -21,13 +28,70 @@ import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Coro } from "@/lib/types";
 
+const buildCoroCopyText = (coro: Coro) => {
+  const sections = [
+    [coro.coroName],
+    coro.temploName ? [coro.temploName] : [],
+    coro.address ? [coro.address] : [],
+    [
+      coro.presidentPhone
+        ? `${coro.presidentName}\n${formatPhoneForDisplay(coro.presidentPhone)}`
+        : coro.presidentName,
+    ],
+    coro.googleMapsUrl ? [coro.googleMapsUrl] : [],
+  ].filter((section) => section.length > 0);
+
+  return sections.map((section) => section.join("\n")).join("\n\n");
+};
+
+function PrintableCoroSheet({ coro }: { coro: Coro }) {
+  return (
+    <PrintableInfoSheet
+      title={coro.coroName}
+      imageUrl={coro.photo}
+      imageAlt={coro.coroName}
+      fallbackIcon={<Music className="h-10 w-10" aria-hidden="true" />}
+      sections={[
+        ...(coro.temploName
+          ? [{
+              id: "templo",
+              label: "Iglesia Sede",
+              icon: <Church className="rm-print-icon" aria-hidden="true" />,
+              content: (
+                <p>
+                  {coro.temploName}
+                  {coro.address ? `\n${coro.address}` : ""}
+                </p>
+              ),
+            }]
+          : []),
+        {
+          id: "president",
+          label: "Presidente de Coro",
+          icon: <User className="rm-print-icon" aria-hidden="true" />,
+          content: (
+            <p>
+              {coro.presidentName}
+              {coro.presidentPhone ? `\n${formatPhoneForDisplay(coro.presidentPhone)}` : ""}
+            </p>
+          ),
+        },
+      ]}
+    />
+  );
+}
+
 function CoroCard({
   coro,
   searchQuery,
+  onCopied,
+  onPrint,
   variant = "grid",
 }: {
   coro: Coro;
   searchQuery: string;
+  onCopied: () => void;
+  onPrint: (coro: Coro) => void;
   variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -37,6 +101,8 @@ function CoroCard({
       window.open(coro.googleMapsUrl, "_blank");
     }
   };
+  const compactUtilityButtonClass =
+    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
 
   const handleToggle = () => {
     setIsExpanded((prev) => {
@@ -51,6 +117,16 @@ function CoroCard({
       return !prev;
     });
   };
+
+  const actionButtons = (
+    <CopyPrintActions
+      copyText={buildCoroCopyText(coro)}
+      copyLabel={`Copiar información de ${coro.coroName}`}
+      printLabel={`Imprimir información de ${coro.coroName}`}
+      onCopied={onCopied}
+      onPrint={() => onPrint(coro)}
+    />
+  );
 
   const detailsContent = (
     <>
@@ -124,6 +200,8 @@ function CoroCard({
           />
         )}
       </div>
+
+      {actionButtons}
     </>
   );
 
@@ -171,7 +249,7 @@ function CoroCard({
             <div className="mt-3 flex flex-col items-start gap-2 md:mt-5 md:flex-row md:flex-wrap md:items-center">
               <button
                 onClick={handleToggle}
-                className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className={compactUtilityButtonClass}
                 aria-expanded={isExpanded}
                 aria-controls={`coro-details-${coro.id}`}
                 style={{ minHeight: "unset", minWidth: "unset" }}
@@ -351,6 +429,7 @@ function CoroCard({
                     </div>
                   </div>
                 )}
+                {actionButtons}
             </div>
           )}
         </div>
@@ -369,8 +448,14 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
   const resolvedInitialViewMode = initialViewMode ?? "grid";
   const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
   const [isOfflinePwa, setIsOfflinePwa] = useState(false);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
+  const [printCoro, setPrintCoro] = useState<Coro | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
+  const copyToastTimerRef = useRef<number | null>(null);
+  const copyToastExitTimerRef = useRef<number | null>(null);
+  const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
 
   useEffect(() => {
@@ -472,12 +557,82 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
     }
   };
 
+  const showCopiedToast = () => {
+    setShowCopyToast(true);
+    window.requestAnimationFrame(() => setIsCopyToastVisible(true));
+
+    if (copyToastTimerRef.current) {
+      window.clearTimeout(copyToastTimerRef.current);
+    }
+    if (copyToastExitTimerRef.current) {
+      window.clearTimeout(copyToastExitTimerRef.current);
+    }
+
+    copyToastTimerRef.current = window.setTimeout(() => {
+      setIsCopyToastVisible(false);
+      copyToastExitTimerRef.current = window.setTimeout(() => {
+        setShowCopyToast(false);
+      }, 240);
+    }, 1600);
+  };
+
+  const handlePrintCoro = async (coro: Coro) => {
+    if (printInFlightRef.current) return;
+
+    printInFlightRef.current = true;
+    document.body.classList.add("rm-printing");
+    setPrintCoro(coro);
+
+    try {
+      await waitForImageReady(coro.photo);
+      await waitForNextPaint();
+      window.print();
+    } finally {
+      printInFlightRef.current = false;
+    }
+  };
+
+  useEffect(
+    () => () => {
+      if (copyToastTimerRef.current) {
+        window.clearTimeout(copyToastTimerRef.current);
+      }
+      if (copyToastExitTimerRef.current) {
+        window.clearTimeout(copyToastExitTimerRef.current);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const clearPrintCoro = () => {
+      document.body.classList.remove("rm-printing");
+      setPrintCoro(null);
+    };
+
+    window.addEventListener("afterprint", clearPrintCoro);
+    return () => {
+      document.body.classList.remove("rm-printing");
+      window.removeEventListener("afterprint", clearPrintCoro);
+    };
+  }, []);
+
   return (
     <div
       className="w-full relative pb-20 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
     >
+      {showCopyToast && createPortal(
+        <CopyToast visible={isCopyToastVisible} />,
+        document.body
+      )}
+      {printCoro && createPortal(
+        <div className="rm-print-root">
+          <PrintableCoroSheet coro={printCoro} />
+        </div>,
+        document.body
+      )}
       <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
@@ -525,6 +680,8 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
                 key={coro.id}
                 coro={coro}
                 searchQuery={searchQuery}
+                onCopied={showCopiedToast}
+                onPrint={handlePrintCoro}
                 variant="compact"
               />
             ))}
@@ -541,7 +698,13 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
             }`}
           >
             {filteredCoros.map((coro) => (
-              <CoroCard key={coro.id} coro={coro} searchQuery={searchQuery} />
+              <CoroCard
+                key={coro.id}
+                coro={coro}
+                searchQuery={searchQuery}
+                onCopied={showCopiedToast}
+                onPrint={handlePrintCoro}
+              />
             ))}
           </div>
         )}

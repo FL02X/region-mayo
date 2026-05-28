@@ -494,15 +494,19 @@ function TemploCard({
     !!templo.phone ||
     typeof templo.latitude === "number" ||
     typeof templo.longitude === "number";
+  const compactUtilityButtonClass =
+    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+  const compactMapsButtonClass =
+    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-[#005998] bg-[#005998] px-2.5 text-sm font-medium text-white transition-[background-color,border-color] duration-150 hover:border-[#004c80] hover:bg-[#004c80] hover:text-white";
 
   const actionButtons = (
-    <div className="mt-2 flex flex-wrap items-center gap-2">
+    <div className="mt-2 flex flex-wrap items-center gap-0">
       <button
         ref={copyButtonRef}
         onClick={handleCopyTempleInfo}
         onMouseEnter={() => setIsCopyHovered(true)}
         onMouseLeave={() => setIsCopyHovered(false)}
-        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
+        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-sm rounded-r-none border border-r-0 px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
         style={{
           backgroundColor: isCopyActive || isCopyHovered
             ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"
@@ -728,11 +732,11 @@ function TemploCard({
               {templo.googleMapsUrl && (
                 <button
                   onClick={openGoogleMaps}
-                  className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-2.5 text-sm font-medium text-[#2f5e93] transition-colors hover:bg-muted"
+                  className={compactMapsButtonClass}
                   aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
                   style={{ minHeight: "unset", minWidth: "unset" }}
                 >
-                  <MapPin className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <MapPin className="h-4 w-4" aria-hidden="true" />
                   Ver ubicación en Maps
                 </button>
               )}
@@ -740,7 +744,7 @@ function TemploCard({
               {hasExpandableContent && (
                 <button
                   onClick={handleToggle}
-                  className="inline-flex h-8 items-center gap-1.5 border border-border bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className={compactUtilityButtonClass}
                   aria-expanded={isExpanded}
                   aria-controls={`templo-details-${templo.id}`}
                   style={{ minHeight: "unset", minWidth: "unset" }}
@@ -1440,6 +1444,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
     if (printInFlightRef.current) return;
 
     printInFlightRef.current = true;
+    document.body.classList.add("rm-printing");
     setPrintTemplo(templo);
 
     try {
@@ -1464,10 +1469,16 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
   );
 
   useEffect(() => {
-    const clearPrintTemplo = () => setPrintTemplo(null);
+    const clearPrintTemplo = () => {
+      document.body.classList.remove("rm-printing");
+      setPrintTemplo(null);
+    };
 
     window.addEventListener("afterprint", clearPrintTemplo);
-    return () => window.removeEventListener("afterprint", clearPrintTemplo);
+    return () => {
+      document.body.classList.remove("rm-printing");
+      window.removeEventListener("afterprint", clearPrintTemplo);
+    };
   }, []);
 
   return (
