@@ -1,4 +1,4 @@
-const VERSION = "v8";
+const VERSION = "v9";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
 const IMAGE_CACHE = `rm-images-${VERSION}`;
@@ -59,6 +59,11 @@ self.addEventListener("activate", (event) => {
 
 const isHtmlRequest = (request) =>
   request.mode === "navigate" || request.headers.get("accept")?.includes("text/html");
+
+const isRscRequest = (request) =>
+  request.headers.get("rsc") === "1" ||
+  request.headers.get("next-router-prefetch") === "1" ||
+  request.headers.get("accept")?.includes("text/x-component");
 
 const isCacheableResponse = (response) =>
   response && (response.ok || response.type === "opaque");
@@ -203,6 +208,11 @@ self.addEventListener("fetch", (event) => {
 
   if (isHtmlRequest(request)) {
     event.respondWith(networkFirstWithCacheFallback(request, STATIC_CACHE, OFFLINE_URL));
+    return;
+  }
+
+  if (isRscRequest(request)) {
+    event.respondWith(networkFirstWithCacheFallback(request, DATA_CACHE, OFFLINE_URL));
     return;
   }
 

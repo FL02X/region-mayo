@@ -2,15 +2,15 @@ type SanityEnv = {
   projectId: string
   dataset: string
   apiVersion: string
-  useCdn: boolean
   token?: string
 }
+
+export const SANITY_CACHE_TAG = "sanity"
 
 function getSanityEnv(): SanityEnv {
   const projectId = process.env.SANITY_PROJECT_ID
   const dataset = process.env.SANITY_DATASET
   const apiVersion = process.env.SANITY_API_VERSION ?? "2024-01-01"
-  const useCdn = process.env.SANITY_USE_CDN !== "false"
   const token = process.env.SANITY_READ_TOKEN
 
   if (!projectId) {
@@ -24,7 +24,6 @@ function getSanityEnv(): SanityEnv {
     projectId,
     dataset,
     apiVersion,
-    useCdn,
     token: token || undefined,
   }
 }
@@ -53,11 +52,21 @@ export function getSanityClient() {
         headers.Authorization = `Bearer ${env.token}`
       }
 
-      // Sanity caches published queries on the edge; for draft/preview you need a token.
+      const cacheOptions =
+        process.env.NODE_ENV === "development"
+          ? ({ cache: "no-store" } as const)
+          : ({
+              cache: "force-cache",
+              next: {
+                tags: [SANITY_CACHE_TAG],
+              },
+            } as const)
+
       const res = await fetch(url, {
         method: "POST",
         headers,
         body: JSON.stringify({ query, params: params ?? {} }),
+        ...cacheOptions,
       })
 
       if (!res.ok) {
@@ -72,4 +81,3 @@ export function getSanityClient() {
 
   return cachedClient
 }
-

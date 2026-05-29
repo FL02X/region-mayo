@@ -102,6 +102,7 @@ export default defineType({
       type: 'string',
       initialValue: 'Ver más información',
       description: 'Texto que aparecerá en el botón si hay un link',
+      hidden: ({ document }) => !document?.url,
     }),
 
     defineField({

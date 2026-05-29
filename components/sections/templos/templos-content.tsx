@@ -495,9 +495,9 @@ function TemploCard({
     typeof templo.latitude === "number" ||
     typeof templo.longitude === "number";
   const compactUtilityButtonClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+    "inline-flex h-8 w-fit items-center gap-1.5 border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
   const compactMapsButtonClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-[#005998] bg-[#005998] px-2.5 text-sm font-medium text-white transition-[background-color,border-color] duration-150 hover:border-[#004c80] hover:bg-[#004c80] hover:text-white";
+    "inline-flex h-8 w-fit items-center gap-1.5 border border-[#005998] bg-[#005998] px-2.5 text-sm font-medium text-white transition-[background-color,border-color] duration-0 hover:border-[#1a6aa1] hover:bg-[#1a6aa1] hover:text-white";
 
   const actionButtons = (
     <div className="mt-2 flex flex-wrap items-center gap-0">

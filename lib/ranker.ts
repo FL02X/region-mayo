@@ -30,7 +30,7 @@ export type HeroCandidate =
       id: string
       publishedAt: number // timestamp ms
       accentColor: string
-      media: { isVertical: boolean; alt: string }
+      media: { isVertical: boolean; alt: string; url?: string }
       url?: string
       ctaText?: string
       pinned?: boolean
@@ -53,6 +53,7 @@ export type HeroCandidate =
       location?: string
       address?: string
       registrationEnabled?: boolean
+      image?: string
       pinned?: boolean
     }
   | {
@@ -259,10 +260,11 @@ export function rankCandidates(
  * Las reglas absolutas IGNORAN el scoring genérico.
  *
  * ORDEN DE AUTORIDAD (de mayor a menor):
- * 1. Custom <24h = SIEMPRE hero
- * 2. Prayer activo (COLLECT o SHOW) = SIEMPRE hero
- * 3. Next upcoming event = hero
- * 4. Más alto scored = fallback
+ * 1. Custom pinned = SIEMPRE hero
+ * 2. Custom <24h = SIEMPRE hero
+ * 3. Prayer activo (COLLECT o SHOW) = SIEMPRE hero
+ * 4. Next upcoming event = hero
+ * 5. Más alto scored = fallback
  */
 export function pickHeroAndDeck(
   candidates: HeroCandidate[],
@@ -295,29 +297,43 @@ export function pickHeroAndDeck(
   let heroReason = ''
 
   // ───────────────────────────────────────────────────────────
-  // REGLA 1: Custom <24h = HIGH PRIORITY
+  // REGLA 1: Custom pinned = ABSOLUTE PRIORITY
   // ───────────────────────────────────────────────────────────
-  const customFresh = ranked.find(
-    (r) =>
-      r.item.type === 'custom' &&
-      now - r.item.publishedAt <= MS_DAY
+  const customPinned = ranked.find(
+    (r) => r.item.type === 'custom' && r.item.pinned
   )
-  if (customFresh) {
-    hero = customFresh.item
-    heroReason = 'custom_fresh_24h'
+  if (customPinned) {
+    hero = customPinned.item
+    heroReason = 'custom_pinned'
   }
 
   // ───────────────────────────────────────────────────────────
-  // REGLA 2: Prayer activo (COLLECT o SHOW)
+  // REGLA 2: Custom <24h = HIGH PRIORITY
+  // ───────────────────────────────────────────────────────────
+  if (!hero) {
+    const customFresh = ranked.find(
+      (r) =>
+        r.item.type === 'custom' &&
+        now - r.item.publishedAt <= MS_DAY
+    )
+    if (customFresh) {
+      hero = customFresh.item
+      heroReason = 'custom_fresh_24h'
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────
+  // REGLA 3: Prayer activo (COLLECT o SHOW)
   // ───────────────────────────────────────────────────────────
   if (!hero) {
     const activePrayer = ranked.find(
       (r) => r.item.type === 'prayer' && r.item.phase !== 'paused'
     )
-    if (activePrayer) {
-      hero = activePrayer.item
+    if (activePrayer && activePrayer.item.type === 'prayer') {
+      const prayerItem = activePrayer.item
+      hero = prayerItem
       heroReason =
-        activePrayer.item.phase === 'show'
+        prayerItem.phase === 'show'
           ? 'prayer_show_active'
           : 'prayer_collect_active'
     }
@@ -405,6 +421,7 @@ export function getHeroReasonLabel(reason: string): string {
   const labels: Record<string, string> = {
     prayer_show_active: '🟢 Muro de Oraciones activo',
     prayer_collect_active: '🟢 Muro de Oraciones activo',
+    custom_pinned: '📌 Tarjeta personalizada fijada',
     custom_fresh_24h: '🟦 Tarjeta personalizada reciente',
     event_within_72h: '🔵 Evento próximo (< 3 días)',
     next_upcoming_event: '🔵 Siguiente evento en calendario',

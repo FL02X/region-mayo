@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useEffect, useState, type ReactNode } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -9,6 +9,7 @@ import {
   Headphones,
   HeartHandshake,
   Instagram as InstagramIcon,
+  X,
   Play,
   Maximize2,
   Megaphone,
@@ -45,6 +46,7 @@ type DeckItem =
       postedAt: Date;
       image?: string;
       href: string;
+      isVideo?: boolean;
       postType?: "reel" | "post";
       pinned?: boolean;
     }
@@ -55,6 +57,7 @@ type DeckItem =
       postedAt: Date;
       image?: string;
       href: string;
+      isVideo?: boolean;
       pinned?: boolean;
     }
   | {
@@ -90,6 +93,11 @@ type DeckItemType = DeckItem["type"];
 
 const MS_HOUR = 60 * 60 * 1000;
 const MS_DAY = 24 * MS_HOUR;
+
+function isSocialVideoUrl(url?: string): boolean {
+  if (!url) return false;
+  return /\/(reel|reels|videos|watch)\b|watch\?v=|fb\.watch/i.test(url);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCORING — see plan: event <24h +1000, promo +600, prayer <24h +400, IG decays
@@ -162,7 +170,7 @@ function mapCandidateToDeckItem(
       pinned: candidate.pinned,
       image: (candidate as any).media?.url,
       accentColor: candidate.accentColor,
-      ctaText: candidate.ctaText,
+      ctaText: candidate.url ? candidate.ctaText : undefined,
     };
   }
 
@@ -198,6 +206,7 @@ function mapCandidateToDeckItem(
       time: candidate.time,
       location: candidate.location,
       pinned: candidate.pinned,
+      href: `/#${candidate.id}`,
     };
   }
 
@@ -212,6 +221,8 @@ function mapCandidateToDeckItem(
         postedAt: new Date(candidate.postedAt),
         href: candidate.url,
         image,
+        isVideo: isSocialVideoUrl(candidate.url),
+        postType: isSocialVideoUrl(candidate.url) ? "reel" : "post",
       };
     }
     return {
@@ -221,6 +232,7 @@ function mapCandidateToDeckItem(
       postedAt: new Date(candidate.postedAt),
       href: candidate.url,
       image,
+      isVideo: isSocialVideoUrl(candidate.url),
     };
   }
 
@@ -250,6 +262,8 @@ export function ActionDeck({
   // Mobile scroll indicator state
   const [mobileScrollProgress, setMobileScrollProgress] = useState(0);
   const [mobileHasOverflow, setMobileHasOverflow] = useState(false);
+  const [mobileCanScrollLeft, setMobileCanScrollLeft] = useState(false);
+  const [mobileCanScrollRight, setMobileCanScrollRight] = useState(false);
 
   // Prayer modal open state (used when the deck's prayer card should open the submit modal)
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
@@ -357,16 +371,21 @@ export function ActionDeck({
   }, [customHeroCard, prayerWall, socialPosts, events, nowProp]);
 
   // Update desktop scroll state and scrollbar thumb
-  const updateScrollState = () => {
+  const updateScrollState = useCallback(() => {
     const container = scrollContainerRef.current;
     const track = trackRef.current;
-    if (!container || !track) return;
+    if (!container) return;
 
     const { scrollLeft, scrollWidth, clientWidth } = container;
     const maxScroll = scrollWidth - clientWidth;
 
     setCanScrollLeft(scrollLeft > 5);
     setCanScrollRight(scrollLeft < maxScroll - 5);
+    if (!track || maxScroll <= 0) {
+      setThumbWidth(0);
+      setThumbLeft(0);
+      return;
+    }
 
     // Calculate thumb size and position
     const trackWidth = track.clientWidth;
@@ -377,10 +396,10 @@ export function ActionDeck({
 
     setThumbWidth(newThumbWidth);
     setThumbLeft(newThumbLeft);
-  };
+  }, []);
 
   // Update mobile scroll indicator
-  const updateMobileScrollState = () => {
+  const updateMobileScrollState = useCallback(() => {
     const container = mobileScrollRef.current;
     if (!container) return;
 
@@ -388,8 +407,10 @@ export function ActionDeck({
     const maxScroll = scrollWidth - clientWidth;
     
     setMobileHasOverflow(scrollWidth > clientWidth + 10);
+    setMobileCanScrollLeft(scrollLeft > 5);
+    setMobileCanScrollRight(scrollLeft < maxScroll - 5);
     setMobileScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
-  };
+  }, []);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -417,7 +438,7 @@ export function ActionDeck({
         window.removeEventListener("resize", updateMobileScrollState);
       }
     };
-  }, [deck]);
+  }, [deck, updateMobileScrollState, updateScrollState]);
 
   
 
@@ -433,6 +454,7 @@ export function ActionDeck({
       left: container.scrollLeft + (direction === "right" ? scrollAmount : -scrollAmount),
       behavior: "smooth",
     });
+    window.setTimeout(updateScrollState, 280);
   };
 
   const handleMobileArrow = (direction: "left" | "right") => {
@@ -441,6 +463,7 @@ export function ActionDeck({
     const cardWidth = 280;
     const amount = cardWidth * 1.5;
     container.scrollTo({ left: container.scrollLeft + (direction === "right" ? amount : -amount), behavior: "smooth" });
+    window.setTimeout(updateMobileScrollState, 280);
   };
 
   // Handle thumb drag
@@ -501,7 +524,7 @@ export function ActionDeck({
     <>
       <section
         aria-label="Acciones destacadas"
-        className="w-full bg-gray-50 pt-6 md:pt-8 pb-8 md:pb-10"
+        className="w-full bg-[#f5f6f7] pt-6 md:pt-8 pb-8 md:pb-10"
       >
       <div className="flex items-center justify-between px-4 md:px-6 mb-2.5">
         <h2 className="text-[15px] mb-3 mt-3 font-bold uppercase tracking-[0.18em] text-[#425060]">
@@ -548,7 +571,17 @@ export function ActionDeck({
             ))}
           </div>
 
-          {mobileHasOverflow && (
+          {mobileHasOverflow && mobileCanScrollLeft && (
+            <button
+              onClick={() => handleMobileArrow("left")}
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1 shadow-md"
+              aria-label="Ver elementos anteriores"
+            >
+              <ChevronLeft className="h-5 w-5 text-[#425060]" />
+            </button>
+          )}
+
+          {mobileHasOverflow && mobileCanScrollRight && (
             <button
               onClick={() => handleMobileArrow("right")}
               className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1 shadow-md"
@@ -578,7 +611,6 @@ export function ActionDeck({
 
       {/* Desktop: horizontal scroll with arrows and custom scrollbar */}
       <div className="hidden md:block relative">
-        {/* Left arrow - inside bounds with full-height gradient fade */}
         {canScrollLeft && (
           <button
             onClick={() => scrollBy("left")}
@@ -592,7 +624,6 @@ export function ActionDeck({
           </button>
         )}
 
-        {/* Scrollable container */}
         <div
           ref={scrollContainerRef}
           className="flex gap-4 overflow-x-auto pb-3 px-6"
@@ -624,7 +655,6 @@ export function ActionDeck({
           ))}
         </div>
 
-        {/* Right arrow - inside bounds with full-height gradient fade */}
         {canScrollRight && (
           <button
             onClick={() => scrollBy("right")}
@@ -638,14 +668,12 @@ export function ActionDeck({
           </button>
         )}
 
-        {/* Custom scrollbar track */}
         {deck.length > 3 && (
           <div
             ref={trackRef}
             onClick={handleTrackClick}
             className="relative h-1.5 bg-[#f0f2f5] rounded-full mx-6 cursor-pointer"
           >
-            {/* Scrollbar thumb */}
             <div
               ref={thumbRef}
               onMouseDown={handleThumbMouseDown}
@@ -686,33 +714,33 @@ const BADGE_META: Record<
   { label: string; classes: string; icon: ReactNode }
 > = {
   event: {
-    label: "Evento",
-    classes: "bg-[#2f5e93] text-white",
+    label: "Próximo evento",
+    classes: "text-[#2f5e93]",
     icon: <Calendar className="h-3 w-3" aria-hidden="true" />,
   },
   instagram: {
     label: "Instagram",
-    classes: "bg-[#f4edfa] text-[#6d49a8]",
+    classes: "text-[#e4405f]",
     icon: <InstagramIcon className="h-3 w-3" aria-hidden="true" />,
   },
   facebook: {
     label: "Facebook",
-    classes: "bg-[#e8f1ff] text-[#1b74e4]",
-    icon: <Megaphone className="h-3 w-3" aria-hidden="true" />,
+    classes: "text-[#1877f2]",
+    icon: <span className="text-[14px] font-black leading-none" aria-hidden="true">f</span>,
   },
   prayer: {
     label: "Oraciones",
-    classes: "bg-[#e7f1ea] text-[#2d6a4f]",
+    classes: "text-[#2d6a4f]",
     icon: <HeartHandshake className="h-3 w-3" aria-hidden="true" />,
   },
   promo: {
     label: "Novedad",
-    classes: "bg-[#fef3c7] text-[#92400e]",
+    classes: "text-[#92400e]",
     icon: <Megaphone className="h-3 w-3" aria-hidden="true" />,
   },
   audio: {
     label: "Audio",
-    classes: "bg-[#eef2ff] text-[#3730a3]",
+    classes: "text-[#3730a3]",
     icon: <Headphones className="h-3 w-3" aria-hidden="true" />,
   },
 };
@@ -863,28 +891,20 @@ function DeckCard({
   const [showFullPrayerModal, setShowFullPrayerModal] = useState(false);
   const [fullPrayerText, setFullPrayerText] = useState("");
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isSocialPlayerOpen, setIsSocialPlayerOpen] = useState(false);
 
-  // Determine width based on type, deck length, and device
-  let widthClass = "";
-  if (isDesktop) {
-    // Desktop: if only prayer and it's the only element, make it full width
-    if (item.type === "prayer" && deckLength === 1) {
-      widthClass = "w-full shrink-0"; // Full width for single prayer
-    } else {
-      widthClass = "w-[260px] shrink-0";
-    }
-  } else {
-    // Mobile: if only one element, full width; otherwise normal
-    if (deckLength === 1) {
-      widthClass = "w-full min-w-[calc(100vw-32px)] shrink-0"; // Force full width for single element
-    } else {
-      widthClass = featured
-         ? "w-[85vw] shrink-0"
-         : "w-[78vw] shrink-0";
-    }
-  }
+  const cardFrameClass = isDesktop
+    ? "w-[260px] h-[270px] shrink-0"
+    : deckLength === 1
+      ? "w-full min-w-[calc(100vw-32px)] h-[284px] shrink-0"
+      : "w-[82vw] h-[284px] shrink-0";
 
-  const imageHeight = featured && !isDesktop ? "h-28" : "h-24";
+  const imageHeight =
+    item.type === "instagram" || item.type === "facebook"
+      ? "h-[154px]"
+      : isDesktop
+        ? "h-[104px]"
+        : "h-[96px]";
 
   const image =
     (item.type === "event" || item.type === "instagram" || item.type === "promo" || item.type === "facebook") &&
@@ -893,83 +913,102 @@ function DeckCard({
       : undefined;
 
   const href = "href" in item ? item.href : undefined;
+  const isSocialVideo = (item.type === "instagram" || item.type === "facebook") && item.isVideo;
+  const canOpenImage = item.type !== "event" && item.type !== "instagram" && item.type !== "facebook";
   const badge = BADGE_META[item.type];
   const prayerDate =
     item.type === "prayer" && item.phase === "show" && item.prayerObjects?.[0]?.submittedAt
       ? formatPrayerDate(item.prayerObjects[0].submittedAt)
       : null;
+  const ctaLabel = isSocialVideo
+    ? "Reproducir"
+    : item.type === "promo" && item.ctaText
+      ? item.ctaText
+      : CTA_LABEL[item.type];
+  const ctaLinkClass =
+    "inline-flex items-center gap-1 text-[12px] font-semibold text-[#2f5e93] underline underline-offset-2 decoration-[#2f5e93]/40 transition-colors hover:text-[#244c78] hover:decoration-current";
+  const ctaStaticClass = `inline-flex items-center gap-1 font-semibold ${
+    item.type === "prayer" && item.phase === "collect"
+      ? "text-[17px] text-[#2d6a4f]"
+      : featured && !isDesktop
+        ? "text-[12px] text-[#2f5e93]"
+        : "text-[12px] text-[#425060]"
+  }`;
+  const ctaContent = (
+    <>
+      {ctaLabel}
+      <ArrowRight className="h-3 w-3" aria-hidden="true" />
+    </>
+  );
 
   const inner = (
     <article
       className={[
         "snap-center relative overflow-hidden flex flex-col",
-        "bg-white border border-[#dce2e9] rounded-[3px]",
-        "hover:border-[#9fb0c5] hover:shadow-[0_2px_10px_rgba(47,94,147,0.08)] transition-all",
-        widthClass,
+        "bg-white rounded-[3px]",
+        "shadow-[0_1px_4px_rgba(31,40,51,0.08)] transition-shadow hover:shadow-[0_4px_14px_rgba(31,40,51,0.10)]",
+        "w-full h-full",
       ].join(" ")}
     >
-      {/* Top accent line to match 'Próximo evento' cards */}
-      <div
-        className="w-full h-1 rounded-t-[3px]"
-        style={{ backgroundColor: item.type === "promo" && item.accentColor ? item.accentColor : ACCENT_COLORS[item.type] }}
-        aria-hidden="true"
-      />
       {image ? (
-        <div className={`relative w-full ${item.type === "promo" ? "flex-1 min-h-[160px] md:min-h-[180px]" : imageHeight} bg-[#f1f1f1] group cursor-pointer`}>
+        <div className={`relative w-full ${item.type === "promo" ? "flex-1 min-h-0" : imageHeight} bg-[#f1f1f1] group cursor-pointer`}>
           <Image
             src={image}
             alt={item.title}
             fill
-            sizes={isDesktop ? "260px" : "(max-width: 768px) 80vw, 360px"}
+            sizes={isDesktop ? "(min-width: 768px) 33vw, 82vw" : "82vw"}
             className={item.type === "promo" ? "object-contain" : "object-cover"}
           />
 
           {/* Clickable overlay for entire image - opens lightbox */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsLightboxOpen(true);
-            }}
-            className="absolute inset-0 z-10 bg-transparent cursor-pointer hover:bg-black/[0.02] transition-colors"
-            aria-label="Ver imagen en pantalla completa"
-          />
+          {isSocialVideo ? (
+            <div className="absolute inset-0 z-10 bg-transparent cursor-pointer hover:bg-black/[0.02] transition-colors" aria-hidden="true" />
+          ) : !canOpenImage ? (
+            <div className="absolute inset-0 z-10 bg-transparent pointer-events-none" aria-hidden="true" />
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsLightboxOpen(true);
+              }}
+              className="absolute inset-0 z-10 bg-transparent cursor-pointer hover:bg-black/[0.02] transition-colors"
+              aria-label="Ver imagen en pantalla completa"
+            />
+          )}
 
-          {/* Overlay magnifier / open lightbox - desktop only hover */}
-          <div className="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none">
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-2 pointer-events-auto flex items-center justify-center">
-              <Maximize2 className="h-5 w-5 text-white" aria-hidden="true" />
+          {canOpenImage && (
+            <div className="absolute bottom-2 right-2 z-20 flex items-center justify-center pointer-events-none">
+              <div className="rounded-[6px] border border-white/15 bg-black/45 p-2 text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] backdrop-blur-[8px] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+                <Maximize2 className="h-4 w-4 md:h-5 md:w-5" aria-hidden="true" />
+              </div>
             </div>
-          </div>
+          )}
 
-          {item.type === "instagram" && item.postType === "reel" && (
+          {isSocialVideo && (
             <div className="absolute top-2 right-2 bg-black/55 rounded-full h-6 w-6 flex items-center justify-center">
               <Play className="h-3 w-3 text-white" fill="white" />
             </div>
           )}
 
-          {/* Promo Expand Badge - mobile only */}
-          {item.type === "promo" && (
-            <div
-              className="md:hidden pointer-events-none absolute bottom-2 right-2 inline-flex items-center justify-center rounded-[6px] border border-white/10 bg-black/45 p-2 text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] backdrop-blur-[8px]"
-              aria-hidden="true"
-            >
-              <Maximize2 className="h-4 w-4" />
-            </div>
-          )}
         </div>
       ) : null}
 
-      <div className={`flex flex-col ${item.type === "promo" ? "p-3" : "flex-1 p-3"}`}>
+      {!(item.type === "promo" && !href) && (
+      <div className={`min-h-0 flex flex-col ${item.type === "promo" ? "p-3" : "flex-1 p-3"}`}>
         {item.type !== "promo" && (
           <>
-            <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
               <span
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-[0.08em] ${badge.classes}`}
+                className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] ${badge.classes}`}
               >
                 {badge.icon}
-                {badge.label}
+                {item.type === "instagram" || item.type === "facebook" ? (
+                  <span className="sr-only">{badge.label}</span>
+                ) : (
+                  badge.label
+                )}
               </span>
               {prayerDate && (
                 <span className="rounded-sm bg-[#4a5568] px-2 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm whitespace-nowrap">
@@ -978,13 +1017,15 @@ function DeckCard({
               )}
             </div>
 
-            <h3
-              className={`font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 ${
-                featured && !isDesktop ? "text-[15px]" : "text-[13px]"
-              }`}
-            >
-              {item.title}
-            </h3>
+            {item.type !== "instagram" && item.type !== "facebook" && (
+              <h3
+                className={`font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 ${
+                  featured && !isDesktop ? "text-[15px]" : "text-[13px]"
+                }`}
+              >
+                {item.title}
+              </h3>
+            )}
           </>
         )}
 
@@ -1004,9 +1045,9 @@ function DeckCard({
           </div>
         )}
 
-        {item.type === "instagram" && (
-          <p className="text-[12px] text-[#5b6876] mb-2">
-            @mgrregionmayo · hace{" "}
+        {(item.type === "instagram" || item.type === "facebook") && (
+          <p className="text-[12px] text-[#5b6876] mb-1">
+            hace{" "}
             {Math.max(
               1,
               Math.round((Date.now() - item.postedAt.getTime()) / MS_HOUR),
@@ -1033,24 +1074,36 @@ function DeckCard({
         )}
 
         {/* Footer / CTA: hide CTA for prayer when in 'show' phase */}
-        {!(item.type === "prayer" && item.phase === "show") && (
+        {!(item.type === "prayer" && item.phase === "show") && !(item.type === "promo" && !href) && (
           <div className={`${item.type === "promo" ? "" : "mt-auto pt-1"}`}>
-            <span
-              className={`inline-flex items-center gap-1 font-semibold ${
-                item.type === "prayer" && item.phase === "collect"
-                  ? "text-[17px] text-[#2d6a4f]" // Larger text for collect prayer CTA
-                  : featured && !isDesktop
-                    ? "text-[12px] text-[#2f5e93]"
-                    : "text-[12px] text-[#425060]"
-              }`}
-              style={item.type === "promo" && item.accentColor ? { color: item.accentColor } : undefined}
-            >
-              {item.type === "promo" && item.ctaText ? item.ctaText : CTA_LABEL[item.type]}
-              <ArrowRight className="h-3 w-3" aria-hidden="true" />
-            </span>
+            {href && (item.type === "event" || item.type === "promo") ? (
+              href.startsWith("http") ? (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={ctaLinkClass}
+                  style={item.type === "promo" && item.accentColor ? { color: item.accentColor } : undefined}
+                >
+                  {ctaContent}
+                </a>
+              ) : (
+                <Link href={href} className={ctaLinkClass}>
+                  {ctaContent}
+                </Link>
+              )
+            ) : (
+              <span
+                className={ctaStaticClass}
+                style={item.type === "promo" && item.accentColor ? { color: item.accentColor } : undefined}
+              >
+                {ctaContent}
+              </span>
+            )}
           </div>
         )}
       </div>
+      )}
     </article>
   );
 
@@ -1064,7 +1117,7 @@ function DeckCard({
         <button
           type="button"
           onClick={onOpenPrayerModal}
-          className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px] w-full text-left"
+          className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px] w-full text-left"
           aria-label={`${BADGE_META[item.type].label}: ${item.title || "Oraciones"}`}
         >
           {inner}
@@ -1073,6 +1126,26 @@ function DeckCard({
     } else {
       wrapper = inner;
     }
+  } else if (isSocialVideo) {
+    wrapper = (
+      <div
+        onClick={() => setIsSocialPlayerOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setIsSocialPlayerOpen(true);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        className="block h-full w-full cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px]"
+        aria-label={`Reproducir video de ${BADGE_META[item.type].label}`}
+      >
+        {inner}
+      </div>
+    );
+  } else if (item.type === "event" || item.type === "promo") {
+    wrapper = inner;
   } else if (href && href.startsWith("http")) {
     // External links as <a> tags
     wrapper = (
@@ -1080,7 +1153,7 @@ function DeckCard({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px]"
+        className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px]"
         aria-label={`${BADGE_META[item.type].label}: ${item.title}`}
       >
         {inner}
@@ -1091,7 +1164,7 @@ function DeckCard({
     wrapper = (
       <Link
         href={href}
-        className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px]"
+        className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px]"
         aria-label={`${BADGE_META[item.type].label}: ${item.title}`}
       >
         {inner}
@@ -1104,13 +1177,17 @@ function DeckCard({
 
   return (
     <>
-      <div role="listitem" className="block">
+      <div role="listitem" className={`block ${cardFrameClass}`}>
         {wrapper}
       </div>
 
       {/* Lightbox for card images */}
       {isLightboxOpen && image && (
         <Lightbox src={image} alt={item.title} onClose={() => setIsLightboxOpen(false)} />
+      )}
+
+      {isSocialPlayerOpen && (item.type === "instagram" || item.type === "facebook") && (
+        <SocialVideoModal item={item} onClose={() => setIsSocialPlayerOpen(false)} />
       )}
       
       {/* Full prayer text modal for long prayers */}
@@ -1152,6 +1229,77 @@ function DeckCard({
         </div>
       )}
     </>
+  );
+}
+
+function getSocialEmbedUrl(item: Extract<DeckItem, { type: "instagram" | "facebook" }>) {
+  if (item.type === "facebook") {
+    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(item.href)}&show_text=false&autoplay=false`;
+  }
+
+  try {
+    const source = new URL(item.href);
+    source.search = "";
+    const cleanPath = source.pathname.endsWith("/") ? source.pathname : `${source.pathname}/`;
+    return `https://www.instagram.com${cleanPath}embed`;
+  } catch {
+    const normalized = item.href.split("?")[0].replace(/\/?$/, "/");
+    return `${normalized}embed`;
+  }
+}
+
+function SocialVideoModal({
+  item,
+  onClose,
+}: {
+  item: Extract<DeckItem, { type: "instagram" | "facebook" }>;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  const embedUrl = getSocialEmbedUrl(item);
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/92 p-3 md:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Video de ${BADGE_META[item.type].label}`}
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#111827] shadow-lg transition-colors hover:bg-[#f3f4f6] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        aria-label="Cerrar video"
+      >
+        <X className="h-7 w-7" aria-hidden="true" />
+      </button>
+
+      <div
+        className="h-full max-h-[92vh] w-full max-w-[520px] overflow-hidden rounded-[6px] bg-black shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <iframe
+          title={`Video de ${BADGE_META[item.type].label}`}
+          src={embedUrl}
+          className="h-full w-full border-0"
+          allow="clipboard-write; encrypted-media; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+    </div>
   );
 }
 

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Playfair_Display } from "next/font/google";
-import { Calendar, ExternalLink, MapPin, ChevronDown } from "lucide-react";
+import { Calendar, ExternalLink, MapPin, ChevronDown, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { PrayerCarousel } from "@/components/shared/prayer-carousel";
@@ -11,7 +11,6 @@ import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
-import { Search } from "lucide-react";
 import { useTime } from "@/lib/time-context";
 import { calculateCountdown } from "@/lib/countdown-utils";
 import type {
@@ -488,7 +487,7 @@ export function HeroSection({
                         onClick={() => setIsLightboxOpen(true)}
                         aria-haspopup="dialog"
                         aria-label="Ver imagen en pantalla completa"
-                        className={customHeroCard.url ? "mx-auto block" : "pointer-events-none mx-auto block"}
+                        className="mx-auto block w-full"
                       >
                         <div
                           className={`group relative w-full overflow-hidden border border-[#dce2e9] bg-[#f5f6f8] flex items-center justify-center p-2 ${
@@ -505,14 +504,14 @@ export function HeroSection({
                           {/* Desktop: centered magnifier on hover */}
                           <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-3">
-                              <Search className="h-6 w-6 text-white" aria-hidden="true" />
+                              <Maximize2 className="h-6 w-6 text-white" aria-hidden="true" />
                             </div>
                           </div>
 
                           {/* Mobile: icon bottom-right */}
                           <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
                             <div className="bg-white/90 rounded-full p-2 shadow">
-                              <Search className="h-4 w-4 text-black" aria-hidden="true" />
+                              <Maximize2 className="h-4 w-4 text-black" aria-hidden="true" />
                             </div>
                           </div>
                         </div>

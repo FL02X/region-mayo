@@ -490,8 +490,7 @@ body:not([data-user-interacted="true"]) :target .availability-pill {
   .desktop-header-track {
     position: relative;
     isolation: isolate;
-    overflow: hidden;
-    contain: layout paint;
+    overflow: visible;
   }
 
   .desktop-header-hover-indicator {

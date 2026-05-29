@@ -15,6 +15,8 @@ import {
   Church,
   Settings,
   Smartphone,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,15 +44,14 @@ interface MobileMenuItem {
 
 const menuItems: MobileMenuItem[] = [
   { href: "/", label: "Inicio", icon: Home },
-  { href: "/templos", label: "Templos", icon: Church },
-  {
-    href: "/pastores",
-    label: "Pastores",
-    icon: Users,
-  },
   { href: "/coros", label: "Coros Locales", icon: Music },
   { href: "/album", label: "Álbum de Actividades", icon: Images },
   { href: "/directiva", label: "Directiva", icon: UserCircle },
+];
+
+const iglesiasItems: MobileMenuItem[] = [
+  { href: "/templos", label: "Templos", icon: Church },
+  { href: "/pastores", label: "Pastores", icon: Users },
 ];
 
 export function MobileMenu({
@@ -63,6 +64,7 @@ export function MobileMenu({
   const touchFeedbackTimerRef = useRef<number | null>(null);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [activePath, setActivePath] = useState("");
+  const [iglesiasOpen, setIglesiasOpen] = useState(false);
   const isMobile = useIsMobile();
   const { isInstalled } = useInstallPrompt();
 
@@ -77,6 +79,7 @@ export function MobileMenu({
   useEffect(() => {
     setIsMounted(true);
     setActivePath(window.location.pathname);
+    setIglesiasOpen(window.location.pathname === "/templos" || window.location.pathname === "/pastores");
     return () => {
       if (touchFeedbackTimerRef.current !== null) {
         window.clearTimeout(touchFeedbackTimerRef.current);
@@ -204,44 +207,142 @@ export function MobileMenu({
             };
             
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={(e) => {
-                  handleMenuClick(e);
-                  window.setTimeout(() => {
-                    setOpen(false);
-                  }, 120);
-                }}
-                onTouchStart={() => {
-                  triggerTouchFeedback(item.href);
-                }}
-                className={cn(
-                  "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
-                  showLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
-                  isActive
-                    ? "bg-gray-200"
-                    : isTouchFeedback
-                      ? "bg-[#e8f1ff] shadow-[inset_0_0_0_1px_rgba(63,109,181,0.2)]"
-                      : "hover:bg-gray-100 active:bg-[#e8f1ff]"
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <Icon
-                  className={cn("h-5 w-5 shrink-0", "text-[#8b929c]")}
-                  aria-hidden="true"
-                />
-                <div className="min-w-0">
-                  <p className={cn("text-[16px] leading-tight uppercase", isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
-                    {item.label}
-                  </p>
-                  {item.description && (
-                    <p className={cn("text-[14px] leading-tight mt-0.5 uppercase", isActive ? "text-[#00508F]/80 font-bold" : "text-[#00508F]/80 font-normal")}>
-                      {item.description}
-                    </p>
+              <div key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={(e) => {
+                    handleMenuClick(e);
+                    window.setTimeout(() => {
+                      setOpen(false);
+                    }, 120);
+                  }}
+                  onTouchStart={() => {
+                    triggerTouchFeedback(item.href);
+                  }}
+                  className={cn(
+                    "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
+                    showLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
+                    isActive
+                      ? "bg-gray-200"
+                      : isTouchFeedback
+                        ? "bg-[#e8f1ff] shadow-[inset_0_0_0_1px_rgba(63,109,181,0.2)]"
+                        : "hover:bg-gray-100 active:bg-[#e8f1ff]"
                   )}
-                </div>
-              </Link>
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <Icon
+                    className={cn("h-5 w-5 shrink-0", "text-[#8b929c]")}
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0">
+                    <p className={cn("text-[16px] leading-tight uppercase", isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
+                      {item.label}
+                    </p>
+                    {item.description && (
+                      <p className={cn("text-[14px] leading-tight mt-0.5 uppercase", isActive ? "text-[#00508F]/80 font-bold" : "text-[#00508F]/80 font-normal")}>
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+
+                {item.href === "/" && (() => {
+                  const iglesiasActive = activePath === "/templos" || activePath === "/pastores";
+                  const showIglesiasLeftAccent = touchFeedbackHref === "/iglesias" && !iglesiasActive;
+                  const ToggleIcon = iglesiasOpen ? ChevronUp : ChevronDown;
+
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerTouchFeedback("/iglesias");
+                          if (typeof navigator !== "undefined" && navigator.vibrate) {
+                            navigator.vibrate(60);
+                          }
+                          setIglesiasOpen((value) => !value);
+                        }}
+                        onTouchStart={() => {
+                          triggerTouchFeedback("/iglesias");
+                        }}
+                        className={cn(
+                          "relative flex w-full items-center gap-3 border-b border-[#cfd4db] px-5 py-4 pr-16 text-left [border-bottom-style:dotted] transition-colors duration-150",
+                          showIglesiasLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
+                          iglesiasOpen ? "bg-[#eeeeea]" : "hover:bg-gray-100 active:bg-[#e8f1ff]"
+                        )}
+                        aria-expanded={iglesiasOpen}
+                        aria-controls="mobile-iglesias-submenu"
+                      >
+                        <Church className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[16px] font-normal leading-tight uppercase text-[#00508F]">
+                            Iglesias
+                          </p>
+                        </div>
+                        <span className="absolute right-5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center border border-[#d3d7dd] bg-[#f5f5f5] text-[#7d858f] shadow-[0_0_0_1px_rgba(63,109,181,0.08)]">
+                          <ToggleIcon className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
+                        </span>
+                      </button>
+
+                      <div
+                        id="mobile-iglesias-submenu"
+                        className={cn(
+                          "overflow-hidden bg-[#eeeeea] transition-[max-height,opacity] duration-200 ease-out",
+                          iglesiasOpen ? "max-h-40 opacity-100" : "pointer-events-none max-h-0 opacity-0"
+                        )}
+                        aria-hidden={!iglesiasOpen}
+                      >
+                        <div>
+                          {iglesiasItems.map((iglesiaItem) => {
+                              const IglesiaIcon = iglesiaItem.icon;
+                              const iglesiaItemActive = activePath === iglesiaItem.href;
+
+                              return (
+                                <Link
+                                  key={iglesiaItem.href}
+                                  href={iglesiaItem.href}
+                                  tabIndex={iglesiasOpen ? undefined : -1}
+                                  onClick={(e) => {
+                                    triggerTouchFeedback(iglesiaItem.href);
+                                    if (typeof navigator !== "undefined" && navigator.vibrate) {
+                                      navigator.vibrate(60);
+                                    }
+
+                                    const target = e.currentTarget;
+                                    target.classList.add("flick-feedback");
+                                    const handleAnimationEnd = () => {
+                                      target.classList.remove("flick-feedback");
+                                      target.removeEventListener("animationend", handleAnimationEnd);
+                                    };
+                                    target.addEventListener("animationend", handleAnimationEnd);
+
+                                    window.setTimeout(() => {
+                                      setOpen(false);
+                                    }, 120);
+                                  }}
+                                  onTouchStart={() => {
+                                    triggerTouchFeedback(iglesiaItem.href);
+                                  }}
+                                  className={cn(
+                                    "relative flex items-center gap-3 border-b border-[#cfd4db] px-9 py-3.5 [border-bottom-style:dotted] transition-colors duration-150",
+                                    iglesiaItemActive && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
+                                    iglesiaItemActive ? "bg-[#d8d8d8]" : "hover:bg-gray-100 active:bg-[#e8f1ff]"
+                                  )}
+                                  aria-current={iglesiaItemActive ? "page" : undefined}
+                                >
+                                  <IglesiaIcon className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" />
+                                  <p className={cn("text-[17px] leading-tight", iglesiaItemActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
+                                    {iglesiaItem.label}
+                                  </p>
+                                </Link>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             );
           })}
 
@@ -277,7 +378,6 @@ export function MobileMenu({
                 className={cn(
                   "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
                   isActive ? "bg-gray-200" : "hover:bg-gray-100 active:bg-[#e8f1ff]",
-                  isInstallItem && "bg-emerald-50/60",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
