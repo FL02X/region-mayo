@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 import { readInitialViewMode } from "@/lib/cookie-utils"
 import { AppHeader } from "@/components/layout/app-header"
+import { SectionNavBar } from "@/components/layout/section-nav-bar"
 import { CorosContent } from "@/components/sections/coros/coros-content"
 import Chatbot from "@/components/shared/chatbot"
 import { getCoros, getRegionConfig } from "@/lib/api"
@@ -28,6 +29,7 @@ export default async function CorosPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
+      <SectionNavBar currentLabel="Coros" icon="coros" />
       <div>
         {region ? (
           <CorosContent coros={coros} initialViewMode={initialViewMode} />

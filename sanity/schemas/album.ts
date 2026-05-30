@@ -124,22 +124,16 @@ export default defineType({
     }),
     defineField({
       name: 'images',
-      title: 'Imagenes',
+      title: 'Imagenes adicionales',
       type: 'array',
       group: 'media',
       of: [
         defineField({
           name: 'albumImage',
           title: 'Foto',
-          type: 'object',
+          type: 'image',
+          options: { hotspot: true },
           fields: [
-            defineField({
-              name: 'image',
-              title: 'Imagen',
-              type: 'image',
-              options: { hotspot: true },
-              validation: (Rule) => Rule.required(),
-            }),
             defineField({
               name: 'alt',
               title: 'Alt text',
@@ -167,8 +161,8 @@ export default defineType({
           },
         }),
       ],
-      validation: (Rule) => Rule.required().min(1),
-      description: 'La primera foto sale primero. Para cambiar el orden, arrastra las fotos dentro del Studio.',
+      description:
+        'La portada ya cuenta como la primera foto del album. Las fotos adicionales se muestran despues, en el orden en que las arrastres dentro del Studio.',
     }),
     defineField({
       name: 'audit',

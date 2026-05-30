@@ -591,7 +591,7 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
         </div>,
         document.body
       )}
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-[#ffffff] md:border-x border-[#e5e7eb] dark:border-[#27272a] min-h-screen focus:outline-none">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-6 md:pt-8 bg-[#ffffff] md:border-x border-[#e5e7eb] dark:border-[#27272a] min-h-screen focus:outline-none">
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-4 border-b border-border">

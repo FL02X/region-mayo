@@ -1,16 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowLeft,
+  ArrowRight,
   Calendar,
   ExternalLink,
   Images,
   Link as LinkIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { ImageGalleryModal } from "@/components/shared/image-gallery-modal";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
@@ -33,6 +40,10 @@ const CATEGORY_LABELS: Record<EventType, string> = {
   boda: "Boda",
 };
 
+const INITIAL_VISIBLE_PHOTOS = 60;
+const PHOTOS_PER_PAGE = 40;
+const ALL_EVENT_TYPES = "all";
+
 function formatAlbumDate(startDate: Date, endDate: Date) {
   const formatter = new Intl.DateTimeFormat("es-MX", {
     day: "numeric",
@@ -50,21 +61,21 @@ function AlbumCard({ album }: { album: Album }) {
   return (
     <Link
       href={`/album/${album.slug}`}
-      className="desktop-card-lift group block overflow-hidden border border-border bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group block overflow-hidden border border-border bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       aria-label={`Abrir album ${album.title}`}
     >
       <div className="offline-aware-image offline-aware-image--fixed relative h-48 w-full bg-muted">
         <Image
           src={sanityImageVariantUrl(album.coverImage, {
-            width: 720,
-            height: 460,
-            quality: 70,
+            width: 840,
+            height: 540,
+            quality: 74,
             format: "webp",
             fit: "crop",
           })}
           alt={album.title}
           fill
-          className="offline-image-online object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          className="offline-image-online object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 310px"
         />
         <OfflineImagePlaceholder />
@@ -84,9 +95,64 @@ function AlbumCard({ album }: { album: Album }) {
           <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>{formatAlbumDate(album.startDate, album.endDate)}</span>
         </div>
+        <div className="mt-4 inline-flex items-center text-sm font-semibold text-primary">
+          Ver fotos
+          <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </div>
       </div>
     </Link>
   );
+}
+
+function getAlbumTileClass(index: number): string {
+  if (index === 0) {
+    return "col-span-2 row-span-2 md:col-span-4 md:row-span-3";
+  }
+
+  if (index > 0 && index % 18 === 0) {
+    return "col-span-2 row-span-2 md:col-span-4 md:row-span-2";
+  }
+
+  const cycle = index % 16;
+  if (index >= 10 && cycle === 10) {
+    return "col-span-1 row-span-2 md:col-start-1";
+  }
+
+  if (index >= 15 && cycle === 15) {
+    return "col-span-1 row-span-2 md:col-start-4";
+  }
+
+  return "col-span-1 row-span-1";
+}
+
+function getAlbumTileImageOptions(index: number) {
+  if (index === 0 || index % 18 === 0) {
+    return {
+      width: 1360,
+      height: 760,
+      quality: 64,
+      format: "webp" as const,
+      fit: "crop" as const,
+    };
+  }
+
+  if ((index >= 10 && index % 16 === 10) || (index >= 15 && index % 16 === 15)) {
+    return {
+      width: 520,
+      height: 860,
+      quality: 62,
+      format: "webp" as const,
+      fit: "crop" as const,
+    };
+  }
+
+  return {
+    width: 460,
+    height: 460,
+    quality: 60,
+    format: "webp" as const,
+    fit: "crop" as const,
+  };
 }
 
 function AlbumImageTile({
@@ -102,21 +168,19 @@ function AlbumImageTile({
     <button
       type="button"
       onClick={() => onOpen(index)}
-      className="group relative aspect-[4/3] overflow-hidden border border-border bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className={`group relative overflow-hidden border border-border bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${getAlbumTileClass(index)}`}
       aria-label={`Abrir foto ${index + 1}`}
     >
       <Image
-        src={sanityImageVariantUrl(image.url, {
-          width: 520,
-          height: 390,
-          quality: 58,
-          format: "webp",
-          fit: "crop",
-        })}
+        src={sanityImageVariantUrl(image.url, getAlbumTileImageOptions(index))}
         alt={image.alt}
         fill
         className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 220px"
+        sizes={
+          index === 0 || index % 18 === 0
+            ? "(max-width: 1024px) 100vw, 900px"
+            : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 220px"
+        }
       />
       {image.caption ? (
         <span className="absolute inset-x-0 bottom-0 bg-black/65 px-2 py-1.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -134,23 +198,18 @@ interface AlbumContentProps {
 
 export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
+  const [selectedType, setSelectedType] = useState<string>(ALL_EVENT_TYPES);
 
   if (album) {
-    const imageUrls = album.images.map((image) => image.url);
+    const visibleImages = album.images.slice(0, visibleCount);
+    const imageUrls = visibleImages.map((image) => image.url);
+    const hasMoreImages = visibleImages.length < album.images.length;
 
     return (
       <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
-        <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]">
+        <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]">
           <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
-            <div className="mb-5">
-              <Button asChild variant="ghost" className="h-9 rounded-none px-0 text-sm">
-                <Link href="/album">
-                  <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Álbumes
-                </Link>
-              </Button>
-            </div>
-
             <div className="mb-6 border-b border-border pb-5">
               <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">
                 {CATEGORY_LABELS[album.category] || album.category}
@@ -193,28 +252,8 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
               </div>
             </div>
 
-            <div className="mb-5 overflow-hidden border border-border bg-muted">
-              <div className="offline-aware-image offline-aware-image--fixed relative aspect-[16/9] w-full">
-                <Image
-                  src={sanityImageVariantUrl(album.coverImage, {
-                    width: 1200,
-                    height: 675,
-                    quality: 75,
-                    format: "webp",
-                    fit: "crop",
-                  })}
-                  alt={album.title}
-                  fill
-                  priority
-                  className="offline-image-online object-cover"
-                  sizes="(max-width: 1024px) 100vw, 900px"
-                />
-                <OfflineImagePlaceholder />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-              {album.images.map((image, index) => (
+            <div className="grid grid-flow-dense grid-cols-2 gap-2 [grid-auto-rows:8.5rem] sm:[grid-auto-rows:10rem] md:grid-cols-4 md:[grid-auto-rows:9.5rem]">
+              {visibleImages.map((image, index) => (
                 <AlbumImageTile
                   key={`${image.url}-${index}`}
                   image={image}
@@ -223,6 +262,23 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 />
               ))}
             </div>
+
+            {hasMoreImages ? (
+              <div className="mt-6 flex justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-none"
+                  onClick={() =>
+                    setVisibleCount((current) =>
+                      Math.min(current + PHOTOS_PER_PAGE, album.images.length),
+                    )
+                  }
+                >
+                  Cargar más fotos
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -239,30 +295,63 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     );
   }
 
+  const availableTypes = useMemo(() => {
+    const seen = new Set<EventType>();
+    albums.forEach((item) => {
+      if (item.category) seen.add(item.category);
+    });
+
+    return Array.from(seen).sort((a, b) =>
+      (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b, "es"),
+    );
+  }, [albums]);
+
+  const filteredAlbums = useMemo(() => {
+    if (selectedType === ALL_EVENT_TYPES) return albums;
+    return albums.filter((item) => item.category === selectedType);
+  }, [albums, selectedType]);
+
   return (
     <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
-      <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]">
+      <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]">
         <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
           <div className="mb-6 border-b border-border pb-4">
-            <h1 className="text-[1.825rem] font-semibold tracking-tight text-foreground">
-              Álbum de Actividades
-            </h1>
-            <p className="mt-2 text-[15px] text-muted-foreground">
-              Revive los momentos especiales de nuestros eventos.
-            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-[1.825rem] font-semibold tracking-tight text-foreground">
+                  Álbum de Actividades
+                </h1>
+                <p className="mt-2 text-[15px] text-muted-foreground">
+                  Revive los momentos especiales de nuestros eventos.
+                </p>
+              </div>
+
+              {availableTypes.length > 0 ? (
+                <Select value={selectedType} onValueChange={setSelectedType}>
+                  <SelectTrigger
+                    className="w-full rounded-none bg-white sm:mt-1 sm:w-[220px]"
+                    aria-label="Organizar álbumes por tipo de evento"
+                  >
+                    <SelectValue placeholder="Tipo de evento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_EVENT_TYPES}>Todos los tipos</SelectItem>
+                    {availableTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {CATEGORY_LABELS[type] || type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : null}
+            </div>
           </div>
 
-          {albums.length > 0 ? (
+          {filteredAlbums.length > 0 ? (
             <div
-              className={`grid gap-4 ${
-                albums.length === 1
-                  ? "mx-auto max-w-sm grid-cols-1"
-                  : albums.length === 2
-                    ? "mx-auto max-w-2xl grid-cols-1 sm:grid-cols-2"
-                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-              }`}
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
             >
-              {albums.map((item) => (
+              {filteredAlbums.map((item) => (
                 <AlbumCard key={item.id} album={item} />
               ))}
             </div>
@@ -273,10 +362,12 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 aria-hidden="true"
               />
               <p className="mb-1 text-sm font-medium text-foreground">
-                Sin álbumes disponibles
+                {albums.length > 0 ? "Sin álbumes para este tipo" : "Sin álbumes disponibles"}
               </p>
               <p className="text-xs text-muted-foreground">
-                Los álbumes se publicarán después de los eventos.
+                {albums.length > 0
+                  ? "Prueba con otro tipo de evento."
+                  : "Los álbumes se publicarán después de los eventos."}
               </p>
             </div>
           )}

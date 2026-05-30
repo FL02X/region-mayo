@@ -148,7 +148,7 @@ function albumAlt(albumTitle: string, index: number, alt?: string): string {
 }
 
 function mapAlbumImage(raw: any, albumTitle: string, index: number): AlbumImage | null {
-  const url = sanityImageUrl(raw?.image);
+  const url = sanityImageUrl(raw?.image ?? raw);
   if (!url || url === "/placeholder.svg") return null;
 
   return {
@@ -165,11 +165,23 @@ function mapAlbum(raw: any): Album {
   const title = raw?.title || "Album";
   const relatedEvent = raw?.relatedEvent;
   const category = relatedEvent?.eventType ?? raw?.category ?? "culto";
-  const images = Array.isArray(raw?.images)
+  const coverImage = sanityImageUrl(raw.coverImage);
+  const additionalImages = Array.isArray(raw?.images)
     ? raw.images
-        .map((image: any, index: number) => mapAlbumImage(image, title, index))
+        .map((image: any, index: number) => mapAlbumImage(image, title, index + 1))
+        .filter((image: AlbumImage | null) => image?.url !== coverImage)
         .filter(Boolean)
     : [];
+  const images =
+    coverImage && coverImage !== "/placeholder.svg"
+      ? [
+          {
+            url: coverImage,
+            alt: albumAlt(title, 0),
+          },
+          ...additionalImages,
+        ]
+      : additionalImages;
 
   return {
     id: raw._id,
@@ -179,7 +191,7 @@ function mapAlbum(raw: any): Album {
     endDate: toDate(raw.endDate ?? raw.startDate),
     category,
     description: raw.description ?? undefined,
-    coverImage: sanityImageUrl(raw.coverImage),
+    coverImage,
     facebookUrl: raw.facebookUrl ?? undefined,
     hidden: Boolean(raw.hidden),
     relatedEvent: relatedEvent
@@ -389,7 +401,8 @@ function getMockAlbums(regionSlug: string): Album[] {
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
-      const imageUrls = event.photos?.length ? event.photos : [event.image].filter(Boolean);
+      const additionalImageUrls = event.photos?.filter((url) => url !== event.image) ?? [];
+      const imageUrls = [event.image, ...additionalImageUrls].filter(Boolean);
 
       return {
         id: `mock-album-${event.id}`,
@@ -439,6 +452,7 @@ const ALBUM_PROJECTION = `{
     templo->{temploName}
   },
   images[]{
+    asset->{url},
     image{asset->{url}},
     alt,
     caption

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { AppHeader } from "@/components/layout/app-header"
+import { SectionNavBar } from "@/components/layout/section-nav-bar"
 import { AlbumContent } from "@/components/sections/album/album-content"
 import Chatbot from "@/components/shared/chatbot"
 import { getAlbumBySlug, getAlbumSlugs, getRegionConfig } from "@/lib/api"
@@ -59,6 +60,12 @@ export default async function AlbumDetailPage({ params }: AlbumDetailPageProps) 
       <AppHeader
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
+      />
+      <SectionNavBar
+        currentLabel={album.title}
+        parentHref="/album"
+        parentLabel="Álbumes"
+        icon="album"
       />
       <AlbumContent album={album} />
       <Chatbot />

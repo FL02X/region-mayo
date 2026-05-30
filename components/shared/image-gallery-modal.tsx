@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
-import { Images, Wifi, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Images, Wifi, X, ChevronLeft, ChevronRight, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useConnectivity } from "@/hooks/use-connectivity"
 import { useInstallPrompt } from "@/hooks/use-install-prompt"
@@ -31,6 +31,11 @@ export function ImageGalleryModal({
   const { isStandalone } = useInstallPrompt()
   const { isOnline } = useConnectivity()
   const shouldShowOfflineNotice = isStandalone && !isOnline
+  const currentImageUrl = sanityImageVariantUrl(images[currentIndex], {
+    quality: 92,
+    format: "jpg",
+    fit: "max",
+  })
   useLockBodyScroll(true)
 
   useEffect(() => {
@@ -107,15 +112,34 @@ export function ImageGalleryModal({
             {currentIndex + 1}/{images.length}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          aria-label="Cerrar galeria"
-          className="text-white hover:bg-white/10 rounded-none h-10 w-10 sm:h-12 sm:w-12 -mr-2 sm:-mr-3"
-        >
-          <X className="h-5 w-5 sm:h-6 sm:w-6" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            aria-label="Descargar imagen"
+            className="text-white hover:bg-white/10 rounded-none h-10 w-10 sm:h-12 sm:w-12"
+          >
+            <a
+              href={currentImageUrl}
+              download
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Download className="h-5 w-5 sm:h-6 sm:w-6" />
+            </a>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            aria-label="Cerrar galeria"
+            className="text-white hover:bg-white/10 rounded-none h-10 w-10 sm:h-12 sm:w-12 -mr-2 sm:-mr-3"
+          >
+            <X className="h-5 w-5 sm:h-6 sm:w-6" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center justify-center p-3 sm:p-4 relative overflow-y-auto" style={{ height: "calc(100vh - 220px)" }} onClick={onClose}>
@@ -142,7 +166,7 @@ export function ImageGalleryModal({
           <img
             key={currentIndex}
             src={sanityImageVariantUrl(images[currentIndex], {
-              quality: 100,
+              quality: 88,
               format: "webp",
               fit: "max",
             })}
