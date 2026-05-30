@@ -18,6 +18,7 @@ import type {
   Prayer,
   Album,
   AlbumImage,
+  AlbumVideo,
 } from "./types";
 import { getSanityClient } from "./sanity/client";
 import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
@@ -161,11 +162,93 @@ function mapAlbumImage(raw: any, albumTitle: string, index: number): AlbumImage 
   };
 }
 
-function mapAlbum(raw: any): Album {
+function getYoutubePlaylistUrl(playlistId?: string, explicitUrl?: string): string | undefined {
+  if (typeof explicitUrl === "string" && explicitUrl.trim().length > 0) {
+    return explicitUrl.trim();
+  }
+  if (typeof playlistId === "string" && playlistId.trim().length > 0) {
+    return `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId.trim())}`;
+  }
+  return undefined;
+}
+
+function bestYoutubeThumbnail(thumbnails: any): string {
+  return (
+    thumbnails?.maxres?.url ||
+    thumbnails?.standard?.url ||
+    thumbnails?.high?.url ||
+    thumbnails?.medium?.url ||
+    thumbnails?.default?.url ||
+    "/placeholder.svg"
+  );
+}
+
+async function fetchYoutubePlaylistVideos(playlistId?: string): Promise<AlbumVideo[]> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  const cleanPlaylistId = typeof playlistId === "string" ? playlistId.trim() : "";
+
+  if (!apiKey || !cleanPlaylistId) return [];
+
+  const videos: AlbumVideo[] = [];
+  let pageToken: string | undefined;
+
+  try {
+    for (let page = 0; page < 5; page += 1) {
+      const url = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
+      url.searchParams.set("part", "snippet,contentDetails");
+      url.searchParams.set("maxResults", "50");
+      url.searchParams.set("playlistId", cleanPlaylistId);
+      url.searchParams.set("key", apiKey);
+      if (pageToken) url.searchParams.set("pageToken", pageToken);
+
+      const response = await fetch(url.toString(), {
+        next: { revalidate: 60 * 60, tags: [SANITY_CACHE_TAG] },
+      });
+
+      if (!response.ok) break;
+
+      const data = await response.json();
+      const items = Array.isArray(data?.items) ? data.items : [];
+
+      items.forEach((item: any) => {
+        const videoId = item?.contentDetails?.videoId || item?.snippet?.resourceId?.videoId;
+        if (!videoId) return;
+
+        videos.push({
+          id: videoId,
+          title: item?.snippet?.title || "Video",
+          description:
+            typeof item?.snippet?.description === "string" &&
+            item.snippet.description.trim().length > 0
+              ? item.snippet.description.trim()
+              : undefined,
+          thumbnailUrl: bestYoutubeThumbnail(item?.snippet?.thumbnails),
+          publishedAt: item?.snippet?.publishedAt,
+        });
+      });
+
+      pageToken = data?.nextPageToken;
+      if (!pageToken) break;
+    }
+  } catch {
+    return videos;
+  }
+
+  return videos;
+}
+
+async function mapAlbum(raw: any): Promise<Album> {
   const title = raw?.title || "Album";
+  const albumType = raw?.albumType === "youtube" ? "youtube" : "photos";
   const relatedEvent = raw?.relatedEvent;
   const category = relatedEvent?.eventType ?? raw?.category ?? "culto";
-  const coverImage = sanityImageUrl(raw.coverImage);
+  const videos =
+    albumType === "youtube" ? await fetchYoutubePlaylistVideos(raw.youtubePlaylistId) : [];
+  const manualCoverImage = raw.coverImage?.asset?.url ? sanityImageUrl(raw.coverImage) : "";
+  const coverImage =
+    manualCoverImage ||
+    (albumType === "youtube" ? videos[0]?.thumbnailUrl : sanityImageUrl(raw.coverImage)) ||
+    "/placeholder.svg";
   const additionalImages = Array.isArray(raw?.images)
     ? raw.images
         .map((image: any, index: number) => mapAlbumImage(image, title, index + 1))
@@ -185,6 +268,7 @@ function mapAlbum(raw: any): Album {
 
   return {
     id: raw._id,
+    albumType,
     title,
     slug: raw.slug?.current ?? raw.slug ?? raw._id,
     startDate: toDate(raw.startDate),
@@ -192,7 +276,12 @@ function mapAlbum(raw: any): Album {
     category,
     description: raw.description ?? undefined,
     coverImage,
-    facebookUrl: raw.facebookUrl ?? undefined,
+    facebookUrl: albumType === "photos" ? raw.facebookUrl ?? undefined : undefined,
+    youtubePlaylistId: raw.youtubePlaylistId ?? undefined,
+    youtubeUrl:
+      albumType === "youtube"
+        ? getYoutubePlaylistUrl(raw.youtubePlaylistId, raw.youtubeUrl)
+        : undefined,
     hidden: Boolean(raw.hidden),
     relatedEvent: relatedEvent
       ? {
@@ -204,7 +293,8 @@ function mapAlbum(raw: any): Album {
           location: relatedEvent.templo?.temploName ?? relatedEvent.location ?? undefined,
         }
       : undefined,
-    images: images as AlbumImage[],
+    images: albumType === "photos" ? (images as AlbumImage[]) : [],
+    videos,
   };
 }
 
@@ -406,6 +496,7 @@ function getMockAlbums(regionSlug: string): Album[] {
 
       return {
         id: `mock-album-${event.id}`,
+        albumType: "photos",
         title: event.title,
         slug: `${slug}-${event.id}`,
         startDate: event.date,
@@ -427,12 +518,14 @@ function getMockAlbums(regionSlug: string): Album[] {
           url,
           alt: `${event.title} - foto ${index + 1}`,
         })),
+        videos: [],
       };
     });
 }
 
 const ALBUM_PROJECTION = `{
   _id,
+  albumType,
   title,
   slug,
   startDate,
@@ -441,6 +534,8 @@ const ALBUM_PROJECTION = `{
   description,
   coverImage{asset->{url}},
   facebookUrl,
+  youtubePlaylistId,
+  youtubeUrl,
   hidden,
   relatedEvent->{
     _id,
@@ -477,7 +572,7 @@ export async function getAlbums(regionSlug: string = "mayo"): Promise<Album[]> {
     { slug: regionSlug },
   );
 
-  return (albums ?? []).map(mapAlbum);
+  return Promise.all((albums ?? []).map(mapAlbum));
 }
 
 export async function getAlbumBySlug(

@@ -9,6 +9,8 @@ import {
   ExternalLink,
   Images,
   Link as LinkIcon,
+  PlayCircle,
+  Youtube,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +23,7 @@ import {
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { ImageGalleryModal } from "@/components/shared/image-gallery-modal";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
-import type { Album, AlbumImage, EventType } from "@/lib/types";
+import type { Album, AlbumImage, AlbumVideo, EventType } from "@/lib/types";
 
 const CATEGORY_LABELS: Record<EventType, string> = {
   campana: "Campaña",
@@ -58,6 +60,9 @@ function formatAlbumDate(startDate: Date, endDate: Date) {
 }
 
 function AlbumCard({ album }: { album: Album }) {
+  const isYoutubeAlbum = album.albumType === "youtube";
+  const itemCount = isYoutubeAlbum ? album.videos.length : album.images.length;
+
   return (
     <Link
       href={`/album/${album.slug}`}
@@ -80,7 +85,10 @@ function AlbumCard({ album }: { album: Album }) {
         />
         <OfflineImagePlaceholder />
         <div className="absolute right-3 top-3 bg-white/92 px-2 py-1 text-[12px] font-semibold text-foreground shadow-sm">
-          {album.images.length} fotos
+          {itemCount} {isYoutubeAlbum ? "videos" : "fotos"}
+        </div>
+        <div className="absolute left-3 top-3 bg-black/70 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+          {isYoutubeAlbum ? "Videos" : "Imágenes"}
         </div>
       </div>
 
@@ -96,11 +104,53 @@ function AlbumCard({ album }: { album: Album }) {
           <span>{formatAlbumDate(album.startDate, album.endDate)}</span>
         </div>
         <div className="mt-4 inline-flex items-center text-sm font-semibold text-primary">
-          Ver fotos
+          {isYoutubeAlbum ? "Ver videos" : "Ver fotos"}
           <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </div>
       </div>
     </Link>
+  );
+}
+
+function YoutubeVideoTile({
+  video,
+  index,
+  isActive,
+  onSelect,
+}: {
+  video: AlbumVideo;
+  index: number;
+  isActive: boolean;
+  onSelect: (video: AlbumVideo) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(video)}
+      className={`group overflow-hidden border bg-card text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+        isActive ? "border-primary" : "border-border hover:border-primary/50"
+      }`}
+      aria-label={`Reproducir ${video.title}`}
+    >
+      <div className="relative aspect-video bg-muted">
+        <Image
+          src={video.thumbnailUrl}
+          alt={video.title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+        />
+        <span className="absolute inset-0 flex items-center justify-center bg-black/15 text-white transition-colors group-hover:bg-black/25">
+          <PlayCircle className="h-10 w-10 drop-shadow" aria-hidden="true" />
+        </span>
+      </div>
+      <div className="p-3">
+        <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+          {video.title}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">Video {index + 1}</p>
+      </div>
+    </button>
   );
 }
 
@@ -200,11 +250,35 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
   const [selectedType, setSelectedType] = useState<string>(ALL_EVENT_TYPES);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+
+  const availableTypes = useMemo(() => {
+    const seen = new Set<EventType>();
+    albums.forEach((item) => {
+      if (item.category) seen.add(item.category);
+    });
+
+    return Array.from(seen).sort((a, b) =>
+      (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b, "es"),
+    );
+  }, [albums]);
+
+  const filteredAlbums = useMemo(() => {
+    if (selectedType === ALL_EVENT_TYPES) return albums;
+    return albums.filter((item) => item.category === selectedType);
+  }, [albums, selectedType]);
 
   if (album) {
+    const isYoutubeAlbum = album.albumType === "youtube";
     const visibleImages = album.images.slice(0, visibleCount);
+    const visibleVideos = album.videos.slice(0, visibleCount);
     const imageUrls = visibleImages.map((image) => image.url);
-    const hasMoreImages = visibleImages.length < album.images.length;
+    const hasMoreItems = isYoutubeAlbum
+      ? visibleVideos.length < album.videos.length
+      : visibleImages.length < album.images.length;
+    const selectedVideo =
+      album.videos.find((video) => video.id === selectedVideoId) || album.videos[0];
+    const totalItems = isYoutubeAlbum ? album.videos.length : album.images.length;
 
     return (
       <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
@@ -223,8 +297,12 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   {formatAlbumDate(album.startDate, album.endDate)}
                 </span>
                 <span className="inline-flex items-center gap-2">
-                  <Images className="h-4 w-4" aria-hidden="true" />
-                  {album.images.length} fotos
+                  {isYoutubeAlbum ? (
+                    <Youtube className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Images className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {totalItems} {isYoutubeAlbum ? "videos" : "fotos"}
                 </span>
               </div>
               {album.description ? (
@@ -241,7 +319,15 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                     </Link>
                   </Button>
                 ) : null}
-                {album.facebookUrl ? (
+                {isYoutubeAlbum && album.youtubeUrl ? (
+                  <Button asChild variant="outline" className="rounded-none">
+                    <a href={album.youtubeUrl} target="_blank" rel="noreferrer">
+                      <Youtube className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Ver playlist en YouTube
+                    </a>
+                  </Button>
+                ) : null}
+                {!isYoutubeAlbum && album.facebookUrl ? (
                   <Button asChild variant="outline" className="rounded-none">
                     <a href={album.facebookUrl} target="_blank" rel="noreferrer">
                       <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
@@ -252,18 +338,54 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
               </div>
             </div>
 
-            <div className="grid grid-flow-dense grid-cols-2 gap-2 [grid-auto-rows:8.5rem] sm:[grid-auto-rows:10rem] md:grid-cols-4 md:[grid-auto-rows:9.5rem]">
-              {visibleImages.map((image, index) => (
-                <AlbumImageTile
-                  key={`${image.url}-${index}`}
-                  image={image}
-                  index={index}
-                  onOpen={setCurrentIndex}
-                />
-              ))}
-            </div>
+            {isYoutubeAlbum ? (
+              <>
+                {selectedVideo ? (
+                  <div className="mb-5 overflow-hidden border border-border bg-black">
+                    <div className="aspect-video">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${selectedVideo.id}`}
+                        title={selectedVideo.title}
+                        className="h-full w-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border border-border bg-card p-8 text-center">
+                    <Youtube className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
+                    <p className="text-sm font-medium text-foreground">Sin videos disponibles</p>
+                  </div>
+                )}
 
-            {hasMoreImages ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {visibleVideos.map((video, index) => (
+                    <YoutubeVideoTile
+                      key={video.id}
+                      video={video}
+                      index={index}
+                      isActive={selectedVideo?.id === video.id}
+                      onSelect={(nextVideo) => setSelectedVideoId(nextVideo.id)}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-flow-dense grid-cols-2 gap-2 [grid-auto-rows:8.5rem] sm:[grid-auto-rows:10rem] md:grid-cols-4 md:[grid-auto-rows:9.5rem]">
+                {visibleImages.map((image, index) => (
+                  <AlbumImageTile
+                    key={`${image.url}-${index}`}
+                    image={image}
+                    index={index}
+                    onOpen={setCurrentIndex}
+                  />
+                ))}
+              </div>
+            )}
+
+            {hasMoreItems ? (
               <div className="mt-6 flex justify-center">
                 <Button
                   type="button"
@@ -271,11 +393,14 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   className="rounded-none"
                   onClick={() =>
                     setVisibleCount((current) =>
-                      Math.min(current + PHOTOS_PER_PAGE, album.images.length),
+                      Math.min(
+                        current + PHOTOS_PER_PAGE,
+                        isYoutubeAlbum ? album.videos.length : album.images.length,
+                      ),
                     )
                   }
                 >
-                  Cargar más fotos
+                  {isYoutubeAlbum ? "Cargar más videos" : "Cargar más fotos"}
                 </Button>
               </div>
             ) : null}
@@ -295,25 +420,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     );
   }
 
-  const availableTypes = useMemo(() => {
-    const seen = new Set<EventType>();
-    albums.forEach((item) => {
-      if (item.category) seen.add(item.category);
-    });
-
-    return Array.from(seen).sort((a, b) =>
-      (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b, "es"),
-    );
-  }, [albums]);
-
-  const filteredAlbums = useMemo(() => {
-    if (selectedType === ALL_EVENT_TYPES) return albums;
-    return albums.filter((item) => item.category === selectedType);
-  }, [albums, selectedType]);
-
   return (
     <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
-      <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]">
+      <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]">
         <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
           <div className="mb-6 border-b border-border pb-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

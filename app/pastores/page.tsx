@@ -1,7 +1,6 @@
 import { Metadata } from "next"
 import { readInitialViewMode } from "@/lib/cookie-utils"
 import { AppHeader } from "@/components/layout/app-header"
-import { SectionNavBar } from "@/components/layout/section-nav-bar"
 import { DirectorioContent } from "@/components/sections/pastores/pastores-content"
 import Chatbot from "@/components/shared/chatbot"
 import { getPastors, getRegionConfig } from "@/lib/api"
@@ -29,7 +28,6 @@ export default async function DirectorioPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <SectionNavBar currentLabel="Pastores" icon="pastores" />
       <div>
         {region ? (
           <DirectorioContent pastors={pastors} initialViewMode={initialViewMode} />

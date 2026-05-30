@@ -7,7 +7,7 @@ export default defineType({
   type: 'document',
   groups: [
     { name: 'basic', title: 'Datos principales' },
-    { name: 'media', title: 'Fotos' },
+    { name: 'media', title: 'Contenido' },
     { name: 'settings', title: 'Configuracion' },
   ],
   fields: [
@@ -29,6 +29,21 @@ export default defineType({
       },
       validation: (Rule) => Rule.required(),
       description: 'Se genera automaticamente desde el titulo y crea la URL /album/slug.',
+    }),
+    defineField({
+      name: 'albumType',
+      title: 'Tipo de album',
+      type: 'string',
+      group: 'basic',
+      initialValue: 'photos',
+      options: {
+        list: [
+          { title: 'Imagenes', value: 'photos' },
+          { title: 'Videos de YouTube', value: 'youtube' },
+        ],
+        layout: 'radio',
+      },
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'startDate',
@@ -106,13 +121,45 @@ export default defineType({
       type: 'image',
       group: 'media',
       options: { hotspot: true },
-      validation: (Rule) => Rule.required(),
+      description:
+        'En albumes de imagenes es obligatoria. En YouTube es opcional; si la dejas vacia se usara la miniatura del primer video.',
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if ((context.document?.albumType ?? 'photos') === 'photos' && !value) {
+            return 'La portada es obligatoria para albumes de imagenes'
+          }
+          return true
+        }),
     }),
     defineField({
       name: 'facebookUrl',
       title: 'Link original de Facebook',
       type: 'url',
       group: 'media',
+      hidden: ({ document }) => (document?.albumType ?? 'photos') !== 'photos',
+    }),
+    defineField({
+      name: 'youtubePlaylistId',
+      title: 'Playlist ID de YouTube',
+      type: 'string',
+      group: 'media',
+      hidden: ({ document }) => document?.albumType !== 'youtube',
+      description: 'Ej: PLxxxxxxxx. No pegues la URL completa aqui; solo el ID de la playlist.',
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if (context.document?.albumType === 'youtube' && !value) {
+            return 'El Playlist ID es obligatorio para albumes de YouTube'
+          }
+          return true
+        }),
+    }),
+    defineField({
+      name: 'youtubeUrl',
+      title: 'URL de la playlist en YouTube',
+      type: 'url',
+      group: 'media',
+      hidden: ({ document }) => document?.albumType !== 'youtube',
+      description: 'Opcional. Se usa para el boton "Ver playlist en YouTube".',
     }),
     defineField({
       name: 'hidden',
@@ -127,6 +174,7 @@ export default defineType({
       title: 'Imagenes adicionales',
       type: 'array',
       group: 'media',
+      hidden: ({ document }) => (document?.albumType ?? 'photos') !== 'photos',
       of: [
         defineField({
           name: 'albumImage',
@@ -211,14 +259,16 @@ export default defineType({
       startDate: 'startDate',
       endDate: 'endDate',
       hidden: 'hidden',
+      albumType: 'albumType',
       media: 'coverImage',
       eventTitle: 'relatedEvent.title',
     },
-    prepare({ title, startDate, endDate, hidden, media, eventTitle }) {
+    prepare({ title, startDate, endDate, hidden, albumType, media, eventTitle }) {
       const range = startDate && endDate ? `${startDate} - ${endDate}` : startDate || 'Sin fecha'
+      const typeLabel = albumType === 'youtube' ? 'Videos' : 'Imagenes'
       return {
         title,
-        subtitle: `${hidden ? 'Oculto' : 'Publicado'} • ${range}${eventTitle ? ` • ${eventTitle}` : ''}`,
+        subtitle: `${typeLabel} • ${hidden ? 'Oculto' : 'Publicado'} • ${range}${eventTitle ? ` • ${eventTitle}` : ''}`,
         media,
       }
     },

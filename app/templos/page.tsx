@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import { readInitialViewMode } from "@/lib/cookie-utils";
 import { AppHeader } from "@/components/layout/app-header";
-import { SectionNavBar } from "@/components/layout/section-nav-bar";
 import { TemplosContent } from "@/components/sections/templos/templos-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getTemplos, getRegionConfig } from "@/lib/api";
@@ -30,7 +29,6 @@ export default async function TemploPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <SectionNavBar currentLabel="Templos" icon="templos" />
       <div>
         {region ? (
           <TemplosContent templos={templos} initialViewMode={initialViewMode} />

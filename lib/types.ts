@@ -113,6 +113,16 @@ export interface AlbumImage {
   caption?: string;
 }
 
+export type AlbumType = "photos" | "youtube";
+
+export interface AlbumVideo {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnailUrl: string;
+  publishedAt?: string;
+}
+
 export interface AlbumRelatedEvent {
   id: string;
   title: string;
@@ -124,6 +134,7 @@ export interface AlbumRelatedEvent {
 
 export interface Album {
   id: string;
+  albumType: AlbumType;
   title: string;
   slug: string;
   startDate: Date;
@@ -132,9 +143,12 @@ export interface Album {
   description?: string;
   coverImage: string;
   facebookUrl?: string;
+  youtubePlaylistId?: string;
+  youtubeUrl?: string;
   hidden: boolean;
   relatedEvent?: AlbumRelatedEvent;
   images: AlbumImage[];
+  videos: AlbumVideo[];
 }
 
 // Pastor directory

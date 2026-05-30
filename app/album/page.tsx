@@ -1,6 +1,5 @@
 import { Metadata } from "next"
 import { AppHeader } from "@/components/layout/app-header"
-import { SectionNavBar } from "@/components/layout/section-nav-bar"
 import { AlbumContent } from "@/components/sections/album/album-content"
 import Chatbot from "@/components/shared/chatbot"
 import { getAlbums, getRegionConfig } from "@/lib/api"
@@ -27,7 +26,6 @@ export default async function AlbumPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <SectionNavBar currentLabel="Álbum" icon="album" />
       <div>
         {region ? (
           <AlbumContent albums={albums} />

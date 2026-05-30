@@ -1,7 +1,6 @@
 import { Metadata } from "next"
 import { readInitialViewMode } from "@/lib/cookie-utils"
 import { AppHeader } from "@/components/layout/app-header"
-import { SectionNavBar } from "@/components/layout/section-nav-bar"
 import { DirectivaContent } from "@/components/sections/directiva/directiva-content"
 import Chatbot from "@/components/shared/chatbot"
 import { getDirectiva, getRegionConfig } from "@/lib/api"
@@ -29,7 +28,6 @@ export default async function DirectivaPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <SectionNavBar currentLabel="Directiva" icon="directiva" />
       <div>
         {region ? (
           <DirectivaContent members={members} initialViewMode={initialViewMode} />
