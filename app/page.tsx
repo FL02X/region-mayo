@@ -1,5 +1,5 @@
 import { AppHeader } from "@/components/layout/app-header";
-import { readCookieValue } from "@/lib/cookie-utils";
+import { readInitialViewMode } from "@/lib/cookie-utils";
 import { LocationNotificationBar } from "@/components/layout/location-notification-bar";
 import { HeroSection } from "@/components/sections/home/hero-section.desktop";
 import { MobileHero } from "@/components/sections/home/hero-section.mobile";
@@ -25,8 +25,7 @@ import {
 export const revalidate = false;
 
 export default async function Home() {
-  const viewModeCookie = await readCookieValue("rm-view-mode-calendar");
-  const initialViewMode = viewModeCookie === "compact" ? "compact" : "grid";
+  const initialViewMode = await readInitialViewMode("rm-view-mode-calendar");
   const now = Date.now();
 
   const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts, templos] =

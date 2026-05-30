@@ -1524,7 +1524,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
-          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Asista a nuestros templos</h1>
+          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Asista a nuestros servicios</h1>
           <p className="text-[15px] text-muted-foreground mt-2">
             Todos son invitamos a nuestros servicios. Busque el templo mas cercano a usted.
           </p>

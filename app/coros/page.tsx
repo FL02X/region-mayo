@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { readCookieValue } from "@/lib/cookie-utils"
+import { readInitialViewMode } from "@/lib/cookie-utils"
 import { AppHeader } from "@/components/layout/app-header"
 import { CorosContent } from "@/components/sections/coros/coros-content"
 import Chatbot from "@/components/shared/chatbot"
@@ -16,8 +16,7 @@ export const metadata: Metadata = {
 }
 
 export default async function CorosPage() {
-  const viewModeCookie = await readCookieValue("rm-view-mode-coros")
-  const initialViewMode = viewModeCookie === "compact" ? "compact" : "grid"
+  const initialViewMode = await readInitialViewMode("rm-view-mode-coros")
   const [region, coros] = await Promise.all([
     getRegionConfig("region-mayo"),
     getCoros("region-mayo"),

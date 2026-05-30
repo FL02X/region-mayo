@@ -152,6 +152,8 @@ export function EventCard({
   const vestimentaHelpRef = useRef<HTMLButtonElement>(null);
   const copyToastTimerRef = useRef<number | null>(null);
   const copyToastExitTimerRef = useRef<number | null>(null);
+  const activePrintEventRef = useRef<Event | null>(null);
+  const printCleanupTimerRef = useRef<number | null>(null);
   const printInFlightRef = useRef(false);
   const { isStandalone } = useInstallPrompt();
   const { isOnline } = useConnectivity();
@@ -627,7 +629,12 @@ export function EventCard({
     if (printInFlightRef.current) return;
 
     printInFlightRef.current = true;
+    if (printCleanupTimerRef.current) {
+      window.clearTimeout(printCleanupTimerRef.current);
+      printCleanupTimerRef.current = null;
+    }
     document.body.classList.add("rm-printing");
+    activePrintEventRef.current = event;
 
     flushSync(() => {
       setPrintEvent(event);
@@ -636,14 +643,23 @@ export function EventCard({
     const printRoot = document.querySelector(".rm-event-print-root");
     printRoot?.getBoundingClientRect();
 
-    const shouldPrintImmediately =
-      window.matchMedia("(hover: none), (pointer: coarse)").matches;
-
     try {
-      if (!shouldPrintImmediately) {
-        await waitForImageReady(event.image);
-        await waitForNextPaint();
+      await waitForImageReady(event.image);
+      await waitForNextPaint();
+
+      const portalImage = printRoot?.querySelector("img");
+      if (portalImage instanceof HTMLImageElement) {
+        await waitForImageReady(portalImage.currentSrc || portalImage.src);
+        try {
+          if (portalImage.decode) {
+            await portalImage.decode();
+          }
+        } catch {
+          // A loaded image is enough for print; decode can fail in mobile browsers.
+        }
       }
+
+      await waitForNextPaint();
       window.print();
     } finally {
       printInFlightRef.current = false;
@@ -689,13 +705,37 @@ export function EventCard({
 
   useEffect(() => {
     const clearPrintEvent = () => {
-      document.body.classList.remove("rm-printing");
-      setPrintEvent(null);
+      if (printCleanupTimerRef.current) {
+        window.clearTimeout(printCleanupTimerRef.current);
+      }
+      const cleanupDelay = window.matchMedia("(hover: none), (pointer: coarse)")
+        .matches
+        ? 8000
+        : 250;
+
+      printCleanupTimerRef.current = window.setTimeout(() => {
+        document.body.classList.remove("rm-printing");
+        activePrintEventRef.current = null;
+        setPrintEvent(null);
+        printCleanupTimerRef.current = null;
+      }, cleanupDelay);
     };
 
+    const keepPrintClass = () => {
+      if (printInFlightRef.current || activePrintEventRef.current) {
+        document.body.classList.add("rm-printing");
+      }
+    };
+
+    window.addEventListener("beforeprint", keepPrintClass);
     window.addEventListener("afterprint", clearPrintEvent);
     return () => {
+      if (printCleanupTimerRef.current) {
+        window.clearTimeout(printCleanupTimerRef.current);
+      }
       document.body.classList.remove("rm-printing");
+      activePrintEventRef.current = null;
+      window.removeEventListener("beforeprint", keepPrintClass);
       window.removeEventListener("afterprint", clearPrintEvent);
     };
   }, []);

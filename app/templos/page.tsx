@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { readCookieValue } from "@/lib/cookie-utils";
+import { readInitialViewMode } from "@/lib/cookie-utils";
 import { AppHeader } from "@/components/layout/app-header";
 import { TemplosContent } from "@/components/sections/templos/templos-content";
 import Chatbot from "@/components/shared/chatbot";
@@ -17,8 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TemploPage() {
-  const viewModeCookie = await readCookieValue("rm-view-mode-templos");
-  const initialViewMode = viewModeCookie === "compact" ? "compact" : "grid";
+  const initialViewMode = await readInitialViewMode("rm-view-mode-templos");
   const [region, templos] = await Promise.all([
     getRegionConfig("region-mayo"),
     getTemplos("region-mayo"),

@@ -1,5 +1,7 @@
 import { cookies, headers } from "next/headers";
 
+type ViewMode = "grid" | "compact";
+
 const normalizeCookieValue = (value?: string) => {
   if (!value) return undefined;
   return decodeURIComponent(value);
@@ -30,4 +32,23 @@ export async function readCookieValue(name: string) {
 
   const headerStore = await headers();
   return parseCookieHeader(headerStore.get("cookie") ?? "", name);
+}
+
+const MOBILE_USER_AGENT_PATTERN =
+  /Android|BlackBerry|iPhone|iPod|IEMobile|Mobile|Opera Mini|webOS/i;
+
+export async function readInitialViewMode(name: string): Promise<ViewMode> {
+  const cookieValue = await readCookieValue(name);
+  if (cookieValue === "grid" || cookieValue === "compact") {
+    return cookieValue;
+  }
+
+  const headerStore = await headers();
+  const clientHintMobile = headerStore.get("sec-ch-ua-mobile");
+  if (clientHintMobile === "?1") return "compact";
+  if (clientHintMobile === "?0") return "grid";
+
+  return MOBILE_USER_AGENT_PATTERN.test(headerStore.get("user-agent") ?? "")
+    ? "compact"
+    : "grid";
 }

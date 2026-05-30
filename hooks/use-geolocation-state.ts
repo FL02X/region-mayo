@@ -39,7 +39,12 @@ export function useGeolocationState(): GeolocationState & { requestGeolocation: 
 
   useEffect(() => {
     // Check if permission was previously denied
-    const permissionDenied = localStorage.getItem(GEOLOCATION_PERMISSION_KEY);
+    let permissionDenied: string | null = null;
+    try {
+      permissionDenied = localStorage.getItem(GEOLOCATION_PERMISSION_KEY);
+    } catch {
+      // Ignore storage failures (private mode, quota)
+    }
     if (permissionDenied === "denied") {
       setState(prev => ({ ...prev, permissionDenied: true }));
       return;
@@ -62,7 +67,12 @@ export function useGeolocationState(): GeolocationState & { requestGeolocation: 
     */
 
     // Check if we have cached location data
-    const cachedData = localStorage.getItem(GEOLOCATION_CACHE_KEY);
+    let cachedData: string | null = null;
+    try {
+      cachedData = localStorage.getItem(GEOLOCATION_CACHE_KEY);
+    } catch {
+      // Ignore storage failures (private mode, quota)
+    }
     if (cachedData) {
       try {
         const { location, timestamp }: CacheData = JSON.parse(cachedData);
@@ -79,7 +89,11 @@ export function useGeolocationState(): GeolocationState & { requestGeolocation: 
         }
       } catch {
         // Cache is invalid, clear it
-        localStorage.removeItem(GEOLOCATION_CACHE_KEY);
+        try {
+          localStorage.removeItem(GEOLOCATION_CACHE_KEY);
+        } catch {
+          // Ignore storage failures (private mode, quota)
+        }
       }
     }
   }, []);
@@ -111,11 +125,15 @@ export function useGeolocationState(): GeolocationState & { requestGeolocation: 
             location,
             timestamp: Date.now(),
           };
-          localStorage.setItem(
-            GEOLOCATION_CACHE_KEY,
-            JSON.stringify(cacheData)
-          );
-          localStorage.removeItem(GEOLOCATION_PERMISSION_KEY);
+          try {
+            localStorage.setItem(
+              GEOLOCATION_CACHE_KEY,
+              JSON.stringify(cacheData)
+            );
+            localStorage.removeItem(GEOLOCATION_PERMISSION_KEY);
+          } catch {
+            // Ignore storage failures (private mode, quota)
+          }
 
           setState({
             userLocation: location,

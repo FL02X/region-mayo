@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 
 const QUESTIONS = [
@@ -18,7 +18,7 @@ const QUESTIONS = [
   {
     question: "¿Cómo debo vestir?",
     answer:
-      "Puedes asistir con ropa adecuada. Algunos miembros usan uniforme en ciertos eventos.",
+      "Puedes asistir con ropa respetuosa. Algunos miembros usan uniforme en ciertos eventos.",
   },
   {
     question: "¿Tiene costo?",
@@ -36,6 +36,9 @@ const QUESTIONS = [
 
 export function FirstVisitInfoMobile() {
   const [isOpen, setIsOpen] = useState(false);
+  const [openQuestion, setOpenQuestion] = useState<string | null>(
+    QUESTIONS[0]?.question ?? null,
+  );
   const [mounted, setMounted] = useState(false);
   const [modalActive, setModalActive] = useState(false);
   const [isStandalonePwa, setIsStandalonePwa] = useState(false);
@@ -124,18 +127,50 @@ export function FirstVisitInfoMobile() {
             </div>
 
             <div className="flex-1 overflow-y-auto bg-[#f9fafb] px-5 py-5 text-left text-[#111827]">
-              <div className="mx-auto max-w-[520px] space-y-5">
+              <div className="mx-auto max-w-[520px]">
+                <p className="mb-4 text-[15px] leading-6 text-[#1f2937]">
+                  Queremos que te sientas bienvenido. Aqui tienes respuestas rapidas antes de asistir.
+                </p>
                 {QUESTIONS.map((item) => (
                   <div
                     key={item.question}
-                    className=" last:border-b-0 last:pb-0"
+                    className="border-b border-[#d9dee7] bg-[#f9fafb]"
                   >
-                    <h4 className="mb-1.5 text-[17px] font-semibold leading-snug text-[#1d3765]">
-                      {item.question}
-                    </h4>
-                    <p className="text-[16px] leading-7 text-[#1f2937]">
-                      {item.answer}
-                    </p>
+                    <button
+                      type="button"
+                      className={`flex min-h-[62px] w-full items-center justify-between gap-4 bg-[#f9fafb] px-3 py-3 text-left text-[17px] leading-snug text-[#111827] ${
+                        openQuestion === item.question ? "font-bold" : "font-normal"
+                      }`}
+                      aria-expanded={openQuestion === item.question}
+                      onClick={() =>
+                        setOpenQuestion((current) =>
+                          current === item.question ? null : item.question,
+                        )
+                      }
+                    >
+                      <span>{item.question}</span>
+                      <ChevronDown
+                        className={`h-5 w-5 shrink-0 text-[#2f6eb8] transition-transform duration-200 ${
+                          openQuestion === item.question ? "rotate-180" : ""
+                        }`}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                    </button>
+
+                    <div
+                      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out ${
+                        openQuestion === item.question
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0"
+                      }`}
+                    >
+                      <div className="min-h-0">
+                        <p className="px-2 pb-4 pt-0 text-[16px] leading-6 text-[#1f2937]">
+                          {item.answer}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -155,7 +190,7 @@ export function FirstVisitInfoMobile() {
         <div className="flex items-start gap-3">
           <div className="relative mt-1.5 pr-12 h-[50px] w-[50px] shrink-0 overflow-hidden bg-[#1d3765]">
             <Image
-              src="/images/faq3.png"
+              src="/images/faq4.png"
               alt=""
               fill
               sizes="50px"
@@ -178,7 +213,7 @@ export function FirstVisitInfoMobile() {
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="ml-14.5 flex h-8.5 items-center justify-between bg-[#005998] px-3 text-left text-[17px] font-normal leading-none text-white"
+            className="ml-14.5 flex h-8.5 items-center justify-between bg-[#255792] px-3 text-left text-[17px] font-normal leading-none text-white"
           >
             <span>Ver información</span>
             <ChevronRight className="h-6 w-6 stroke-[1.4]" aria-hidden="true" />

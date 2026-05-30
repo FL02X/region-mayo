@@ -559,12 +559,12 @@ export function CountdownSection({
         {/* Spotlight: event */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
           <div className="desktop-card-lift bg-card border border-border overflow-hidden mb-8">
-            <div className="h-[3px]" style={{ backgroundColor: "#005998" }} aria-hidden="true" />
+            <div className="h-[3px]" style={{ backgroundColor: "#2f5e93" }} aria-hidden="true" />
 
             <div className="p-5">
               <p
                 className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3"
-                style={{ color: "#005998" }}
+                style={{ color: "#2f5e93" }}
               >
                 Nuestro Próximo Evento
               </p>

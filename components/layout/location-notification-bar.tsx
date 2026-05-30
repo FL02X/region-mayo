@@ -42,13 +42,26 @@ export function LocationNotificationBar({
     setIsMounted(true);
   }, []);
 
-  // Resize observer to get accurate height for smooth transition
+  // Measure height for smooth transition, with a safe fallback if ResizeObserver is unavailable.
   useEffect(() => {
-    if (!contentRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      setContentHeight(entries[0].target.scrollHeight);
+    const element = contentRef.current;
+    if (!element) return;
+
+    const measure = () => {
+      setContentHeight(element.scrollHeight);
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === "undefined") {
+      const raf = window.requestAnimationFrame(measure);
+      return () => window.cancelAnimationFrame(raf);
+    }
+
+    const observer = new ResizeObserver(() => {
+      measure();
     });
-    observer.observe(contentRef.current);
+    observer.observe(element);
     return () => observer.disconnect();
   }, [barState, errorMessage]);
 
