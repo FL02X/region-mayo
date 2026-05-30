@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useEffect, useState, useCallback, type ReactNode } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback, useLayoutEffect, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -22,6 +22,7 @@ import type { HeroCandidate } from "@/lib/ranker";
 import { pickHeroAndDeck } from "@/lib/ranker";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { Lightbox } from "@/components/shared/lightbox";
+import useLockBodyScroll from "@/hooks/use-lock-scroll";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES — each candidate slot the deck can show
@@ -93,6 +94,7 @@ type DeckItemType = DeckItem["type"];
 
 const MS_HOUR = 60 * 60 * 1000;
 const MS_DAY = 24 * MS_HOUR;
+const CUSTOM_BANNER_ACCENT = "#e36600";
 
 function isSocialVideoUrl(url?: string): boolean {
   if (!url) return false;
@@ -278,7 +280,7 @@ export function ActionDeck({
         type: "custom",
         id: customHeroCard._id,
         publishedAt: new Date(customHeroCard.publishedAt).getTime(),
-        accentColor: customHeroCard.accentColor || "#2f5e93",
+        accentColor: CUSTOM_BANNER_ACCENT,
         media: {
           isVertical: Boolean(customHeroCard.media.isVertical),
           alt: customHeroCard.media.alt || "Contenido destacado",
@@ -524,7 +526,7 @@ export function ActionDeck({
     <>
       <section
         aria-label="Acciones destacadas"
-        className="w-full bg-[#f5f6f7] pt-6 md:pt-8 pb-8 md:pb-10"
+        className="w-full bg-[#fffefa] md:pt-8 pb-8 md:pb-10"
       >
       <div className="flex items-center justify-between px-4 md:px-6 mb-2.5">
         <h2 className="text-[15px] mb-3 mt-3 font-bold uppercase tracking-[0.18em] text-[#425060]">
@@ -729,13 +731,13 @@ const BADGE_META: Record<
     icon: <span className="text-[14px] font-black leading-none" aria-hidden="true">f</span>,
   },
   prayer: {
-    label: "Oraciones",
+    label: "Peticiones de oracion",
     classes: "text-[#2d6a4f]",
     icon: <HeartHandshake className="h-3 w-3" aria-hidden="true" />,
   },
   promo: {
-    label: "Novedad",
-    classes: "text-[#92400e]",
+    label: "Aviso",
+    classes: "text-[#e36600]",
     icon: <Megaphone className="h-3 w-3" aria-hidden="true" />,
   },
   audio: {
@@ -760,13 +762,12 @@ const ACCENT_COLORS: Record<DeckItemType, string> = {
   instagram: "#6d49a8",
   facebook: "#1b74e4",
   prayer: "#2d6a4f",
-  promo: "#92400e",
+  promo: CUSTOM_BANNER_ACCENT,
   audio: "#3730a3",
 };
 
 function PrayerMiniCarousel({
   prayers,
-  prayerObjects,
   deckLength = 1,
   isDesktop = false,
   onOpenModal,
@@ -778,95 +779,122 @@ function PrayerMiniCarousel({
   onOpenModal?: (text: string) => void;
 }) {
   const [index, setIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState<number | null>(null);
-  const [isSliding, setIsSliding] = useState(false);
-  const [shouldTransition, setShouldTransition] = useState(false);
-
-  // Truncate on both desktop and mobile when multiple deck items (deckLength > 1)
-  const shouldTruncate = deckLength > 1;
-  let charLimit = 85;
-  if (prayers.length > 1) {
-    const longCount = prayers.filter((p) => p.length >= 85).length;
-    if (longCount >= 2) charLimit = 84;
-  }
-
-  useEffect(() => {
-    if (prayers.length <= 1) return;
-    const interval = window.setInterval(() => {
-      setShouldTransition(true);
-      setIsSliding(true);
-      setNextIndex((idx) => (idx === null ? (index + 1) % prayers.length : idx));
-
-      const completeTimer = window.setTimeout(() => {
-        setIndex((current) => (current + 1) % prayers.length);
-        setNextIndex(null);
-        setShouldTransition(false);
-
-        const resetTimer = window.setTimeout(() => setIsSliding(false), 16);
-        return () => window.clearTimeout(resetTimer);
-      }, 450);
-
-      return () => window.clearTimeout(completeTimer);
-    }, 10000);
-
-    return () => window.clearInterval(interval);
-  }, [prayers, index]);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const prayerTextRef = useRef<HTMLParagraphElement>(null);
 
   if (prayers.length === 0) {
     return (
-      <p className="text-[12px] text-[#5b6876] mb-2">La comunidad está orando · únete</p>
+      <p className="text-[15px] leading-relaxed text-[#1f2833]">La comunidad está orando · únete</p>
     );
   }
 
   const currentPrayer = prayers[index];
-  const nextPrayer = prayers[(index + 1) % prayers.length];
-  const isTruncated = shouldTruncate && currentPrayer.length > charLimit;
-  const displayText = isTruncated ? currentPrayer.substring(0, charLimit) + "..." : currentPrayer;
-  const nextIsTruncated = shouldTruncate && nextPrayer.length > charLimit;
-  const nextDisplayText = nextIsTruncated ? nextPrayer.substring(0, charLimit) + "..." : nextPrayer;
+  const textSize =
+    currentPrayer.length <= 70
+      ? isDesktop
+        ? "text-[19px]"
+        : "text-[18px]"
+      : currentPrayer.length <= 135
+        ? "text-[17px]"
+        : "text-[16px]";
+  const textAlign = isDesktop ? "text-center" : "text-left";
+  const minHeight = isDesktop && deckLength === 1 ? "min-h-[184px]" : "min-h-[158px]";
+  const canNavigate = prayers.length > 1;
+  const maxVisibleLines = isOverflowing ? 4 : 5;
 
-  const textSize = isDesktop && deckLength === 1 ? "text-[16px]" : "text-[18px]";
-  const textAlign = isDesktop ? "text-center" : "text-justify";
-  const itemsAlign = isDesktop ? "items-center" : "items-start";
-  const minHeight = isDesktop && deckLength === 1 ? "min-h-[100px]" : "min-h-[80px]";
-  const padding = isDesktop && deckLength === 1 ? "p-4" : "p-3";
-  const actionSlotHeight = "h-[26px]";
+  useLayoutEffect(() => {
+    const textEl = prayerTextRef.current;
+    if (!textEl) return;
 
-  const translateAmount = isSliding && nextIndex !== null ? -100 : 0;
+    const updateOverflow = () => {
+      window.requestAnimationFrame(() => {
+        const previousClamp = textEl.style.webkitLineClamp;
+        textEl.style.webkitLineClamp = "7";
+        const needsMoreSpace = textEl.scrollHeight > textEl.clientHeight + 1;
+        textEl.style.webkitLineClamp = previousClamp;
+        setIsOverflowing(needsMoreSpace);
+      });
+    };
+
+    updateOverflow();
+    window.addEventListener("resize", updateOverflow);
+    return () => window.removeEventListener("resize", updateOverflow);
+  }, [currentPrayer, textSize, isDesktop, deckLength]);
+
+  const goToPrayer = (direction: "previous" | "next") => {
+    setIndex((current) => {
+      if (direction === "previous") return (current - 1 + prayers.length) % prayers.length;
+      return (current + 1) % prayers.length;
+    });
+  };
 
   return (
-    <div className="mb-3">
-      <div className="relative overflow-hidden rounded-[3px] bg-[#f5f9f7] border border-[#d4e8e0]" style={{ minHeight: deckLength > 1 ? minHeight : undefined }}>
-        <div className={`${shouldTransition ? "transition-transform duration-450 ease-out" : ""} flex`} style={{ transform: `translateX(${translateAmount}%)` }}>
-          <div className={`w-full flex-shrink-0 ${padding} ${minHeight} flex flex-col ${itemsAlign} justify-between`}>
-            <p className={`${textSize} text-[#1f2833] italic leading-relaxed ${textAlign}`}>"{displayText}"</p>
-            <div className={`${actionSlotHeight} flex items-center justify-center`}>
-              {isTruncated && onOpenModal ? (
-                <button onClick={() => onOpenModal(currentPrayer)} className="text-[12px] text-[#2d6a4f] hover:text-[#1f4d39] font-semibold underline transition-colors">
-                  Ver más
-                </button>
-              ) : (
-                <span className="invisible text-[12px] font-semibold underline">Ver más</span>
-              )}
-            </div>
-          </div>
-
-          {prayers.length > 1 && (
-            <div className={`w-full flex-shrink-0 ${padding} ${minHeight} flex flex-col ${itemsAlign} justify-between`}>
-              <p className={`${textSize} text-[#1f2833] italic leading-relaxed ${textAlign}`}>"{nextDisplayText}"</p>
-              <div className={`${actionSlotHeight} flex items-center justify-center`}>
-                <span className="invisible text-[12px] font-semibold underline">Ver más</span>
-              </div>
-            </div>
-          )}
+    <div className="mb-1 flex min-h-0 flex-1 flex-col">
+      <div className={`${minHeight} flex min-h-0 flex-1 items-center justify-center`}>
+        <div className="w-full">
+          <p
+            ref={prayerTextRef}
+            className={`${textSize} text-[#1f2833] italic leading-[1.62] ${textAlign}`}
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: maxVisibleLines,
+              overflow: "hidden",
+            }}
+          >
+            <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">“</span>
+            {currentPrayer}
+            <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">”</span>
+          </p>
+          {isOverflowing && onOpenModal ? (
+            <button
+              type="button"
+              onClick={() => onOpenModal(currentPrayer)}
+              className={`mt-4 md:ml-3 inline-flex items-center gap-1 w-fit text-[15px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors ${
+                isDesktop ? "mx-auto" : ""
+              }`}
+            >
+              Leer completo...
+            </button>
+          ) : null}
         </div>
       </div>
 
       {prayers.length > 1 && (
-        <div className="flex items-center gap-1 justify-center mt-1.5">
+        <div className="mt-3 flex items-center justify-center gap-2.5">
+          {canNavigate && (
+            <button
+              type="button"
+              onClick={() => goToPrayer("previous")}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#eef2f5] hover:text-[#2d6a4f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93]"
+              aria-label="Ver oración anterior"
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+          )}
+
+          <div className="flex items-center justify-center gap-1.5" aria-label={`Oración ${index + 1} de ${prayers.length}`}>
           {prayers.map((_, idx) => (
-            <span key={idx} className={`h-1 rounded-full transition-all duration-300 ${idx === index ? "w-2 bg-[#2d6a4f]" : "w-1 bg-[#bfd6c7]"}`} aria-label={`Oración ${idx + 1} de ${prayers.length}`} />
+            <span
+              key={idx}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                idx === index ? "w-7 bg-[#2d6a4f]" : "w-2 bg-[#c9d2d8]"
+              }`}
+              aria-hidden="true"
+            />
           ))}
+          </div>
+
+          {canNavigate && (
+            <button
+              type="button"
+              onClick={() => goToPrayer("next")}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#eef2f5] hover:text-[#2d6a4f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93]"
+              aria-label="Ver siguiente oración"
+            >
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -892,6 +920,8 @@ function DeckCard({
   const [fullPrayerText, setFullPrayerText] = useState("");
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isSocialPlayerOpen, setIsSocialPlayerOpen] = useState(false);
+
+  useLockBodyScroll(showFullPrayerModal);
 
   const cardFrameClass = isDesktop
     ? "w-[260px] h-[270px] shrink-0"
@@ -926,7 +956,7 @@ function DeckCard({
       ? item.ctaText
       : CTA_LABEL[item.type];
   const ctaLinkClass =
-    "inline-flex items-center gap-1 text-[12px] font-semibold text-[#2f5e93] underline underline-offset-2 decoration-[#2f5e93]/40 transition-colors hover:text-[#244c78] hover:decoration-current";
+    "inline-flex items-center gap-1 w-fit text-[18px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
   const ctaStaticClass = `inline-flex items-center gap-1 font-semibold ${
     item.type === "prayer" && item.phase === "collect"
       ? "text-[17px] text-[#2d6a4f]"
@@ -945,11 +975,21 @@ function DeckCard({
     <article
       className={[
         "snap-center relative overflow-hidden flex flex-col",
-        "bg-white rounded-[3px]",
+        "bg-white",
+        "border-[0.5px] border-black/20",
         "shadow-[0_1px_4px_rgba(31,40,51,0.08)] transition-shadow hover:shadow-[0_4px_14px_rgba(31,40,51,0.10)]",
         "w-full h-full",
       ].join(" ")}
     >
+      {item.type === "promo" && (
+        <div className="px-3 pt-3">
+          <p className="mb-2.5 inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#e36600]">
+            <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Aviso</span>
+          </p>
+        </div>
+      )}
+
       {image ? (
         <div className={`relative w-full ${item.type === "promo" ? "flex-1 min-h-0" : imageHeight} bg-[#f1f1f1] group cursor-pointer`}>
           <Image
@@ -1001,7 +1041,7 @@ function DeckCard({
           <>
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <span
-                className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] ${badge.classes}`}
+                className={`inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-[0.12em] ${badge.classes}`}
               >
                 {badge.icon}
                 {item.type === "instagram" || item.type === "facebook" ? (
@@ -1010,8 +1050,8 @@ function DeckCard({
                   badge.label
                 )}
               </span>
-              {prayerDate && (
-                <span className="rounded-sm bg-[#4a5568] px-2 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm whitespace-nowrap">
+              {prayerDate && item.type !== "prayer" && (
+                <span className="rounded-sm bg-[#4a5568] px-2 py-0.5 text-[12px] font-semibold leading-none text-white shadow-sm whitespace-nowrap">
                   {prayerDate}
                 </span>
               )}
@@ -1019,9 +1059,7 @@ function DeckCard({
 
             {item.type !== "instagram" && item.type !== "facebook" && (
               <h3
-                className={`font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 ${
-                  featured && !isDesktop ? "text-[15px]" : "text-[13px]"
-                }`}
+                className="font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 text-[16px]"
               >
                 {item.title}
               </h3>
@@ -1031,13 +1069,13 @@ function DeckCard({
 
         {item.type === "event" && (
           <div className="space-y-0.5 mb-2">
-            <p className="text-[12px] text-[#5b6876] flex items-center gap-1.5">
+            <p className="text-[15px] text-[#1f2833] flex items-center gap-1.5">
               <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
               {formatEventDate(item.date)}
               {item.time ? ` · ${item.time}` : ""}
             </p>
             {item.location && (
-              <p className="text-[12px] text-[#5b6876] flex items-center gap-1.5 min-w-0">
+              <p className="text-[15px] text-[#1f2833] flex items-center gap-1.5 min-w-0">
                 <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
                 <span className="truncate">{item.location}</span>
               </p>
@@ -1118,7 +1156,7 @@ function DeckCard({
           type="button"
           onClick={onOpenPrayerModal}
           className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93] rounded-[3px] w-full text-left"
-          aria-label={`${BADGE_META[item.type].label}: ${item.title || "Oraciones"}`}
+          aria-label={`${BADGE_META[item.type].label}: ${item.title || "Peticiones de oracion"}`}
         >
           {inner}
         </button>
@@ -1193,22 +1231,24 @@ function DeckCard({
       {/* Full prayer text modal for long prayers */}
       {showFullPrayerModal && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-          onClick={() => setShowFullPrayerModal(false)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Oración completa"
         >
           <div
-            className="bg-white rounded-lg max-w-md w-full p-6 max-h-[80vh] overflow-y-auto shadow-lg"
+            className="bg-white max-w-md w-full max-h-[80vh] overflow-hidden border border-black shadow-[0_18px_48px_rgba(0,0,0,0.45)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-[15px] font-bold text-[#1f2833]">Oración completa</h3>
+            <div className="flex h-16 items-center justify-between bg-[#757575] pl-5">
+              <h3 className="text-[17px] font-bold text-white">Oración completa</h3>
               <button
                 onClick={() => setShowFullPrayerModal(false)}
-                className="text-[#8a96a4] hover:text-[#425060] transition-colors"
+                className="flex h-full w-14 items-center justify-center bg-[#434343] text-white transition-colors hover:bg-[#2f2f2f]"
                 aria-label="Cerrar"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-7 h-7"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1222,9 +1262,11 @@ function DeckCard({
                 </svg>
               </button>
             </div>
-            <p className="text-[14px] text-[#1f2833] italic leading-relaxed">
-              "{fullPrayerText}"
-            </p>
+            <div className="max-h-[calc(80vh-64px)] overflow-y-auto p-6">
+              <p className="text-[14px] text-[#1f2833] italic leading-relaxed">
+                "{fullPrayerText}"
+              </p>
+            </div>
           </div>
         </div>
       )}

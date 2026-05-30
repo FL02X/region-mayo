@@ -524,7 +524,7 @@ function mapHeroCard(raw: any): HeroCard {
       isVertical: Boolean(raw?.media?.isVertical),
       alt: raw?.media?.alt || "Contenido destacado",
     },
-    accentColor: raw?.accentColor || "#2f5e93",
+    accentColor: "#e36600",
     url: raw?.url || undefined,
     ctaText: raw?.url ? raw?.ctaText || "Ver más información" : undefined,
     publishedAt: raw?.publishedAt || new Date(0).toISOString(),
@@ -618,7 +618,6 @@ export async function getLatestHeroCard(regionSlug: string = "mayo"): Promise<He
     `*[_type == "heroCard" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
       | order(coalesce(pinned, false) desc, coalesce(publishedAt, _updatedAt, _createdAt) desc)[0]{
         _id,
-        accentColor,
         url,
         ctaText,
         "publishedAt": coalesce(publishedAt, _updatedAt, _createdAt),

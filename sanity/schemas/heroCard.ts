@@ -70,21 +70,6 @@ export default defineType({
     }),
 
     // ─────────────────────────────────────────────────────────
-    // COLOR DE ACENTO (OPCIONAL)
-    // ─────────────────────────────────────────────────────────
-    defineField({
-      name: 'accentColor',
-      title: 'Color de Acento (Opcional)',
-      type: 'string',
-      description:
-        'Color que afectará el texto "NOVEDAD", links, y botones. ' +
-        'Si no especificas nada, se usará azul (#2f5e93). ' +
-        'Usa el color picker abajo.',
-      initialValue: '#2f5e93',
-      validation: (Rule) => Rule.required(),
-    }),
-
-    // ─────────────────────────────────────────────────────────
     // LINK DESTINO (OPCIONAL)
     // ─────────────────────────────────────────────────────────
     defineField({

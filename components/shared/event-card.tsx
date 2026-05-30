@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import {
   MapPin,
   ExternalLink,
@@ -628,11 +628,22 @@ export function EventCard({
 
     printInFlightRef.current = true;
     document.body.classList.add("rm-printing");
-    setPrintEvent(event);
+
+    flushSync(() => {
+      setPrintEvent(event);
+    });
+
+    const printRoot = document.querySelector(".rm-event-print-root");
+    printRoot?.getBoundingClientRect();
+
+    const shouldPrintImmediately =
+      window.matchMedia("(hover: none), (pointer: coarse)").matches;
 
     try {
-      await waitForImageReady(event.image);
-      await waitForNextPaint();
+      if (!shouldPrintImmediately) {
+        await waitForImageReady(event.image);
+        await waitForNextPaint();
+      }
       window.print();
     } finally {
       printInFlightRef.current = false;

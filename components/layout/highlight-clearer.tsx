@@ -6,14 +6,9 @@ import { usePathname } from "next/navigation";
 export function HighlightClearer() {
   const pathname = usePathname();
   const attachedRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Reset ref on path change
-    attachedRef.current = true;
-    if (typeof document !== "undefined") {
-      document.body.removeAttribute("data-user-interacted");
-    }
-    
     const events = [
       "pointerdown",
       "touchstart",
@@ -27,7 +22,13 @@ export function HighlightClearer() {
       capture: true,
     };
     
-    // Only bind globally and clear immediately on user intent
+    const detachInteractionListeners = () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleInteraction, eventOptions);
+      });
+      attachedRef.current = false;
+    };
+
     const handleInteraction = () => {
       if (typeof document !== "undefined") {
         document.body.setAttribute("data-user-interacted", "true");
@@ -45,29 +46,41 @@ export function HighlightClearer() {
         );
       }
 
-      // 3. Remove listeners: only needed once per navigation
-      events.forEach(event => {
-        window.removeEventListener(event, handleInteraction, eventOptions);
-      });
-      attachedRef.current = false;
+      // 3. Remove listeners: only needed once per highlighted target
+      detachInteractionListeners();
     };
 
-    // We add a tiny delay before attaching listeners just to avoid 
-    // immediately firing on the event that triggered the page navigation.
-    const timer = setTimeout(() => {
-      if (attachedRef.current) {
+    const armInteractionClearer = () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+
+      detachInteractionListeners();
+      document.body.removeAttribute("data-user-interacted");
+
+      // Delay binding so the click/scroll that opened the target doesn't
+      // immediately remove the highlight it just requested.
+      timerRef.current = window.setTimeout(() => {
+        attachedRef.current = true;
         events.forEach(event => {
           window.addEventListener(event, handleInteraction, eventOptions);
         });
-      }
-    }, 1000); // 1-second grace period before an interaction kills the highlight
+        timerRef.current = null;
+      }, 1000);
+    };
+
+    armInteractionClearer();
+    window.addEventListener("hashchange", armInteractionClearer);
+    window.addEventListener("rm-highlight-applied", armInteractionClearer);
 
     return () => {
-      attachedRef.current = false;
-      clearTimeout(timer);
-      events.forEach(event => {
-        window.removeEventListener(event, handleInteraction, eventOptions);
-      });
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      detachInteractionListeners();
+      window.removeEventListener("hashchange", armInteractionClearer);
+      window.removeEventListener("rm-highlight-applied", armInteractionClearer);
     };
   }, [pathname]);
 

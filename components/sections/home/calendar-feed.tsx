@@ -8,6 +8,7 @@ import { RegistrationModal } from "@/components/shared/registration-modal";
 import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { CountdownSection } from "./countdown-section.mobile";
 import { ActionDeck } from "./action-deck";
+import { FirstVisitInfoMobile } from "./first-visit-info.mobile";
 import { HomeInfoCards } from "./home-info-cards";
 import type {
   Event,
@@ -144,8 +145,10 @@ export function EventsFeed({
         const existingHighlights = document.querySelectorAll(".global-highlight");
         existingHighlights.forEach((el) => el.classList.remove("global-highlight"));
 
+        document.body.removeAttribute("data-user-interacted");
         targetEl.classList.add("global-highlight");
         targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.dispatchEvent(new Event("rm-highlight-applied"));
         setPendingHashEventId(null);
         return;
       }
@@ -239,7 +242,7 @@ export function EventsFeed({
   };
 
   return (
-    <div className="w-full relative bg-[#f1f1f1]" /* [#f1f1f1] */ data-events-feed="true">
+    <div className="w-full relative bg-[#f1f1f1] mb-20" /* [#f1f1f1] */ data-events-feed="true">
       <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen pb-20 pt-[2px]">
         {/* Priority spotlight section (mobile only) */}
         <div className="offline-hide-when-offline md:hidden">
@@ -255,7 +258,7 @@ export function EventsFeed({
         </div>
 
         {/* ActionDeck (mobile only; desktop renders in page.tsx) */}
-        <div className="offline-hide-when-offline md:hidden">
+        <div className="offline-hide-when-offline md:hidden pt-2">
           <ActionDeck
             events={events}
             instagramUrl={instagramUrl}
@@ -267,11 +270,13 @@ export function EventsFeed({
           />
         </div>
 
+        <FirstVisitInfoMobile />
+
         {/* Info Cards (Services, Bible, Hymnal) - HIDDEN */}
         {/* <HomeInfoCards /> */}
 
         {/* Calendar section */}
-        <section id="calendario" className="px-4 md:px-8 pt-6 pb-4 border-t border-border/70 bg-muted/20">
+        <section id="calendario" className="mt-5 md:mt-0 px-4 md:px-8 pt-6 pb-4 border-t md:border-t-0 border-border/70 bg-muted/20">
         <div className="mt-1 max-w-4xl mx-auto w-full">
           <div className="mb-5">
             <h2

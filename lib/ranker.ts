@@ -451,7 +451,7 @@ export function isVerticalMedia(candidate: HeroCandidate): boolean {
 export function getAccentColor(candidate: HeroCandidate): string {
   switch (candidate.type) {
     case 'custom':
-      return candidate.accentColor || '#2f5e93'
+      return '#e36600'
     case 'prayer':
       return '#2d6a4f' // Verde prayer wall
     case 'event':
