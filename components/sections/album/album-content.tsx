@@ -1,183 +1,286 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { Images, ExternalLink, Calendar, MapPin } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Calendar,
+  ExternalLink,
+  Images,
+  Link as LinkIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
-import type { Event } from "@/lib/types";
-import { ALBUM_SHARING_ENABLED } from "@/lib/countdown-utils";
+import { ImageGalleryModal } from "@/components/shared/image-gallery-modal";
+import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import type { Album, AlbumImage, EventType } from "@/lib/types";
 
-function AlbumCard({ event }: { event: Event }) {
-  const formatDate = (date: Date) => {
-    const months = [
-      "Ene",
-      "Feb",
-      "Mar",
-      "Abr",
-      "May",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dic",
-    ];
-    return `${date.getUTCDate()} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
-  };
+const CATEGORY_LABELS: Record<EventType, string> = {
+  campana: "Campaña",
+  convencion: "Convención General",
+  recorrido: "Recorrido Regional",
+  confraternidadJuvenilRegional: "Confraternidad Juvenil Regional",
+  confraternidadJuvenilGeneral: "Confraternidad Juvenil General",
+  cultoJuvenil: "Culto Juvenil",
+  culto: "Culto",
+  visita: "Visita",
+  ensayo: "Ensayo",
+  actividad: "Actividad",
+  estudioBiblico: "Estudio Bíblico",
+  biregional: "Biregional",
+  congresoBrilla: "Congreso Brilla",
+  boda: "Boda",
+};
 
-  const hasAlbum = !!event.googleDriveAlbumUrl;
-  const isPastEvent = new Date(event.date) < new Date();
+function formatAlbumDate(startDate: Date, endDate: Date) {
+  const formatter = new Intl.DateTimeFormat("es-MX", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 
-  const openAlbum = () => {
-    if (event.googleDriveAlbumUrl) {
-      window.open(event.googleDriveAlbumUrl, "_blank");
-    }
-  };
+  const start = formatter.format(startDate);
+  const end = formatter.format(endDate);
+  return start === end ? start : `${start} - ${end}`;
+}
 
+function AlbumCard({ album }: { album: Album }) {
   return (
-    <article className="desktop-card-lift bg-card border border-border overflow-hidden">
-      {/* Image */}
-      <div className="offline-aware-image offline-aware-image--fixed relative h-40 w-full bg-muted">
-        {event.image ? (
-          <Image
-            src={event.image}
-            alt={event.title}
-            fill
-            className="offline-image-online object-cover"
-          />
-        ) : (
-          <Images
-            className="offline-image-online absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/30"
-            aria-hidden="true"
-          />
-        )}
+    <Link
+      href={`/album/${album.slug}`}
+      className="desktop-card-lift group block overflow-hidden border border-border bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      aria-label={`Abrir album ${album.title}`}
+    >
+      <div className="offline-aware-image offline-aware-image--fixed relative h-48 w-full bg-muted">
+        <Image
+          src={sanityImageVariantUrl(album.coverImage, {
+            width: 720,
+            height: 460,
+            quality: 70,
+            format: "webp",
+            fit: "crop",
+          })}
+          alt={album.title}
+          fill
+          className="offline-image-online object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 310px"
+        />
         <OfflineImagePlaceholder />
-        {/* Status label */}
-        <div className="absolute top-3 right-3">
-          <span
-            className={`text-[13px] font-semibold px-2 py-1 ${
-              isPastEvent
-                ? "bg-white/90 text-foreground"
-                : "bg-primary/90 text-white"
-            }`}
-          >
-            {isPastEvent ? "Finalizado" : "Próximo"}
-          </span>
+        <div className="absolute right-3 top-3 bg-white/92 px-2 py-1 text-[12px] font-semibold text-foreground shadow-sm">
+          {album.images.length} fotos
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-base text-foreground mb-2 line-clamp-2 leading-snug">
-          {event.title}
-        </h3>
-
-        <div className="space-y-1 mb-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span>{formatDate(event.date)}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{event.location}</span>
-          </div>
+        <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-primary">
+          {CATEGORY_LABELS[album.category] || album.category}
+        </p>
+        <h2 className="line-clamp-2 text-base font-semibold leading-snug text-foreground">
+          {album.title}
+        </h2>
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>{formatAlbumDate(album.startDate, album.endDate)}</span>
         </div>
-
-        {isPastEvent ? (
-          <Button
-            onClick={openAlbum}
-            disabled={!hasAlbum}
-            variant={hasAlbum ? "default" : "secondary"}
-            className={`w-full text-sm ${
-              hasAlbum ? "bg-primary hover:bg-primary/90 text-white" : ""
-            }`}
-            aria-label={
-              hasAlbum
-                ? `Ver álbum de ${event.title} en Google Drive`
-                : "Álbum no disponible"
-            }
-          >
-            <Images className="h-4 w-4 mr-2" aria-hidden="true" />
-            {hasAlbum ? "Ver Álbum en Drive" : "Álbum no disponible"}
-            {hasAlbum && (
-              <ExternalLink
-                className="h-3.5 w-3.5 ml-auto"
-                aria-hidden="true"
-              />
-            )}
-          </Button>
-        ) : (
-          <p className="text-xs text-muted-foreground text-center py-2.5 border border-border">
-            El álbum estará disponible después del evento
-          </p>
-        )}
       </div>
-    </article>
+    </Link>
+  );
+}
+
+function AlbumImageTile({
+  image,
+  index,
+  onOpen,
+}: {
+  image: AlbumImage;
+  index: number;
+  onOpen: (index: number) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(index)}
+      className="group relative aspect-[4/3] overflow-hidden border border-border bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      aria-label={`Abrir foto ${index + 1}`}
+    >
+      <Image
+        src={sanityImageVariantUrl(image.url, {
+          width: 520,
+          height: 390,
+          quality: 58,
+          format: "webp",
+          fit: "crop",
+        })}
+        alt={image.alt}
+        fill
+        className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 220px"
+      />
+      {image.caption ? (
+        <span className="absolute inset-x-0 bottom-0 bg-black/65 px-2 py-1.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+          {image.caption}
+        </span>
+      ) : null}
+    </button>
   );
 }
 
 interface AlbumContentProps {
-  events: Event[];
+  albums?: Album[];
+  album?: Album;
 }
 
-export function AlbumContent({ events }: AlbumContentProps) {
-  const eventsWithAlbums = ALBUM_SHARING_ENABLED
-    ? events.filter((event) => event.albumEnabled)
-    : [];
+export function AlbumContent({ albums = [], album }: AlbumContentProps) {
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+
+  if (album) {
+    const imageUrls = album.images.map((image) => image.url);
+
+    return (
+      <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
+        <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]">
+          <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
+            <div className="mb-5">
+              <Button asChild variant="ghost" className="h-9 rounded-none px-0 text-sm">
+                <Link href="/album">
+                  <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Álbumes
+                </Link>
+              </Button>
+            </div>
+
+            <div className="mb-6 border-b border-border pb-5">
+              <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">
+                {CATEGORY_LABELS[album.category] || album.category}
+              </p>
+              <h1 className="text-[1.825rem] font-semibold tracking-tight text-foreground">
+                {album.title}
+              </h1>
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-2">
+                  <Calendar className="h-4 w-4" aria-hidden="true" />
+                  {formatAlbumDate(album.startDate, album.endDate)}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Images className="h-4 w-4" aria-hidden="true" />
+                  {album.images.length} fotos
+                </span>
+              </div>
+              {album.description ? (
+                <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+                  {album.description}
+                </p>
+              ) : null}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {album.relatedEvent ? (
+                  <Button asChild variant="outline" className="rounded-none">
+                    <Link href={`/buscar?q=${encodeURIComponent(album.relatedEvent.title)}`}>
+                      <LinkIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Ver evento relacionado
+                    </Link>
+                  </Button>
+                ) : null}
+                {album.facebookUrl ? (
+                  <Button asChild variant="outline" className="rounded-none">
+                    <a href={album.facebookUrl} target="_blank" rel="noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Facebook
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mb-5 overflow-hidden border border-border bg-muted">
+              <div className="offline-aware-image offline-aware-image--fixed relative aspect-[16/9] w-full">
+                <Image
+                  src={sanityImageVariantUrl(album.coverImage, {
+                    width: 1200,
+                    height: 675,
+                    quality: 75,
+                    format: "webp",
+                    fit: "crop",
+                  })}
+                  alt={album.title}
+                  fill
+                  priority
+                  className="offline-image-online object-cover"
+                  sizes="(max-width: 1024px) 100vw, 900px"
+                />
+                <OfflineImagePlaceholder />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+              {album.images.map((image, index) => (
+                <AlbumImageTile
+                  key={`${image.url}-${index}`}
+                  image={image}
+                  index={index}
+                  onOpen={setCurrentIndex}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {currentIndex !== null ? (
+          <ImageGalleryModal
+            images={imageUrls}
+            currentIndex={currentIndex}
+            onClose={() => setCurrentIndex(null)}
+            onNavigate={setCurrentIndex}
+            alt={album.title}
+          />
+        ) : null}
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
-        <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
-          {/* Header */}
-        <div className="mb-6 pb-4 border-b border-border">
-          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">
-            Álbum de Actividades
-          </h1>
-          <p className="text-[15px] text-muted-foreground mt-2">
-            Revive los momentos especiales de nuestros eventos
-          </p>
-        </div>
-
-        {/* Info notice */}
-        <div className="border border-border bg-muted/30 p-4 mb-6">
-          <p className="text-sm text-muted-foreground">
-            Los álbumes se almacenan en Google Drive. Después de cada evento
-            podrás acceder para ver y compartir tus fotos favoritas.
-          </p>
-        </div>
-
-        {/* Grid */}
-        {eventsWithAlbums.length > 0 ? (
-          <div
-            className={`grid gap-4 ${
-              eventsWithAlbums.length === 1
-                ? "grid-cols-1 max-w-sm mx-auto"
-                : eventsWithAlbums.length === 2
-                  ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-            }`}
-          >
-            {eventsWithAlbums.map((event) => (
-              <AlbumCard key={event.id} event={event} />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-card border border-border p-8 text-center">
-            <Images
-              className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3"
-              aria-hidden="true"
-            />
-            <p className="text-sm font-medium text-foreground mb-1">
-              Sin álbumes disponibles
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Los álbumes se publicarán después de los eventos.
+    <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
+      <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]">
+        <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
+          <div className="mb-6 border-b border-border pb-4">
+            <h1 className="text-[1.825rem] font-semibold tracking-tight text-foreground">
+              Álbum de Actividades
+            </h1>
+            <p className="mt-2 text-[15px] text-muted-foreground">
+              Revive los momentos especiales de nuestros eventos.
             </p>
           </div>
-        )}
-      </div>
+
+          {albums.length > 0 ? (
+            <div
+              className={`grid gap-4 ${
+                albums.length === 1
+                  ? "mx-auto max-w-sm grid-cols-1"
+                  : albums.length === 2
+                    ? "mx-auto max-w-2xl grid-cols-1 sm:grid-cols-2"
+                    : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+              }`}
+            >
+              {albums.map((item) => (
+                <AlbumCard key={item.id} album={item} />
+              ))}
+            </div>
+          ) : (
+            <div className="border border-border bg-card p-8 text-center">
+              <Images
+                className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30"
+                aria-hidden="true"
+              />
+              <p className="mb-1 text-sm font-medium text-foreground">
+                Sin álbumes disponibles
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Los álbumes se publicarán después de los eventos.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

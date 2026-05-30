@@ -1272,7 +1272,7 @@ export function EventCard({
 
           {/* ── "Ver más información" dropdown ── */}
           {(hasDetails || hasEventActionMenu) && (
-            <div className="-mx-5 mt-6 border-t border-border">
+            <div className="-mx-5 mb-0 mt-6 border-t border-border">
               <button
                 onClick={handleToggle}
                 className="w-full px-5 flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -1298,7 +1298,7 @@ export function EventCard({
 
               {/* ── Expanded details ── */}
               {isExpanded && (
-                <div id={`details-${event.id}`} className="space-y-2 pb-5 pt-2.5 md:pt-2.5 px-5">
+                <div id={`details-${event.id}`} className="space-y-2 pb-0 pt-2.5 md:pt-2.5 px-5">
                   {/* Vestimenta */}
                   {event.vestimenta && (
                     <div className="flex items-start gap-2.5">
@@ -1310,7 +1310,7 @@ export function EventCard({
                         <p className="flex items-start gap-1.5 text-sm text-foreground">
                           <span className="min-w-0">
                           <span className="text-muted-foreground">
-                            Vestimenta ·{" "}
+                            Vestimenta: {" "}
                           </span>
                           {vestimentaLabels[event.vestimenta]}
                           {event.vestimenta === "otro" && event.vestimentaCustom
@@ -1354,7 +1354,7 @@ export function EventCard({
                           />
                           <p className="text-sm text-foreground">
                             <span className="text-muted-foreground">
-                              Pastor ·{" "}
+                              Pastor a cargo: {" "}
                             </span>
                             {event.speakers.pastorMensaje}
                           </p>
@@ -1368,7 +1368,7 @@ export function EventCard({
                           />
                           <p className="text-sm text-foreground">
                             <span className="text-muted-foreground">
-                              Preside ·{" "}
+                              Preside: {" "}
                             </span>
                             {event.speakers.jovenPreside}
                           </p>

@@ -563,7 +563,7 @@ export function CountdownSection({
 
             <div className="p-5">
               <p
-                className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3"
+                className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3"
                 style={{ color: "#2f5e93" }}
               >
                 Nuestro Próximo Evento

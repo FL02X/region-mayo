@@ -35,6 +35,7 @@ const AUDITABLE_DOCUMENT_TYPES = [
   'coro',
   'directiva',
   'event',
+  'album',
   'registration',
 ]
 

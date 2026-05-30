@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -405,6 +405,8 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
   const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
   const copyToastTimerRef = useRef<number | null>(null);
   const copyToastExitTimerRef = useRef<number | null>(null);
+  const activePrintMemberRef = useRef<DirectivaMember | null>(null);
+  const printCleanupTimerRef = useRef<number | null>(null);
   const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
 
@@ -487,11 +489,36 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
     if (printInFlightRef.current) return;
 
     printInFlightRef.current = true;
+    if (printCleanupTimerRef.current) {
+      window.clearTimeout(printCleanupTimerRef.current);
+      printCleanupTimerRef.current = null;
+    }
     document.body.classList.add("rm-printing");
-    setPrintMember(member);
+    activePrintMemberRef.current = member;
+
+    flushSync(() => {
+      setPrintMember(member);
+    });
+
+    const printRoot = document.querySelector(".rm-print-root");
+    printRoot?.getBoundingClientRect();
 
     try {
       await waitForImageReady(member.photo);
+      await waitForNextPaint();
+
+      const portalImage = printRoot?.querySelector("img");
+      if (portalImage instanceof HTMLImageElement) {
+        await waitForImageReady(portalImage.currentSrc || portalImage.src);
+        try {
+          if (portalImage.decode) {
+            await portalImage.decode();
+          }
+        } catch {
+          // A loaded image is enough for print; decode can fail in mobile browsers.
+        }
+      }
+
       await waitForNextPaint();
       window.print();
     } finally {
@@ -513,13 +540,37 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
 
   useEffect(() => {
     const clearPrintMember = () => {
-      document.body.classList.remove("rm-printing");
-      setPrintMember(null);
+      if (printCleanupTimerRef.current) {
+        window.clearTimeout(printCleanupTimerRef.current);
+      }
+      const cleanupDelay = window.matchMedia("(hover: none), (pointer: coarse)")
+        .matches
+        ? 8000
+        : 250;
+
+      printCleanupTimerRef.current = window.setTimeout(() => {
+        document.body.classList.remove("rm-printing");
+        activePrintMemberRef.current = null;
+        setPrintMember(null);
+        printCleanupTimerRef.current = null;
+      }, cleanupDelay);
     };
 
+    const keepPrintClass = () => {
+      if (printInFlightRef.current || activePrintMemberRef.current) {
+        document.body.classList.add("rm-printing");
+      }
+    };
+
+    window.addEventListener("beforeprint", keepPrintClass);
     window.addEventListener("afterprint", clearPrintMember);
     return () => {
+      if (printCleanupTimerRef.current) {
+        window.clearTimeout(printCleanupTimerRef.current);
+      }
       document.body.classList.remove("rm-printing");
+      activePrintMemberRef.current = null;
+      window.removeEventListener("beforeprint", keepPrintClass);
       window.removeEventListener("afterprint", clearPrintMember);
     };
   }, []);

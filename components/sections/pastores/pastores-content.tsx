@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { Users, MapPin, Church, Phone, ChevronDown } from "lucide-react";
@@ -390,6 +390,8 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
   const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
   const copyToastTimerRef = useRef<number | null>(null);
   const copyToastExitTimerRef = useRef<number | null>(null);
+  const activePrintPastorRef = useRef<Pastor | null>(null);
+  const printCleanupTimerRef = useRef<number | null>(null);
   const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
 
@@ -472,11 +474,36 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
     if (printInFlightRef.current) return;
 
     printInFlightRef.current = true;
+    if (printCleanupTimerRef.current) {
+      window.clearTimeout(printCleanupTimerRef.current);
+      printCleanupTimerRef.current = null;
+    }
     document.body.classList.add("rm-printing");
-    setPrintPastor(pastor);
+    activePrintPastorRef.current = pastor;
+
+    flushSync(() => {
+      setPrintPastor(pastor);
+    });
+
+    const printRoot = document.querySelector(".rm-print-root");
+    printRoot?.getBoundingClientRect();
 
     try {
       await waitForImageReady(pastor.photo);
+      await waitForNextPaint();
+
+      const portalImage = printRoot?.querySelector("img");
+      if (portalImage instanceof HTMLImageElement) {
+        await waitForImageReady(portalImage.currentSrc || portalImage.src);
+        try {
+          if (portalImage.decode) {
+            await portalImage.decode();
+          }
+        } catch {
+          // A loaded image is enough for print; decode can fail in mobile browsers.
+        }
+      }
+
       await waitForNextPaint();
       window.print();
     } finally {
@@ -498,13 +525,37 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
 
   useEffect(() => {
     const clearPrintPastor = () => {
-      document.body.classList.remove("rm-printing");
-      setPrintPastor(null);
+      if (printCleanupTimerRef.current) {
+        window.clearTimeout(printCleanupTimerRef.current);
+      }
+      const cleanupDelay = window.matchMedia("(hover: none), (pointer: coarse)")
+        .matches
+        ? 8000
+        : 250;
+
+      printCleanupTimerRef.current = window.setTimeout(() => {
+        document.body.classList.remove("rm-printing");
+        activePrintPastorRef.current = null;
+        setPrintPastor(null);
+        printCleanupTimerRef.current = null;
+      }, cleanupDelay);
     };
 
+    const keepPrintClass = () => {
+      if (printInFlightRef.current || activePrintPastorRef.current) {
+        document.body.classList.add("rm-printing");
+      }
+    };
+
+    window.addEventListener("beforeprint", keepPrintClass);
     window.addEventListener("afterprint", clearPrintPastor);
     return () => {
+      if (printCleanupTimerRef.current) {
+        window.clearTimeout(printCleanupTimerRef.current);
+      }
       document.body.classList.remove("rm-printing");
+      activePrintPastorRef.current = null;
+      window.removeEventListener("beforeprint", keepPrintClass);
       window.removeEventListener("afterprint", clearPrintPastor);
     };
   }, []);

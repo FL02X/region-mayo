@@ -16,6 +16,8 @@ import type {
   PrayerWallConfig,
   SocialPost,
   Prayer,
+  Album,
+  AlbumImage,
 } from "./types";
 import { getSanityClient } from "./sanity/client";
 import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
@@ -137,6 +139,60 @@ function mapEvent(raw: any, now: Date): Event {
         : undefined,
     isMultiDayEvent: raw.isMultiDayEvent ?? undefined,
     eventGroupId: raw.eventGroupId ?? undefined,
+  };
+}
+
+function albumAlt(albumTitle: string, index: number, alt?: string): string {
+  const cleanAlt = typeof alt === "string" ? alt.trim() : "";
+  return cleanAlt.length > 0 ? cleanAlt : `${albumTitle} - foto ${index + 1}`;
+}
+
+function mapAlbumImage(raw: any, albumTitle: string, index: number): AlbumImage | null {
+  const url = sanityImageUrl(raw?.image);
+  if (!url || url === "/placeholder.svg") return null;
+
+  return {
+    url,
+    alt: albumAlt(albumTitle, index, raw?.alt),
+    caption:
+      typeof raw?.caption === "string" && raw.caption.trim().length > 0
+        ? raw.caption.trim()
+        : undefined,
+  };
+}
+
+function mapAlbum(raw: any): Album {
+  const title = raw?.title || "Album";
+  const relatedEvent = raw?.relatedEvent;
+  const category = relatedEvent?.eventType ?? raw?.category ?? "culto";
+  const images = Array.isArray(raw?.images)
+    ? raw.images
+        .map((image: any, index: number) => mapAlbumImage(image, title, index))
+        .filter(Boolean)
+    : [];
+
+  return {
+    id: raw._id,
+    title,
+    slug: raw.slug?.current ?? raw.slug ?? raw._id,
+    startDate: toDate(raw.startDate),
+    endDate: toDate(raw.endDate ?? raw.startDate),
+    category,
+    description: raw.description ?? undefined,
+    coverImage: sanityImageUrl(raw.coverImage),
+    facebookUrl: raw.facebookUrl ?? undefined,
+    hidden: Boolean(raw.hidden),
+    relatedEvent: relatedEvent
+      ? {
+          id: relatedEvent._id,
+          title: relatedEvent.title,
+          eventType: relatedEvent.eventType ?? category,
+          date: toDate(relatedEvent.date),
+          endDate: relatedEvent.endDate ? toDate(relatedEvent.endDate) : undefined,
+          location: relatedEvent.templo?.temploName ?? relatedEvent.location ?? undefined,
+        }
+      : undefined,
+    images: images as AlbumImage[],
   };
 }
 
@@ -315,6 +371,148 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
 
   const now = new Date();
   return (events ?? []).map((event: any) => mapEvent(event, now));
+}
+
+// ============================================
+// Album APIs
+// ============================================
+
+function getMockAlbums(regionSlug: string): Album[] {
+  if (!isMayoRegion(regionSlug)) return [];
+
+  return eventsData
+    .filter((event) => event.albumEnabled)
+    .map((event) => {
+      const slug = event.title
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      const imageUrls = event.photos?.length ? event.photos : [event.image].filter(Boolean);
+
+      return {
+        id: `mock-album-${event.id}`,
+        title: event.title,
+        slug: `${slug}-${event.id}`,
+        startDate: event.date,
+        endDate: event.endDate ?? event.date,
+        category: event.eventType,
+        description: event.description,
+        coverImage: event.image,
+        facebookUrl: event.facebookPostUrl,
+        hidden: false,
+        relatedEvent: {
+          id: event.id,
+          title: event.title,
+          eventType: event.eventType,
+          date: event.date,
+          endDate: event.endDate,
+          location: event.location,
+        },
+        images: imageUrls.map((url, index) => ({
+          url,
+          alt: `${event.title} - foto ${index + 1}`,
+        })),
+      };
+    });
+}
+
+const ALBUM_PROJECTION = `{
+  _id,
+  title,
+  slug,
+  startDate,
+  endDate,
+  category,
+  description,
+  coverImage{asset->{url}},
+  facebookUrl,
+  hidden,
+  relatedEvent->{
+    _id,
+    title,
+    eventType,
+    date,
+    endDate,
+    location,
+    templo->{temploName}
+  },
+  images[]{
+    image{asset->{url}},
+    alt,
+    caption
+  }
+}`;
+
+export async function getAlbums(regionSlug: string = "mayo"): Promise<Album[]> {
+  if (!SANITY_ENABLED) return getMockAlbums(regionSlug);
+
+  const client = getSanityClient();
+  const albums = await client.fetch(
+    `*[
+      _type == "album" &&
+      hidden != true &&
+      !defined(deletedAt) &&
+      (
+        !defined(relatedEvent) ||
+        relatedEvent->region->slug.current == $slug ||
+        relatedEvent->region->name == $slug
+      )
+    ] | order(startDate desc) ${ALBUM_PROJECTION}`,
+    { slug: regionSlug },
+  );
+
+  return (albums ?? []).map(mapAlbum);
+}
+
+export async function getAlbumBySlug(
+  slug: string,
+  regionSlug: string = "mayo",
+): Promise<Album | null> {
+  if (!SANITY_ENABLED) {
+    return getMockAlbums(regionSlug).find((album) => album.slug === slug) ?? null;
+  }
+
+  const client = getSanityClient();
+  const album = await client.fetch(
+    `*[
+      _type == "album" &&
+      slug.current == $slug &&
+      hidden != true &&
+      !defined(deletedAt) &&
+      (
+        !defined(relatedEvent) ||
+        relatedEvent->region->slug.current == $regionSlug ||
+        relatedEvent->region->name == $regionSlug
+      )
+    ][0] ${ALBUM_PROJECTION}`,
+    { slug, regionSlug },
+  );
+
+  return album ? mapAlbum(album) : null;
+}
+
+export async function getAlbumSlugs(regionSlug: string = "mayo"): Promise<string[]> {
+  if (!SANITY_ENABLED) return getMockAlbums(regionSlug).map((album) => album.slug);
+
+  const client = getSanityClient();
+  const slugs = await client.fetch(
+    `*[
+      _type == "album" &&
+      hidden != true &&
+      defined(slug.current) &&
+      !defined(deletedAt) &&
+      (
+        !defined(relatedEvent) ||
+        relatedEvent->region->slug.current == $slug ||
+        relatedEvent->region->name == $slug
+      )
+    ].slug.current`,
+    { slug: regionSlug },
+  );
+
+  return (slugs ?? []).filter(Boolean);
 }
 
 export async function getUpcomingEvents(

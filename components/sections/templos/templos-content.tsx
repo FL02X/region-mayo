@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -1043,6 +1043,8 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
   const lastOnlineViewModeRef = useRef<ViewMode>(resolvedInitialViewMode);
   const copyToastTimerRef = useRef<number | null>(null);
   const copyToastExitTimerRef = useRef<number | null>(null);
+  const activePrintTemploRef = useRef<Templo | null>(null);
+  const printCleanupTimerRef = useRef<number | null>(null);
   const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
   
@@ -1444,11 +1446,36 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
     if (printInFlightRef.current) return;
 
     printInFlightRef.current = true;
+    if (printCleanupTimerRef.current) {
+      window.clearTimeout(printCleanupTimerRef.current);
+      printCleanupTimerRef.current = null;
+    }
     document.body.classList.add("rm-printing");
-    setPrintTemplo(templo);
+    activePrintTemploRef.current = templo;
+
+    flushSync(() => {
+      setPrintTemplo(templo);
+    });
+
+    const printRoot = document.querySelector(".templo-print-root");
+    printRoot?.getBoundingClientRect();
 
     try {
       await waitForImageReady(getPrintableTemplePhotoUrl(templo));
+      await waitForNextPaint();
+
+      const portalImage = printRoot?.querySelector("img");
+      if (portalImage instanceof HTMLImageElement) {
+        await waitForImageReady(portalImage.currentSrc || portalImage.src);
+        try {
+          if (portalImage.decode) {
+            await portalImage.decode();
+          }
+        } catch {
+          // A loaded image is enough for print; decode can fail in mobile browsers.
+        }
+      }
+
       await waitForNextPaint();
       window.print();
     } finally {
@@ -1470,13 +1497,37 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
 
   useEffect(() => {
     const clearPrintTemplo = () => {
-      document.body.classList.remove("rm-printing");
-      setPrintTemplo(null);
+      if (printCleanupTimerRef.current) {
+        window.clearTimeout(printCleanupTimerRef.current);
+      }
+      const cleanupDelay = window.matchMedia("(hover: none), (pointer: coarse)")
+        .matches
+        ? 8000
+        : 250;
+
+      printCleanupTimerRef.current = window.setTimeout(() => {
+        document.body.classList.remove("rm-printing");
+        activePrintTemploRef.current = null;
+        setPrintTemplo(null);
+        printCleanupTimerRef.current = null;
+      }, cleanupDelay);
     };
 
+    const keepPrintClass = () => {
+      if (printInFlightRef.current || activePrintTemploRef.current) {
+        document.body.classList.add("rm-printing");
+      }
+    };
+
+    window.addEventListener("beforeprint", keepPrintClass);
     window.addEventListener("afterprint", clearPrintTemplo);
     return () => {
+      if (printCleanupTimerRef.current) {
+        window.clearTimeout(printCleanupTimerRef.current);
+      }
       document.body.classList.remove("rm-printing");
+      activePrintTemploRef.current = null;
+      window.removeEventListener("beforeprint", keepPrintClass);
       window.removeEventListener("afterprint", clearPrintTemplo);
     };
   }, []);

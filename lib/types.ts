@@ -107,6 +107,36 @@ export interface Event {
   photos?: string[];
 }
 
+export interface AlbumImage {
+  url: string;
+  alt: string;
+  caption?: string;
+}
+
+export interface AlbumRelatedEvent {
+  id: string;
+  title: string;
+  eventType: EventType;
+  date: Date;
+  endDate?: Date;
+  location?: string;
+}
+
+export interface Album {
+  id: string;
+  title: string;
+  slug: string;
+  startDate: Date;
+  endDate: Date;
+  category: EventType;
+  description?: string;
+  coverImage: string;
+  facebookUrl?: string;
+  hidden: boolean;
+  relatedEvent?: AlbumRelatedEvent;
+  images: AlbumImage[];
+}
+
 // Pastor directory
 export interface Pastor {
   id: string;

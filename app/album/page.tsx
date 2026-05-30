@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { AppHeader } from "@/components/layout/app-header"
 import { AlbumContent } from "@/components/sections/album/album-content"
 import Chatbot from "@/components/shared/chatbot"
-import { getEvents, getRegionConfig } from "@/lib/api"
+import { getAlbums, getRegionConfig } from "@/lib/api"
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity
 // Optimized for free Vercel plan with low traffic
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 }
 
 export default async function AlbumPage() {
-  const [region, events] = await Promise.all([
+  const [region, albums] = await Promise.all([
     getRegionConfig("region-mayo"),
-    getEvents("region-mayo"),
+    getAlbums("region-mayo"),
   ])
 
   return (
@@ -28,7 +28,7 @@ export default async function AlbumPage() {
       />
       <div>
         {region ? (
-          <AlbumContent events={events} />
+          <AlbumContent albums={albums} />
         ) : (
           <div className="flex items-center justify-center min-h-[400px]">
             <p className="text-lg text-gray-500">
