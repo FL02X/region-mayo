@@ -1,25 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
   Calendar,
+  ChevronDown,
   ExternalLink,
+  Info,
   Images,
-  Link as LinkIcon,
+  Play,
   PlayCircle,
   Youtube,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { ImageGalleryModal } from "@/components/shared/image-gallery-modal";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
@@ -44,7 +39,9 @@ const CATEGORY_LABELS: Record<EventType, string> = {
 
 const INITIAL_VISIBLE_PHOTOS = 60;
 const PHOTOS_PER_PAGE = 40;
-const ALL_EVENT_TYPES = "all";
+const ALL_FILTER = "todos";
+const VIDEO_FILTER = "videos";
+const PHOTO_FILTER = "fotos";
 
 function formatAlbumDate(startDate: Date, endDate: Date) {
   const formatter = new Intl.DateTimeFormat("es-MX", {
@@ -59,9 +56,17 @@ function formatAlbumDate(startDate: Date, endDate: Date) {
   return start === end ? start : `${start} - ${end}`;
 }
 
+function formatMediaCount(count: number, isVideo: boolean) {
+  if (isVideo) {
+    return `${count} ${count === 1 ? "video" : "videos"}`;
+  }
+  return `${count} ${count === 1 ? "foto" : "fotos"}`;
+}
+
 function AlbumCard({ album }: { album: Album }) {
   const isYoutubeAlbum = album.albumType === "youtube";
   const itemCount = isYoutubeAlbum ? album.videos.length : album.images.length;
+  const itemLabel = formatMediaCount(itemCount, isYoutubeAlbum);
 
   return (
     <Link
@@ -84,11 +89,13 @@ function AlbumCard({ album }: { album: Album }) {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 310px"
         />
         <OfflineImagePlaceholder />
+        {isYoutubeAlbum ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+            <Play className="h-9 w-9 text-white drop-shadow" aria-hidden="true" />
+          </div>
+        ) : null}
         <div className="absolute right-3 top-3 bg-white/92 px-2 py-1 text-[12px] font-semibold text-foreground shadow-sm">
-          {itemCount} {isYoutubeAlbum ? "videos" : "fotos"}
-        </div>
-        <div className="absolute left-3 top-3 bg-black/70 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-          {isYoutubeAlbum ? "Videos" : "Imágenes"}
+          {itemLabel}
         </div>
       </div>
 
@@ -104,7 +111,7 @@ function AlbumCard({ album }: { album: Album }) {
           <span>{formatAlbumDate(album.startDate, album.endDate)}</span>
         </div>
         <div className="mt-4 inline-flex items-center text-sm font-semibold text-primary">
-          {isYoutubeAlbum ? "Ver videos" : "Ver fotos"}
+          {isYoutubeAlbum ? "Ver video" : "Ver galería"}
           <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </div>
       </div>
@@ -247,25 +254,47 @@ interface AlbumContentProps {
 }
 
 export function AlbumContent({ albums = [], album }: AlbumContentProps) {
+  const filterMenuRef = useRef<HTMLDivElement | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
-  const [selectedType, setSelectedType] = useState<string>(ALL_EVENT_TYPES);
+  const [selectedType, setSelectedType] = useState<string>(ALL_FILTER);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
-  const availableTypes = useMemo(() => {
-    const seen = new Set<EventType>();
-    albums.forEach((item) => {
-      if (item.category) seen.add(item.category);
-    });
+  useEffect(() => {
+    if (!isFilterOpen) return;
 
-    return Array.from(seen).sort((a, b) =>
-      (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b, "es"),
-    );
-  }, [albums]);
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (!filterMenuRef.current) return;
+      if (!filterMenuRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsFilterOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFilterOpen]);
 
   const filteredAlbums = useMemo(() => {
-    if (selectedType === ALL_EVENT_TYPES) return albums;
-    return albums.filter((item) => item.category === selectedType);
+    if (selectedType === VIDEO_FILTER) {
+      return albums.filter((item) => item.albumType === "youtube");
+    }
+    if (selectedType === PHOTO_FILTER) {
+      return albums.filter((item) => item.albumType !== "youtube");
+    }
+    return albums;
   }, [albums, selectedType]);
 
   if (album) {
@@ -281,7 +310,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     const totalItems = isYoutubeAlbum ? album.videos.length : album.images.length;
 
     return (
-      <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
+      <div className="album-detail-surface w-full bg-[#f1f1f1] pb-20" id="main-content">
         <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]">
           <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
             <div className="mb-6 border-b border-border pb-5">
@@ -302,7 +331,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   ) : (
                     <Images className="h-4 w-4" aria-hidden="true" />
                   )}
-                  {totalItems} {isYoutubeAlbum ? "videos" : "fotos"}
+                  {formatMediaCount(totalItems, isYoutubeAlbum)}
                 </span>
               </div>
               {album.description ? (
@@ -314,8 +343,8 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 {album.relatedEvent ? (
                   <Button asChild variant="outline" className="rounded-none">
                     <Link href={`/buscar?q=${encodeURIComponent(album.relatedEvent.title)}`}>
-                      <LinkIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Ver evento relacionado
+                      <Info className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Ver informacion del evento
                     </Link>
                   </Button>
                 ) : null}
@@ -323,7 +352,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   <Button asChild variant="outline" className="rounded-none">
                     <a href={album.youtubeUrl} target="_blank" rel="noreferrer">
                       <Youtube className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Ver playlist en YouTube
+                      Ver en YouTube
                     </a>
                   </Button>
                 ) : null}
@@ -357,6 +386,11 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   <div className="border border-border bg-card p-8 text-center">
                     <Youtube className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
                     <p className="text-sm font-medium text-foreground">Sin videos disponibles</p>
+                    {album.youtubeError ? (
+                      <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
+                        {album.youtubeError}
+                      </p>
+                    ) : null}
                   </div>
                 )}
 
@@ -434,27 +468,93 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   Revive los momentos especiales de nuestros eventos.
                 </p>
               </div>
-
-              {availableTypes.length > 0 ? (
-                <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger
-                    className="w-full rounded-none bg-white sm:mt-1 sm:w-[220px]"
-                    aria-label="Organizar álbumes por tipo de evento"
-                  >
-                    <SelectValue placeholder="Tipo de evento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ALL_EVENT_TYPES}>Todos los tipos</SelectItem>
-                    {availableTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {CATEGORY_LABELS[type] || type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : null}
             </div>
           </div>
+
+          {albums.length > 0 ? (
+            <div className="mb-6 flex justify-start sm:justify-end">
+              <div ref={filterMenuRef} className="relative w-full sm:w-[220px]">
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Filtrar
+                </span>
+                <span className="sr-only" id="album-type-label">
+                  Organizar álbumes por tipo de evento
+                </span>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 rounded-none border border-border bg-white px-3 py-2 text-sm text-foreground shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-labelledby="album-type-label"
+                  aria-haspopup="listbox"
+                  aria-expanded={isFilterOpen}
+                  onClick={() => setIsFilterOpen((open) => !open)}
+                >
+                  <span className="truncate">
+                    {selectedType === VIDEO_FILTER
+                      ? "Videos"
+                      : selectedType === PHOTO_FILTER
+                      ? "Fotos"
+                      : "Mostrar todo"}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform ${
+                      isFilterOpen ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+                {isFilterOpen ? (
+                  <div
+                    className="absolute right-0 top-full z-20 w-full overflow-hidden border border-border bg-white shadow-md sm:w-[220px]"
+                    role="listbox"
+                    aria-label="Tipo de evento"
+                  >
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={selectedType === ALL_FILTER}
+                      className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground ${
+                        selectedType === ALL_FILTER ? "bg-[#e8effb]" : "hover:bg-[#e8effb]"
+                      }`}
+                      onClick={() => {
+                        setSelectedType(ALL_FILTER);
+                        setIsFilterOpen(false);
+                      }}
+                    >
+                      Mostrar todo
+                    </button>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={selectedType === PHOTO_FILTER}
+                      className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground ${
+                        selectedType === PHOTO_FILTER ? "bg-[#e8effb]" : "hover:bg-[#e8effb]"
+                      }`}
+                      onClick={() => {
+                        setSelectedType(PHOTO_FILTER);
+                        setIsFilterOpen(false);
+                      }}
+                    >
+                      Fotos
+                    </button>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={selectedType === VIDEO_FILTER}
+                      className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground ${
+                        selectedType === VIDEO_FILTER ? "bg-[#e8effb]" : "hover:bg-[#e8effb]"
+                      }`}
+                      onClick={() => {
+                        setSelectedType(VIDEO_FILTER);
+                        setIsFilterOpen(false);
+                      }}
+                    >
+                      Videos
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           {filteredAlbums.length > 0 ? (
             <div

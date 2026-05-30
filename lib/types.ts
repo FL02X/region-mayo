@@ -149,6 +149,7 @@ export interface Album {
   relatedEvent?: AlbumRelatedEvent;
   images: AlbumImage[];
   videos: AlbumVideo[];
+  youtubeError?: string;
 }
 
 // Pastor directory

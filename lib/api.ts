@@ -20,7 +20,7 @@ import type {
   AlbumImage,
   AlbumVideo,
 } from "./types";
-import { getSanityClient } from "./sanity/client";
+import { getSanityClient, SANITY_CACHE_TAG } from "./sanity/client";
 import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
 import {
   regionMayo,
@@ -162,12 +162,28 @@ function mapAlbumImage(raw: any, albumTitle: string, index: number): AlbumImage 
   };
 }
 
+function extractYoutubePlaylistId(value?: string): string {
+  const cleanValue = typeof value === "string" ? value.trim() : "";
+  if (!cleanValue) return "";
+
+  try {
+    const url = new URL(cleanValue);
+    const list = url.searchParams.get("list");
+    if (list) return list.trim();
+  } catch {
+    // Not a URL; treat as a raw playlist id.
+  }
+
+  return cleanValue;
+}
+
 function getYoutubePlaylistUrl(playlistId?: string, explicitUrl?: string): string | undefined {
   if (typeof explicitUrl === "string" && explicitUrl.trim().length > 0) {
     return explicitUrl.trim();
   }
-  if (typeof playlistId === "string" && playlistId.trim().length > 0) {
-    return `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId.trim())}`;
+  const cleanPlaylistId = extractYoutubePlaylistId(playlistId);
+  if (cleanPlaylistId) {
+    return `https://www.youtube.com/playlist?list=${encodeURIComponent(cleanPlaylistId)}`;
   }
   return undefined;
 }
@@ -183,19 +199,76 @@ function bestYoutubeThumbnail(thumbnails: any): string {
   );
 }
 
-async function fetchYoutubePlaylistVideos(playlistId?: string): Promise<AlbumVideo[]> {
-  const apiKey = process.env.YOUTUBE_API_KEY;
-  const cleanPlaylistId = typeof playlistId === "string" ? playlistId.trim() : "";
+function decodeXmlText(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
 
-  if (!apiKey || !cleanPlaylistId) return [];
+async function fetchYoutubePlaylistFeedVideos(playlistId: string): Promise<AlbumVideo[]> {
+  const url = `https://www.youtube.com/feeds/videos.xml?playlist_id=${encodeURIComponent(playlistId)}`;
+  const response = await fetch(url, {
+    next: { revalidate: 60 * 60, tags: [SANITY_CACHE_TAG] },
+  });
+
+  if (!response.ok) return [];
+
+  const xml = await response.text();
+  const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) ?? [];
+
+  return entries
+    .map((entry): AlbumVideo | null => {
+      const id = entry.match(/<yt:videoId>(.*?)<\/yt:videoId>/)?.[1]?.trim();
+      if (!id) return null;
+
+      const title = decodeXmlText(entry.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim() || "Video");
+      const publishedAt = entry.match(/<published>(.*?)<\/published>/)?.[1]?.trim();
+      const mediaGroup = entry.match(/<media:group>[\s\S]*?<\/media:group>/)?.[0] || "";
+      const description = decodeXmlText(
+        mediaGroup.match(/<media:description>([\s\S]*?)<\/media:description>/)?.[1]?.trim() || "",
+      );
+      const thumbnailUrl =
+        mediaGroup.match(/<media:thumbnail[^>]*url="([^"]+)"/)?.[1] ||
+        `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+
+      return {
+        id,
+        title,
+        description: description || undefined,
+        thumbnailUrl,
+        publishedAt,
+      };
+    })
+    .filter(Boolean) as AlbumVideo[];
+}
+
+async function fetchYoutubePlaylistVideos(
+  playlistId?: string,
+): Promise<{ videos: AlbumVideo[]; error?: string }> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  const cleanPlaylistId = extractYoutubePlaylistId(playlistId);
+
+  if (!cleanPlaylistId) return { videos: [], error: "Falta el Playlist ID de YouTube." };
+
+  if (!apiKey) {
+    const feedVideos = await fetchYoutubePlaylistFeedVideos(cleanPlaylistId);
+    return {
+      videos: feedVideos,
+      error: feedVideos.length > 0 ? undefined : "Falta YOUTUBE_API_KEY para consultar la playlist.",
+    };
+  }
 
   const videos: AlbumVideo[] = [];
   let pageToken: string | undefined;
+  let apiError: string | undefined;
 
   try {
     for (let page = 0; page < 5; page += 1) {
       const url = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
-      url.searchParams.set("part", "snippet,contentDetails");
+      url.searchParams.set("part", "snippet,contentDetails,status");
       url.searchParams.set("maxResults", "50");
       url.searchParams.set("playlistId", cleanPlaylistId);
       url.searchParams.set("key", apiKey);
@@ -205,7 +278,10 @@ async function fetchYoutubePlaylistVideos(playlistId?: string): Promise<AlbumVid
         next: { revalidate: 60 * 60, tags: [SANITY_CACHE_TAG] },
       });
 
-      if (!response.ok) break;
+      if (!response.ok) {
+        apiError = `YouTube API respondio ${response.status}.`;
+        break;
+      }
 
       const data = await response.json();
       const items = Array.isArray(data?.items) ? data.items : [];
@@ -213,6 +289,7 @@ async function fetchYoutubePlaylistVideos(playlistId?: string): Promise<AlbumVid
       items.forEach((item: any) => {
         const videoId = item?.contentDetails?.videoId || item?.snippet?.resourceId?.videoId;
         if (!videoId) return;
+        if (item?.snippet?.title === "Private video" || item?.snippet?.title === "Deleted video") return;
 
         videos.push({
           id: videoId,
@@ -231,10 +308,20 @@ async function fetchYoutubePlaylistVideos(playlistId?: string): Promise<AlbumVid
       if (!pageToken) break;
     }
   } catch {
-    return videos;
+    apiError = "No se pudo conectar con YouTube API.";
   }
 
-  return videos;
+  if (videos.length > 0) return { videos };
+
+  const feedVideos = await fetchYoutubePlaylistFeedVideos(cleanPlaylistId);
+  return {
+    videos: feedVideos,
+    error:
+      feedVideos.length > 0
+        ? undefined
+        : apiError ||
+          "No se encontraron videos. Verifica que la playlist exista, no sea privada y que la API key pueda leer YouTube Data API v3.",
+  };
 }
 
 async function mapAlbum(raw: any): Promise<Album> {
@@ -242,8 +329,11 @@ async function mapAlbum(raw: any): Promise<Album> {
   const albumType = raw?.albumType === "youtube" ? "youtube" : "photos";
   const relatedEvent = raw?.relatedEvent;
   const category = relatedEvent?.eventType ?? raw?.category ?? "culto";
-  const videos =
-    albumType === "youtube" ? await fetchYoutubePlaylistVideos(raw.youtubePlaylistId) : [];
+  const youtubeResult =
+    albumType === "youtube"
+      ? await fetchYoutubePlaylistVideos(raw.youtubePlaylistId)
+      : { videos: [] as AlbumVideo[] };
+  const videos = youtubeResult.videos;
   const manualCoverImage = raw.coverImage?.asset?.url ? sanityImageUrl(raw.coverImage) : "";
   const coverImage =
     manualCoverImage ||
@@ -277,7 +367,7 @@ async function mapAlbum(raw: any): Promise<Album> {
     description: raw.description ?? undefined,
     coverImage,
     facebookUrl: albumType === "photos" ? raw.facebookUrl ?? undefined : undefined,
-    youtubePlaylistId: raw.youtubePlaylistId ?? undefined,
+    youtubePlaylistId: extractYoutubePlaylistId(raw.youtubePlaylistId) || undefined,
     youtubeUrl:
       albumType === "youtube"
         ? getYoutubePlaylistUrl(raw.youtubePlaylistId, raw.youtubeUrl)
@@ -295,6 +385,7 @@ async function mapAlbum(raw: any): Promise<Album> {
       : undefined,
     images: albumType === "photos" ? (images as AlbumImage[]) : [],
     videos,
+    youtubeError: albumType === "youtube" ? youtubeResult.error : undefined,
   };
 }
 

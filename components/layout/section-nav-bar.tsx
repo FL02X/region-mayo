@@ -15,7 +15,6 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 
 type SectionIconName = "templos" | "pastores" | "coros" | "directiva" | "album";
@@ -34,6 +33,9 @@ const ICONS: Record<SectionIconName, LucideIcon> = {
   directiva: UserCircle,
   album: ImageIcon,
 };
+
+const sectionNavActionButtonClass =
+  "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-transparent bg-transparent px-3 text-sm font-medium text-black transition-[background-color,border-color] duration-150 hover:border-[var(--border)] hover:bg-[var(--surface-pane)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005998]";
 
 export function SectionNavBar({
   currentLabel,
@@ -157,25 +159,22 @@ export function SectionNavBar({
         <div className="mx-auto flex h-11 max-w-[950px] md:max-w-[952px] items-center justify-between md:border-x-2 border-b border-[#d6d0c5] bg-[#f1f1f1] px-4 shadow-[0_2px_8px_rgba(15,23,42,0.05)] md:px-8">
           <div className="min-w-0">
             {parentHref && parentLabel ? (
-              <Button asChild variant="ghost" className="h-9 rounded-none px-0 text-sm">
-                <Link href={parentHref}>
-                  <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {parentLabel}
-                </Link>
-              </Button>
+              <Link href={parentHref} className={sectionNavActionButtonClass}>
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                {parentLabel}
+              </Link>
             ) : null}
           </div>
 
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            className="h-9 rounded-none px-2 text-sm md:px-3"
+            className={sectionNavActionButtonClass}
             onClick={() => setIsShareOpen(true)}
             aria-label="Compartir"
           >
             <Share2 className="h-4 w-4" aria-hidden="true" />
-            <span className="ml-2 hidden md:inline">Compartir</span>
-          </Button>
+            <span className="hidden md:inline">Compartir</span>
+          </button>
         </div>
       </div>
       {modal}
