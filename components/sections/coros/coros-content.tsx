@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePageTransition } from "@/components/shared/mobile-page-transition";
 import {
   CopyPrintActions,
   CopyToast,
@@ -740,7 +741,7 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
   }, []);
 
   return (
-    <div
+    <MobilePageTransition
       className="w-full relative pb-20 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
@@ -849,6 +850,6 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
         )}
       </div>
       </div>
-    </div>
+    </MobilePageTransition>
   );
 }
