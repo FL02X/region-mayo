@@ -56,11 +56,11 @@ export default async function Home() {
           facebookUrl={region?.socialLinks.facebook}
         />
 
-        <MobilePageTransition className="w-full">
-          <div className="md:hidden">
-            <LocationNotificationBar templos={templos} />
-          </div>
+        <div className="md:hidden">
+          <LocationNotificationBar templos={templos} />
+        </div>
 
+        <MobilePageTransition axis="y" className="w-full">
           <div className="hidden md:block">
             <HeroSection
               heroImages={siteSettings?.heroImages}
@@ -116,9 +116,10 @@ export default async function Home() {
               </div>
             )}
           </div>
-          <GoToCalendar />
-          <Chatbot />
         </MobilePageTransition>
+
+        <GoToCalendar />
+        <Chatbot />
       </Providers>
     </main>
   );

@@ -261,12 +261,17 @@ interface AlbumContentProps {
 
 export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const isMobile = useIsMobile();
+  const [hasMounted, setHasMounted] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
   const [selectedType, setSelectedType] = useState<string>(ALL_FILTER);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isFilterOpen) return;
@@ -304,16 +309,18 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     return albums;
   }, [albums, selectedType]);
 
-  const pageMotionProps = isMobile
+  const shouldAnimate = hasMounted && isMobile;
+
+  const pageMotionProps = shouldAnimate
     ? {
-        initial: { opacity: 0, x: album ? 24 : -24 },
-        animate: { opacity: 1, x: 0 },
-        exit: { opacity: 0, x: album ? -24 : 24 },
+        initial: { opacity: 0, x: 16 },
+        animate: { opacity: 1, x: 0, y: 0 },
+        exit: { opacity: 0, x: -16 },
         transition: albumMobileSlideTransition,
       }
     : {
         initial: false,
-        animate: { opacity: 1, x: 0 },
+        animate: { opacity: 1, x: 0, y: 0 },
         exit: undefined,
         transition: { duration: 0 },
       };
@@ -331,10 +338,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     const totalItems = isYoutubeAlbum ? album.videos.length : album.images.length;
 
     return (
-      <div className="album-detail-surface w-full bg-[#f1f1f1] pb-20" id="main-content">
+      <div className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1] pb-20" id="main-content">
         <motion.div
-          key={`album-detail-${album.slug}`}
-          className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]"
+          key={`album-detail-${album.slug}-${shouldAnimate ? "mobile" : "static"}`}
+          className="desktop-content-pane mx-auto min-h-screen max-w-[950px] overflow-x-clip bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]"
           {...pageMotionProps}
         >
           <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
@@ -366,8 +373,13 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
               ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
                 {album.relatedEvent ? (
-                  <Button asChild variant="outline" className="rounded-none">
-                    <Link href={`/buscar?q=${encodeURIComponent(album.relatedEvent.title)}`}>
+                  <Button asChild variant="outline" className="rounded-none touch-manipulation">
+                    <Link
+                      href={`/buscar?q=${encodeURIComponent(album.relatedEvent.title)}`}
+                      onClick={(event) => {
+                        event.currentTarget.blur();
+                      }}
+                    >
                       <Info className="mr-2 h-4 w-4" aria-hidden="true" />
                       Ver informacion del evento
                     </Link>
@@ -480,10 +492,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   }
 
   return (
-    <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
+    <div className="w-full overflow-x-clip bg-[#f1f1f1] pb-20" id="main-content">
       <motion.div
-        key="album-list"
-        className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]"
+        key={`album-list-${shouldAnimate ? "mobile" : "static"}`}
+        className="desktop-content-pane mx-auto min-h-screen max-w-[950px] overflow-x-clip bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]"
         {...pageMotionProps}
       >
         <div className="mx-auto max-w-4xl md:px-4 md:pt-1">

@@ -577,6 +577,7 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
 
   return (
     <MobilePageTransition
+      axis="x"
       className="w-full relative pb-20 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}

@@ -1561,6 +1561,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
 
   return (
     <MobilePageTransition
+      axis="x"
       className="w-full relative pb-15 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}

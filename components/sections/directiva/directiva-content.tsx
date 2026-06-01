@@ -596,6 +596,7 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
 
   return (
     <MobilePageTransition
+      axis="x"
       className="w-full relative pb-16 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
