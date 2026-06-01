@@ -247,8 +247,8 @@ export function MobileMenu({
                 </Link>
 
                 {item.href === "/" && (() => {
-                  const iglesiasActive = activePath === "/templos" || activePath === "/pastores";
-                  const showIglesiasLeftAccent = touchFeedbackHref === "/iglesias" && !iglesiasActive;
+                  // The parent toggle should not look like the active destination.
+                  const showIglesiasLeftAccent = false;
                   const ToggleIcon = iglesiasOpen ? ChevronUp : ChevronDown;
 
                   return (
