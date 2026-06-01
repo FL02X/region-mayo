@@ -36,6 +36,7 @@ const months = [
 ];
 
 type CalendarViewMode = ViewMode;
+const calendarFadeTransition = { duration: 0.18, ease: "easeOut" as const };
 
 function getMonthStart(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
@@ -118,6 +119,11 @@ export function EventsFeed({
   const eventsListRef = useRef<HTMLDivElement>(null);
 
   const eventDates = useMemo(() => events.map((e) => e.date), [events]);
+  const selectedMonthKey = useMemo(
+    () =>
+      `${selectedMonth.getUTCFullYear()}-${String(selectedMonth.getUTCMonth() + 1).padStart(2, "0")}`,
+    [selectedMonth],
+  );
 
   const filteredEvents = useMemo(() => {
     return events
@@ -128,6 +134,10 @@ export function EventsFeed({
       )
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [events, selectedMonth]);
+
+  const calendarStateKey = `${selectedMonthKey}-${renderedViewMode}-${
+    filteredEvents.length === 0 ? "empty" : filteredEvents.length === 1 ? "single" : "grid"
+  }`;
 
   useEffect(() => {
     if (!pendingHashEventId) return;
@@ -338,73 +348,78 @@ export function EventsFeed({
               - 1 event   → centered single card (max-w-md)
               - 2+ events → 1 col mobile / 2 col md+
           */}
-          {filteredEvents.length === 0 ? (
-            <div className="bg-card border border-border p-8 text-center max-w-md mx-auto">
-              <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm font-medium text-foreground mb-1">
-                Sin eventos este mes
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Selecciona otro mes en el calendario para ver más actividades.
-              </p>
-            </div>
-          ) : (
-            <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
-              {renderedViewMode === "compact" ? (
-                <motion.div
-                  key="events-compact"
-                  initial={isMobile ? { opacity: 0, y: 6 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={isMobile ? { opacity: 0, y: -4 } : undefined}
-                  transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
-                  className="mx-0 flex flex-col gap-3 md:gap-3 pb-14"
-                >
-                  {filteredEvents.map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onRegister={handleRegister}
-                      showAlbumButton={event.status === "past"}
-                      variant="compact"
-                    />
-                  ))}
-                </motion.div>
-              ) : filteredEvents.length === 1 ? (
-                <motion.div
-                  key="events-single"
-                  initial={isMobile ? { opacity: 0, y: 6 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={isMobile ? { opacity: 0, y: -4 } : undefined}
-                  transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
-                  className="max-w-md mx-auto"
-                >
+          <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
+            {filteredEvents.length === 0 ? (
+              <motion.div
+                key={calendarStateKey}
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? calendarFadeTransition : { duration: 0 }}
+                className="bg-card border border-border p-8 text-center max-w-md mx-auto"
+              >
+                <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm font-medium text-foreground mb-1">
+                  Sin eventos este mes
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona otro mes en el calendario para ver más actividades.
+                </p>
+              </motion.div>
+            ) : renderedViewMode === "compact" ? (
+              <motion.div
+                key={calendarStateKey}
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? calendarFadeTransition : { duration: 0 }}
+                className="mx-0 flex flex-col gap-3 md:gap-3 pb-14"
+              >
+                {filteredEvents.map((event) => (
                   <EventCard
-                    event={filteredEvents[0]}
+                    key={event.id}
+                    event={event}
                     onRegister={handleRegister}
-                    showAlbumButton={filteredEvents[0].status === "past"}
+                    showAlbumButton={event.status === "past"}
+                    variant="compact"
                   />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="events-grid"
-                  initial={isMobile ? { opacity: 0, y: 6 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={isMobile ? { opacity: 0, y: -4 } : undefined}
-                  transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                >
-                  {filteredEvents.map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onRegister={handleRegister}
-                      showAlbumButton={event.status === "past"}
-                    />
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          )}
+                ))}
+              </motion.div>
+            ) : filteredEvents.length === 1 ? (
+              <motion.div
+                key={calendarStateKey}
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? calendarFadeTransition : { duration: 0 }}
+                className="max-w-md mx-auto"
+              >
+                <EventCard
+                  event={filteredEvents[0]}
+                  onRegister={handleRegister}
+                  showAlbumButton={filteredEvents[0].status === "past"}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={calendarStateKey}
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? calendarFadeTransition : { duration: 0 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              >
+                {filteredEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onRegister={handleRegister}
+                    showAlbumButton={event.status === "past"}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </section>
       </div>
