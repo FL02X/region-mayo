@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -51,6 +52,10 @@ import {
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  formatRegionDateRange,
+  formatRegionDayMonth,
+} from "@/lib/region-date";
 import { useTime } from "@/lib/time-context";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
@@ -102,7 +107,20 @@ const vestimentaLabels: Record<Vestimenta, string> = {
   otro: "Especial",
 };
 
-// Fechas en UTC para evitar diferencias entre server y cliente.
+const formatVestimentaValue = (event: Event) => {
+  if (!event.vestimenta) return "";
+
+  const vestimentaLabel = vestimentaLabels[event.vestimenta];
+  if (event.vestimenta === "otro" && event.vestimentaCustom) {
+    return `${vestimentaLabel} (${event.vestimentaCustom})`;
+  }
+
+  return vestimentaLabel;
+};
+
+const pastorLinkClassName =
+  "inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
+
 const MONTHS = [
   "Enero",
   "Febrero",
@@ -153,20 +171,6 @@ const buildEventMapsUrl = (event: Event) => {
   return "";
 };
 
-const formatDate = (date: Date) =>
-  `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]}`;
-
-const formatDateRange = (start: Date, end: Date) => {
-  const startDay = start.getUTCDate();
-  const endDay = end.getUTCDate();
-  const startMonth = MONTHS[start.getUTCMonth()];
-  const endMonth = MONTHS[end.getUTCMonth()];
-
-  return startMonth === endMonth
-    ? `${startDay} y ${endDay} ${startMonth}`
-    : `${startDay} ${startMonth} hasta el ${endDay} ${endMonth}`;
-};
-
 const openGoogleMaps = (url?: string, address?: string) => {
   const targetUrl = url || (address ? buildGoogleMapsSearchUrl(address) : "");
   if (targetUrl) window.open(targetUrl, "_blank");
@@ -174,7 +178,7 @@ const openGoogleMaps = (url?: string, address?: string) => {
 
 const expandTransition = {
   duration: 0.24,
-  ease: [0.22, 1, 0.36, 1],
+  ease: [0.22, 1, 0.36, 1] as const,
 };
 
 export function EventCard({
@@ -232,8 +236,8 @@ export function EventCard({
   const eventType = event.eventType || "culto";
   const EventTypeIcon = eventTypeIcons[eventType];
   const dateLabel = isMultiDay
-    ? formatDateRange(event.date, event.endDate!)
-    : formatDate(event.date);
+    ? formatRegionDateRange(event.date, event.endDate!)
+    : formatRegionDayMonth(event.date);
   const eventDateTimeLabel = `${dateLabel} | ${event.time}`;
   const eventCoordinates = getEventCoordinates(event);
   const eventMapsUrl = buildEventMapsUrl(event);
@@ -325,6 +329,8 @@ export function EventCard({
   const gridMapsButtonClass = hasPrimaryAction
     ? `${eventUtilityButtonSmallClass} ml-2 shrink-0 self-center`
     : `${eventPrimaryMapsButtonSmallClass} ml-2 shrink-0 self-center`;
+  const speakerBlockClass =
+    variant === "grid" ? "space-y-2 mt-[2px]" : "space-y-2 mt-[-4px]";
   const compactPrimaryAction = isPastEvent ? (
     hasAlbum || hasFacebookPost ? (
       <>
@@ -360,6 +366,18 @@ export function EventCard({
       Registrarse
     </Button>
   ) : null;
+  const pastorNameNode =
+    event.speakers?.pastorMensaje && event.speakers?.pastorMensajeId ? (
+      <Link
+        href={`/pastores#${event.speakers.pastorMensajeId}`}
+        className={pastorLinkClassName}
+        aria-label={`Ver información de ${event.speakers.pastorMensaje}`}
+      >
+        <span className="inline-block">{event.speakers.pastorMensaje}</span>
+      </Link>
+    ) : (
+      <span>{event.speakers?.pastorMensaje}</span>
+    );
 
   const renderExpandedDetails = (
     containerClassName = "space-y-2 pb-5 pt-5 px-5",
@@ -389,11 +407,8 @@ export function EventCard({
             <div className="flex-1 min-w-0">
               <p className="flex items-start gap-1.5 text-sm text-foreground">
                 <span className="min-w-0">
-                  <span className="text-muted-foreground">Vestimenta · </span>
-                  {vestimentaLabels[event.vestimenta]}
-                  {event.vestimenta === "otro" && event.vestimentaCustom
-                    ? ` · ${event.vestimentaCustom}`
-                    : ""}
+                  <span className="text-muted-foreground">Vestimenta: </span>
+                  {formatVestimentaValue(event)}
                 </span>
                 <button
                   ref={vestimentaHelpRef}
@@ -422,7 +437,7 @@ export function EventCard({
       )}
 
       {(event.speakers?.pastorMensaje || event.speakers?.jovenPreside) && (
-        <div className="space-y-2 mt-[-4px]">
+        <div className={speakerBlockClass}>
           {event.speakers.pastorMensaje && (
             <div className="flex items-start gap-2.5">
               <User
@@ -430,8 +445,8 @@ export function EventCard({
                 aria-hidden="true"
               />
               <p className="text-sm text-foreground">
-                <span className="text-muted-foreground">Pastor · </span>
-                {event.speakers.pastorMensaje}
+                <span className="text-muted-foreground">Pastor a cargo: </span>
+                {pastorNameNode}
               </p>
             </div>
           )}
@@ -442,7 +457,7 @@ export function EventCard({
                 aria-hidden="true"
               />
               <p className="text-sm text-foreground">
-                <span className="text-muted-foreground">Preside · </span>
+                <span className="text-muted-foreground">Preside: </span>
                 {event.speakers.jovenPreside}
               </p>
             </div>
@@ -584,20 +599,13 @@ export function EventCard({
           id: "vestimenta",
           label: "Vestimenta",
           icon: <Shirt className="rm-print-icon" aria-hidden="true" />,
-          content: (
-            <p>
-              {vestimentaLabels[event.vestimenta]}
-              {event.vestimenta === "otro" && event.vestimentaCustom
-                ? ` · ${event.vestimentaCustom}`
-                : ""}
-            </p>
-          ),
+          content: <p>{formatVestimentaValue(event)}</p>,
         }]
       : []),
     ...(event.speakers?.pastorMensaje
       ? [{
           id: "pastor",
-          label: "Pastor",
+          label: "Pastor a cargo",
           icon: <Mic className="rm-print-icon" aria-hidden="true" />,
           content: <p>{event.speakers.pastorMensaje}</p>,
         }]

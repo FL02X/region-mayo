@@ -1,5 +1,4 @@
 import { AppHeader } from "@/components/layout/app-header";
-import { MobilePageTransition } from "@/components/shared/mobile-page-transition";
 import { readInitialViewMode } from "@/lib/cookie-utils";
 import { LocationNotificationBar } from "@/components/layout/location-notification-bar";
 import { HeroSection } from "@/components/sections/home/hero-section.desktop";
@@ -60,63 +59,61 @@ export default async function Home() {
           <LocationNotificationBar templos={templos} />
         </div>
 
-        <MobilePageTransition axis="y" className="w-full">
-          <div className="hidden md:block">
-            <HeroSection
-              heroImages={siteSettings?.heroImages}
+        <div className="hidden md:block">
+          <HeroSection
+            heroImages={siteSettings?.heroImages}
+            events={events}
+            customHeroCard={heroCard}
+            prayerWall={prayerWall}
+            socialPosts={socialPosts}
+            instagramUrl={region?.socialLinks.instagram}
+            facebookUrl={region?.socialLinks.facebook}
+            regionPresident={regionPresident}
+          />
+        </div>
+
+        <div className="pt-[51px] md:pt-0">
+          <MobileHero
+            src={siteSettings?.mobileHeroImage?.url || "/images/event-conference.jpg"}
+            alt={siteSettings?.mobileHeroImage?.alt || "Conferencia Regional"}
+          />
+        </div>
+
+        {/* Desktop only: ActionDeck below hero — keep tight to hero, decorative bottom rules in component */}
+        <div className="offline-hide-when-offline hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white mt-0 mb-0">
+          <ActionDeck
+            events={events}
+            instagramUrl={region?.socialLinks.instagram}
+            facebookUrl={region?.socialLinks.facebook}
+            customHeroCard={heroCard}
+            prayerWall={prayerWall}
+            socialPosts={socialPosts}
+            now={now}
+          />
+        </div>
+
+        <div className="pt-0 md:pt-0">
+          {region ? (
+            <EventsFeed
               events={events}
-              customHeroCard={heroCard}
-              prayerWall={prayerWall}
-              socialPosts={socialPosts}
-              instagramUrl={region?.socialLinks.instagram}
-              facebookUrl={region?.socialLinks.facebook}
               regionPresident={regionPresident}
-            />
-          </div>
-
-          <div className="pt-[51px] md:pt-0">
-            <MobileHero
-              src={siteSettings?.mobileHeroImage?.url || "/images/event-conference.jpg"}
-              alt={siteSettings?.mobileHeroImage?.alt || "Conferencia Regional"}
-            />
-          </div>
-
-          {/* Desktop only: ActionDeck below hero — keep tight to hero, decorative bottom rules in component */}
-          <div className="offline-hide-when-offline hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white mt-0 mb-0">
-            <ActionDeck
-              events={events}
               instagramUrl={region?.socialLinks.instagram}
               facebookUrl={region?.socialLinks.facebook}
               customHeroCard={heroCard}
               prayerWall={prayerWall}
               socialPosts={socialPosts}
               now={now}
+              initialViewMode={initialViewMode}
             />
-          </div>
-
-          <div className="pt-0 md:pt-0">
-            {region ? (
-              <EventsFeed
-                events={events}
-                regionPresident={regionPresident}
-                instagramUrl={region?.socialLinks.instagram}
-                facebookUrl={region?.socialLinks.facebook}
-                customHeroCard={heroCard}
-                prayerWall={prayerWall}
-                socialPosts={socialPosts}
-                now={now}
-                initialViewMode={initialViewMode}
-              />
-            ) : (
-              <div className="flex items-center justify-center min-h-[400px]">
-                <p className="text-lg text-gray-500">
-                  No hay información de región disponible. Por favor, configúrala en
-                  Sanity Studio.
-                </p>
-              </div>
-            )}
-          </div>
-        </MobilePageTransition>
+          ) : (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <p className="text-lg text-gray-500">
+                No hay información de región disponible. Por favor, configúrala en
+                Sanity Studio.
+              </p>
+            </div>
+          )}
+        </div>
 
         <GoToCalendar />
         <Chatbot />

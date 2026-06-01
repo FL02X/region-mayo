@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
+import { formatRegionWeekdayDayMonth } from "@/lib/region-date";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
 import type { HeroCandidate } from "@/lib/ranker";
@@ -504,25 +505,6 @@ export function CountdownSection({
     return null;
   }
 
-  const formatDate = (date: Date) => {
-    const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-    const months = [
-      "Ene",
-      "Feb",
-      "Mar",
-      "Abr",
-      "May",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dic",
-    ];
-    return `${days[date.getUTCDay()]}, ${date.getUTCDate()} de ${months[date.getUTCMonth()]}`;
-  };
-
   const getTimeUnits = (): TimeUnit[] => {
     if (!countdownData) return [];
     return [
@@ -582,7 +564,7 @@ export function CountdownSection({
                     aria-hidden="true"
                   />
                   <span>
-                    {formatDate(countdownEvent.date)} · {countdownEvent.time}
+                    {formatRegionWeekdayDayMonth(countdownEvent.date)} · {countdownEvent.time}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">

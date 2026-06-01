@@ -7,7 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface MobilePageTransitionProps
   extends Omit<HTMLMotionProps<"div">, "initial" | "animate" | "transition" | "children"> {
   children: ReactNode;
-  axis?: "x" | "y";
+  axis?: "x" | "y" | "none";
   distance?: number;
   duration?: number;
 }
@@ -34,9 +34,13 @@ export function MobilePageTransition({
     ease: MOBILE_PAGE_TRANSITION.ease,
   } as const;
   const initialOffset =
-    axis === "y" ? { opacity: 0, y: distance } : { opacity: 0, x: distance };
+    axis === "none"
+      ? { opacity: 0 }
+      : axis === "y"
+        ? { opacity: 0, y: distance }
+        : { opacity: 0, x: distance };
   const animateOffset =
-    axis === "y" ? { opacity: 1, x: 0, y: 0 } : { opacity: 1, x: 0, y: 0 };
+    axis === "none" ? { opacity: 1 } : { opacity: 1, x: 0, y: 0 };
 
   useEffect(() => {
     setHasMounted(true);
@@ -52,7 +56,11 @@ export function MobilePageTransition({
       className={`${axis === "x" ? "overflow-x-clip" : ""} ${className ?? ""}`.trim()}
       style={{
         ...props.style,
-        willChange: shouldAnimate ? "transform, opacity" : props.style?.willChange,
+        willChange: shouldAnimate
+          ? axis === "none"
+            ? "opacity"
+            : "transform, opacity"
+          : props.style?.willChange,
       }}
     >
       {children}

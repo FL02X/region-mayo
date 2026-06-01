@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { getRegionCalendarParts, getRegionMonthStart } from "@/lib/region-date";
 
 const months = [
   "Enero",
@@ -23,6 +24,10 @@ const months = [
   "Diciembre",
 ];
 
+function getCalendarMonthDate(year: number, monthIndex: number) {
+  return getRegionMonthStart(new Date(Date.UTC(year, monthIndex, 1, 12)));
+}
+
 interface MonthNavigatorProps {
   selectedMonth: Date;
   onMonthSelect: (date: Date, options?: { suppressScroll?: boolean }) => void;
@@ -34,7 +39,8 @@ export function MonthNavigator({
   onMonthSelect,
   eventDates = [],
 }: MonthNavigatorProps) {
-  const [viewYear, setViewYear] = useState(selectedMonth.getUTCFullYear());
+  const selectedParts = getRegionCalendarParts(selectedMonth);
+  const [viewYear, setViewYear] = useState(selectedParts.year);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [isDesktopPickerOpen, setIsDesktopPickerOpen] = useState(false);
   const [isMobilePickerOpen, setIsMobilePickerOpen] = useState(false);
@@ -44,7 +50,7 @@ export function MonthNavigator({
   }, []);
 
   useEffect(() => {
-    setViewYear(selectedMonth.getUTCFullYear());
+    setViewYear(getRegionCalendarParts(selectedMonth).year);
   }, [selectedMonth]);
 
   const navigateYear = (direction: "prev" | "next") => {
@@ -52,44 +58,44 @@ export function MonthNavigator({
   };
 
   const isSelected = (monthIndex: number) =>
-    selectedMonth.getUTCMonth() === monthIndex &&
-    selectedMonth.getUTCFullYear() === viewYear;
+    getRegionCalendarParts(selectedMonth).month === monthIndex + 1 &&
+    getRegionCalendarParts(selectedMonth).year === viewYear;
 
   const isCurrentMonth = (monthIndex: number) => {
     if (!currentDate) return false;
+    const currentParts = getRegionCalendarParts(currentDate);
     return (
-      currentDate.getUTCMonth() === monthIndex &&
-      currentDate.getUTCFullYear() === viewYear
+      currentParts.month === monthIndex + 1 &&
+      currentParts.year === viewYear
     );
   };
 
   const hasEvents = (monthIndex: number) =>
     eventDates.some(
       (date) =>
-        date.getUTCMonth() === monthIndex && date.getUTCFullYear() === viewYear,
+        getRegionCalendarParts(date).month === monthIndex + 1 &&
+        getRegionCalendarParts(date).year === viewYear,
     );
 
   const getEventCount = (monthIndex: number) =>
     eventDates.filter(
       (date) =>
-        date.getUTCMonth() === monthIndex && date.getUTCFullYear() === viewYear,
+        getRegionCalendarParts(date).month === monthIndex + 1 &&
+        getRegionCalendarParts(date).year === viewYear,
     ).length;
 
   const handleMonthClick = (monthIndex: number) => {
-    onMonthSelect(new Date(Date.UTC(viewYear, monthIndex, 1)));
+    onMonthSelect(getCalendarMonthDate(viewYear, monthIndex));
   };
 
   const navigateMonth = (direction: "prev" | "next") => {
     const delta = direction === "next" ? 1 : -1;
-    const next = new Date(
-      Date.UTC(
-        selectedMonth.getUTCFullYear(),
-        selectedMonth.getUTCMonth() + delta,
-        1,
-      )
+    const next = getCalendarMonthDate(
+      selectedParts.year,
+      selectedParts.month - 1 + delta,
     );
     onMonthSelect(next);
-    setViewYear(next.getUTCFullYear());
+    setViewYear(getRegionCalendarParts(next).year);
   };
 
   // Mobile: navigate without letting the page auto-scroll. We do this by
@@ -99,16 +105,13 @@ export function MonthNavigator({
   // month grid should behave normally (allowing scroll).
   const navigateMonthWithoutScroll = (direction: "prev" | "next") => {
     const delta = direction === "next" ? 1 : -1;
-    const next = new Date(
-      Date.UTC(
-        selectedMonth.getUTCFullYear(),
-        selectedMonth.getUTCMonth() + delta,
-        1,
-      )
+    const next = getCalendarMonthDate(
+      selectedParts.year,
+      selectedParts.month - 1 + delta,
     );
 
     onMonthSelect(next, { suppressScroll: true });
-    setViewYear(next.getUTCFullYear());
+    setViewYear(getRegionCalendarParts(next).year);
   };
 
   const handleMobileMonthNavClick = (direction: "prev" | "next") => {
@@ -125,7 +128,7 @@ export function MonthNavigator({
   };
 
   const selectDesktopMonth = (monthIndex: number) => {
-    onMonthSelect(new Date(Date.UTC(viewYear, monthIndex, 1)));
+    onMonthSelect(getCalendarMonthDate(viewYear, monthIndex));
     setIsDesktopPickerOpen(false);
   };
 
@@ -152,7 +155,7 @@ export function MonthNavigator({
               style={{ minHeight: "unset", minWidth: "unset" }}
             >
               <span className="truncate">
-                {months[selectedMonth.getUTCMonth()]} {selectedMonth.getUTCFullYear()}
+                {months[getRegionCalendarParts(selectedMonth).month - 1]} {getRegionCalendarParts(selectedMonth).year}
               </span>
               <ChevronDown
                 className={`h-4 w-4 shrink-0 transition-transform ${
@@ -255,7 +258,7 @@ export function MonthNavigator({
               style={{ minHeight: "unset", minWidth: "unset" }}
             >
               <span className="truncate">
-                {months[selectedMonth.getUTCMonth()].slice(0, 3)} {selectedMonth.getUTCFullYear()}
+                {months[getRegionCalendarParts(selectedMonth).month - 1].slice(0, 3)} {getRegionCalendarParts(selectedMonth).year}
               </span>
               <ChevronDown
                 className={`h-3 w-3 shrink-0 transition-transform ${
@@ -300,7 +303,7 @@ export function MonthNavigator({
                     <button
                       key={`${month}-${viewYear}`}
                       onClick={() => {
-                        onMonthSelect(new Date(Date.UTC(viewYear, index, 1)));
+                        onMonthSelect(getCalendarMonthDate(viewYear, index));
                         setIsMobilePickerOpen(false);
                       }}
                       aria-pressed={selected}

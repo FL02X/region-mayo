@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MobilePageTransition } from "@/components/shared/mobile-page-transition";
 import { Badge } from "@/components/ui/badge";
 import {
   CopyPrintActions,
@@ -595,8 +594,7 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
   }, []);
 
   return (
-    <MobilePageTransition
-      axis="x"
+    <div
       className="w-full relative pb-16 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
@@ -715,6 +713,6 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
         )}
       </div>
       </div>
-    </MobilePageTransition>
+    </div>
   );
 }

@@ -3,7 +3,7 @@ import { esESLocale } from '@sanity/locale-es-es'
 import { structureTool } from 'sanity/structure'
 import { schemaTypes } from './sanity/schemas'
 import { auditBeforeCreate, auditBeforeCommit } from './sanity/auditHooks'
-import { coroBeforeCommit } from './sanity/denormalizationHooks'
+import { coroBeforeCommit, eventBeforeCommit } from './sanity/denormalizationHooks'
 import { StudioActiveToolLayout, StudioLayout } from './components/layout/studio-shell'
 
 const projectId =
@@ -73,13 +73,13 @@ export default defineConfig({
     types: schemaTypes,
   },
   document: {
-    beforeCreate: (documentBeforeCreate, context) => {
+    beforeCreate: (documentBeforeCreate: any, context: any) => {
       if (AUDITABLE_DOCUMENT_TYPES.includes(documentBeforeCreate._type)) {
         return auditBeforeCreate(documentBeforeCreate, context)
       }
       return documentBeforeCreate
     },
-    beforeCommit: async (documentBeforeCommit, context) => {
+    beforeCommit: async (documentBeforeCommit: any, context: any) => {
       let updated = documentBeforeCommit
 
       if (updated._type === HERO_CARD_TYPE && !isDraftDocumentId(updated._id)) {
@@ -91,6 +91,10 @@ export default defineConfig({
 
       if (documentBeforeCommit._type === 'coro') {
         updated = await coroBeforeCommit(updated, context)
+      }
+
+      if (documentBeforeCommit._type === 'event') {
+        updated = await eventBeforeCommit(updated, context)
       }
 
       if (AUDITABLE_DOCUMENT_TYPES.includes(updated._type)) {

@@ -16,6 +16,7 @@
  */
 
 import { defineType, defineField } from 'sanity'
+import { EventPastorInput } from '../components/inputs/event-pastor-input'
 
 export default defineType({
   name: 'event',
@@ -134,7 +135,7 @@ export default defineType({
       to: [{ type: 'templo' }],
       group: 'location',
       description:
-        'Opcional. Selecciona un templo para ahorrar tiempo: cuando un `templo` está asociado, los campos de Lugar, Dirección y Google Maps se obtienen automáticamente del templo y quedan ocultos en el editor. Déjalo vacío si el evento es en un lugar que no es templo (ej: centro de convenciones).',
+        'Opcional. Si seleccionas un templo, el lugar, la dirección, Google Maps y el pastor a cargo se toman automáticamente de ese templo, pero todavía puedes cambiarlos manualmente en los campos correspondientes. Déjalo vacío si el evento no está ligado a un templo.',
     }),
     defineField({
       name: 'location',
@@ -261,18 +262,21 @@ export default defineType({
     }),
     defineField({
       name: 'pastorMensaje',
-      title: 'Pastor del mensaje',
+      title: 'Pastor a cargo',
       type: 'reference',
       to: [{ type: 'pastor' }],
       group: 'extras',
-      description: 'Selecciona de la lista de pastores registrados',
+      components: {
+        input: EventPastorInput,
+      },
+      description: 'Si el evento tiene templo, este campo se sugiere automáticamente con su pastor a cargo, pero puedes cambiarlo manualmente. Si no hay templo asociado, selecciona el pastor manualmente.',
     }),
     defineField({
       name: 'pastorMensajeCustom',
-      title: 'Pastor invitado',
+      title: 'Pastor a cargo manual',
       type: 'string',
       group: 'extras',
-      description: 'Nombre del pastor si no está registrado en el sistema',
+      description: 'Úsalo si el pastor no está registrado o si necesitas escribirlo manualmente.',
     }),
     defineField({
       name: 'jovenPreside',

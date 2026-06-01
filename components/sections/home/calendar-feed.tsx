@@ -8,6 +8,7 @@ import { EventCard } from "@/components/shared/event-card";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getRegionCalendarParts, getRegionMonthStart } from "@/lib/region-date";
 import { CountdownSection } from "./countdown-section.mobile";
 import { ActionDeck } from "./action-deck";
 import { FirstVisitInfoMobile } from "./first-visit-info.mobile";
@@ -38,17 +39,13 @@ const months = [
 type CalendarViewMode = ViewMode;
 const calendarFadeTransition = { duration: 0.18, ease: "easeOut" as const };
 
-function getMonthStart(date: Date) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-}
-
 function getInitialCalendarMonth(events: Event[], nowMs?: number) {
   const referenceTime = nowMs ?? Date.now();
   const nextEvent = [...events]
     .filter((event) => event.date.getTime() >= referenceTime)
     .sort((a, b) => a.date.getTime() - b.date.getTime())[0];
 
-  return getMonthStart(nextEvent?.date ?? new Date(referenceTime));
+  return getRegionMonthStart(nextEvent?.date ?? new Date(referenceTime));
 }
 
 interface EventsFeedProps {
@@ -95,9 +92,7 @@ export function EventsFeed({
       const targetEvent = events.find((event) => event.id === id);
       if (!targetEvent) return;
 
-      setSelectedMonth(
-        new Date(Date.UTC(targetEvent.date.getUTCFullYear(), targetEvent.date.getUTCMonth(), 1)),
-      );
+      setSelectedMonth(getRegionMonthStart(targetEvent.date));
       setPendingHashEventId(id);
     };
 
@@ -121,16 +116,17 @@ export function EventsFeed({
   const eventDates = useMemo(() => events.map((e) => e.date), [events]);
   const selectedMonthKey = useMemo(
     () =>
-      `${selectedMonth.getUTCFullYear()}-${String(selectedMonth.getUTCMonth() + 1).padStart(2, "0")}`,
+      `${getRegionCalendarParts(selectedMonth).year}-${String(getRegionCalendarParts(selectedMonth).month).padStart(2, "0")}`,
     [selectedMonth],
   );
 
   const filteredEvents = useMemo(() => {
+    const selectedParts = getRegionCalendarParts(selectedMonth);
     return events
       .filter(
         (event) =>
-          event.date.getUTCMonth() === selectedMonth.getUTCMonth() &&
-          event.date.getUTCFullYear() === selectedMonth.getUTCFullYear(),
+          getRegionCalendarParts(event.date).month === selectedParts.month &&
+          getRegionCalendarParts(event.date).year === selectedParts.year,
       )
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [events, selectedMonth]);
@@ -324,7 +320,7 @@ export function EventsFeed({
           <div className="mb-6 flex items-start justify-between gap-4">
             <div className="min-w-0">
               <h3 className="font-semibold text-[1.200rem] text-foreground tracking-tight">
-                {months[selectedMonth.getUTCMonth()]} {selectedMonth.getUTCFullYear()}
+                {months[getRegionCalendarParts(selectedMonth).month - 1]} {getRegionCalendarParts(selectedMonth).year}
               </h3>
               <p className="text-[15px] text-muted-foreground mt-0.5">
                 {filteredEvents.length === 0

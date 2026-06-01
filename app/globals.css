@@ -600,10 +600,30 @@ select,
   box-shadow: none;
 }
 
-.album-detail-surface button:hover,
-.album-detail-surface [role="button"]:hover,
-.album-detail-surface a:hover {
-  background-color: #005998;
+@media (min-width: 768px) {
+  .album-detail-surface button:hover,
+  .album-detail-surface [role="button"]:hover,
+  .album-detail-surface a:hover {
+    background-color: #005998;
+  }
+}
+
+.youtube-embed-frame:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  background: #000;
+}
+
+.youtube-embed-frame:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  background: #000;
 }
 
 

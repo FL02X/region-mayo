@@ -114,6 +114,7 @@ export interface AlbumImage {
 }
 
 export type AlbumType = "photos" | "youtube";
+export type AlbumYoutubeLayout = "auto" | "vertical" | "horizontal";
 
 export interface AlbumVideo {
   id: string;
@@ -145,6 +146,7 @@ export interface Album {
   facebookUrl?: string;
   youtubePlaylistId?: string;
   youtubeUrl?: string;
+  youtubeLayout?: AlbumYoutubeLayout;
   hidden: boolean;
   relatedEvent?: AlbumRelatedEvent;
   images: AlbumImage[];

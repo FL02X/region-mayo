@@ -19,6 +19,7 @@ import type {
   Album,
   AlbumImage,
   AlbumVideo,
+  AlbumYoutubeLayout,
 } from "./types";
 import { getSanityClient, SANITY_CACHE_TAG } from "./sanity/client";
 import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
@@ -79,8 +80,18 @@ function mapEvent(raw: any, now: Date): Event {
   const temploFirstPhoto = raw.templo && Array.isArray(raw.templo.photos) && raw.templo.photos.length > 0
     ? sanityImageUrl(raw.templo.photos[0])
     : undefined;
+  const temploPastor = raw.templo?.pastores?.[0];
   const image = eventImage || eventGalleryFirstPhoto || temploFirstPhoto || "/placeholder.svg";
   const typeColor = (raw.typeColor ?? "worship") as Event["typeColor"];
+  const pastorName =
+    raw.pastorMensaje?.fullName ||
+    raw.pastorMensajeCustom ||
+    temploPastor?.fullName ||
+    undefined;
+  const pastorId =
+    raw.pastorMensaje?._id ||
+    temploPastor?._id ||
+    undefined;
 
   return {
     id: raw._id,
@@ -122,12 +133,10 @@ function mapEvent(raw: any, now: Date): Event {
         }
       : undefined,
     speakers:
-      raw.pastorMensaje || raw.pastorMensajeCustom || raw.jovenPreside
+      pastorName || raw.jovenPreside
         ? {
-            pastorMensaje:
-              (raw.pastorMensaje?.fullName || raw.pastorMensajeCustom) ??
-              undefined,
-            pastorMensajeId: raw.pastorMensaje?._id ?? undefined,
+            pastorMensaje: pastorName,
+            pastorMensajeId: pastorId,
             jovenPreside: raw.jovenPreside ?? undefined,
           }
         : undefined,
@@ -372,6 +381,10 @@ async function mapAlbum(raw: any): Promise<Album> {
       albumType === "youtube"
         ? getYoutubePlaylistUrl(raw.youtubePlaylistId, raw.youtubeUrl)
         : undefined,
+    youtubeLayout:
+      albumType === "youtube" && (raw.youtubeLayout === "vertical" || raw.youtubeLayout === "horizontal")
+        ? (raw.youtubeLayout as AlbumYoutubeLayout)
+        : "auto",
     hidden: Boolean(raw.hidden),
     relatedEvent: relatedEvent
       ? {
@@ -542,7 +555,11 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
         facebookPostUrl,
         registrationEnabled,
         photos[]{asset->{url}},
-        templo->{temploName, address, googleMapsUrl, photos[]{asset->{url}}},
+        templo->{temploName, address, googleMapsUrl, photos[]{asset->{url}}, "pastores": *[
+          _type == "pastor" &&
+          templo._ref == ^._id &&
+          !defined(deletedAt)
+        ]{_id, fullName}},
         isMultiDayEvent,
         eventGroupId,
         alimentosEnabled,
@@ -627,6 +644,7 @@ const ALBUM_PROJECTION = `{
   facebookUrl,
   youtubePlaylistId,
   youtubeUrl,
+  youtubeLayout,
   hidden,
   relatedEvent->{
     _id,

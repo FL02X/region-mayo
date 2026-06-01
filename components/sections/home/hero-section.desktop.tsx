@@ -22,6 +22,7 @@ import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
+import { formatRegionEventDate } from "@/lib/region-date";
 import { useTime } from "@/lib/time-context";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 import { calculateCountdown } from "@/lib/countdown-utils";
@@ -530,12 +531,6 @@ export function HeroSection({
     }
   };
 
-  const formatDate = (date: Date) => {
-    const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    return `${days[date.getUTCDay()]}, ${date.getUTCDate()} ${months[date.getUTCMonth()]} · ${date.getUTCFullYear()}`;
-  };
-
   const timeUnits = countdownData
     ? [
         { value: countdownData.daysRemaining, label: "Días" },
@@ -640,7 +635,7 @@ export function HeroSection({
                     <div className="space-y-1.5 text-[13px] text-[#425060] mb-3.5">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        <span>{formatDate(spotlightEvent.date)} · {spotlightEvent.time}</span>
+                        <span>{formatRegionEventDate(spotlightEvent.date)} · {spotlightEvent.time}</span>
                       </div>
                       <div className="flex items-center gap-2 min-w-0">
                         <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />

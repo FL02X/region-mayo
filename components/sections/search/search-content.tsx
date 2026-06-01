@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Users, Music, UserCircle, Church, Calendar, Search, ChevronRight, Loader2 } from "lucide-react";
 import { highlightText, normalizeText, getNestedValue } from "@/lib/search-utils";
+import { formatRegionLongDate } from "@/lib/region-date";
 import type { Pastor, Coro, DirectivaMember, Templo, Event } from "@/lib/types";
 
 interface SearchContentProps {
@@ -402,7 +403,7 @@ function SearchContentInner({ data }: SearchContentProps) {
                 const e = item as Event;
                 title = e.title;
                 subtitle = e.location || "";
-                description = e.date ? new Date(e.date).toLocaleDateString("es-MX", { year: 'numeric', month: 'long', day: 'numeric' }) : "";
+                description = e.date ? formatRegionLongDate(new Date(e.date)) : "";
                 photo = e.image || "";
                 Icon = Calendar;
               }

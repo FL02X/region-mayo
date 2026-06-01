@@ -48,6 +48,8 @@ const albumMobileSlideTransition = {
   duration: 0.28,
   ease: [0.22, 1, 0.36, 1] as const,
 };
+const ALBUM_TRANSITION_STORAGE_KEY = "rm-album-transition-next";
+type VideoOrientation = "portrait" | "landscape";
 
 function formatAlbumDate(startDate: Date, endDate: Date) {
   const formatter = new Intl.DateTimeFormat("es-MX", {
@@ -74,11 +76,20 @@ function AlbumCard({ album }: { album: Album }) {
   const itemCount = isYoutubeAlbum ? album.videos.length : album.images.length;
   const itemLabel = formatMediaCount(itemCount, isYoutubeAlbum);
 
+  const markAlbumTransition = () => {
+    try {
+      sessionStorage.setItem(ALBUM_TRANSITION_STORAGE_KEY, "true");
+    } catch {
+      // The transition is decorative; ignore storage failures.
+    }
+  };
+
   return (
     <Link
       href={`/album/${album.slug}`}
       className="group block overflow-hidden border border-border bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       aria-label={`Abrir album ${album.title}`}
+      onClick={markAlbumTransition}
     >
       <div className="offline-aware-image offline-aware-image--fixed relative h-48 w-full bg-muted">
         <Image
@@ -130,38 +141,77 @@ function YoutubeVideoTile({
   index,
   isActive,
   onSelect,
+  onThumbnailLoad,
+  variant = "grid",
 }: {
   video: AlbumVideo;
   index: number;
   isActive: boolean;
   onSelect: (video: AlbumVideo) => void;
+  onThumbnailLoad?: (video: AlbumVideo, width: number, height: number) => void;
+  variant?: "grid" | "list";
 }) {
+  const isListVariant = variant === "list";
+
   return (
     <button
       type="button"
       onClick={() => onSelect(video)}
-      className={`group overflow-hidden border bg-card text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-        isActive ? "border-primary" : "border-border hover:border-primary/50"
+      onPointerUp={(event) => {
+        event.currentTarget.blur();
+      }}
+      onTouchEnd={(event) => {
+        event.currentTarget.blur();
+      }}
+      className={`group overflow-hidden border bg-card text-left transition-colors touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+        isListVariant
+          ? `flex w-full items-stretch gap-3 p-2 ${
+              isActive
+                ? "border-primary bg-card"
+                : "border-border md:hover:border-primary/50 md:hover:bg-primary md:hover:text-white"
+            }`
+          : `block ${
+              isActive
+                ? "border-primary bg-card md:hover:bg-primary md:hover:text-white"
+                : "border-border md:hover:border-primary/50 md:hover:bg-primary md:hover:text-white"
+            }`
       }`}
       aria-label={`Reproducir ${video.title}`}
     >
-      <div className="relative aspect-video bg-muted">
+      <div
+        className={`relative shrink-0 overflow-hidden bg-muted ${
+          isListVariant
+            ? "h-20 w-24"
+            : "aspect-video"
+        }`}
+      >
         <Image
           src={video.thumbnailUrl}
           alt={video.title}
           fill
           className="object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+          onLoadingComplete={(img) => {
+            onThumbnailLoad?.(video, img.naturalWidth, img.naturalHeight);
+          }}
         />
-        <span className="absolute inset-0 flex items-center justify-center bg-black/15 text-white transition-colors group-hover:bg-black/25">
-          <PlayCircle className="h-10 w-10 drop-shadow" aria-hidden="true" />
+        <span className="absolute inset-0 flex items-center justify-center bg-black/15 text-white transition-colors md:group-hover:bg-black/25">
+          <PlayCircle className={`${isListVariant ? "h-8 w-8" : "h-10 w-10"} drop-shadow`} aria-hidden="true" />
         </span>
       </div>
-      <div className="p-3">
-        <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+      <div className={isListVariant ? "min-w-0 flex-1 py-1 pr-1" : "p-3"}>
+        <p
+          className={`line-clamp-2 font-semibold leading-snug transition-colors ${
+            isListVariant
+              ? "text-[15px] text-foreground md:group-hover:text-white"
+              : "text-sm text-foreground md:group-hover:text-white"
+          }`}
+        >
           {video.title}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">Video {index + 1}</p>
+        <p className={`mt-1 text-xs ${isListVariant ? "text-muted-foreground md:group-hover:text-white/85" : "text-muted-foreground md:group-hover:text-white/85"}`}>
+          Video {index + 1}
+        </p>
       </div>
     </button>
   );
@@ -261,8 +311,9 @@ interface AlbumContentProps {
 
 export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const isMobile = useIsMobile();
-  const [hasMounted, setHasMounted] = useState(false);
+  const [shouldAnimatePage, setShouldAnimatePage] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
+  const [videoOrientations, setVideoOrientations] = useState<Record<string, VideoOrientation>>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
@@ -270,8 +321,18 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   useEffect(() => {
-    setHasMounted(true);
-  }, []);
+    if (!isMobile) return;
+
+    try {
+      const shouldAnimateNext = sessionStorage.getItem(ALBUM_TRANSITION_STORAGE_KEY) === "true";
+      sessionStorage.removeItem(ALBUM_TRANSITION_STORAGE_KEY);
+      if (shouldAnimateNext) {
+        setShouldAnimatePage(true);
+      }
+    } catch {
+      setShouldAnimatePage(false);
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     if (!isFilterOpen) return;
@@ -309,7 +370,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     return albums;
   }, [albums, selectedType]);
 
-  const shouldAnimate = hasMounted && isMobile;
+  const shouldAnimate = shouldAnimatePage && isMobile;
 
   const pageMotionProps = shouldAnimate
     ? {
@@ -317,16 +378,19 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
         animate: { opacity: 1, x: 0, y: 0 },
         exit: { opacity: 0, x: -16 },
         transition: albumMobileSlideTransition,
+        onAnimationComplete: () => setShouldAnimatePage(false),
       }
     : {
         initial: false,
-        animate: { opacity: 1, x: 0, y: 0 },
+        animate: { opacity: 1 },
         exit: undefined,
         transition: { duration: 0 },
       };
 
   if (album) {
     const isYoutubeAlbum = album.albumType === "youtube";
+    const forcePortraitLayout = album.youtubeLayout === "vertical";
+    const forceLandscapeLayout = album.youtubeLayout === "horizontal";
     const visibleImages = album.images.slice(0, visibleCount);
     const visibleVideos = album.videos.slice(0, visibleCount);
     const imageUrls = visibleImages.map((image) => image.url);
@@ -336,6 +400,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     const selectedVideo =
       album.videos.find((video) => video.id === selectedVideoId) || album.videos[0];
     const totalItems = isYoutubeAlbum ? album.videos.length : album.images.length;
+    const selectedVideoOrientation = selectedVideo ? videoOrientations[selectedVideo.id] : undefined;
+    const selectedVideoIsPortrait =
+      isMobile &&
+      (forcePortraitLayout || (!forceLandscapeLayout && selectedVideoOrientation === "portrait"));
 
     return (
       <div className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1] pb-20" id="main-content">
@@ -373,17 +441,16 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
               ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
                 {album.relatedEvent ? (
-                  <Button asChild variant="outline" className="rounded-none touch-manipulation">
-                    <Link
-                      href={`/buscar?q=${encodeURIComponent(album.relatedEvent.title)}`}
-                      onClick={(event) => {
-                        event.currentTarget.blur();
-                      }}
-                    >
-                      <Info className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Ver informacion del evento
-                    </Link>
-                  </Button>
+                  <Link
+                    href={`/buscar?q=${encodeURIComponent(album.relatedEvent.title)}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-none border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-accent md:hover:text-accent-foreground"
+                    onClick={(event) => {
+                      event.currentTarget.blur();
+                    }}
+                  >
+                    <Info className="h-4 w-4" aria-hidden="true" />
+                    Ver informacion del evento
+                  </Link>
                 ) : null}
                 {isYoutubeAlbum && album.youtubeUrl ? (
                   <Button asChild variant="outline" className="rounded-none">
@@ -408,12 +475,19 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
               <>
                 {selectedVideo ? (
                   <div className="mb-5 overflow-hidden border border-border bg-black">
-                    <div className="aspect-video">
+                    <div
+                      data-youtube-player-shell
+                      className={`${
+                        selectedVideoIsPortrait
+                          ? "mx-auto aspect-[9/16] w-full max-w-[420px] bg-black"
+                          : "aspect-video"
+                      }`}
+                    >
                       <iframe
                         src={`https://www.youtube.com/embed/${selectedVideo.id}`}
                         title={selectedVideo.title}
-                        className="h-full w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        className="youtube-embed-frame h-full w-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
                         allowFullScreen
                         loading="lazy"
                       />
@@ -431,7 +505,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="hidden grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 md:grid">
                   {visibleVideos.map((video, index) => (
                     <YoutubeVideoTile
                       key={video.id}
@@ -439,9 +513,46 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                       index={index}
                       isActive={selectedVideo?.id === video.id}
                       onSelect={(nextVideo) => setSelectedVideoId(nextVideo.id)}
+                      onThumbnailLoad={(nextVideo, width, height) => {
+                        const orientation: VideoOrientation =
+                          height > width ? "portrait" : "landscape";
+                        setVideoOrientations((current) =>
+                          current[nextVideo.id] === orientation
+                            ? current
+                            : { ...current, [nextVideo.id]: orientation },
+                        );
+                      }}
                     />
                   ))}
                 </div>
+                {isMobile && visibleVideos.length > 0 ? (
+                  <div className="mt-5 border-t border-border pt-4">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Seleccionar video
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {visibleVideos.map((video, index) => (
+                        <YoutubeVideoTile
+                          key={`mobile-${video.id}`}
+                          video={video}
+                          index={index}
+                          isActive={selectedVideo?.id === video.id}
+                          onSelect={(nextVideo) => setSelectedVideoId(nextVideo.id)}
+                          variant="list"
+                          onThumbnailLoad={(nextVideo, width, height) => {
+                            const orientation: VideoOrientation =
+                              height > width ? "portrait" : "landscape";
+                            setVideoOrientations((current) =>
+                              current[nextVideo.id] === orientation
+                                ? current
+                                : { ...current, [nextVideo.id]: orientation },
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </>
             ) : (
               <div className="grid grid-flow-dense grid-cols-2 gap-2 [grid-auto-rows:8.5rem] sm:[grid-auto-rows:10rem] md:grid-cols-4 md:[grid-auto-rows:9.5rem]">

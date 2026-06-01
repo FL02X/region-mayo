@@ -162,6 +162,24 @@ export default defineType({
       description: 'Opcional. Se usa para el boton "Ver playlist en YouTube".',
     }),
     defineField({
+      name: 'youtubeLayout',
+      title: 'Formato de reproduccion de YouTube',
+      type: 'string',
+      group: 'media',
+      hidden: ({ document }) => document?.albumType !== 'youtube',
+      initialValue: 'auto',
+      options: {
+        list: [
+          { title: 'Automatico', value: 'auto' },
+          { title: 'Vertical', value: 'vertical' },
+          { title: 'Horizontal', value: 'horizontal' },
+        ],
+        layout: 'radio',
+      },
+      description:
+        'Usa Automatico si quieres que la pagina intente ajustar el reproductor segun la miniatura. Vertical y Horizontal fuerzan el contenedor del video en la pagina.',
+    }),
+    defineField({
       name: 'hidden',
       title: 'Oculto',
       type: 'boolean',

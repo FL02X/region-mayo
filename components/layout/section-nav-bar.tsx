@@ -37,6 +37,8 @@ const ICONS: Record<SectionIconName, LucideIcon> = {
 const sectionNavActionButtonClass =
   "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-transparent bg-transparent px-3 text-sm font-medium text-black transition-[background-color,border-color] duration-150 hover:border-[var(--border)] hover:bg-[var(--surface-pane)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005998]";
 
+const ALBUM_TRANSITION_STORAGE_KEY = "rm-album-transition-next";
+
 export function SectionNavBar({
   currentLabel,
   parentHref,
@@ -82,6 +84,16 @@ export function SectionNavBar({
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
       setCopied(false);
+    }
+  };
+
+  const markAlbumBackTransition = () => {
+    if (parentHref !== "/album") return;
+
+    try {
+      sessionStorage.setItem(ALBUM_TRANSITION_STORAGE_KEY, "true");
+    } catch {
+      // The transition is decorative; ignore storage failures.
     }
   };
 
@@ -162,6 +174,7 @@ export function SectionNavBar({
               <Link
                 href={parentHref}
                 className={`${sectionNavActionButtonClass} -ml-[14px]`}
+                onClick={markAlbumBackTransition}
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 {parentLabel}

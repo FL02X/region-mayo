@@ -24,7 +24,6 @@ import {
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MobilePageTransition } from "@/components/shared/mobile-page-transition";
 import { useNearbyChurchDistances } from "@/hooks/use-nearby-church-distances";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
@@ -1560,8 +1559,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
   }, []);
 
   return (
-    <MobilePageTransition
-      axis="x"
+    <div
       className="w-full relative pb-15 bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
@@ -1808,6 +1806,6 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
         )}
       </div>
       </div>
-    </MobilePageTransition>
+    </div>
   );
 }

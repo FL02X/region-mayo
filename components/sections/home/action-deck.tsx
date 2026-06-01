@@ -22,6 +22,7 @@ import type { HeroCandidate } from "@/lib/ranker";
 import { pickHeroAndDeck } from "@/lib/ranker";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { Lightbox } from "@/components/shared/lightbox";
+import { REGION_TIME_ZONE, formatRegionWeekdayDayMonth } from "@/lib/region-date";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1350,42 +1351,16 @@ function SocialVideoModal({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatEventDate(date: Date) {
-  const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-  const months = [
-    "Ene",
-    "Feb",
-    "Mar",
-    "Abr",
-    "May",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dic",
-  ];
-  return `${days[date.getUTCDay()]}, ${date.getUTCDate()} ${months[date.getUTCMonth()]}`;
+  return formatRegionWeekdayDayMonth(date);
 }
 
 function formatPrayerDate(submittedAt: string) {
   const date = new Date(submittedAt);
   if (Number.isNaN(date.getTime())) return null;
 
-  const months = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
-
-  return `${date.getUTCDate()} de ${months[date.getUTCMonth()]}`;
+  return new Intl.DateTimeFormat("es-MX", {
+    timeZone: REGION_TIME_ZONE,
+    day: "numeric",
+    month: "long",
+  }).format(date);
 }
