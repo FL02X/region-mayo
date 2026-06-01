@@ -2,10 +2,12 @@
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal, flushSync } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Users, MapPin, Church, Phone, ChevronDown } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CopyPrintActions,
   CopyToast,
@@ -20,7 +22,48 @@ import { HighlightedText } from "@/components/shared/highlighted-text";
 import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
+import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import type { Pastor } from "@/lib/types";
+
+const expandTransition = {
+  duration: 0.24,
+  ease: [0.22, 1, 0.36, 1] as const,
+};
+
+const PASTOR_THUMB_IMAGE_OPTIONS = {
+  width: 320,
+  quality: 72,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const PASTOR_CARD_IMAGE_OPTIONS = {
+  width: 960,
+  quality: 72,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const PASTOR_PRINT_IMAGE_OPTIONS = {
+  width: 1200,
+  quality: 78,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const getPastorImageUrl = (photo?: string, kind: "thumb" | "card" | "print" = "card") => {
+  if (!photo) return "";
+
+  if (kind === "thumb") {
+    return sanityImageVariantUrl(photo, PASTOR_THUMB_IMAGE_OPTIONS);
+  }
+
+  if (kind === "print") {
+    return sanityImageVariantUrl(photo, PASTOR_PRINT_IMAGE_OPTIONS);
+  }
+
+  return sanityImageVariantUrl(photo, PASTOR_CARD_IMAGE_OPTIONS);
+};
 
 const buildPastorCopyText = (pastor: Pastor) => {
   const sections = [
@@ -36,10 +79,12 @@ const buildPastorCopyText = (pastor: Pastor) => {
 };
 
 function PrintablePastorSheet({ pastor }: { pastor: Pastor }) {
+  const imageUrl = getPastorImageUrl(pastor.photo, "print");
+
   return (
     <PrintableInfoSheet
       title={pastor.fullName}
-      imageUrl={pastor.photo}
+      imageUrl={imageUrl}
       imageAlt={pastor.fullName}
       fallbackIcon={<Users className="h-10 w-10" aria-hidden="true" />}
       sections={[
@@ -84,6 +129,7 @@ function PastorCard({
   variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
 
   const openGoogleMaps = () => {
     if (pastor.googleMapsUrl) {
@@ -191,11 +237,12 @@ function PastorCard({
           <div className="offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
             {pastor.photo ? (
               <Image
-                src={pastor.photo}
+                src={getPastorImageUrl(pastor.photo, "thumb")}
                 alt={pastor.fullName}
                 fill
                 className="offline-image-online object-cover object-center"
                 sizes="(min-width: 768px) 112px, 72px"
+                quality={72}
               />
             ) : (
               <div className="offline-image-online absolute inset-0 flex items-center justify-center">
@@ -240,20 +287,29 @@ function PastorCard({
           </div>
         </div>
 
-        {hasDetails && isExpanded && (
-          <div
-            id={`pastor-details-${pastor.id}`}
-            className="border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5"
-          >
-            {detailsContent}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {hasDetails && isExpanded && (
+            <motion.div
+              key="compact-details"
+              id={`pastor-details-${pastor.id}`}
+              initial={isMobile ? { height: 0, opacity: 0 } : false}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+              transition={isMobile ? expandTransition : { duration: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5">
+                {detailsContent}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </article>
     );
   }
 
   return (
-    <div 
+    <div
       id={pastor.id} 
       data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
@@ -262,10 +318,12 @@ function PastorCard({
       <div className="offline-aware-image relative w-full bg-muted shrink-0">
         {pastor.photo ? (
           <Image
-            src={pastor.photo}
+            src={getPastorImageUrl(pastor.photo)}
             alt={pastor.fullName}
             fill
             className="offline-image-online object-cover object-center"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={72}
           />
         ) : (
           <div className="offline-image-online absolute inset-0 flex items-center justify-center">
@@ -286,87 +344,42 @@ function PastorCard({
           </h3>
         </div>
 
-        <div className="space-y-5 pt-5 pb-5 border-t border-border">
-          {pastor.temploName && (
-              <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <Church
-                    className="h-4 w-4 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[0px]">
-                    Iglesia Sede
-                  </p>
-                  {pastor.temploId ? (
-                    <Link
-                      href={`/templos#${pastor.temploId}`}
-                      className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
-                      aria-label={`Ver información de ${pastor.temploName}`}
-                    >
-                      <span className="inline-block">
-                        <HighlightedText text={pastor.temploName} query={searchQuery} />
-                      </span>
-                    </Link>
-                  ) : (
-                    <p className="text-sm font-medium text-foreground leading-[1.15] mb-2">
-                      <HighlightedText text={pastor.temploName} query={searchQuery} />
-                    </p>
-                  )}
-                  {pastor.churchNumber && (
-                    <p className="text-xs text-muted-foreground mb-1.5">
-                      Pastor Local de Iglesia #<HighlightedText text={pastor.churchNumber.toString()} query={searchQuery} />
-                    </p>
-                  )}
-                  {pastor.address && (
-                    <div className="flex items-start gap-1.5 mb-1.5">
-                      <MapPin
-                        className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5"
-                        aria-hidden="true"
-                      />
-                      <p className="text-sm text-foreground/80 leading-tight">
-                        <HighlightedText text={pastor.address} query={searchQuery} />
-                      </p>
-                    </div>
-                  )}
-                  {pastor.googleMapsUrl && (
-                    <button
-                      onClick={openGoogleMaps}
-                      className="text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 transition-colors flex items-center gap-1.5"
-                      aria-label={`Ver ubicación de ${pastor.temploName} en Maps`}
-                    >
-                      <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      <span>Ver ubicación</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+        <div className="flex flex-col">
+          <div className="-mx-4 border-t border-border">
+            <button
+              onClick={() => setIsExpanded((prev) => !prev)}
+              className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/80 transition-colors"
+              aria-expanded={isExpanded}
+              aria-controls={`pastor-details-${pastor.id}`}
+              style={{ background: "none" }}
+            >
+              <span>{isExpanded ? "Ocultar información" : "Ver información"}</span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
 
-            {pastor.phone && (
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <Phone
-                    className="h-4 w-4 text-muted-foreground"
-                    aria-hidden="true"
-                  />
+          <AnimatePresence initial={false}>
+            {isExpanded && (
+              <motion.div
+                key="grid-details"
+                id={`pastor-details-${pastor.id}`}
+                initial={isMobile ? { height: 0, opacity: 0 } : false}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+                transition={isMobile ? expandTransition : { duration: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border">
+                  {detailsContent}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
-                    Número de Teléfono
-                  </p>
-                  <p className="text-sm font-medium text-foreground leading-tight">
-                    <HighlightedText text={pastor.phone} query={searchQuery} />
-                  </p>
-                </div>
-                <WhatsAppIconButton
-                  phone={pastor.phone}
-                  message={`Hola ${pastor.fullName}, me comunico del sitio web de Región Mayo.`}
-                />
-              </div>
+              </motion.div>
             )}
-            {actionButtons}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -379,6 +392,7 @@ interface DirectorioContentProps {
 }
 
 export function DirectorioContent({ pastors, initialViewMode }: DirectorioContentProps) {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const resolvedInitialViewMode = initialViewMode ?? "grid";
   const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
@@ -489,7 +503,7 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
     printRoot?.getBoundingClientRect();
 
     try {
-      await waitForImageReady(pastor.photo);
+      await waitForImageReady(getPastorImageUrl(pastor.photo, "print"));
       await waitForNextPaint();
 
       const portalImage = printRoot?.querySelector("img");
@@ -623,40 +637,57 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
                 : "Intenta con otros términos de búsqueda."}
             </p>
           </div>
-        ) : viewMode === "compact" ? (
-          <div className="mx-0 flex flex-col gap-3 md:gap-3 pb-14">
-            {filteredPastors.map((pastor) => (
-              <PastorCard
-                key={pastor.id}
-                pastor={pastor}
-                searchQuery={searchQuery}
-                onCopied={showCopiedToast}
-                onPrint={handlePrintPastor}
-                variant="compact"
-              />
-            ))}
-          </div>
         ) : (
-          <div
-            ref={gridRef}
-            className={`grid gap-4 ${
-              filteredPastors.length === 1
-                ? "grid-cols-1 max-w-sm mx-auto"
-                : filteredPastors.length === 2
-                  ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-            }`}
-          >
-            {filteredPastors.map((pastor) => (
-              <PastorCard
-                key={pastor.id}
-                pastor={pastor}
-                searchQuery={searchQuery}
-                onCopied={showCopiedToast}
-                onPrint={handlePrintPastor}
-              />
-            ))}
-          </div>
+          <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
+            {viewMode === "compact" ? (
+              <motion.div
+                key="pastores-compact"
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                className="mx-0 flex flex-col gap-3 md:gap-3 pb-14"
+              >
+                {filteredPastors.map((pastor) => (
+                  <PastorCard
+                    key={pastor.id}
+                    pastor={pastor}
+                    searchQuery={searchQuery}
+                    onCopied={showCopiedToast}
+                    onPrint={handlePrintPastor}
+                    variant="compact"
+                  />
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="pastores-grid"
+                ref={gridRef}
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                className={`grid gap-4 ${
+                  filteredPastors.length === 1
+                    ? "grid-cols-1 max-w-sm mx-auto"
+                    : filteredPastors.length === 2
+                      ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
+                      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                }`}
+              >
+                {filteredPastors.map((pastor) => (
+                  <div key={pastor.id} className="h-full">
+                    <PastorCard
+                      pastor={pastor}
+                      searchQuery={searchQuery}
+                      onCopied={showCopiedToast}
+                      onPrint={handlePrintPastor}
+                    />
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
       </div>

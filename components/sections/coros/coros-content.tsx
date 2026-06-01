@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal, flushSync } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,6 +13,7 @@ import {
   Church,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CopyPrintActions,
   CopyToast,
@@ -25,8 +27,49 @@ import { SearchBar } from "@/components/shared/search-bar-sections";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
+import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Coro } from "@/lib/types";
+
+const expandTransition = {
+  duration: 0.24,
+  ease: [0.22, 1, 0.36, 1] as const,
+};
+
+const CORO_THUMB_IMAGE_OPTIONS = {
+  width: 320,
+  quality: 72,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const CORO_CARD_IMAGE_OPTIONS = {
+  width: 960,
+  quality: 72,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const CORO_PRINT_IMAGE_OPTIONS = {
+  width: 1200,
+  quality: 78,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const getCoroImageUrl = (photo?: string, kind: "thumb" | "card" | "print" = "card") => {
+  if (!photo) return "";
+
+  if (kind === "thumb") {
+    return sanityImageVariantUrl(photo, CORO_THUMB_IMAGE_OPTIONS);
+  }
+
+  if (kind === "print") {
+    return sanityImageVariantUrl(photo, CORO_PRINT_IMAGE_OPTIONS);
+  }
+
+  return sanityImageVariantUrl(photo, CORO_CARD_IMAGE_OPTIONS);
+};
 
 const buildCoroCopyText = (coro: Coro) => {
   const sections = [
@@ -45,10 +88,12 @@ const buildCoroCopyText = (coro: Coro) => {
 };
 
 function PrintableCoroSheet({ coro }: { coro: Coro }) {
+  const imageUrl = getCoroImageUrl(coro.photo, "print");
+
   return (
     <PrintableInfoSheet
       title={coro.coroName}
-      imageUrl={coro.photo}
+      imageUrl={imageUrl}
       imageAlt={coro.coroName}
       fallbackIcon={<Music className="h-10 w-10" aria-hidden="true" />}
       sections={[
@@ -95,6 +140,7 @@ function CoroCard({
   variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
 
   const openGoogleMaps = () => {
     if (coro.googleMapsUrl) {
@@ -215,11 +261,12 @@ function CoroCard({
           <div className="offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
             {coro.photo ? (
               <Image
-                src={coro.photo}
+                src={getCoroImageUrl(coro.photo, "thumb")}
                 alt={coro.coroName}
                 fill
                 className="offline-image-online object-cover object-center"
                 sizes="(min-width: 768px) 112px, 72px"
+                quality={72}
               />
             ) : (
               <div className="offline-image-online absolute inset-0 flex items-center justify-center">
@@ -273,20 +320,29 @@ function CoroCard({
           </div>
         </div>
 
-        {isExpanded && (
-          <div
-            id={`coro-details-${coro.id}`}
-            className="space-y-5 border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5"
-          >
-            {detailsContent}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              key="compact-details"
+              id={`coro-details-${coro.id}`}
+              initial={isMobile ? { height: 0, opacity: 0 } : false}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+              transition={isMobile ? expandTransition : { duration: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-5 border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5">
+                {detailsContent}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </article>
     );
   }
 
   return (
-    <div 
+    <div
       id={coro.id} 
       data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
@@ -295,10 +351,12 @@ function CoroCard({
       <div className="offline-aware-image relative w-full bg-muted shrink-0">
         {coro.photo ? (
           <Image
-            src={coro.photo}
+            src={getCoroImageUrl(coro.photo)}
             alt={coro.coroName}
             fill
             className="offline-image-online object-cover object-center"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={72}
           />
         ) : (
           <div className="offline-image-online absolute inset-0 flex items-center justify-center">
@@ -340,8 +398,18 @@ function CoroCard({
             </button>
           </div>
 
-          {isExpanded && (
-            <div id={`coro-details-${coro.id}`} className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border">
+          <AnimatePresence initial={false}>
+            {isExpanded && (
+              <motion.div
+                key="grid-details"
+                id={`coro-details-${coro.id}`}
+                initial={isMobile ? { height: 0, opacity: 0 } : false}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+                transition={isMobile ? expandTransition : { duration: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border">
                 {/* Temple Information */}
                 {coro.temploName && (
                   <div className="flex items-start gap-3">
@@ -430,8 +498,10 @@ function CoroCard({
                   </div>
                 )}
                 {actionButtons}
-            </div>
-          )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -444,6 +514,7 @@ interface CorosContentProps {
 }
 
 export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const resolvedInitialViewMode = initialViewMode ?? "grid";
   const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
@@ -597,7 +668,7 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
     printRoot?.getBoundingClientRect();
 
     try {
-      await waitForImageReady(coro.photo);
+      await waitForImageReady(getCoroImageUrl(coro.photo, "print"));
       await waitForNextPaint();
 
       const portalImage = printRoot?.querySelector("img");
@@ -724,40 +795,57 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
               No se encontraron coros que coincidan con tu búsqueda.
             </p>
           </div>
-        ) : viewMode === "compact" ? (
-          <div className="mx-0 flex flex-col gap-3 md:gap-3 pb-14">
-            {filteredCoros.map((coro) => (
-              <CoroCard
-                key={coro.id}
-                coro={coro}
-                searchQuery={searchQuery}
-                onCopied={showCopiedToast}
-                onPrint={handlePrintCoro}
-                variant="compact"
-              />
-            ))}
-          </div>
         ) : (
-          <div
-            ref={gridRef}
-            className={`grid gap-4 ${
-              filteredCoros.length === 1
-                ? "grid-cols-1 max-w-sm mx-auto"
-                : filteredCoros.length === 2
-                  ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-            }`}
-          >
-            {filteredCoros.map((coro) => (
-              <CoroCard
-                key={coro.id}
-                coro={coro}
-                searchQuery={searchQuery}
-                onCopied={showCopiedToast}
-                onPrint={handlePrintCoro}
-              />
-            ))}
-          </div>
+          <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
+            {viewMode === "compact" ? (
+              <motion.div
+                key="coros-compact"
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                className="mx-0 flex flex-col gap-3 md:gap-3 pb-14"
+              >
+                {filteredCoros.map((coro) => (
+                  <CoroCard
+                    key={coro.id}
+                    coro={coro}
+                    searchQuery={searchQuery}
+                    onCopied={showCopiedToast}
+                    onPrint={handlePrintCoro}
+                    variant="compact"
+                  />
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="coros-grid"
+                ref={gridRef}
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                className={`grid gap-4 ${
+                  filteredCoros.length === 1
+                    ? "grid-cols-1 max-w-sm mx-auto"
+                    : filteredCoros.length === 2
+                      ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
+                      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                }`}
+              >
+                {filteredCoros.map((coro) => (
+                  <div key={coro.id} className="h-full">
+                    <CoroCard
+                      coro={coro}
+                      searchQuery={searchQuery}
+                      onCopied={showCopiedToast}
+                      onPrint={handlePrintCoro}
+                    />
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
       </div>

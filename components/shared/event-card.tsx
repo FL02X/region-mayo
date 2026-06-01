@@ -9,11 +9,11 @@ import {
 } from "react";
 import Image from "next/image";
 import { createPortal, flushSync } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   MapPin,
   ExternalLink,
   ChevronDown,
-  ChevronUp,
   Images,
   Facebook,
   Shirt,
@@ -50,6 +50,7 @@ import {
 } from "@/components/shared/copy-print-actions";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useTime } from "@/lib/time-context";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
@@ -101,6 +102,22 @@ const vestimentaLabels: Record<Vestimenta, string> = {
   otro: "Especial",
 };
 
+// Fechas en UTC para evitar diferencias entre server y cliente.
+const MONTHS = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
 type EventWithCoordinates = Event & {
   latitude?: number;
   longitude?: number;
@@ -127,12 +144,37 @@ const getEventCoordinates = (event: Event) => {
   return `${latitude}, ${longitude}`;
 };
 
+const buildGoogleMapsSearchUrl = (address: string) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
 const buildEventMapsUrl = (event: Event) => {
   if (event.googleMapsUrl) return event.googleMapsUrl;
-  if (event.address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`;
-  }
+  if (event.address) return buildGoogleMapsSearchUrl(event.address);
   return "";
+};
+
+const formatDate = (date: Date) =>
+  `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]}`;
+
+const formatDateRange = (start: Date, end: Date) => {
+  const startDay = start.getUTCDate();
+  const endDay = end.getUTCDate();
+  const startMonth = MONTHS[start.getUTCMonth()];
+  const endMonth = MONTHS[end.getUTCMonth()];
+
+  return startMonth === endMonth
+    ? `${startDay} y ${endDay} ${startMonth}`
+    : `${startDay} ${startMonth} hasta el ${endDay} ${endMonth}`;
+};
+
+const openGoogleMaps = (url?: string, address?: string) => {
+  const targetUrl = url || (address ? buildGoogleMapsSearchUrl(address) : "");
+  if (targetUrl) window.open(targetUrl, "_blank");
+};
+
+const expandTransition = {
+  duration: 0.24,
+  ease: [0.22, 1, 0.36, 1],
 };
 
 export function EventCard({
@@ -158,59 +200,8 @@ export function EventCard({
   const { isStandalone } = useInstallPrompt();
   const { isOnline } = useConnectivity();
   const shouldShowOfflineNotice = isStandalone && !isOnline;
+  const isMobile = useIsMobile();
   const { currentTime } = useTime();
-
-  /* ── date helpers (UTC to avoid hydration drift) ── */
-  const formatDate = (date: Date) => {
-    const months = [
-      "Enero",
-      "Febrero",
-      "Marzo",
-      "Abril",
-      "Mayo",
-      "Junio",
-      "Julio",
-      "Agosto",
-      "Septiembre",
-      "Octubre",
-      "Noviembre",
-      "Diciembre",
-    ];
-    return `${date.getUTCDate()} ${months[date.getUTCMonth()]}`;
-  };
-
-  const formatDateRange = (start: Date, end: Date) => {
-    const months = [
-      "Enero",
-      "Febrero",
-      "Marzo",
-      "Abril",
-      "Mayo",
-      "Junio",
-      "Julio",
-      "Agosto",
-      "Septiembre",
-      "Octubre",
-      "Noviembre",
-      "Diciembre",
-    ];
-    const sd = start.getUTCDate();
-    const ed = end.getUTCDate();
-    const sm = months[start.getUTCMonth()];
-    const em = months[end.getUTCMonth()];
-    return sm === em ? `${sd} y ${ed} ${sm}` : `${sd} ${sm} hasta el ${ed} ${em}`;
-  };
-
-  const openGoogleMaps = (url?: string, address?: string) => {
-    if (url) {
-      window.open(url, "_blank");
-    } else if (address) {
-      window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
-        "_blank",
-      );
-    }
-  };
 
   const openAlbum = () => {
     if (event.googleDriveAlbumUrl)
@@ -222,17 +213,12 @@ export function EventCard({
   };
 
   const handleToggle = () => {
-    setIsExpanded((prev) => {
-      if (!prev) {
-        setTimeout(() => {
-          const el = document.getElementById(`details-${event.id}`);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }
-        }, 100);
-      }
-      return !prev;
-    });
+    setIsExpanded((prev) => !prev);
+  };
+
+  const scrollExpandedDetailsIntoView = () => {
+    const el = document.getElementById(`details-${event.id}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   /* ── state derivations ── */
@@ -240,6 +226,7 @@ export function EventCard({
   const hasAlbum = event.albumEnabled && event.googleDriveAlbumUrl;
   const hasFacebookPost = !!event.facebookPostUrl;
   const canRegister = !isPastEvent && event.registrationEnabled !== false;
+  const hasPrimaryAction = canRegister || hasAlbum || hasFacebookPost;
   const hasDescription = !!event.description && event.description.length > 0;
   const isMultiDay = !!(event.endDate && event.endDate > event.date);
   const eventType = event.eventType || "culto";
@@ -317,18 +304,27 @@ export function EventCard({
     (event.moreInfo?.enabled && !!event.moreInfo.imageUrl);
   const hasMobileCompactDetails =
     hasDescription || !!event.location || !!event.address;
-  const hasEventActionMenu = true;
-  const compactHasDetails = hasDetails || hasMobileCompactDetails;
-  const showCompactMobileInfoButton = compactHasDetails || hasEventActionMenu;
-  const showCompactDesktopInfoButton = hasDetails || hasEventActionMenu;
   const actionMenuLabel = hasDetails ? "Ver más información" : "Opciones";
   const actionMenuExpandedLabel = hasDetails
     ? "Ocultar información"
     : "Ocultar opciones";
   const eventUtilityButtonClass =
-    "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+    "mt-[-25px] inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
   const eventUtilityButtonSmallClass =
     "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+  const eventPrimaryMapsButtonClass =
+    "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm bg-primary px-3 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4]";
+  const eventPrimaryMapsButtonSmallClass =
+    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm bg-primary px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4]";
+  const compactDesktopMapsButtonClass = hasPrimaryAction
+    ? "hidden h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10 md:inline-flex"
+    : "hidden h-8 w-fit items-center gap-1.5 rounded-sm bg-primary px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
+  const compactMobileMapsButtonClass = hasPrimaryAction
+    ? eventUtilityButtonClass
+    : eventPrimaryMapsButtonClass;
+  const gridMapsButtonClass = hasPrimaryAction
+    ? `${eventUtilityButtonSmallClass} ml-2 shrink-0 self-center`
+    : `${eventPrimaryMapsButtonSmallClass} ml-2 shrink-0 self-center`;
   const compactPrimaryAction = isPastEvent ? (
     hasAlbum || hasFacebookPost ? (
       <>
@@ -365,53 +361,71 @@ export function EventCard({
     </Button>
   ) : null;
 
-  const renderExpandedDetails = (containerClassName = "space-y-2 pb-5 pt-5 px-5") => (
+  const renderExpandedDetails = (
+    containerClassName = "space-y-2 pb-5 pt-5 px-5",
+    options: { showDescription?: boolean } = {},
+  ) => (
     <div id={`details-${event.id}`} className={containerClassName}>
+      {/* En compact desktop la descripcion ya esta visible; aqui solo va cuando haga falta. */}
+      {options.showDescription && hasDescription && (
+        <div className="space-y-1 mb-6">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            DESCRIPCION
+          </p>
+          <p className="text-[15px] leading-relaxed">{event.description}</p>
+        </div>
+      )}
+
       {event.vestimenta && (
-        <div className="flex items-start gap-2.5">
-          <Shirt
-            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
-            aria-hidden="true"
-          />
-          <div className="flex-1 min-w-0">
-            <p className="flex items-start gap-1.5 text-sm text-foreground">
-              <span className="min-w-0">
-                <span className="text-muted-foreground">Vestimenta · </span>
-                {vestimentaLabels[event.vestimenta]}
-                {event.vestimenta === "otro" && event.vestimentaCustom
-                  ? ` · ${event.vestimentaCustom}`
-                  : ""}
-              </span>
-              <button
-                ref={vestimentaHelpRef}
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setShowVestimentaHelp((value) => !value);
-                }}
-                onPointerEnter={(event) => {
-                  if (event.pointerType === "mouse") setShowVestimentaHelp(true);
-                }}
-                onPointerLeave={(event) => {
-                  if (event.pointerType === "mouse") setShowVestimentaHelp(false);
-                }}
-                className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground hover:text-foreground"
-                aria-label="Informacion sobre la vestimenta"
-                aria-expanded={showVestimentaHelp}
-                style={{ minHeight: "unset", minWidth: "unset" }}
-              >
-                <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-            </p>
+        <div className="space-y-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+            INFORMACION
+          </p>
+          <div className="flex items-start gap-2.5">
+            <Shirt
+              className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1.5"
+              aria-hidden="true"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="flex items-start gap-1.5 text-sm text-foreground">
+                <span className="min-w-0">
+                  <span className="text-muted-foreground">Vestimenta · </span>
+                  {vestimentaLabels[event.vestimenta]}
+                  {event.vestimenta === "otro" && event.vestimentaCustom
+                    ? ` · ${event.vestimentaCustom}`
+                    : ""}
+                </span>
+                <button
+                  ref={vestimentaHelpRef}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setShowVestimentaHelp((value) => !value);
+                  }}
+                  onPointerEnter={(event) => {
+                    if (event.pointerType === "mouse") setShowVestimentaHelp(true);
+                  }}
+                  onPointerLeave={(event) => {
+                    if (event.pointerType === "mouse") setShowVestimentaHelp(false);
+                  }}
+                  className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label="Informacion sobre la vestimenta"
+                  aria-expanded={showVestimentaHelp}
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       )}
 
       {(event.speakers?.pastorMensaje || event.speakers?.jovenPreside) && (
-        <div className="space-y-2">
+        <div className="space-y-2 mt-[-4px]">
           {event.speakers.pastorMensaje && (
             <div className="flex items-start gap-2.5">
-              <Mic
+              <User
                 className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
                 aria-hidden="true"
               />
@@ -422,8 +436,8 @@ export function EventCard({
             </div>
           )}
           {event.speakers.jovenPreside && (
-            <div className="flex items-start gap-2.5 mb-7">
-              <User
+            <div className="flex items-start gap-2.5 mb-7 mt-[-4px]">
+              <Mic
                 className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
                 aria-hidden="true"
               />
@@ -870,6 +884,66 @@ export function EventCard({
     </>
   );
 
+  const moreInfoModal = showMoreInfoImage && event.moreInfo?.imageUrl && (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+      onClick={() => setShowMoreInfoImage(false)}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Información adicional del evento"
+    >
+      {/* En offline evitamos abrir imagenes ampliadas que no siempre estan cacheadas. */}
+      {shouldShowOfflineNotice ? (
+        <div
+          className="relative w-full max-w-[360px] border border-border bg-background p-5 text-center shadow-2xl"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowMoreInfoImage(false)}
+            className="absolute right-2 top-2 h-9 w-9 rounded-none"
+            aria-label="Cerrar aviso"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </Button>
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-primary/10">
+            <Wifi className="h-6 w-6 text-primary" aria-hidden="true" />
+          </div>
+          <p className="text-sm font-bold uppercase tracking-wide text-foreground">
+            Requiere conexion a internet
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Para ahorrar datos y almacenamiento, las imagenes ampliadas no se descargan para uso sin conexion.
+          </p>
+        </div>
+      ) : (
+        <div
+          className="relative max-w-lg w-full max-h-[90vh]"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowMoreInfoImage(false)}
+            className="absolute -top-12 right-0 text-white hover:bg-white/20 rounded-full"
+            aria-label="Cerrar imagen de informacion"
+          >
+            <X className="h-6 w-6" aria-hidden="true" />
+          </Button>
+          <div className="relative aspect-[3/4] w-full overflow-hidden">
+            <Image
+              src={event.moreInfo.imageUrl}
+              alt={`Más información de ${event.title}`}
+              fill
+              className="object-contain"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   if (variant === "compact") {
     return (
       <>
@@ -909,10 +983,10 @@ export function EventCard({
                   <span className="tabular-nums">{event.time}</span>
                 </p>
 
-                <p className="mb-0.5 flex w-fit items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs">
+                <span className="mb-0.5 inline-flex w-fit items-center gap-1.5 rounded-sm border border-[#cbd9e7] bg-[#e6edf6] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs mb-2.5">
                   <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>{eventTypeLabels[eventType]}</span>
-                </p>
+                </span>
 
                 <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px] mt-1 md:mt-0">
                   {event.title}
@@ -943,51 +1017,48 @@ export function EventCard({
                     {event.description}
                   </p>
                 )}
+
               </div>
 
               <div className="mt-3 flex flex-col items-start gap-2 md:flex-row md:flex-wrap md:items-center md:mt-6">
                 {compactPrimaryAction}
 
-                {showCompactMobileInfoButton && (
-                  <button
-                    onClick={handleToggle}
-                    className={`${eventUtilityButtonSmallClass} md:hidden`}
-                    aria-expanded={isExpanded}
-                    aria-controls={`details-${event.id}`}
-                    style={{ minHeight: "unset", minWidth: "unset" }}
-                  >
-                    <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
-                    <ChevronDown
-                      className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                        isExpanded ? "rotate-180" : ""
-                      }`}
-                      aria-hidden="true"
-                    />
-                  </button>
-                )}
+                <button
+                  onClick={handleToggle}
+                  className={`${eventUtilityButtonSmallClass} md:hidden`}
+                  aria-expanded={isExpanded}
+                  aria-controls={`details-${event.id}`}
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
 
-                {showCompactDesktopInfoButton && (
-                  <button
-                    onClick={handleToggle}
-                    className="hidden h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10 md:inline-flex"
-                    aria-expanded={isExpanded}
-                    aria-controls={`details-${event.id}`}
-                    style={{ minHeight: "unset", minWidth: "unset" }}
-                  >
-                    <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
-                    <ChevronDown
-                      className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                        isExpanded ? "rotate-180" : ""
-                      }`}
-                      aria-hidden="true"
-                    />
-                  </button>
-                )}
+                <button
+                  onClick={handleToggle}
+                  className="hidden h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10 md:inline-flex"
+                  aria-expanded={isExpanded}
+                  aria-controls={`details-${event.id}`}
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
 
                 {event.location && (
                   <button
                     onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
-                    className="hidden h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10 md:inline-flex"
+                    className={compactDesktopMapsButtonClass}
                     aria-label={`Abrir ${event.location} en Google Maps`}
                     style={{ minHeight: "unset", minWidth: "unset" }}
                   >
@@ -999,117 +1070,86 @@ export function EventCard({
             </div>
           </div>
 
-          {(compactHasDetails || hasEventActionMenu) && isExpanded && (
-            <div className="border-t border-border/80 bg-muted/20">
-              {hasMobileCompactDetails && (
-                <div className="space-y-4 px-3 py-4 md:hidden">
-                  {event.location && (
-                    <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground">
-                      <Church
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0">{event.location}</span>
+          <AnimatePresence initial={false}>
+            {isExpanded && (
+              <motion.div
+                key="compact-details"
+                initial={isMobile ? { height: 0, opacity: 0 } : false}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+                transition={isMobile ? expandTransition : { duration: 0 }}
+                onAnimationComplete={() => {
+                  if (isExpanded) scrollExpandedDetailsIntoView();
+                }}
+                className="overflow-hidden"
+              >
+                <div className="border-t border-border/80 bg-muted/20">
+                  {hasMobileCompactDetails && (
+                    <div className="space-y-4 px-3 py-4 md:hidden">
+                      {(event.location || event.address) && (
+                        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          <span>UBICACION</span>
+                        </p>
+                      )}
+                      {event.location && (
+                        <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground mt-[-7px]">
+                          <Church
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0">{event.location}</span>
+                        </div>
+                      )}
+
+                      {event.address && (
+                        <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground/60 mt-[-12px]">
+                          <MapPin
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/90"
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0">{event.address}</span>
+                        </div>
+                      )}
+
+                      {event.location && (
+                        <button
+                          onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
+                          className={compactMobileMapsButtonClass}
+                          aria-label={`Abrir ${event.location} en Google Maps`}
+                          style={{ minHeight: "unset", minWidth: "unset" }}
+                        >
+                          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                          Maps
+                        </button>
+                      )}
+
+                      {hasDescription && (
+                        <div className="space-y-1">
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-3">
+                            DESCRIPCION
+                          </p>
+                          <p className="text-[15px] leading-relaxed">
+                            {event.description}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
-
-                  {event.address && (
-                    <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground/90">
-                      <MapPin
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0">{event.address}</span>
+                  {hasDetails &&
+                    renderExpandedDetails("space-y-2 px-3 py-4 md:px-5 md:py-5")}
+                  <div className={`px-3 pb-4 md:px-5 md:pb-5 ${hasDetails ? "" : "pt-4 md:pt-5"}`}>
+                    <div className="[&>div]:mt-0">
+                      {eventActionButtons}
                     </div>
-                  )}
-
-                  {event.location && (
-                    <button
-                      onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
-                      className={eventUtilityButtonClass}
-                      aria-label={`Abrir ${event.location} en Google Maps`}
-                      style={{ minHeight: "unset", minWidth: "unset" }}
-                    >
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                      Maps
-                    </button>
-                  )}
-
-                  {hasDescription && (
-                    <p className="text-[15px] leading-relaxed text-muted-foreground">
-                      {event.description}
-                    </p>
-                  )}
+                  </div>
                 </div>
-              )}
-              {hasDetails &&
-                renderExpandedDetails("space-y-2 px-3 py-4 md:px-5 md:py-5")}
-              <div className={`px-3 pb-4 md:px-5 md:pb-5 ${hasDetails ? "" : "pt-4 md:pt-5"}`}>
-                <div className="[&>div]:mt-0">
-                  {eventActionButtons}
-                </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </article>
 
         {vestimentaTooltipNode}
-
-        {showMoreInfoImage && event.moreInfo?.imageUrl && (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
-            onClick={() => setShowMoreInfoImage(false)}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Información adicional del evento"
-          >
-            {shouldShowOfflineNotice ? (
-              <div
-                className="relative w-full max-w-[360px] border border-border bg-background p-5 text-center shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowMoreInfoImage(false)}
-                  className="absolute right-2 top-2 h-8 w-8"
-                  aria-label="Cerrar información adicional"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </Button>
-                <Wifi className="mx-auto mb-3 h-7 w-7 text-muted-foreground" aria-hidden="true" />
-                <p className="text-sm font-semibold text-foreground">
-                  Imagen no disponible sin conexión
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Conéctate a internet para ver esta información adicional.
-                </p>
-              </div>
-            ) : (
-              <div
-                className="relative max-h-[90vh] max-w-[90vw]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowMoreInfoImage(false)}
-                  className="absolute -right-2 -top-2 z-10 h-9 w-9 rounded-full bg-background text-foreground shadow-lg"
-                  aria-label="Cerrar información adicional"
-                >
-                  <X className="h-5 w-5" aria-hidden="true" />
-                </Button>
-                <Image
-                  src={event.moreInfo.imageUrl}
-                  alt={`Más información de ${event.title}`}
-                  width={1200}
-                  height={1600}
-                  className="max-h-[90vh] w-auto object-contain"
-                />
-              </div>
-            )}
-          </div>
-        )}
+        {moreInfoModal}
       </>
     );
   }
@@ -1143,10 +1183,10 @@ export function EventCard({
           )}
         </div>
 
-        <div className="flex w-full items-center justify-between gap-3 border-b border-border/80 bg-muted/55 px-4 py-3 text-[20px] md:text-[21px] font-bold leading-tight text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
+        <div className="flex w-full items-center justify-between gap-3 border-b border-border/80 bg-[#eaeff4] px-4 py-3 text-[16px] md:text-[16px] font-bold leading-tight text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
           <div className="flex min-w-0 items-center gap-1.5">
             <CalendarDays
-              className="h-5 w-5 shrink-0 text-foreground"
+              className="h-5 w-5 shrink-0 text-foreground mr-0.5"
               aria-hidden="true"
             />
             <span className="truncate">{dateLabel}</span>
@@ -1160,26 +1200,19 @@ export function EventCard({
         <div className="p-5">
           <div data-eq-head>
             {/* Event type — plain uppercase label */}
-            <p className="inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] mb-2.5">
+            <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-sm border border-[#cbd9e7] bg-[#e6edf6] px-2 py-1 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93]">
               <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{eventTypeLabels[eventType]}</span>
-            </p>
+            </span>
 
             {/* Title — Inter bold, no serif */}
             <h3 className="text-[22px] md:text-[23px] font-bold text-foreground leading-[1.2] mb-7 font-sans tracking-tight">
               {event.title}
             </h3>
 
-            {/* Description — always shown, 3-line clamp */}
-            {hasDescription && (
-              <p className="text-[15px] leading-relaxed line-clamp-3 mb-8">
-                {event.description}
-              </p>
-            )}
-
             {/* Location — shown before action buttons */}
             {event.location && (
-              <div className="mt-1 mb-4 flex items-start gap-2.5">
+              <div className="mt-1 mb-4 flex items-center gap-2.5">
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-start gap-2">
                     <Church
@@ -1206,7 +1239,7 @@ export function EventCard({
                   onClick={() =>
                     openGoogleMaps(event.googleMapsUrl, event.address)
                   }
-                  className={`${eventUtilityButtonSmallClass} ml-2 mt-1 shrink-0 self-start`}
+                  className={gridMapsButtonClass}
                   aria-label={`Abrir ${event.location} en Google Maps`}
                   style={{ minHeight: "unset", minWidth: "unset" }}
                 >
@@ -1270,279 +1303,65 @@ export function EventCard({
             </div>
           )}
 
-          {/* ── "Ver más información" dropdown ── */}
-          {(hasDetails || hasEventActionMenu) && (
-            <div className="-mx-5 mb-0 mt-6 border-t border-border">
-              <button
-                onClick={handleToggle}
-                className="w-full px-5 flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                aria-expanded={isExpanded}
-                aria-controls={`details-${event.id}`}
-                style={{
-                  minHeight: "unset",
-                  minWidth: "unset",
-                  background: "none",
-                  border: "none",
-                }}
-              >
-                <span>
-                  {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                  aria-hidden="true"
-                />
-              </button>
+          {/* El menu siempre incluye copiar/imprimir, aunque no haya mas detalles. */}
+          <div className="-mx-5 mb-0 mt-6 border-t border-border">
+            <button
+              onClick={handleToggle}
+              className="w-full px-5 flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              aria-expanded={isExpanded}
+              aria-controls={`details-${event.id}`}
+              style={{
+                minHeight: "unset",
+                minWidth: "unset",
+                background: "none",
+                border: "none",
+              }}
+            >
+              <span>
+                {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+              />
+            </button>
 
-              {/* ── Expanded details ── */}
+            {/* El mismo renderer alimenta grid y compact para evitar duplicar detalles. */}
+            <AnimatePresence initial={false}>
               {isExpanded && (
-                <div id={`details-${event.id}`} className="space-y-2 pb-0 pt-2.5 md:pt-2.5 px-5">
-                  {/* Vestimenta */}
-                  {event.vestimenta && (
-                    <div className="flex items-start gap-2.5">
-                      <Shirt
-                        className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
-                        aria-hidden="true"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="flex items-start gap-1.5 text-sm text-foreground">
-                          <span className="min-w-0">
-                          <span className="text-muted-foreground">
-                            Vestimenta: {" "}
-                          </span>
-                          {vestimentaLabels[event.vestimenta]}
-                          {event.vestimenta === "otro" && event.vestimentaCustom
-                            ? ` · ${event.vestimentaCustom}`
-                            : ""}
-                          </span>
-                          <button
-                            ref={vestimentaHelpRef}
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setShowVestimentaHelp((value) => !value);
-                            }}
-                            onPointerEnter={(event) => {
-                              if (event.pointerType === "mouse") setShowVestimentaHelp(true);
-                            }}
-                            onPointerLeave={(event) => {
-                              if (event.pointerType === "mouse") setShowVestimentaHelp(false);
-                            }}
-                            className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground hover:text-foreground"
-                            aria-label="Informacion sobre la vestimenta"
-                            aria-expanded={showVestimentaHelp}
-                            style={{ minHeight: "unset", minWidth: "unset" }}
-                          >
-                            <HelpCircle className="h-3.5 w-3.5 mt-1 md:mt-0.5" aria-hidden="true" />
-                          </button>
-                        </p>
-                      </div>
-                    </div>
+                <motion.div
+                  key="grid-details"
+                  initial={isMobile ? { height: 0, opacity: 0 } : false}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+                  transition={isMobile ? expandTransition : { duration: 0 }}
+                  onAnimationComplete={() => {
+                    if (isExpanded) scrollExpandedDetailsIntoView();
+                  }}
+                  className="overflow-hidden"
+                >
+                  {renderExpandedDetails(
+                    "space-y-1 pb-0 pt-2.5 md:pt-2.5 px-5 mt-1",
+                    { showDescription: true },
                   )}
-
-                  {/* Speakers */}
-                  {(event.speakers?.pastorMensaje ||
-                    event.speakers?.jovenPreside) && (
-                    <div className="space-y-2">
-                      {event.speakers.pastorMensaje && (
-                        <div className="flex items-start gap-2.5">
-                          <Mic
-                            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
-                            aria-hidden="true"
-                          />
-                          <p className="text-sm text-foreground">
-                            <span className="text-muted-foreground">
-                              Pastor a cargo: {" "}
-                            </span>
-                            {event.speakers.pastorMensaje}
-                          </p>
-                        </div>
-                      )}
-                      {event.speakers.jovenPreside && (
-                        <div className="flex items-start gap-2.5 mb-7">
-                          <User
-                            className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
-                            aria-hidden="true"
-                          />
-                          <p className="text-sm text-foreground">
-                            <span className="text-muted-foreground">
-                              Preside: {" "}
-                            </span>
-                            {event.speakers.jovenPreside}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Alimentos */}
-                  {event.alimentos?.enabled && (
-                    <div className="p-3 bg-muted/40 border border-border">
-                      <div className="flex items-start gap-2.5">
-                        <Utensils
-                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
-                          aria-hidden="true"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground mb-0.5">
-                            Alimentos
-                          </p>
-                          {event.alimentos.location && (
-                            <p className="text-xs text-muted-foreground">
-                              {event.alimentos.location}
-                            </p>
-                          )}
-                          {event.alimentos.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">
-                              {event.alimentos.description}
-                            </p>
-                          )}
-                        </div>
-                        {event.alimentos.googleMapsUrl && (
-                          <button
-                            onClick={() =>
-                              openGoogleMaps(event.alimentos?.googleMapsUrl)
-                            }
-                            className="mt-4 mr-5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                            aria-label="Ver ubicación de alimentos en Maps"
-                            style={{ minHeight: "unset", minWidth: "unset" }}
-                          >
-                            <MapPin
-                              className="h-5 w-5"
-                              aria-hidden="true"
-                            />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Junta Juvenil */}
-                  {event.juntaJuvenil?.enabled && (
-                    <div className="p-3 bg-muted/40 border border-border mt-3">
-                      <div className="flex items-start gap-2.5">
-                        <Users
-                          className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
-                          aria-hidden="true"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground mb-0.5">
-                            Junta Juvenil
-                          </p>
-                          {event.juntaJuvenil.location && (
-                            <p className="text-xs text-muted-foreground">
-                              {event.juntaJuvenil.location}
-                            </p>
-                          )}
-                          {event.juntaJuvenil.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">
-                              {event.juntaJuvenil.description}
-                            </p>
-                          )}
-                        </div>
-                        {event.juntaJuvenil.googleMapsUrl && (
-                          <button
-                            onClick={() =>
-                              openGoogleMaps(event.juntaJuvenil?.googleMapsUrl)
-                            }
-                            className="mt-4 mr-5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                            aria-label="Ver ubicación de junta juvenil en Maps"
-                            style={{ minHeight: "unset", minWidth: "unset" }}
-                          >
-                            <MapPin
-                              className="h-5 w-5"
-                              aria-hidden="true"
-                            />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Más Info image */}
-                  {!isPastEvent &&
-                    event.moreInfo?.enabled &&
-                    event.moreInfo.imageUrl && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowMoreInfoImage(true)}
-                        className="text-sm w-full"
-                      >
-                        <Info className="h-4 w-4 mr-1.5" aria-hidden="true" />
-                        Más información del evento
-                      </Button>
-                    )}
-
-                  <div className={hasDetails ? "[&>div]:mt-7" : "[&>div]:mt-0"}>
+                  <div
+                    className={`px-5 pb-5 ${
+                      hasDetails ? "[&>div]:mt-5" : "[&>div]:mt-0"
+                    }`}
+                  >
                     {eventActionButtons}
                   </div>
-                </div>
+                </motion.div>
               )}
-            </div>
-          )}
+            </AnimatePresence>
+          </div>
         </div>
       </article>
 
       {vestimentaTooltipNode}
-
-      {/* ── "Más Info" image modal ── */}
-      {showMoreInfoImage && event.moreInfo?.imageUrl && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setShowMoreInfoImage(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Información adicional del evento"
-        >
-          {shouldShowOfflineNotice ? (
-            <div
-              className="relative w-full max-w-[360px] border border-border bg-background p-5 text-center shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowMoreInfoImage(false)}
-                className="absolute right-2 top-2 h-9 w-9 rounded-none"
-                aria-label="Cerrar aviso"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-primary/10">
-                <Wifi className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <p className="text-sm font-bold uppercase tracking-wide text-foreground">
-                Requiere conexion a internet
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Para ahorrar datos y almacenamiento, las imagenes ampliadas no se descargan para uso sin conexion.
-              </p>
-            </div>
-          ) : (
-            <div className="relative max-w-lg w-full max-h-[90vh]">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowMoreInfoImage(false)}
-                className="absolute -top-12 right-0 text-white hover:bg-white/20 rounded-full"
-                aria-label="Cerrar imagen de informacion"
-              >
-                <X className="h-6 w-6" />
-              </Button>
-              <div className="relative aspect-[3/4] w-full overflow-hidden">
-                <Image
-                  src={event.moreInfo.imageUrl}
-                  alt="Mas informacion del evento"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {moreInfoModal}
     </>
   );
 }

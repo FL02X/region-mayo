@@ -29,7 +29,13 @@ export function sanityImageVariantUrl(
   const url = sanityImageUrl(source)
   if (url === PLACEHOLDER_IMAGE) return url
 
-  const parsedUrl = new URL(url)
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(url)
+  } catch {
+    return url
+  }
+
   if (options.width) parsedUrl.searchParams.set("w", String(options.width))
   if (options.height) parsedUrl.searchParams.set("h", String(options.height))
   if (options.quality) parsedUrl.searchParams.set("q", String(options.quality))
@@ -45,4 +51,3 @@ export function sanityImagesUrls(sources: Array<any> | undefined | null): string
     .map((s) => sanityImageUrl(s))
     .filter((u) => typeof u === "string" && u.length > 0)
 }
-

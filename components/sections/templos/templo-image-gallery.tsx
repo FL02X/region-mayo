@@ -40,15 +40,15 @@ export function TemploImageGallery({ images, alt, hideCountBadge = false }: Temp
       >
         <Image
           src={sanityImageVariantUrl(images[0], {
-            width: 1200,
-            quality: 78,
+            width: 960,
+            quality: 72,
             format: "webp",
             fit: "max",
           })}
           alt={alt}
           fill
           className="object-cover object-center"
-          quality={78}
+          quality={72}
           sizes="(max-width: 768px) 100vw, 33vw"
         />
 

@@ -159,7 +159,10 @@ export function SectionNavBar({
         <div className="mx-auto flex h-11 max-w-[950px] md:max-w-[952px] items-center justify-between md:border-x-2 border-b border-[#d6d0c5] bg-[#f1f1f1] px-4 shadow-[0_2px_8px_rgba(15,23,42,0.05)] md:px-8">
           <div className="min-w-0">
             {parentHref && parentLabel ? (
-              <Link href={parentHref} className={sectionNavActionButtonClass}>
+              <Link
+                href={parentHref}
+                className={`${sectionNavActionButtonClass} -ml-[14px]`}
+              >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 {parentLabel}
               </Link>

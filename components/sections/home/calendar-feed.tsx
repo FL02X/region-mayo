@@ -2,10 +2,12 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Calendar } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { MonthNavigator } from "@/components/shared/month-navigator";
 import { EventCard } from "@/components/shared/event-card";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { CountdownSection } from "./countdown-section.mobile";
 import { ActionDeck } from "./action-deck";
 import { FirstVisitInfoMobile } from "./first-visit-info.mobile";
@@ -111,6 +113,7 @@ export function EventsFeed({
   }, [events]);
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const isMobile = useIsMobile();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const eventsListRef = useRef<HTMLDivElement>(null);
 
@@ -345,38 +348,62 @@ export function EventsFeed({
                 Selecciona otro mes en el calendario para ver más actividades.
               </p>
             </div>
-          ) : renderedViewMode === "compact" ? (
-            <div className="mx-0 flex flex-col gap-3 md:gap-3 pb-14">
-              {filteredEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onRegister={handleRegister}
-                  showAlbumButton={event.status === "past"}
-                  variant="compact"
-                />
-              ))}
-            </div>
-          ) : filteredEvents.length === 1 ? (
-            <div className="max-w-md mx-auto">
-              <EventCard
-                key={filteredEvents[0].id}
-                event={filteredEvents[0]}
-                onRegister={handleRegister}
-                showAlbumButton={filteredEvents[0].status === "past"}
-              />
-            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onRegister={handleRegister}
-                  showAlbumButton={event.status === "past"}
-                />
-              ))}
-            </div>
+            <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
+              {renderedViewMode === "compact" ? (
+                <motion.div
+                  key="events-compact"
+                  initial={isMobile ? { opacity: 0, y: 6 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                  transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                  className="mx-0 flex flex-col gap-3 md:gap-3 pb-14"
+                >
+                  {filteredEvents.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onRegister={handleRegister}
+                      showAlbumButton={event.status === "past"}
+                      variant="compact"
+                    />
+                  ))}
+                </motion.div>
+              ) : filteredEvents.length === 1 ? (
+                <motion.div
+                  key="events-single"
+                  initial={isMobile ? { opacity: 0, y: 6 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                  transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                  className="max-w-md mx-auto"
+                >
+                  <EventCard
+                    event={filteredEvents[0]}
+                    onRegister={handleRegister}
+                    showAlbumButton={filteredEvents[0].status === "past"}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="events-grid"
+                  initial={isMobile ? { opacity: 0, y: 6 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                  transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  {filteredEvents.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onRegister={handleRegister}
+                      showAlbumButton={event.status === "past"}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           )}
         </div>
       </section>

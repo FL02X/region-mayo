@@ -61,13 +61,13 @@ export function CopyPrintActions({
   }, []);
 
   return (
-    <div className="mt-2 inline-flex flex-wrap items-center gap-0">
+    <div className="mt-2 inline-flex flex-wrap items-center gap-[5px]">
       <button
         ref={copyButtonRef}
         onClick={handleCopy}
         onMouseEnter={() => setIsCopyHovered(true)}
         onMouseLeave={() => setIsCopyHovered(false)}
-        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-sm rounded-r-none border border-r-0 px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
+        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-sm rounded-r-none border px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
         style={{
           backgroundColor: isCopyActive || isCopyHovered
             ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"
@@ -84,7 +84,7 @@ export function CopyPrintActions({
         onClick={onPrint}
         onMouseEnter={() => setIsPrintHovered(true)}
         onMouseLeave={() => setIsPrintHovered(false)}
-        className="inline-flex -ml-px h-10 w-fit items-center gap-1.5 rounded-l-none rounded-r-sm border px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
+        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-none rounded-r-sm border px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
         style={{
           backgroundColor: isPrintHovered
             ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"

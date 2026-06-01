@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal, flushSync } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useNearbyChurchDistances } from "@/hooks/use-nearby-church-distances";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
@@ -49,6 +51,10 @@ const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
 const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
 const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
 const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
+const expandTransition = {
+  duration: 0.24,
+  ease: [0.22, 1, 0.36, 1] as const,
+};
 
 type LocationSearchState = "idle" | "searching" | "warning" | "error";
 type DistanceMap = Record<string, DistanceResult>;
@@ -98,7 +104,7 @@ const getPrintableTemplePhotoUrl = (templo: Templo) => {
 
   return sanityImageVariantUrl(firstPhoto, {
     width: 1200,
-    quality: 82,
+    quality: 78,
     format: "webp",
     fit: "max",
   });
@@ -388,6 +394,7 @@ function TemploCard({
   variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
   const [isMounted, setIsMounted] = useState(false);
   const [isCopyActive, setIsCopyActive] = useState(false);
   const [isCopyHovered, setIsCopyHovered] = useState(false);
@@ -762,20 +769,29 @@ function TemploCard({
           </div>
         </div>
 
-        {hasExpandableContent && isExpanded && (
-          <div
-            id={`templo-details-${templo.id}`}
-            className="space-y-5 border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5"
-          >
-            {detailsContent}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {hasExpandableContent && isExpanded && (
+            <motion.div
+              key="compact-details"
+              id={`templo-details-${templo.id}`}
+              initial={isMobile ? { height: 0, opacity: 0 } : false}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+              transition={isMobile ? expandTransition : { duration: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-5 border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5">
+                {detailsContent}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </article>
     );
   }
 
   return (
-    <div 
+    <div
       id={templo.id} 
       data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20"
@@ -889,11 +905,18 @@ function TemploCard({
           )}
 
           {/* Expanded details */}
-          {hasExpandableContent && isExpanded && (
-            <div
-              id={`templo-details-${templo.id}`}
-              className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border"
-            >
+          <AnimatePresence initial={false}>
+            {hasExpandableContent && isExpanded && (
+              <motion.div
+                key="grid-details"
+                id={`templo-details-${templo.id}`}
+                initial={isMobile ? { height: 0, opacity: 0 } : false}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+                transition={isMobile ? expandTransition : { duration: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border">
                 {/* Pastores */}
                 {templo.pastores.length > 0 && templo.pastores.map((pastor) => (
                   <div key={pastor.id} className="flex items-center gap-3">
@@ -1003,9 +1026,11 @@ function TemploCard({
                 )}
 
                 {actionButtons}
-              </div>
+                </div>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
@@ -1018,6 +1043,7 @@ interface TemploContentProps {
 
 export function TemplosContent({ templos, initialViewMode }: TemploContentProps) {
   const geolocation = useGeolocationState();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const resolvedInitialViewMode = initialViewMode ?? "grid";
   const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
@@ -1714,54 +1740,69 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
                 : "Intenta con otros términos de búsqueda."}
             </p>
           </div>
-        ) : viewMode === "compact" ? (
-          <div
-            className={`mx-0 flex flex-col gap-3 md:gap-3 pb-14 ${
-              shouldHideList ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
-            aria-hidden={shouldHideList}
-          >
-            {sortedTemplos.map((templo) => (
-              <TemploCard
-                key={templo.id}
-                templo={templo}
-                searchQuery={searchQuery}
-                distance={visibleDistances[templo.id]}
-                showDistance={
-                  showDistanceBadges && !!visibleDistances[templo.id]
-                }
-                onCopied={showCopiedToast}
-                onPrint={handlePrintTemplo}
-                variant="compact"
-              />
-            ))}
-          </div>
         ) : (
-          <div
-            ref={gridRef}
-            className={`grid gap-4 ${
-              sortedTemplos.length === 1
-                ? "grid-cols-1 max-w-sm mx-auto"
-                : sortedTemplos.length === 2
-                  ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                  : "grid-cols-1 sm:grid-cols-2 templos-grid-3cols"
-            } ${shouldHideList ? "opacity-0 pointer-events-none" : "opacity-100"}`}
-            aria-hidden={shouldHideList}
-          >
-            {sortedTemplos.map((templo) => (
-              <TemploCard
-                key={templo.id}
-                templo={templo}
-                searchQuery={searchQuery}
-                distance={visibleDistances[templo.id]}
-                showDistance={
-                  showDistanceBadges && !!visibleDistances[templo.id]
-                }
-                onCopied={showCopiedToast}
-                onPrint={handlePrintTemplo}
-              />
-            ))}
-          </div>
+          <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
+            {viewMode === "compact" ? (
+              <motion.div
+                key="templos-compact"
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                className={`mx-0 flex flex-col gap-3 md:gap-3 pb-14 ${
+                  shouldHideList ? "opacity-0 pointer-events-none" : "opacity-100"
+                }`}
+                aria-hidden={shouldHideList}
+              >
+                {sortedTemplos.map((templo) => (
+                  <TemploCard
+                    key={templo.id}
+                    templo={templo}
+                    searchQuery={searchQuery}
+                    distance={visibleDistances[templo.id]}
+                    showDistance={
+                      showDistanceBadges && !!visibleDistances[templo.id]
+                    }
+                    onCopied={showCopiedToast}
+                    onPrint={handlePrintTemplo}
+                    variant="compact"
+                  />
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="templos-grid"
+                ref={gridRef}
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                className={`grid gap-4 ${
+                  sortedTemplos.length === 1
+                    ? "grid-cols-1 max-w-sm mx-auto"
+                    : sortedTemplos.length === 2
+                      ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
+                      : "grid-cols-1 sm:grid-cols-2 templos-grid-3cols"
+                } ${shouldHideList ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+                aria-hidden={shouldHideList}
+              >
+                {sortedTemplos.map((templo) => (
+                  <div key={templo.id} className="h-full">
+                    <TemploCard
+                      templo={templo}
+                      searchQuery={searchQuery}
+                      distance={visibleDistances[templo.id]}
+                      showDistance={
+                        showDistanceBadges && !!visibleDistances[templo.id]
+                      }
+                      onCopied={showCopiedToast}
+                      onPrint={handlePrintTemplo}
+                    />
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
       </div>

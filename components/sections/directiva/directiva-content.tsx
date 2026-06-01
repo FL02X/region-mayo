@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal, flushSync } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,6 +13,7 @@ import {
   Phone,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import {
   CopyPrintActions,
@@ -26,8 +28,52 @@ import { SearchBar } from "@/components/shared/search-bar-sections";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
+import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { DirectivaMember } from "@/lib/types";
+
+const expandTransition = {
+  duration: 0.24,
+  ease: [0.22, 1, 0.36, 1] as const,
+};
+
+const DIRECTIVA_THUMB_IMAGE_OPTIONS = {
+  width: 320,
+  quality: 72,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const DIRECTIVA_CARD_IMAGE_OPTIONS = {
+  width: 960,
+  quality: 72,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const DIRECTIVA_PRINT_IMAGE_OPTIONS = {
+  width: 1200,
+  quality: 78,
+  format: "webp",
+  fit: "max",
+} as const;
+
+const getDirectivaImageUrl = (
+  photo?: string,
+  kind: "thumb" | "card" | "print" = "card",
+) => {
+  if (!photo) return "";
+
+  if (kind === "thumb") {
+    return sanityImageVariantUrl(photo, DIRECTIVA_THUMB_IMAGE_OPTIONS);
+  }
+
+  if (kind === "print") {
+    return sanityImageVariantUrl(photo, DIRECTIVA_PRINT_IMAGE_OPTIONS);
+  }
+
+  return sanityImageVariantUrl(photo, DIRECTIVA_CARD_IMAGE_OPTIONS);
+};
 
 const buildDirectivaCopyText = (member: DirectivaMember) => {
   const sections = [
@@ -43,10 +89,12 @@ const buildDirectivaCopyText = (member: DirectivaMember) => {
 };
 
 function PrintableDirectivaSheet({ member }: { member: DirectivaMember }) {
+  const imageUrl = getDirectivaImageUrl(member.photo, "print");
+
   return (
     <PrintableInfoSheet
       title={member.fullName}
-      imageUrl={member.photo}
+      imageUrl={imageUrl}
       imageAlt={member.fullName}
       fallbackIcon={<UserCircle className="h-10 w-10" aria-hidden="true" />}
       sections={[
@@ -96,6 +144,7 @@ function DirectivaCard({
   variant?: ViewMode;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
 
   const openGoogleMaps = () => {
     if (member.googleMapsUrl) {
@@ -197,11 +246,12 @@ function DirectivaCard({
           <div className="offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
             {member.photo ? (
               <Image
-                src={member.photo}
+                src={getDirectivaImageUrl(member.photo, "thumb")}
                 alt={member.fullName}
                 fill
                 className="offline-image-online object-cover object-center"
                 sizes="(min-width: 768px) 112px, 72px"
+                quality={72}
               />
             ) : (
               <div className="offline-image-online absolute inset-0 flex items-center justify-center">
@@ -250,20 +300,29 @@ function DirectivaCard({
           </div>
         </div>
 
-        {isExpanded && (
-          <div
-            id={`directiva-details-${member.id}`}
-            className="border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5"
-          >
-            {detailsContent}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              key="compact-details"
+              id={`directiva-details-${member.id}`}
+              initial={isMobile ? { height: 0, opacity: 0 } : false}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+              transition={isMobile ? expandTransition : { duration: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5">
+                {detailsContent}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </article>
     );
   }
 
   return (
-    <div 
+    <div
       id={member.id} 
       data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
@@ -272,10 +331,12 @@ function DirectivaCard({
       <div className="offline-aware-image relative w-full bg-muted shrink-0">
         {member.photo ? (
           <Image
-            src={member.photo}
+            src={getDirectivaImageUrl(member.photo)}
             alt={member.fullName}
             fill
             className="offline-image-online object-cover object-center"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={72}
           />
         ) : (
           <div className="offline-image-online absolute inset-0 flex items-center justify-center">
@@ -302,86 +363,42 @@ function DirectivaCard({
           </h3>
         </div>
 
-        <div className="space-y-5 pt-5 pb-5 border-t border-border">
-          {/* Temple Information */}
-          {member.temploName && (
-              <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <Church
-                    className="h-4 w-4 text-muted-foreground"
-                    aria-hidden="true"
-                  />
+        <div className="flex flex-col">
+          <div className="-mx-4 border-t border-border">
+            <button
+              onClick={() => setIsExpanded((prev) => !prev)}
+              className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/80 transition-colors"
+              aria-expanded={isExpanded}
+              aria-controls={`directiva-details-${member.id}`}
+              style={{ background: "none" }}
+            >
+              <span>{isExpanded ? "Ocultar información" : "Ver información"}</span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {isExpanded && (
+              <motion.div
+                key="grid-details"
+                id={`directiva-details-${member.id}`}
+                initial={isMobile ? { height: 0, opacity: 0 } : false}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+                transition={isMobile ? expandTransition : { duration: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-5 pt-5 pb-5 px-4 -mx-4 border-t border-border">
+                  {detailsContent}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[5px]">
-                    Iglesia Sede
-                  </p>
-                  {member.temploId ? (
-                    <Link
-                      href={`/templos#${member.temploId}`}
-                      className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
-                      aria-label={`Ver información de ${member.temploName}`}
-                    >
-                      <span className="inline-block">
-                        <HighlightedText text={member.temploName} query={searchQuery} />
-                      </span>
-                    </Link>
-                  ) : (
-                    <p className="text-sm font-medium text-foreground leading-[1.15] mb-2">
-                      <HighlightedText text={member.temploName} query={searchQuery} />
-                    </p>
-                  )}
-                  {member.address && (
-                    <div className="flex items-start gap-1.5 mb-1.5">
-                      <MapPin
-                        className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5"
-                        aria-hidden="true"
-                      />
-                      <p className="text-sm text-foreground/70 leading-tight">
-                        <HighlightedText text={member.address} query={searchQuery} />
-                      </p>
-                    </div>
-                  )}
-                  {member.googleMapsUrl && (
-                    <button
-                      onClick={openGoogleMaps}
-                      className="text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 transition-colors flex items-center gap-1.5"
-                      aria-label={`Ver ubicación de ${member.temploName} en Google Maps`}
-                    >
-                      <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      <span>Ver ubicación</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+              </motion.div>
             )}
-
-            {/* Phone display with icon */}
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                <Phone
-                  className="h-4 w-4 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
-                  Contacto
-                </p>
-                <p className="text-sm font-medium text-foreground leading-tight">
-                  <HighlightedText text={formatPhoneForDisplay(member.phone)} query={searchQuery} />
-                </p>
-              </div>
-            </div>
-
-            {/* WhatsApp Button - Green */}
-            <WhatsAppButton
-              phone={member.phone}
-              message={`Hola ${member.fullName}, me comunico del sitio web de Región Mayo.`}
-              className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white"
-            />
-
-            {actionButtons}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -394,6 +411,7 @@ interface DirectivaContentProps {
 }
 
 export function DirectivaContent({ members, initialViewMode }: DirectivaContentProps) {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const resolvedInitialViewMode = initialViewMode ?? "grid";
   const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
@@ -504,7 +522,7 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
     printRoot?.getBoundingClientRect();
 
     try {
-      await waitForImageReady(member.photo);
+      await waitForImageReady(getDirectivaImageUrl(member.photo, "print"));
       await waitForNextPaint();
 
       const portalImage = printRoot?.querySelector("img");
@@ -641,40 +659,57 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
                 : "Intenta con otros términos de búsqueda."}
             </p>
           </div>
-        ) : viewMode === "compact" ? (
-          <div className="mx-0 flex flex-col gap-3 md:gap-3 pb-14">
-            {filteredMembers.map((member) => (
-              <DirectivaCard
-                key={member.id}
-                member={member}
-                searchQuery={searchQuery}
-                onCopied={showCopiedToast}
-                onPrint={handlePrintMember}
-                variant="compact"
-              />
-            ))}
-          </div>
         ) : (
-          <div
-            ref={gridRef}
-            className={`grid gap-4 ${
-              filteredMembers.length === 1
-                ? "grid-cols-1 max-w-sm mx-auto"
-                : filteredMembers.length === 2
-                  ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-            }`}
-          >
-            {filteredMembers.map((member) => (
-              <DirectivaCard
-                key={member.id}
-                member={member}
-                searchQuery={searchQuery}
-                onCopied={showCopiedToast}
-                onPrint={handlePrintMember}
-              />
-            ))}
-          </div>
+          <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
+            {viewMode === "compact" ? (
+              <motion.div
+                key="directiva-compact"
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                className="mx-0 flex flex-col gap-3 md:gap-3 pb-14"
+              >
+                {filteredMembers.map((member) => (
+                  <DirectivaCard
+                    key={member.id}
+                    member={member}
+                    searchQuery={searchQuery}
+                    onCopied={showCopiedToast}
+                    onPrint={handlePrintMember}
+                    variant="compact"
+                  />
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="directiva-grid"
+                ref={gridRef}
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
+                className={`grid gap-4 ${
+                  filteredMembers.length === 1
+                    ? "grid-cols-1 max-w-sm mx-auto"
+                    : filteredMembers.length === 2
+                      ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
+                      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                }`}
+              >
+                {filteredMembers.map((member) => (
+                  <div key={member.id} className="h-full">
+                    <DirectivaCard
+                      member={member}
+                      searchQuery={searchQuery}
+                      onCopied={showCopiedToast}
+                      onPrint={handlePrintMember}
+                    />
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
       </div>
