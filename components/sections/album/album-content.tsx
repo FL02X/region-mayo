@@ -14,10 +14,12 @@ import {
   PlayCircle,
   Youtube,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
 import { ImageGalleryModal } from "@/components/shared/image-gallery-modal";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Album, AlbumImage, AlbumVideo, EventType } from "@/lib/types";
 
 const CATEGORY_LABELS: Record<EventType, string> = {
@@ -42,6 +44,10 @@ const PHOTOS_PER_PAGE = 40;
 const ALL_FILTER = "todos";
 const VIDEO_FILTER = "videos";
 const PHOTO_FILTER = "fotos";
+const albumMobileSlideTransition = {
+  duration: 0.28,
+  ease: [0.22, 1, 0.36, 1] as const,
+};
 
 function formatAlbumDate(startDate: Date, endDate: Date) {
   const formatter = new Intl.DateTimeFormat("es-MX", {
@@ -254,6 +260,7 @@ interface AlbumContentProps {
 }
 
 export function AlbumContent({ albums = [], album }: AlbumContentProps) {
+  const isMobile = useIsMobile();
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
@@ -297,6 +304,20 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     return albums;
   }, [albums, selectedType]);
 
+  const pageMotionProps = isMobile
+    ? {
+        initial: { opacity: 0, x: album ? 24 : -24 },
+        animate: { opacity: 1, x: 0 },
+        exit: { opacity: 0, x: album ? -24 : 24 },
+        transition: albumMobileSlideTransition,
+      }
+    : {
+        initial: false,
+        animate: { opacity: 1, x: 0 },
+        exit: undefined,
+        transition: { duration: 0 },
+      };
+
   if (album) {
     const isYoutubeAlbum = album.albumType === "youtube";
     const visibleImages = album.images.slice(0, visibleCount);
@@ -311,7 +332,11 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
 
     return (
       <div className="album-detail-surface w-full bg-[#f1f1f1] pb-20" id="main-content">
-        <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]">
+        <motion.div
+          key={`album-detail-${album.slug}`}
+          className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]"
+          {...pageMotionProps}
+        >
           <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
             <div className="mb-6 border-b border-border pb-5">
               <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">
@@ -438,25 +463,29 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 </Button>
               </div>
             ) : null}
-          </div>
-        </div>
 
-        {currentIndex !== null ? (
-          <ImageGalleryModal
-            images={imageUrls}
-            currentIndex={currentIndex}
-            onClose={() => setCurrentIndex(null)}
-            onNavigate={setCurrentIndex}
-            alt={album.title}
-          />
-        ) : null}
+            {currentIndex !== null ? (
+              <ImageGalleryModal
+                images={imageUrls}
+                currentIndex={currentIndex}
+                onClose={() => setCurrentIndex(null)}
+                onNavigate={setCurrentIndex}
+                alt={album.title}
+              />
+            ) : null}
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="w-full bg-[#f1f1f1] pb-20" id="main-content">
-      <div className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]">
+      <motion.div
+        key="album-list"
+        className="desktop-content-pane mx-auto min-h-screen max-w-[950px] bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]"
+        {...pageMotionProps}
+      >
         <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
           <div className="mb-6 border-b border-border pb-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -581,7 +610,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
