@@ -39,6 +39,8 @@ const SANITY_ENABLED = Boolean(
   process.env.SANITY_PROJECT_ID && process.env.SANITY_DATASET,
 );
 
+const PASTOR_PENDING_LABEL = "Por confirmar";
+
 function isMayoRegion(input: string): boolean {
   return input === "mayo" || input === "Región Mayo" || input === "region-mayo";
 }
@@ -81,16 +83,22 @@ function mapEvent(raw: any, now: Date): Event {
     ? sanityImageUrl(raw.templo.photos[0])
     : undefined;
   const temploPastor = raw.templo?.pastores?.[0];
+  const customPastorName =
+    typeof raw.pastorMensajeCustom === "string" &&
+    raw.pastorMensajeCustom.trim() &&
+    raw.pastorMensajeCustom.trim() !== PASTOR_PENDING_LABEL
+      ? raw.pastorMensajeCustom.trim()
+      : undefined;
   const image = eventImage || eventGalleryFirstPhoto || temploFirstPhoto || "/placeholder.svg";
   const typeColor = (raw.typeColor ?? "worship") as Event["typeColor"];
   const pastorName =
     raw.pastorMensaje?.fullName ||
-    raw.pastorMensajeCustom ||
+    customPastorName ||
     temploPastor?.fullName ||
     undefined;
   const pastorId =
     raw.pastorMensaje?._id ||
-    temploPastor?._id ||
+    (!customPastorName ? temploPastor?._id : undefined) ||
     undefined;
 
   return {

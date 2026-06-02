@@ -40,8 +40,6 @@ export default async function Home() {
       getTemplos("region-mayo"),
     ]);
 
-
-
   const nextUpcomingEvent =
     events
       .filter((event) => event.date.getTime() > now)

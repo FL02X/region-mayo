@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { MapPin, ExternalLink, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { MapPin, ExternalLink } from "lucide-react";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { findNearestChurch } from "@/lib/location-service";
 import { formatDistanceAndTime } from "@/lib/geo-utils";
@@ -12,14 +12,14 @@ const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
 const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
 const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
 const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
-const LOCATION_BAR_DISMISSED_KEY = "region-mayo-location-bar-dismissed";
+const MOBILE_HEADER_OFFSET = 51;
+const FALLBACK_BAR_HEIGHT = 56;
 
 type BarState =
   | "initial" 
   | "loading" 
   | "success" 
-  | "error" 
-  | "dismissed";
+  | "error";
 
 interface LocationNotificationBarProps {
   templos: Templo[];
@@ -29,26 +29,28 @@ export function LocationNotificationBar({
   templos,
 }: LocationNotificationBarProps) {
   const geolocation = useGeolocationState();
-  const [isMounted, setIsMounted] = useState(false);
   const [barState, setBarState] = useState<BarState>("initial");
-  const [isVisible, setIsVisible] = useState(false);
   const [nearestChurch, setNearestChurch] = useState<Templo | null>(null);
   const [nearestDistance, setNearestDistance] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isVisible, setIsVisible] = useState(false);
+  const [contentHeight, setContentHeight] = useState(FALLBACK_BAR_HEIGHT);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [contentHeight, setContentHeight] = useState<number>(0);
 
   useEffect(() => {
-    setIsMounted(true);
+    const timer = window.setTimeout(() => {
+      setIsVisible(true);
+    }, 500);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
-  // Measure height for smooth transition, with a safe fallback if ResizeObserver is unavailable.
   useEffect(() => {
     const element = contentRef.current;
     if (!element) return;
 
     const measure = () => {
-      setContentHeight(element.scrollHeight);
+      setContentHeight(Math.max(element.scrollHeight, FALLBACK_BAR_HEIGHT));
     };
 
     measure();
@@ -58,36 +60,11 @@ export function LocationNotificationBar({
       return () => window.cancelAnimationFrame(raf);
     }
 
-    const observer = new ResizeObserver(() => {
-      measure();
-    });
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
+
     return () => observer.disconnect();
   }, [barState, errorMessage]);
-
-  useEffect(() => {
-    if (!isMounted) return;
-
-    let dismissed = false;
-    try {
-      dismissed = localStorage.getItem(LOCATION_BAR_DISMISSED_KEY) === "true";
-    } catch {
-      // Ignore storage failures (private mode, quota)
-    }
-
-    if (dismissed) {
-      setBarState("dismissed");
-      setIsVisible(false);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setBarState(prev => prev === "initial" ? "initial" : prev);
-      setIsVisible(true);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [isMounted]);
 
   const handleRequestPermission = async () => {
     setBarState("loading");
@@ -124,18 +101,6 @@ export function LocationNotificationBar({
     }
   };
 
-  const handleDismiss = () => {
-    setIsVisible(false);
-    try {
-      localStorage.setItem(LOCATION_BAR_DISMISSED_KEY, "true");
-    } catch {
-      // Ignore storage failures (private mode, quota)
-    }
-    setTimeout(() => {
-      setBarState("dismissed");
-    }, 500); // Wait for transition
-  };
-
   const handleSuccessClick = () => {
     if (nearestChurch) {
       try {
@@ -152,28 +117,25 @@ export function LocationNotificationBar({
     }
   };
 
-  if (!isMounted || barState === "dismissed") {
-    return null;
-  }
-
-  // Determine actual height for smooth transition. 
-  // Add margin values (51px on mobile, 45px on desktop) to the total height when visible.
-  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
-  const marginTop = isDesktop ? 45 : 51;
-  const containerHeight = isVisible ? (contentHeight + marginTop) : 0;
-  const containerMarginBottom = isVisible ? -marginTop : 0;
+  const containerHeight = isVisible
+    ? contentHeight + MOBILE_HEADER_OFFSET
+    : 0;
+  const containerMarginBottom = isVisible ? -MOBILE_HEADER_OFFSET : 0;
 
   return (
     <div
-      className="w-full md:max-w-[950px] md:mx-auto relative z-[55] overflow-hidden transition-[height,margin-bottom] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[height,margin-bottom]"
-      style={{ height: `${containerHeight}px`, marginBottom: `${containerMarginBottom}px` }}
+      className="w-full md:max-w-[950px] md:mx-auto relative z-[55] overflow-hidden transition-[height,margin-bottom] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[height,margin-bottom] md:[--location-header-offset:45px] [--location-header-offset:51px]"
+      style={{
+        height: `${containerHeight}px`,
+        marginBottom: `${containerMarginBottom}px`,
+      }}
     >
-      <div 
+      <div
         ref={contentRef}
-        className="w-full absolute top-[51px] md:top-[45px] left-0 transition-[opacity,transform] duration-300 pointer-events-auto"
-        style={{ 
+        className="w-full absolute top-[var(--location-header-offset)] left-0 transition-[opacity,transform] duration-300 pointer-events-auto"
+        style={{
           opacity: isVisible ? 1 : 0,
-          transform: isVisible ? 'translateY(0)' : 'translateY(-10px)'
+          transform: isVisible ? "translateY(0)" : "translateY(-10px)",
         }}
       >
         <div className={`w-full shadow-md ${barState === 'success' ? 'bg-green-600 border border-white/0' : 'bg-[#2f5e93] border-b border-[#2f5e93]/30'}`}>
@@ -245,14 +207,6 @@ export function LocationNotificationBar({
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={handleDismiss}
-              className="shrink-0 inline-flex h-9 w-9 items-center justify-center text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-              aria-label="Cerrar aviso de ubicacion"
-            >
-              <X className="h-5 w-5" aria-hidden="true" />
-            </button>
           </div>
         </div>
       </div>

@@ -276,6 +276,13 @@ export default defineType({
       title: 'Pastor a cargo manual',
       type: 'string',
       group: 'extras',
+      validation: (Rule) =>
+        Rule.custom((value) => {
+          if (typeof value === 'string' && value.trim() === 'Por confirmar') {
+            return 'Usa el pastor del templo o deja este campo vacío.'
+          }
+          return true
+        }),
       description: 'Úsalo si el pastor no está registrado o si necesitas escribirlo manualmente.',
     }),
     defineField({

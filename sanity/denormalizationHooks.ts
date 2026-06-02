@@ -45,6 +45,8 @@ type EventDenormalizationDocument = {
   [key: string]: any
 }
 
+const PASTOR_PENDING_LABEL = 'Por confirmar'
+
 /**
  * Hook para auto-llenar campos denormalizados en CORO
  * Llena: region (desde templo.region), temploName, regionName
@@ -110,10 +112,23 @@ export const eventBeforeCommit = async (
 
   const hasManualPastor =
     Boolean(documentBeforeCommit.pastorMensaje?._ref) ||
-    Boolean(documentBeforeCommit.pastorMensajeCustom?.trim())
+    Boolean(
+      documentBeforeCommit.pastorMensajeCustom?.trim() &&
+        documentBeforeCommit.pastorMensajeCustom.trim() !== PASTOR_PENDING_LABEL,
+    )
+
+  const hasPendingPastorPlaceholder =
+    documentBeforeCommit.pastorMensajeCustom?.trim() === PASTOR_PENDING_LABEL
 
   if (hasManualPastor || !documentBeforeCommit.templo?._ref) {
-    return documentBeforeCommit
+    if (!hasPendingPastorPlaceholder) {
+      return documentBeforeCommit
+    }
+
+    return {
+      ...documentBeforeCommit,
+      pastorMensajeCustom: undefined,
+    }
   }
 
   try {
@@ -137,7 +152,14 @@ export const eventBeforeCommit = async (
 
     const pastorId = templo?.pastores?.[0]?._id
     if (!pastorId) {
-      return documentBeforeCommit
+      if (!hasPendingPastorPlaceholder) {
+        return documentBeforeCommit
+      }
+
+      return {
+        ...documentBeforeCommit,
+        pastorMensajeCustom: undefined,
+      }
     }
 
     return {

@@ -136,6 +136,8 @@ const MONTHS = [
   "Diciembre",
 ];
 
+const PASTOR_PENDING_LABEL = "Por confirmar";
+
 type EventWithCoordinates = Event & {
   latitude?: number;
   longitude?: number;
@@ -367,7 +369,9 @@ export function EventCard({
     </Button>
   ) : null;
   const pastorNameNode =
-    event.speakers?.pastorMensaje && event.speakers?.pastorMensajeId ? (
+    event.speakers?.pastorMensaje &&
+    event.speakers?.pastorMensajeId &&
+    event.speakers.pastorMensaje.trim() !== PASTOR_PENDING_LABEL ? (
       <Link
         href={`/pastores#${event.speakers.pastorMensajeId}`}
         className={pastorLinkClassName}
@@ -1110,9 +1114,9 @@ export function EventCard({
                       )}
 
                       {event.address && (
-                        <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground/60 mt-[-12px]">
+                        <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug mt-[-12px]">
                           <MapPin
-                            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/90"
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0"
                             aria-hidden="true"
                           />
                           <span className="min-w-0">{event.address}</span>
