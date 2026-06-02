@@ -14,6 +14,16 @@ const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
 const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
 const MOBILE_HEADER_OFFSET = 51;
 const FALLBACK_BAR_HEIGHT = 56;
+const VISIBLE_BUFFER_PX = 6;
+
+function isPwaStandalone() {
+  if (typeof window === "undefined") return false;
+
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+  );
+}
 
 type BarState =
   | "initial" 
@@ -28,6 +38,7 @@ interface LocationNotificationBarProps {
 export function LocationNotificationBar({
   templos,
 }: LocationNotificationBarProps) {
+  const shouldRenderLocationBar = false;
   const geolocation = useGeolocationState();
   const [barState, setBarState] = useState<BarState>("initial");
   const [nearestChurch, setNearestChurch] = useState<Templo | null>(null);
@@ -35,7 +46,22 @@ export function LocationNotificationBar({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isVisible, setIsVisible] = useState(false);
   const [contentHeight, setContentHeight] = useState(FALLBACK_BAR_HEIGHT);
+  const [isStandalone, setIsStandalone] = useState<boolean | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const standaloneQuery = window.matchMedia("(display-mode: standalone)");
+    const syncStandaloneMode = () => {
+      setIsStandalone(isPwaStandalone());
+    };
+
+    syncStandaloneMode();
+    standaloneQuery.addEventListener("change", syncStandaloneMode);
+
+    return () => {
+      standaloneQuery.removeEventListener("change", syncStandaloneMode);
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -118,9 +144,17 @@ export function LocationNotificationBar({
   };
 
   const containerHeight = isVisible
-    ? contentHeight + MOBILE_HEADER_OFFSET
+    ? contentHeight + MOBILE_HEADER_OFFSET + VISIBLE_BUFFER_PX
     : 0;
   const containerMarginBottom = isVisible ? -MOBILE_HEADER_OFFSET : 0;
+
+  if (isStandalone !== false) {
+    return null;
+  }
+
+  if (!shouldRenderLocationBar) {
+    return null;
+  }
 
   return (
     <div
