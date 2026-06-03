@@ -74,6 +74,7 @@ export default async function Home() {
           <MobileHero
             src={siteSettings?.mobileHeroImage?.url || "/images/event-conference.jpg"}
             alt={siteSettings?.mobileHeroImage?.alt || "Conferencia Regional"}
+            templos={templos}
           />
         </div>
 

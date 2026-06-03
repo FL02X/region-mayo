@@ -100,6 +100,25 @@ const eventTypeIcons: Record<EventType, typeof Church> = {
   boda: Gem,
 };
 
+const eventTypeBadgeClasses: Record<EventType, string> = {
+  campana: "border-[#2f5e93]/25 bg-[#e6edf6] text-[#2f5e93]",
+  convencion: "border-[#8c731e]/25 bg-[#fdf6e1] text-[#8c731e]",
+  recorrido: "border-[#1a737f]/25 bg-[#e1f3f6] text-[#1a737f]",
+  confraternidadJuvenilRegional:
+    "border-[#a83e3e]/25 bg-[#fef2f2] text-[#a83e3e]",
+  confraternidadJuvenilGeneral:
+    "border-[#a83e3e]/25 bg-[#fef2f2] text-[#a83e3e]",
+  cultoJuvenil: "border-[#a83e3e]/25 bg-[#fef2f2] text-[#a83e3e]",
+  culto: "border-[#26733a]/25 bg-[#e6f6eb] text-[#26733a]",
+  visita: "border-[#1a737f]/25 bg-[#e1f3f6] text-[#1a737f]",
+  ensayo: "border-[#26733a]/25 bg-[#e6f6eb] text-[#26733a]",
+  actividad: "border-[#26733a]/25 bg-[#e6f6eb] text-[#26733a]",
+  estudioBiblico: "border-[#26733a]/25 bg-[#e6f6eb] text-[#26733a]",
+  biregional: "border-[#8c731e]/25 bg-[#fdf6e1] text-[#8c731e]",
+  congresoBrilla: "border-[#6a3f91]/25 bg-[#f1e6f6] text-[#6a3f91]",
+  boda: "border-[#6a3f91]/25 bg-[#f1e6f6] text-[#6a3f91]",
+};
+
 const vestimentaLabels: Record<Vestimenta, string> = {
   uniformeMGR: "Uniforme MGR",
   formalCasual: "Formal/Casual",
@@ -232,11 +251,11 @@ export function EventCard({
   const hasAlbum = event.albumEnabled && event.googleDriveAlbumUrl;
   const hasFacebookPost = !!event.facebookPostUrl;
   const canRegister = !isPastEvent && event.registrationEnabled !== false;
-  const hasPrimaryAction = canRegister || hasAlbum || hasFacebookPost;
   const hasDescription = !!event.description && event.description.length > 0;
   const isMultiDay = !!(event.endDate && event.endDate > event.date);
   const eventType = event.eventType || "culto";
   const EventTypeIcon = eventTypeIcons[eventType];
+  const eventTypeBadgeClass = eventTypeBadgeClasses[eventType];
   const dateLabel = isMultiDay
     ? formatRegionDateRange(event.date, event.endDate!)
     : formatRegionDayMonth(event.date);
@@ -310,6 +329,7 @@ export function EventCard({
     (event.moreInfo?.enabled && !!event.moreInfo.imageUrl);
   const hasMobileCompactDetails =
     hasDescription || !!event.location || !!event.address;
+  const hasDropdownCtas = hasAlbum || hasFacebookPost;
   const actionMenuLabel = hasDetails ? "Ver más información" : "Opciones";
   const actionMenuExpandedLabel = hasDetails
     ? "Ocultar información"
@@ -322,44 +342,15 @@ export function EventCard({
     "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm bg-primary px-3 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const eventPrimaryMapsButtonSmallClass =
     "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm bg-primary px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4]";
-  const compactDesktopMapsButtonClass = hasPrimaryAction
-    ? "hidden h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10 md:inline-flex"
-    : "hidden h-8 w-fit items-center gap-1.5 rounded-sm bg-primary px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
-  const compactMobileMapsButtonClass = hasPrimaryAction
-    ? eventUtilityButtonClass
-    : eventPrimaryMapsButtonClass;
-  const gridMapsButtonClass = hasPrimaryAction
+  const compactDesktopMapsButtonClass =
+    "hidden h-8 w-fit items-center gap-1.5 rounded-sm bg-primary px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
+  const compactMobileMapsButtonClass = eventPrimaryMapsButtonClass;
+  const gridMapsButtonClass = canRegister
     ? `${eventUtilityButtonSmallClass} ml-2 shrink-0 self-center`
     : `${eventPrimaryMapsButtonSmallClass} ml-2 shrink-0 self-center`;
   const speakerBlockClass =
     variant === "grid" ? "space-y-2 mt-[2px]" : "space-y-2 mt-[-4px]";
-  const compactPrimaryAction = isPastEvent ? (
-    hasAlbum || hasFacebookPost ? (
-      <>
-        {hasAlbum && (
-          <Button
-            onClick={openAlbum}
-            size="sm"
-            className="h-8 rounded-none bg-primary px-2.5 text-sm text-white hover:bg-primary/90"
-          >
-            <Images className="h-4 w-4 mr-1.5" aria-hidden="true" />
-            Álbum
-          </Button>
-        )}
-        {hasFacebookPost && (
-          <Button
-            onClick={openFacebookPost}
-            size="sm"
-            variant={hasAlbum ? "outline" : "default"}
-            className="h-8 rounded-none px-2.5 text-sm"
-          >
-            <Facebook className="h-4 w-4 mr-1.5" aria-hidden="true" />
-            Facebook
-          </Button>
-        )}
-      </>
-    ) : null
-  ) : canRegister ? (
+  const registerActionButton = !isPastEvent && canRegister ? (
     <Button
       onClick={() => onRegister(event)}
       size="sm"
@@ -367,6 +358,34 @@ export function EventCard({
     >
       Registrarse
     </Button>
+  ) : null;
+  const dropdownCtaButtons = hasDropdownCtas ? (
+    <div className="space-y-2.5">
+      <div className="flex flex-wrap items-center gap-2.5">
+        {hasFacebookPost && (
+          <Button
+            onClick={openFacebookPost}
+            variant="outline"
+            className="h-10 w-fit justify-start rounded-none border-border bg-[var(--surface-pane)] px-3 text-sm font-medium text-[var(--brand-ink)] hover:border-[var(--brand-ink)] hover:bg-primary/10"
+          >
+            <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="ml-1.5">Ver en Facebook</span>
+            <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
+          </Button>
+        )}
+        {hasAlbum && (
+          <Button
+            onClick={openAlbum}
+            variant="outline"
+            className="h-10 w-fit justify-start rounded-none border-border bg-[var(--surface-pane)] px-3 text-sm font-medium text-[var(--brand-ink)] hover:border-[var(--brand-ink)] hover:bg-primary/10"
+          >
+            <Images className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="ml-1.5">Ver Álbum</span>
+            <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
+          </Button>
+        )}
+      </div>
+    </div>
   ) : null;
   const pastorNameNode =
     event.speakers?.pastorMensaje &&
@@ -411,8 +430,10 @@ export function EventCard({
             <div className="flex-1 min-w-0">
               <p className="flex items-start gap-1.5 text-sm text-foreground">
                 <span className="min-w-0">
-                  <span className="text-muted-foreground">Vestimenta: </span>
-                  {formatVestimentaValue(event)}
+                  <span className="text-foreground">Vestimenta: </span>
+                  <span className="text-muted-foreground">
+                    {formatVestimentaValue(event)}
+                  </span>
                 </span>
                 <button
                   ref={vestimentaHelpRef}
@@ -449,8 +470,8 @@ export function EventCard({
                 aria-hidden="true"
               />
               <p className="text-sm text-foreground">
-                <span className="text-muted-foreground">Pastor a cargo: </span>
-                {pastorNameNode}
+                <span className="text-foreground">Pastor a cargo: </span>
+                <span className="text-muted-foreground">{pastorNameNode}</span>
               </p>
             </div>
           )}
@@ -461,8 +482,10 @@ export function EventCard({
                 aria-hidden="true"
               />
               <p className="text-sm text-foreground">
-                <span className="text-muted-foreground">Preside: </span>
-                {event.speakers.jovenPreside}
+                <span className="text-foreground">Preside: </span>
+                <span className="text-muted-foreground">
+                  {event.speakers.jovenPreside}
+                </span>
               </p>
             </div>
           )}
@@ -995,7 +1018,7 @@ export function EventCard({
                   <span className="tabular-nums">{event.time}</span>
                 </p>
 
-                <span className="mb-0.5 inline-flex w-fit items-center gap-1.5 rounded-sm border border-[#cbd9e7] bg-[#e6edf6] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs mb-2.5">
+                <span className={`mb-0.5 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] md:text-xs mb-2.5 ${eventTypeBadgeClass}`}>
                   <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>{eventTypeLabels[eventType]}</span>
                 </span>
@@ -1033,11 +1056,11 @@ export function EventCard({
               </div>
 
               <div className="mt-3 flex flex-col items-start gap-2 md:flex-row md:flex-wrap md:items-center md:mt-6">
-                {compactPrimaryAction}
+                {registerActionButton}
 
                 <button
                   onClick={handleToggle}
-                  className={`${eventUtilityButtonSmallClass} md:hidden`}
+                  className="inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10 md:hidden"
                   aria-expanded={isExpanded}
                   aria-controls={`details-${event.id}`}
                   style={{ minHeight: "unset", minWidth: "unset" }}
@@ -1096,8 +1119,13 @@ export function EventCard({
                 className="overflow-hidden"
               >
                 <div className="border-t border-border/80 bg-muted/20">
+                  {hasDropdownCtas && (
+                    <div className="px-3 pb-0 pt-4 md:px-5 md:pt-5">
+                      {dropdownCtaButtons}
+                    </div>
+                  )}
                   {hasMobileCompactDetails && (
-                    <div className="space-y-4 px-3 py-4 md:hidden">
+                    <div className={`space-y-4 px-3 py-4 md:hidden ${hasDropdownCtas ? "pt-5" : ""}`}>
                       {(event.location || event.address) && (
                         <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           <span>UBICACION</span>
@@ -1149,7 +1177,7 @@ export function EventCard({
                   )}
                   {hasDetails &&
                     renderExpandedDetails("space-y-2 px-3 py-4 md:px-5 md:py-5")}
-                  <div className={`px-3 pb-4 md:px-5 md:pb-5 ${hasDetails ? "" : "pt-4 md:pt-5"}`}>
+                  <div className={`px-3 pb-4 md:px-5 md:pb-5 ${hasDetails || hasDropdownCtas ? "" : "pt-4 md:pt-5"}`}>
                     <div className="[&>div]:mt-0">
                       {eventActionButtons}
                     </div>
@@ -1195,7 +1223,7 @@ export function EventCard({
           )}
         </div>
 
-        <div className="flex w-full items-center justify-between gap-3 border-b border-border/80 bg-[#eaeff4] px-4 py-3 text-[16px] md:text-[16px] font-bold leading-tight text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
+        <div className="flex w-full items-center justify-between gap-3 border-b border-border/80 bg-[#ffffff] px-4 py-3 text-[17px] md:text-[17px] font-bold leading-tight text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
           <div className="flex min-w-0 items-center gap-1.5">
             <CalendarDays
               className="h-5 w-5 shrink-0 text-foreground mr-0.5"
@@ -1212,13 +1240,13 @@ export function EventCard({
         <div className="p-5">
           <div data-eq-head>
             {/* Event type — plain uppercase label */}
-            <span className="mb-2.5 inline-flex items-center gap-1.5 rounded-sm border border-[#cbd9e7] bg-[#e6edf6] px-2 py-1 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93]">
+            <span className={`mb-2.5 inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[13px] font-semibold uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}>
               <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{eventTypeLabels[eventType]}</span>
             </span>
 
-            {/* Title — Inter bold, no serif */}
-            <h3 className="text-[22px] md:text-[23px] font-bold text-foreground leading-[1.2] mb-7 font-sans tracking-tight">
+            {/* Title — Playfair Display for stronger editorial weight */}
+            <h3 className="text-[22px] md:text-[23px] font-bold text-foreground leading-[1.2] mb-7 tracking-tight">
               {event.title}
             </h3>
 
@@ -1262,56 +1290,16 @@ export function EventCard({
             )}
           </div>
 
-          {/* ── Action buttons — ALWAYS VISIBLE ── */}
-          {(isPastEvent || canRegister) && (
+          {/* ── Action buttons ── */}
+          {registerActionButton && (
             <div className="pt-1 mt-1">
-              {isPastEvent ? (
-              <div className="mt-3.5 gap-2">
-                {hasAlbum && (
-                  <Button
-                    onClick={openAlbum}
-                    className="bg-primary hover:bg-primary/90 text-white "
-                  >
-                    <Images className="h-4 w-4 mr-2" aria-hidden="true" />
-                    Ver Álbum
-                    <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
-                  </Button>
-                )}
-                {hasFacebookPost && (
-                  <Button
-                    onClick={openFacebookPost}
-                    variant={hasAlbum ? "outline" : "default"}
-                    className={`flex-1 text-sm ${
-                      !hasAlbum
-                        ? "bg-primary hover:bg-primary/90 text-white"
-                        : ""
-                    }`}
-                  >
-                    <Facebook className="h-4 w-4 mr-2" aria-hidden="true" />
-                    Ver en Facebook
-                    <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
-                  </Button>
-                )}
-                {!hasAlbum && !hasFacebookPost && (
-                  <Button
-                    disabled
-                    variant="secondary"
-                    className="text-sm"
-                  >
-                    Evento finalizado
-                    <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
-                  </Button>
-                )}
-              </div>
-              ) : (
-                <Button
-                  onClick={() => onRegister(event)}
-                  className="mt-3.5 text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
-                >
-                  REGISTRARSE
-                  <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
-                </Button>
-              )}
+              <Button
+                onClick={() => onRegister(event)}
+                className="mt-3.5 text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
+              >
+                REGISTRARSE
+                <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
+              </Button>
             </div>
           )}
 
@@ -1354,13 +1342,21 @@ export function EventCard({
                   }}
                   className="overflow-hidden"
                 >
-                  {renderExpandedDetails(
-                    "space-y-1 pb-0 pt-2.5 md:pt-2.5 px-5 mt-1",
-                    { showDescription: true },
+                  {hasDropdownCtas && (
+                    <div className="px-5 pb-0 pt-2.5 md:pt-2.5 mt-1">
+                      {dropdownCtaButtons}
+                    </div>
                   )}
+                  {(hasDetails || hasDescription) &&
+                    renderExpandedDetails(
+                      hasDropdownCtas
+                        ? "space-y-1 pb-0 pt-5 px-5"
+                        : "space-y-1 pb-0 pt-2.5 md:pt-2.5 px-5 mt-1",
+                      { showDescription: true },
+                    )}
                   <div
                     className={`px-5 pb-5 ${
-                      hasDetails ? "[&>div]:mt-5" : "[&>div]:mt-0"
+                      hasDetails || hasDropdownCtas ? "[&>div]:mt-5" : "[&>div]:mt-0"
                     }`}
                   >
                     {eventActionButtons}

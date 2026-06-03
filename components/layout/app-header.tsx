@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { Inter } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,6 +26,12 @@ interface AppHeaderProps {
   facebookUrl?: string;
   behavior?: "fixed" | "sticky";
 }
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["800"],
+  display: "swap",
+});
 
 const navItems = [
   { href: "/", label: "Inicio", icon: Home },
@@ -442,7 +449,9 @@ export function AppHeader({
               </Link>
 
               <div className="ml-2 flex flex-col justify-center leading-tight">
-                <span className="text-[#c9c9c9] text-[12px] font-semibold">IGC</span>
+                <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
+                  IGC
+                </span>
                 <span className="text-[#c9c9c9] text-[11px] opacity-90">Region Mayo</span>
               </div>
             </div>

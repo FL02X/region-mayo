@@ -13,6 +13,17 @@ export interface GeolocationState {
   error: string | null;
 }
 
+export type GeolocationErrorKind =
+  | "permission_denied"
+  | "gps_off"
+  | "timeout"
+  | "unsupported"
+  | "unknown";
+
+export interface GeolocationRequestError extends Error {
+  kind: GeolocationErrorKind;
+}
+
 const GEOLOCATION_CACHE_KEY = "region-mayo-geolocation-cache";
 const GEOLOCATION_PERMISSION_KEY = "region-mayo-geolocation-permission";
 const CACHE_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -20,6 +31,15 @@ const CACHE_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 interface CacheData {
   location: UserLocation;
   timestamp: number;
+}
+
+function createGeolocationRequestError(
+  kind: GeolocationErrorKind,
+  message: string,
+): GeolocationRequestError {
+  const error = new Error(message) as GeolocationRequestError;
+  error.kind = kind;
+  return error;
 }
 
 /**
@@ -110,7 +130,12 @@ export function useGeolocationState(): GeolocationState & { requestGeolocation: 
           loading: false,
           error: "Tu navegador o dispositivo no cuenta con tecnología de GPS o ubicación.",
         });
-        reject(new Error("Geolocation not supported"));
+        reject(
+          createGeolocationRequestError(
+            "unsupported",
+            "Tu navegador o dispositivo no cuenta con tecnología de GPS o ubicación.",
+          ),
+        );
         return;
       }
 
@@ -147,14 +172,36 @@ export function useGeolocationState(): GeolocationState & { requestGeolocation: 
         },
         (error) => {
           let errorMessage = "No fue posible determinar tu ubicación actual. Revisa si tu GPS está encendido.";
+          let errorKind: GeolocationErrorKind = "unknown";
 
           if (error.code === error.PERMISSION_DENIED) {
-            errorMessage = "Has denegado el permiso para acceder a tu ubicación. Para usar esta función, actívalo en los ajustes de tu navegador.";
+            errorKind = "permission_denied";
+            errorMessage = "No aceptaste el permiso de ubicación. Actívalo en los ajustes del navegador para continuar.";
             // DEBUG: Comentado para demostrar la funcionalidad.
             // localStorage.setItem(GEOLOCATION_PERMISSION_KEY, "denied");
             setState({
               userLocation: null,
               permissionDenied: true,
+              permissionGranted: false,
+              loading: false,
+              error: errorMessage,
+            });
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorKind = "gps_off";
+            errorMessage = "Tu GPS parece estar desactivado. Actívalo e inténtalo de nuevo.";
+            setState({
+              userLocation: null,
+              permissionDenied: false,
+              permissionGranted: false,
+              loading: false,
+              error: errorMessage,
+            });
+          } else if (error.code === error.TIMEOUT) {
+            errorKind = "timeout";
+            errorMessage = "No pudimos obtener tu ubicación a tiempo. Revisa el GPS e inténtalo otra vez.";
+            setState({
+              userLocation: null,
+              permissionDenied: false,
               permissionGranted: false,
               loading: false,
               error: errorMessage,
@@ -169,7 +216,7 @@ export function useGeolocationState(): GeolocationState & { requestGeolocation: 
             });
           }
 
-          reject(new Error(errorMessage));
+          reject(createGeolocationRequestError(errorKind, errorMessage));
         },
         {
           enableHighAccuracy: true,

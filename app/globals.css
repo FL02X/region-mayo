@@ -12,9 +12,9 @@
  * 2. Remove the blocks marked "Newsletter skeuomorphism layer" farther down:
  *    body background texture, desktop paper pane/card treatments, utility
  *    overrides for bg/border classes, and input paper shading.
- * 3. To revert only the JW.org-style type, change --font-sans back to:
+ * 3. To revert only the display/body type, change --font-sans back to:
  *    var(--font-inter), "Segoe UI", "Tahoma", "Arial", system-ui, sans-serif
- *    and restore app/layout.tsx to load Inter with --font-inter.
+ *    and --font-serif back to a system serif stack.
  *
  * Previous digital values:
  * --background: oklch(0.992 0.003 240);
@@ -112,9 +112,8 @@
 }
 
 @theme inline {
-  /* JW.org-style body stack from reference image. */
-  --font-sans: var(--font-noto-sans), "NotoSans", Arial, "Arial Unicode MS", sans-serif;
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), "Inter", "Segoe UI", "Tahoma", "Arial", system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -211,6 +210,7 @@
       linear-gradient(90deg, rgba(24, 31, 40, 0.035), transparent 18%, transparent 82%, rgba(24, 31, 40, 0.035)),
       linear-gradient(180deg, #f3f3ef 0%, #ecebe6 100%);
     background-size: 17px 17px, 23px 23px, 100% 100%, 100% 100%;
+    font-family: var(--font-sans);
     font-size: calc(18px * var(--app-font-scale, 1));
     line-height: 1.58;
     word-break: normal;
@@ -290,6 +290,7 @@
   h4,
   h5,
   h6 {
+    font-family: var(--font-serif);
     line-height: 1.25;
     letter-spacing: 0;
   }
@@ -357,13 +358,6 @@ body[data-user-interacted="true"] .global-highlight {
 body[data-user-interacted="true"] :target {
   box-shadow: none !important;
   background-color: inherit !important;
-}
-
-body:not([data-user-interacted="true"]) .global-highlight .availability-pill,
-body:not([data-user-interacted="true"]) :target .availability-pill {
-  background-color: rgb(216 180 0 / 0.2) !important;
-  border-color: rgb(216 180 0 / 0.55) !important;
-  color: #6b5200 !important;
 }
 
 /* ─── Flick animation — quick visual feedback on mobile menu click ─── */

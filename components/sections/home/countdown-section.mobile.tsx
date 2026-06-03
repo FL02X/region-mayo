@@ -564,38 +564,28 @@ export function CountdownSection({
                     aria-hidden="true"
                   />
                   <span>
-                    {formatRegionWeekdayDayMonth(countdownEvent.date)} · {countdownEvent.time}
+                    <span className="font-bold">
+                      {formatRegionWeekdayDayMonth(countdownEvent.date)}
+                    </span>
+                    {" | "}
+                    {countdownEvent.time}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate text-foreground/80">
+                    {countdownEvent.address || countdownEvent.location}
+                  </span>
                   {countdownEvent.googleMapsUrl ? (
                     <button
                       onClick={() => openGoogleMaps(countdownEvent.googleMapsUrl!)}
-                      className="group inline-flex items-center gap-1.5 text-left text-muted-foreground hover:text-foreground transition-colors overflow-hidden"
+                      className="inline-flex shrink-0 items-center gap-1 text-[16px] font-semibold text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2 leading-tight"
                       aria-label="Abrir ubicación del evento en Google Maps"
                     >
-                      <span className="truncate">
-                        {countdownEvent.address || countdownEvent.location}
-                      </span>
-                      <span
-                        className="inline-flex items-center gap-1 shrink-0"
-                        style={{ color: spotlightAccent }}
-                      >
-                        <ExternalLink
-                          className="h-3.5 w-3.5 opacity-80 group-hover:opacity-100"
-                          aria-hidden="true"
-                        />
-                        <span className="text-sm font-semibold opacity-90 group-hover:opacity-100">
-                          Maps
-                        </span>
-                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 stroke-3 shrink-0" aria-hidden="true" />
+                      <span>Maps</span>
                     </button>
-                  ) : (
-                    <span className="truncate text-muted-foreground">
-                      {countdownEvent.address || countdownEvent.location}
-                    </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
 

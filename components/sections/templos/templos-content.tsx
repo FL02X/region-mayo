@@ -1421,8 +1421,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
     };
   }, [isClientReady, sortedTemplos.map((t) => t.id).join(",")]);
 
-  const shouldHideList = hasHydrated && !isClientReady;
-  const shouldShowLoader = hasHydrated && !isClientReady;
+  const shouldShowLoader = !isClientReady;
   const locationModalTitle =
     locationSearchState === "error"
       ? "No se pudo encontrar el templo cercano"
@@ -1597,7 +1596,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
           </div>
         </div>
       )}
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
+      <div className={`desktop-content-pane ${shouldShowLoader ? "invisible" : "visible"} max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none`}>
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
@@ -1750,9 +1749,9 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
                 exit={isMobile ? { opacity: 0, y: -4 } : undefined}
                 transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
                 className={`mx-0 flex flex-col gap-3 md:gap-3 pb-14 ${
-                  shouldHideList ? "opacity-0 pointer-events-none" : "opacity-100"
+                  shouldShowLoader ? "opacity-0 pointer-events-none" : "opacity-100"
                 }`}
-                aria-hidden={shouldHideList}
+                aria-hidden={shouldShowLoader}
               >
                 {sortedTemplos.map((templo) => (
                   <TemploCard
@@ -1783,8 +1782,8 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
                     : sortedTemplos.length === 2
                       ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
                       : "grid-cols-1 sm:grid-cols-2 templos-grid-3cols"
-                } ${shouldHideList ? "opacity-0 pointer-events-none" : "opacity-100"}`}
-                aria-hidden={shouldHideList}
+                } ${shouldShowLoader ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+                aria-hidden={shouldShowLoader}
               >
                 {sortedTemplos.map((templo) => (
                   <div key={templo.id} className="h-full">

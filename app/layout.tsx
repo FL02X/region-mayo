@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import { TimeProvider } from "@/lib/time-context";
 import { HighlightClearer } from "@/components/layout/highlight-clearer";
 import { RouteBodyFlags } from "@/components/layout/route-body-flags";
@@ -9,13 +9,22 @@ import { AnalyticsGate } from "@/components/pwa/analytics-gate";
 import { Suspense } from "react";
 import "./globals.css";
 
-const notoSans = Noto_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
-  variable: "--font-noto-sans",
+  variable: "--font-inter",
   preload: true,
   fallback: ["Arial", "Arial Unicode MS", "sans-serif"],
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-playfair",
+  preload: true,
+  fallback: ["Georgia", "Times New Roman", "serif"],
 });
 
 export const metadata: Metadata = {
@@ -57,7 +66,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
-        className={`${notoSans.variable} font-sans antialiased`}
+        className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}
       >
         <a href="#main-content" className="skip-link">
           Saltar al contenido principal
