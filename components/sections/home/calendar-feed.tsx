@@ -252,7 +252,7 @@ export function EventsFeed({
 
   return (
     <div className="w-full relative bg-[#f1f1f1] mb-20" /* [#f1f1f1] */ data-events-feed="true">
-      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen pb-20 pt-[2px]">
+      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen pb-20">
         {/* Priority spotlight section (mobile only) */}
         <div className="offline-hide-when-offline md:hidden">
           <CountdownSection
@@ -285,12 +285,12 @@ export function EventsFeed({
         {/* <HomeInfoCards /> */}
 
         {/* Calendar section */}
-        <section id="calendario" className="mt-5 md:mt-0 px-4 md:px-8 pt-6 pb-4 border-t md:border-t-0 border-border/70 bg-muted/20">
+        <section id="calendario" className="mt-5 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-t md:border-t-0 border-border/70 bg-muted/20">
         <div className="mt-1 max-w-4xl mx-auto w-full">
           <div className="mb-5">
             <h2
               id="calendar-title"
-              className="text-[1.425rem] font-semibold text-foreground tracking-tight mb-2"
+              className="text-[1.625rem] font-semibold text-foreground tracking-tight mb-2"
             >
               Calendario 2026
             </h2>
@@ -313,16 +313,16 @@ export function EventsFeed({
       <section
         id="eventos"
         ref={eventsListRef}
-        className="bg-muted/20 px-4 md:px-6 pt-4 pb-14"
+        className="bg-muted/20 px-4 md:px-[32px] md:py-[24px] pt-4 pb-14"
       >
         <div className="mt-0 max-w-4xl mx-auto w-full">
           {/* Month label */}
           <div className="mb-6 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h3 className="font-semibold text-[1.200rem] text-foreground tracking-tight">
+              <h3 className="font-semibold text-[1.425rem] text-foreground tracking-tight">
                 {months[getRegionCalendarParts(selectedMonth).month - 1]} {getRegionCalendarParts(selectedMonth).year}
               </h3>
-              <p className="text-[15px] text-muted-foreground mt-0.5">
+              <p className="text-[15px] text-muted-foreground/90 mt-1">
                 {filteredEvents.length === 0
                   ? "No hay eventos programados"
                   : `${filteredEvents.length} ${

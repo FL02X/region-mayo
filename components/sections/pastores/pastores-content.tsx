@@ -231,10 +231,10 @@ function PastorCard({
     return (
       <article
         id={pastor.id}
-        className="bg-card border-y border-border/80 scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:border-x md:transition-all md:duration-700"
+        className="md:bg-card md:border-y md:border-border/80 scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:border-x md:transition-all md:duration-700"
       >
         <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-4 md:py-5">
-          <div className="offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
+          <div className="offline-hide-when-offline offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
             {pastor.photo ? (
               <Image
                 src={getPastorImageUrl(pastor.photo, "thumb")}
@@ -315,7 +315,7 @@ function PastorCard({
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
       {/* Photo */}
-      <div className="offline-aware-image relative w-full bg-muted shrink-0">
+      <div className="offline-hide-when-offline offline-aware-image relative w-full bg-muted shrink-0">
         {pastor.photo ? (
           <Image
             src={getPastorImageUrl(pastor.photo)}

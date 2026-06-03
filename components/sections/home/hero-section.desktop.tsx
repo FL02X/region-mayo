@@ -796,25 +796,25 @@ export function HeroSection({
                 )}
               </div>
 
-              <div className="w-full max-w-[360px] text-center md:text-left md:justify-self-end flex flex-col justify-center">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/85 mb-2 opacity-75">
+              <div className="w-full max-w-[390px] flex flex-col justify-center text-center md:text-left md:justify-self-end">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/85 opacity-75">
                   Iglesia Gentil de Cristo
                 </p>
-                <h1 className={`${heroTitleFont.className} text-[2.05rem] sm:text-[2.45rem] font-semibold text-white mb-5 leading-[1.04] tracking-[0.01em] [text-shadow:0_3px_16px_rgba(0,0,0,0.45)]`}>
+                <h1 className={`${heroTitleFont.className} mb-5 text-[2.05rem] font-semibold leading-[1.04] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)] sm:text-[2.45rem]`}>
                   <span className="block">Calendario</span>
                   <span className="block">Región Mayo</span>
                 </h1>
                 <button
                   onClick={scrollToContent}
-                  className="w-full group flex items-center justify-start gap-2 text-[15px] font-semibold text-white/90 hover:text-white transition-colors py-3 opacity-75"
+                  className="group flex w-full items-center justify-start gap-2 py-3 text-[15px] font-semibold text-white/90 opacity-75 transition-colors hover:text-white"
                   aria-label="Explorar calendario y desplazarse hacia abajo"
                 >
                   Explorar Calendario 2026
-                  <ChevronDown className="h-5 w-5 text-white/70 group-hover:text-white group-hover:translate-y-1 transition-all" aria-hidden="true" />
+                  <ChevronDown className="h-5 w-5 text-white/70 transition-all group-hover:translate-y-1 group-hover:text-white" aria-hidden="true" />
                 </button>
 
                 {slides.length > 1 && (
-                  <div className="mt-5 flex items-center justify-center md:justify-start gap-2 opacity-75" aria-label="Indicador de carrusel">
+                  <div className="mt-5 flex items-center justify-center gap-2 opacity-75 md:justify-start" aria-label="Indicador de carrusel">
                     {slides.map((_, index) => {
                       const isActive = index === (incomingIndex ?? currentIndex);
                       return (

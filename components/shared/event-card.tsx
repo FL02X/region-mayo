@@ -962,9 +962,9 @@ export function EventCard({
         {eventPortals}
         <article
           id={event.id}
-          className="bg-card border-y border-border/80 scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:border-x md:transition-all md:duration-700"
+          className=" scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
-          <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-4 md:py-5">
+          <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-0 md:py-0 md:pb-[35px]">
             <div className="offline-hide-when-offline relative h-[72px] w-[72px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
               {event.image ? (
                 <Image
