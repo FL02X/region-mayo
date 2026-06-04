@@ -798,10 +798,10 @@ function PrayerMiniCarousel({
       : currentPrayer.length <= 135
         ? "text-[17px]"
         : "text-[16px]";
-  const textAlign = isDesktop ? "text-center" : "text-left";
+  const textAlign = "text-left";
   const minHeight = isDesktop && deckLength === 1 ? "min-h-[184px]" : "min-h-[158px]";
   const canNavigate = prayers.length > 1;
-  const maxVisibleLines = isOverflowing ? 4 : 5;
+  const maxVisibleLines = isOverflowing ? 6 : 7;
 
   useLayoutEffect(() => {
     const textEl = prayerTextRef.current;
@@ -809,10 +809,28 @@ function PrayerMiniCarousel({
 
     const updateOverflow = () => {
       window.requestAnimationFrame(() => {
-        const previousClamp = textEl.style.webkitLineClamp;
-        textEl.style.webkitLineClamp = "7";
-        const needsMoreSpace = textEl.scrollHeight > textEl.clientHeight + 1;
-        textEl.style.webkitLineClamp = previousClamp;
+        const clone = textEl.cloneNode(true) as HTMLParagraphElement;
+        const parent = textEl.parentElement;
+
+        if (!parent) return;
+
+        clone.style.position = "absolute";
+        clone.style.visibility = "hidden";
+        clone.style.pointerEvents = "none";
+        clone.style.display = "block";
+        clone.style.WebkitLineClamp = "unset";
+        clone.style.webkitLineClamp = "unset";
+        clone.style.overflow = "visible";
+        clone.style.maxHeight = "none";
+        clone.style.height = "auto";
+        clone.style.width = `${textEl.clientWidth}px`;
+        clone.style.left = "0";
+        clone.style.top = "0";
+
+        parent.appendChild(clone);
+        const needsMoreSpace =
+          clone.getBoundingClientRect().height > textEl.getBoundingClientRect().height + 1;
+        clone.remove();
         setIsOverflowing(needsMoreSpace);
       });
     };
@@ -843,20 +861,24 @@ function PrayerMiniCarousel({
               overflow: "hidden",
             }}
           >
-            <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">“</span>
-            {currentPrayer}
-            <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">”</span>
+            <span className="relative block pl-[0.75em]">
+              <span className="absolute left-0 top-0 font-serif text-[1.35em] leading-none text-[#9aa3ad]">
+                “
+              </span>
+              <span>{currentPrayer}</span>
+              <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">”</span>
+            </span>
           </p>
           {isOverflowing && onOpenModal ? (
-            <button
-              type="button"
-              onClick={() => onOpenModal(currentPrayer)}
-              className={`mt-4 md:ml-3 inline-flex items-center gap-1 w-fit text-[15px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors ${
-                isDesktop ? "mx-auto" : ""
-              }`}
-            >
-              Leer completo...
-            </button>
+            <div className="pl-[0.75em]">
+              <button
+                type="button"
+                onClick={() => onOpenModal(currentPrayer)}
+                className="mt-4 inline-flex w-fit items-center gap-1 text-[15px] font-normal leading-tight text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2"
+              >
+                Leer más
+              </button>
+            </div>
           ) : null}
         </div>
       </div>
@@ -978,7 +1000,8 @@ function DeckCard({
         "snap-center relative overflow-hidden flex flex-col",
         "bg-white",
         "border-[0.5px] border-black/20",
-        "shadow-[0_1px_4px_rgba(31,40,51,0.08)] transition-shadow hover:shadow-[0_4px_14px_rgba(31,40,51,0.10)]",
+        "rounded-[2px]",
+        "shadow-[0_12px_24px_-22px_rgba(15,25,40,0.42),0_3px_10px_-9px_rgba(15,25,40,0.22),0_1px_0_rgba(255,255,255,0.82)_inset] transition-shadow hover:shadow-[0_14px_26px_-22px_rgba(15,25,40,0.46),0_4px_12px_-9px_rgba(15,25,40,0.24),0_1px_0_rgba(255,255,255,0.82)_inset]",
         "w-full h-full",
       ].join(" ")}
     >
@@ -1264,7 +1287,7 @@ function DeckCard({
               </button>
             </div>
             <div className="max-h-[calc(80vh-64px)] overflow-y-auto p-6">
-              <p className="text-[14px] text-[#1f2833] italic leading-relaxed">
+              <p className="text-[16px] text-[#1f2833] italic leading-[1.75]">
                 "{fullPrayerText}"
               </p>
             </div>

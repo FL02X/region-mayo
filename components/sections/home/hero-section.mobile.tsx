@@ -229,13 +229,24 @@ export function MobileHero({
       </div>
 
       <div className={`${bodyFont.className} w-full bg-[#21252b] text-white px-5 py-4`}>
-        <p className="text-[12px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
-          Iglesia Gentil de Cristo
-        </p>
-        <p className="font-sans mt-1 mb-1 text-[26px] leading-[1.05] font-semibold tracking-[0.01em] text-white">
-          Sitio oficial de la IGC Region Mayo
-        </p>
-        <div className="mt-6 mb-1 flex w-full flex-col items-start">
+        <div className="flex items-start gap-1.5">
+          <img
+            src="/images/logo_hero.png"
+            alt="Logo de Iglesia Gentil de Cristo"
+            className="mt-[-7px] ml-[-15px] h-25 w-25 shrink-0 rounded-[2px] object-contain"
+            loading="eager"
+            decoding="async"
+          />
+          <div className="min-w-0">
+            <p className="text-[12px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
+              Iglesia Gentil de Cristo
+            </p>
+            <p className="font-sans mt-1 mb-1 text-[26px] leading-[1.05] font-bold tracking-[0.01em] text-white">
+              Sitio oficial de la IGC Region Mayo
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 mb-1 flex w-full flex-col items-start">
           <div className="relative w-fit">
             {locationPhase === "loading" ? (
               <span className="gps-burst-ring gps-burst-ring--visible" aria-hidden="true" />
@@ -246,7 +257,7 @@ export function MobileHero({
               onClick={handleActivateGps}
               disabled={locationPhase === "loading"}
               data-loading={locationPhase === "loading"}
-              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-3 py-2 text-left text-[15px] font-medium leading-none transition-all duration-300 ease-in-out ${
+              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-4 py-3 text-left text-[15px] font-bold leading-none transition-all duration-300 ease-in-out ${
                 locationPhase === "success"
                   ? "border-[#4d7a68] bg-[#4d7a68] text-white shadow-[0_8px_22px_rgba(26,58,52,0.22)]"
                   : locationPhase === "loading"
@@ -289,7 +300,7 @@ export function MobileHero({
                   : "mt-0 max-h-0 -translate-y-2 opacity-0"
               }`}
             >
-              <p className="max-w-[90%] pl-1 text-[11px] leading-tight text-red-200/90">
+              <p className="max-w-[90%] pl-1 text-[13px] leading-tight text-red-200/90">
                 {getLocationErrorMessage()}
               </p>
             </div>

@@ -46,6 +46,10 @@ interface TimeUnit {
 }
 
 const CUSTOM_BANNER_ACCENT = "#e36600";
+const MOBILE_FLOATING_CARD_CLASS =
+  "rounded-[2px] shadow-[0_12px_24px_-22px_rgba(15,25,40,0.42),0_3px_10px_-9px_rgba(15,25,40,0.22),0_1px_0_rgba(255,255,255,0.82)_inset]";
+const MOBILE_FLOATING_BORDER_CLASS =
+  "rounded-[2px] shadow-[0_8px_18px_-17px_rgba(15,25,40,0.36),0_2px_7px_-6px_rgba(15,25,40,0.18)]";
 
 function FlipCountdownCell({ value, label }: TimeUnit) {
   const [displayValue, setDisplayValue] = useState(value);
@@ -184,7 +188,29 @@ function MobilePrayerSpotlightCard({
 
     const updateOverflow = () => {
       window.requestAnimationFrame(() => {
-        setIsOverflowing(textEl.scrollHeight > textEl.clientHeight + 1);
+        const clone = textEl.cloneNode(true) as HTMLParagraphElement;
+        const parent = textEl.parentElement;
+
+        if (!parent) return;
+
+        clone.style.position = "absolute";
+        clone.style.visibility = "hidden";
+        clone.style.pointerEvents = "none";
+        clone.style.display = "block";
+        clone.style.WebkitLineClamp = "unset";
+        clone.style.webkitLineClamp = "unset";
+        clone.style.overflow = "visible";
+        clone.style.maxHeight = "none";
+        clone.style.height = "auto";
+        clone.style.width = `${textEl.clientWidth}px`;
+        clone.style.left = "0";
+        clone.style.top = "0";
+
+        parent.appendChild(clone);
+        const needsMoreSpace =
+          clone.getBoundingClientRect().height > textEl.getBoundingClientRect().height + 1;
+        clone.remove();
+        setIsOverflowing(needsMoreSpace);
       });
     };
 
@@ -201,7 +227,7 @@ function MobilePrayerSpotlightCard({
   };
 
   return (
-    <div className="desktop-card-lift bg-card border border-border overflow-hidden mb-3">
+    <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}>
       <div className="h-[3px] bg-[#2d6a4f]" aria-hidden="true" />
       <div className="flex min-h-[270px] flex-col p-5">
         <div className="mb-2 flex items-center justify-between gap-2">
@@ -232,10 +258,10 @@ function MobilePrayerSpotlightCard({
           <>
             <div className="flex min-h-0 flex-1 items-center justify-center">
               {currentPrayer ? (
-                <div className="w-full mt-3.5">
+                <div className="w-full mt-3.5 px-[3px] ml-[-15px]">
                   <p
                     ref={prayerTextRef}
-                    className={`${textSize} text-center font-normal italic leading-[1.62] text-[#1f2833]`}
+                    className={`${textSize} text-justify font-normal italic leading-[1.62] text-[#1f2833] px-[2px]`}
                     style={{
                       display: "-webkit-box",
                       WebkitBoxOrient: "vertical",
@@ -243,18 +269,28 @@ function MobilePrayerSpotlightCard({
                       overflow: "hidden",
                     }}
                   >
-                    <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">“</span>
-                    {currentPrayer.text}
-                    <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">”</span>
+                    <span
+                      className="block"
+                      style={{
+                        paddingLeft: "0.75em",
+                        textIndent: "-0.75em",
+                      }}
+                    >
+                      <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">“</span>
+                      <span>{currentPrayer.text}</span>
+                      <span className="ml-0.5 font-serif text-[1.35em] leading-none text-[#9aa3ad]">”</span>
+                    </span>
                   </p>
                   {isOverflowing && (
-                    <button
-                      type="button"
-                      onClick={() => setShowFullPrayerModal(true)}
-                      className="mx-auto mt-4 inline-flex w-fit items-center gap-1 text-[15px] font-normal leading-tight text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2"
-                    >
-                      Leer más
-                    </button>
+                    <div className="pl-[0.75em]">
+                      <button
+                        type="button"
+                        onClick={() => setShowFullPrayerModal(true)}
+                        className="mt-4 inline-flex w-fit items-center gap-1 text-[15px] font-normal leading-tight text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2"
+                      >
+                        Leer más
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : (
@@ -533,14 +569,14 @@ export function CountdownSection({
 
   return (
     <section
-      className="bg-background px-4 pt-[15px] pb-0 md:pt-6 mb-7 pt-[30px]"
+      className="pt-[30px] bg-background px-4 pt-[13px] pb-0 mb-7"
       data-countdown-section
       aria-label="Sección destacada"
     >
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* Spotlight: event */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
-          <div className="desktop-card-lift bg-card border border-border overflow-hidden mb-8">
+          <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-8 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="h-[3px]" style={{ backgroundColor: "#2f5e93" }} aria-hidden="true" />
 
             <div className="p-5">
@@ -591,7 +627,7 @@ export function CountdownSection({
 
               {/* Countdown grid — flat dividers, no background fill */}
               <div
-                className="grid grid-cols-4 border border-border divide-x divide-border"
+                className={`grid grid-cols-4 border border-border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS}`}
                 role="timer"
                 aria-label="Tiempo restante para el evento"
               >
@@ -619,7 +655,7 @@ export function CountdownSection({
 
         {/* Spotlight: custom media */}
         {showCustomCard && customHeroCard && (
-          <div className="desktop-card-lift bg-card border border-border overflow-hidden mb-3">
+          <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="h-[3px]" style={{ backgroundColor: spotlightAccent }} aria-hidden="true" />
             <div className="p-3">
               <p className="mb-2.5 inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#1f2833]">
@@ -635,7 +671,7 @@ export function CountdownSection({
                         className="mx-auto block w-full"
                       >
                         <div
-                          className={`group relative w-full overflow-hidden border border-border bg-[#f5f6f8] flex items-center justify-center p-2 ${
+                          className={`group relative w-full overflow-hidden flex items-center justify-center bg-transparent ${
                             customHeroCard.media.isVertical ? "h-[min(86vh,680px)] md:h-[520px]" : "h-[210px] md:h-[250px]"
                           }`}
                         >
@@ -655,8 +691,8 @@ export function CountdownSection({
 
                           {/* Mobile: icon bottom-right */}
                           <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
-                            <div className="bg-white/90 rounded-full p-2 shadow">
-                              <Maximize2 className="h-4 w-4 text-black" aria-hidden="true" />
+                            <div className="rounded-[2px] border-2 border-[#111827]/20 bg-white p-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.22)]">
+                              <Maximize2 className="h-4 w-4 text-[#111827]" aria-hidden="true" />
                             </div>
                           </div>
                         </div>
@@ -670,7 +706,7 @@ export function CountdownSection({
                       )}
                     </div>
               {customHeroCard.url && (
-                <Button asChild className="mt-3 w-full h-11 bg-[#2f5e93] hover:bg-[#244a72] text-white text-sm font-bold px-4">
+                <Button asChild className="mt-3 w-full h-11 bg-[#e98432] hover:bg-[#cf7425] text-white text-sm font-bold px-4">
                   <a href={customHeroCard.url} target="_blank" rel="noopener noreferrer">
                     <span className="inline-flex items-center justify-center gap-1.5 w-full">
                       {customHeroCard.ctaText || "Ver más información"}
@@ -685,7 +721,7 @@ export function CountdownSection({
 
         {/* Spotlight: social */}
         {showSocialCard && spotlightHero && spotlightHero.type === "social" && (
-          <div className="desktop-card-lift bg-card border border-border overflow-hidden mb-3">
+          <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="h-[3px]" style={{ backgroundColor: spotlightAccent }} aria-hidden="true" />
             <div className="p-5">
               <p
@@ -697,7 +733,7 @@ export function CountdownSection({
 
               {spotlightSocialPost?.media?.url && (
                 <div
-                  className={`relative w-full overflow-hidden border border-border bg-[#f5f6f8] mb-4 ${
+                  className={`relative w-full overflow-hidden border border-border bg-[#f5f6f8] mb-4 ${MOBILE_FLOATING_BORDER_CLASS} ${
                     spotlightSocialPost.media.isVertical
                       ? "h-[min(86vh,680px)] md:h-[520px]"
                       : "h-[210px] md:h-[250px]"
@@ -745,7 +781,7 @@ export function CountdownSection({
 
         {/* ── Album sharing cards (post-event) ── */}
         {albumEvents.map((event) => (
-          <div key={event.id} className="desktop-card-lift bg-card border border-border p-4">
+          <div key={event.id} className={`desktop-card-lift bg-card border border-border p-4 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="flex items-start gap-3">
               <Images
                 className="h-4 w-4 text-primary shrink-0 mt-0.5"

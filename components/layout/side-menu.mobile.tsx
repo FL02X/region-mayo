@@ -50,8 +50,8 @@ const menuItems: MobileMenuItem[] = [
 ];
 
 const iglesiasItems: MobileMenuItem[] = [
-  { href: "/templos", label: "Templos", icon: Church },
-  { href: "/pastores", label: "Pastores", icon: Users },
+  { href: "/templos", label: "Templos", icon: Church, description: "Ubica las congregaciones de la región" },
+  { href: "/pastores", label: "Pastores", icon: Users, description: "Consulta el directorio pastoral regional" },
 ];
 
 export function MobileMenu({
@@ -288,7 +288,7 @@ export function MobileMenu({
                         id="mobile-iglesias-submenu"
                         className={cn(
                           "overflow-hidden bg-[#eeeeea] transition-[max-height,opacity] duration-200 ease-out",
-                          iglesiasOpen ? "max-h-40 opacity-100" : "pointer-events-none max-h-0 opacity-0"
+                          iglesiasOpen ? "max-h-56 opacity-100" : "pointer-events-none max-h-0 opacity-0"
                         )}
                         aria-hidden={!iglesiasOpen}
                       >
@@ -331,9 +331,16 @@ export function MobileMenu({
                                   aria-current={iglesiaItemActive ? "page" : undefined}
                                 >
                                   <IglesiaIcon className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" />
-                                  <p className={cn("text-[17px] leading-tight", iglesiaItemActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
-                                    {iglesiaItem.label}
-                                  </p>
+                                  <div className="min-w-0">
+                                    <p className={cn("text-[17px] leading-tight", iglesiaItemActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
+                                      {iglesiaItem.label}
+                                    </p>
+                                    {iglesiaItem.description && (
+                                      <p className="mt-1 text-[13px] font-normal leading-tight text-muted-foreground">
+                                        {iglesiaItem.description}
+                                      </p>
+                                    )}
+                                  </div>
                                 </Link>
                               );
                             })}

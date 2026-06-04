@@ -45,6 +45,7 @@ const heroTitleFont = Playfair_Display({
 });
 
 const CUSTOM_BANNER_ACCENT = "#e36600";
+const CUSTOM_BANNER_CTA = "#e98432";
 
 interface HeroSectionProps {
   heroImages?: HeroImage[];
@@ -684,56 +685,56 @@ export function HeroSection({
                 )}
 
                 {showCustomCard && customHeroCard && (
-                  <article className="desktop-next-event-lift overflow-hidden rounded-[2px] bg-white/93 backdrop-blur-[1px]">
-                    <div className="flex items-center gap-1.5 bg-[#e36600] px-4 py-3 text-[13px] font-semibold uppercase tracking-[0.12em] text-white">
+                  <article className="desktop-next-event-lift overflow-hidden rounded-[2px] bg-white/93 p-3 backdrop-blur-[1px]">
+                    <p className="mb-1.5 inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em] text-[#1f2833]">
                       <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span>Aviso</span>
-                    </div>
-                    <div className="p-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsLightboxOpen(true)}
-                        aria-haspopup="dialog"
-                        aria-label="Ver imagen en pantalla completa"
-                        className="mx-auto block w-full"
+                      <span>AVISO</span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsLightboxOpen(true)}
+                      aria-haspopup="dialog"
+                      aria-label="Ver imagen en pantalla completa"
+                      className="mx-auto block w-full"
+                    >
+                      <div
+                        className={`group relative w-full overflow-hidden border border-[#d5dbe3] bg-[#f5f6f8] flex items-center justify-center p-1.5 ${
+                          customHeroCard.media.isVertical ? "h-[334px]" : "h-[220px]"
+                        }`}
                       >
-                        <div
-                          className={`group relative w-full overflow-hidden border border-[#dce2e9] bg-[#f5f6f8] flex items-center justify-center p-2 ${
-                            customHeroCard.media.isVertical ? "h-[360px]" : "h-[240px]"
-                          }`}
-                        >
-                          <img
-                            src={customHeroCard.media.url}
-                            alt={customHeroCard.media.alt || "Contenido destacado"}
-                            className="block max-h-full max-w-full w-auto h-auto object-contain"
-                            decoding="async"
-                          />
-
-                          {/* Desktop: centered magnifier on hover */}
-                          <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-3">
-                              <Maximize2 className="h-6 w-6 text-white" aria-hidden="true" />
-                            </div>
-                          </div>
-
-                          {/* Mobile: icon bottom-right */}
-                          <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
-                            <div className="bg-white/90 rounded-full p-2 shadow">
-                              <Maximize2 className="h-4 w-4 text-black" aria-hidden="true" />
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                      {isLightboxOpen && (
-                        <Lightbox
+                        <img
                           src={customHeroCard.media.url}
                           alt={customHeroCard.media.alt || "Contenido destacado"}
-                          onClose={() => setIsLightboxOpen(false)}
+                          className="block max-h-full max-w-full w-auto h-auto object-contain"
+                          decoding="async"
                         />
-                      )}
-                    </div>
+
+                        <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
+                          <div className="rounded-[2px] border-2 border-white/15 bg-black/45 p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                            <Maximize2 className="h-6 w-6 text-white" aria-hidden="true" />
+                          </div>
+                        </div>
+
+                        <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
+                          <div className="bg-white/90 rounded-full p-2 shadow">
+                            <Maximize2 className="h-4 w-4 text-black" aria-hidden="true" />
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                    {isLightboxOpen && (
+                      <Lightbox
+                        src={customHeroCard.media.url}
+                        alt={customHeroCard.media.alt || "Contenido destacado"}
+                        onClose={() => setIsLightboxOpen(false)}
+                      />
+                    )}
                     {customHeroCard.url && (
-                      <Button asChild className="mt-3 w-full h-11 bg-[#2f5e93] hover:bg-[#244a72] text-white text-sm font-bold px-4">
+                      <Button
+                        asChild
+                        className="mt-2.5 w-full h-9 text-[12px] font-extrabold tracking-[0.04em] text-white rounded-[2px]"
+                        style={{ backgroundColor: CUSTOM_BANNER_CTA }}
+                      >
                         <a href={customHeroCard.url} target="_blank" rel="noopener noreferrer">
                           <span className="inline-flex items-center justify-center gap-1.5 w-full">
                             {customHeroCard.ctaText || "Ver más información"}
