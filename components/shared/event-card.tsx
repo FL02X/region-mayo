@@ -1021,10 +1021,21 @@ export function EventCard({
         {eventPortals}
         <article
           id={event.id}
-          className="overflow-hidden rounded-[2px] border border-border/80 bg-card shadow-[0_8px_22px_-20px_rgba(15,25,40,0.38)] scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
+          className="overflow-hidden bg-card scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
-          <div className="flex gap-4 p-4 md:gap-5 md:p-5">
-            <div className="offline-hide-when-offline relative h-[96px] w-[96px] shrink-0 overflow-hidden rounded-[2px] bg-muted md:h-[116px] md:w-[124px]">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-5 text-[16px] font-semibold leading-none text-foreground md:px-5 md:pt-6 md:text-[17px]">
+            <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
+            <span className="inline-flex items-center gap-2 whitespace-nowrap">
+              <span>{visualDateLabel}</span>
+              <span className="text-[#2f5e93]" aria-hidden="true">
+                ·
+              </span>
+            </span>
+            <span className="whitespace-nowrap tabular-nums">{event.time}</span>
+          </p>
+
+          <div className="flex gap-4 px-4 pb-5 pt-4 md:gap-5 md:px-5 md:pb-6 md:pt-5">
+            <div className="offline-hide-when-offline relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-[2px] bg-muted md:h-[128px] md:w-[128px]">
               {event.image ? (
                 <>
                   <Image
@@ -1032,17 +1043,19 @@ export function EventCard({
                     alt={event.title}
                     fill
                     className="offline-image-online object-cover"
-                    sizes="(min-width: 768px) 124px, 96px"
+                    sizes="(min-width: 768px) 128px, 104px"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowEventImage(true)}
-                    className="absolute bottom-1.5 left-1.5 inline-flex h-7 w-7 items-center justify-center rounded-[2px] border border-white/50 bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/75"
-                    aria-label={`Ampliar imagen de ${event.title}`}
-                    style={{ minHeight: "unset", minWidth: "unset" }}
-                  >
-                    <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
+                  {event.image !== "/placeholder.svg" ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowEventImage(true)}
+                      className="absolute bottom-1.5 left-1.5 inline-flex h-7 w-7 items-center justify-center rounded-[2px] border border-white/50 bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/75"
+                      aria-label={`Ampliar imagen de ${event.title}`}
+                      style={{ minHeight: "unset", minWidth: "unset" }}
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </>
               ) : (
                 <div className="offline-image-online absolute inset-0 flex items-center justify-center">
@@ -1054,23 +1067,14 @@ export function EventCard({
               )}
             </div>
 
-          <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1">
               <div className="min-w-0 space-y-2.5 text-left">
-                <p className="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[16px] font-bold leading-none text-foreground md:mb-3 md:text-[18px]">
-                  <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
-                  <span>{visualDateLabel}</span>
-                  <span className="text-[#2f5e93]" aria-hidden="true">
-                    ·
-                  </span>
-                  <span className="tabular-nums">{event.time}</span>
-                </p>
-
-                <span className={`mb-1 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] md:text-xs ${eventTypeBadgeClass}`}>
+                <span className={`mb-1 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] md:text-xs ${eventTypeBadgeClass}`}>
                   <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>{eventTypeLabels[eventType]}</span>
                 </span>
 
-                <h3 className="mt-1 text-[17px] font-bold leading-[1.28] text-foreground md:mt-0 md:text-[21px]">
+                <h3 className="mt-1 text-[17px] font-semibold leading-[1.35] text-foreground md:mt-0 md:text-[20px]">
                   {event.title}
                 </h3>
 
@@ -1124,7 +1128,7 @@ export function EventCard({
 
           <button
             onClick={handleToggle}
-            className="flex w-full items-center justify-between border-t border-border/80 bg-muted/20 px-4 py-3 text-[14px] font-semibold text-[var(--brand-ink)] transition-colors hover:bg-primary/10"
+            className="flex w-full items-center justify-between px-4 pb-4 pt-1 text-[14px] font-semibold text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] md:px-5 md:pb-5"
             aria-expanded={isExpanded}
             aria-controls={`details-${event.id}`}
             style={{ minHeight: "unset", minWidth: "unset" }}
@@ -1263,7 +1267,7 @@ export function EventCard({
           )}
         </div>
 
-        <div className="flex w-full items-center justify-between gap-3 border-b border-border/80 bg-[#ffffff] px-4 py-3 text-[17px] md:text-[17px] font-bold leading-tight text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
+        <div className="flex w-full items-center justify-between gap-3 border-b border-border/80 bg-[#ffffff] px-4 py-3 text-[17px] font-semibold leading-tight text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] md:text-[17px]">
           <div className="flex min-w-0 items-center gap-1.5">
             <CalendarDays
               className="h-5 w-5 shrink-0 text-foreground mr-0.5"
@@ -1280,13 +1284,13 @@ export function EventCard({
         <div className="p-5">
           <div data-eq-head>
             {/* Event type — plain uppercase label */}
-            <span className={`mb-2.5 inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[13px] font-semibold uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}>
+            <span className={`mb-2.5 inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[13px] font-medium uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}>
               <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{eventTypeLabels[eventType]}</span>
             </span>
 
             {/* Title — Playfair Display for stronger editorial weight */}
-            <h3 className="text-[22px] md:text-[23px] font-bold text-foreground leading-[1.2] mb-7 tracking-tight">
+            <h3 className="mb-7 text-[21px] font-semibold leading-[1.35] tracking-tight text-foreground md:text-[22px]">
               {event.title}
             </h3>
 
