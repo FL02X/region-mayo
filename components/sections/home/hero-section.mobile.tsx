@@ -229,19 +229,19 @@ export function MobileHero({
       </div>
 
       <div className={`${bodyFont.className} w-full bg-[#21252b] text-white px-5 py-4`}>
-        <div className="flex items-start gap-1.5">
+        <div className="flex items-center gap-1.5">
           <img
             src="/images/logo_hero.png"
             alt="Logo de Iglesia Gentil de Cristo"
-            className="mt-[-7px] ml-[-15px] h-25 w-25 shrink-0 rounded-[2px] object-contain"
+            className="ml-[-9px] h-25 w-25 shrink-0 rounded-[2px] object-contain"
             loading="eager"
             decoding="async"
           />
-          <div className="min-w-0">
+          <div className="min-w-0 ml-2">
             <p className="text-[12px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
               Iglesia Gentil de Cristo
             </p>
-            <p className="font-sans mt-1 mb-1 text-[26px] leading-[1.05] font-bold tracking-[0.01em] text-white">
+            <p className="font-sans mt-1 mb-1 text-[24px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
               Sitio oficial de la IGC Region Mayo
             </p>
           </div>
