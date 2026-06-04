@@ -1024,7 +1024,7 @@ export function EventCard({
           id={event.id}
           className="overflow-hidden bg-transparent scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-5 text-[16px] font-semibold leading-none text-foreground md:px-5 md:pt-6 md:text-[17px]">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-5 text-[17px] font-semibold leading-none text-foreground md:pt-6 md:text-[18px]">
             <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
             <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
               <span className="whitespace-nowrap">{visualDateLabel}</span>
@@ -1037,7 +1037,7 @@ export function EventCard({
             </span>
           </p>
 
-          <div className="flex gap-4 px-4 pb-5 pt-4 md:gap-5 md:px-5 md:pb-6 md:pt-5">
+          <div className="flex gap-4 pb-5 pt-4 md:gap-5 md:pb-6 md:pt-5">
             <div className="offline-hide-when-offline relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-[2px] bg-muted md:h-[128px] md:w-[128px]">
               {event.image ? (
                 <>
@@ -1165,12 +1165,12 @@ export function EventCard({
               >
                 <div className="bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-1">
                   {hasDropdownCtas && (
-                    <div className="px-3 pb-0 pt-4 md:px-5 md:pt-5">
+                    <div className="pb-0 pt-4 md:pt-5">
                       {dropdownCtaButtons}
                     </div>
                   )}
                   {hasMobileCompactDetails && (
-                    <div className={`space-y-4 px-3 py-4 md:hidden ${hasDropdownCtas ? "pt-5" : ""}`}>
+                    <div className={`space-y-4 py-4 md:hidden ${hasDropdownCtas ? "pt-5" : ""}`}>
                       {(event.location || event.address) && (
                         <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                           <span>UBICACION</span>
@@ -1221,8 +1221,8 @@ export function EventCard({
                     </div>
                   )}
                   {hasDetails &&
-                    renderExpandedDetails("space-y-2 px-3 py-4 md:px-5 md:py-5")}
-                  <div className={`px-3 pb-4 md:px-5 md:pb-5 ${hasDetails || hasDropdownCtas ? "" : "pt-4 md:pt-5"}`}>
+                    renderExpandedDetails("space-y-2 py-4 md:py-5")}
+                  <div className={`pb-4 md:pb-5 ${hasDetails || hasDropdownCtas ? "" : "pt-4 md:pt-5"}`}>
                     <div className="[&>div]:mt-0">
                       {eventActionButtons}
                     </div>

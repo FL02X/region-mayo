@@ -369,7 +369,7 @@ export function EventsFeed({
                 animate={{ opacity: 1, y: 0 }}
                 exit={isMobile ? { opacity: 0, y: -4 } : undefined}
                 transition={isMobile ? calendarFadeTransition : { duration: 0 }}
-                className="mx-0 flex flex-col gap-3 md:gap-3 pb-14"
+                className="mx-0 flex flex-col gap-5 pb-14 md:gap-6"
               >
                 {filteredEvents.map((event) => (
                   <EventCard
@@ -403,7 +403,7 @@ export function EventsFeed({
                 animate={{ opacity: 1, y: 0 }}
                 exit={isMobile ? { opacity: 0, y: -4 } : undefined}
                 transition={isMobile ? calendarFadeTransition : { duration: 0 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                className="grid grid-cols-1 gap-5 md:grid-cols-2"
               >
                 {filteredEvents.map((event) => (
                   <EventCard
