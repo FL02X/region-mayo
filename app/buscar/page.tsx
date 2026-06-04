@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { AppHeader } from "@/components/layout/app-header";
 import { SearchContent } from "@/components/sections/search/search-content";
+import Chatbot from "@/components/shared/chatbot";
 import { getRegionConfig, getPastors, getCoros, getDirectiva, getTemplos, getEvents } from "@/lib/api";
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity
@@ -33,6 +34,7 @@ export default async function BuscarPage() {
       <SearchContent 
         data={{ pastores, coros, directiva, templos, eventos }}
       />
+      <Chatbot />
     </main>
   );
 }

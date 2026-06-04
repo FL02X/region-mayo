@@ -19,6 +19,7 @@ const SHOW_DISTANCE_BADGES_KEY = "region-mayo-templos-show-distance-badges";
 const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
 const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
 const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
+const GPS_CTA_COLOR = "";
 
 const bodyFont = Inter({
   subsets: ["latin"],
@@ -212,7 +213,7 @@ export function MobileHero({
 
   return (
     <section className="md:hidden w-full max-w-[950px] mx-auto bg-white" aria-label="Imagen principal móvil">
-      <div className="w-full aspect-[4/3] bg-black overflow-hidden flex items-center justify-center">
+      <div className="w-full aspect-[1.38] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
@@ -229,11 +230,11 @@ export function MobileHero({
       </div>
 
       <div className={`${bodyFont.className} w-full bg-[#21252b] text-white px-5 py-4`}>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-0">
           <img
             src="/images/logo_hero.png"
             alt="Logo de Iglesia Gentil de Cristo"
-            className="ml-[-9px] h-25 w-25 shrink-0 rounded-[2px] object-contain"
+            className="ml-[-0px] h-20 w-20 shrink-0 rounded-[2px] object-contain"
             loading="eager"
             decoding="async"
           />
@@ -242,11 +243,11 @@ export function MobileHero({
               Iglesia Gentil de Cristo
             </p>
             <p className="font-sans mt-1 mb-1 text-[24px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
-              Sitio oficial de la IGC Region Mayo
+              Calendario de la Region Mayo
             </p>
           </div>
         </div>
-        <div className="mt-3 mb-1 flex w-full flex-col items-start">
+        <div className="mt-5 mb-1 flex w-full flex-col items-start">
           <div className="relative w-fit">
             {locationPhase === "loading" ? (
               <span className="gps-burst-ring gps-burst-ring--visible" aria-hidden="true" />
@@ -257,12 +258,12 @@ export function MobileHero({
               onClick={handleActivateGps}
               disabled={locationPhase === "loading"}
               data-loading={locationPhase === "loading"}
-              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-4 py-3 text-left text-[15px] font-bold leading-none transition-all duration-300 ease-in-out ${
+              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-5.5 py-3.5 text-left text-[15px] font-bold leading-none transition-all duration-300 ease-in-out ${
                 locationPhase === "success"
                   ? "border-[#4d7a68] bg-[#4d7a68] text-white shadow-[0_8px_22px_rgba(26,58,52,0.22)]"
                   : locationPhase === "loading"
                     ? "border-transparent bg-[#21252b] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
-                    : "border-[#FFFFFF] bg-transparent text-white hover:bg-white/5"
+                    : "border-[#005998] bg-transparent text-white shadow-[0_7px_40px_rgba(0,89,152,0.24)] hover:border-[#0b6ea6] hover:bg-[#0b6ea6]"
               }`}
               aria-label={
                 locationPhase === "success"
@@ -272,19 +273,26 @@ export function MobileHero({
             >
               <span className="relative flex min-w-0 items-center gap-2 ">
                 <LocateFixed
-                  className={`h-4 w-4 shrink-0 transition-colors duration-300 ${
-                    locationPhase === "success" ? "text-white" : "text-[#FFFFFF]"
-                  }`}
+                  className="h-4 w-4 shrink-0 text-white transition-colors duration-300"
                   aria-hidden="true"
                   strokeWidth={2}
                 />
-                <span className="min-w-0 transition-all duration-300 ease-in-out">
-                  {locationPhase === "loading"
-                    ? "Buscando..."
-                    : locationPhase === "success"
-                      ? `Más cercano: ${nearestChurchName} (${nearestChurchDistanceKm ?? 0} km)`
-                      : "Buscar iglesia más cercana"}
-                </span>
+                {locationPhase === "success" ? (
+                  <span className="flex min-w-0 flex-col items-start gap-1 transition-all duration-300 ease-in-out">
+                    <span className="text-[12px] font-bold leading-none text-white/80">
+                      Iglesia más cercana
+                    </span>
+                    <span className="min-w-0 text-[15px] leading-tight text-white">
+                      {nearestChurchName} · {nearestChurchDistanceKm ?? 0} km
+                    </span>
+                  </span>
+                ) : (
+                  <span className="min-w-0 transition-all duration-300 ease-in-out">
+                    {locationPhase === "loading"
+                      ? "Buscando iglesia cercana..."
+                      : "Encontrar iglesia cercana"}
+                  </span>
+                )}
               </span>
               {locationPhase === "success" ? (
                 <ArrowRight className="ml-1 h-7 w-7 shrink-0 text-white/90" aria-hidden="true" strokeWidth={2} />
@@ -343,13 +351,13 @@ export function MobileHero({
             border-radius: 2px;
             background: linear-gradient(
               90deg,
-              #ff5f6d,
-              #ff9a44,
-              #ffd93d,
-              #7bdcb5,
-              #6bcbef,
-              #8f7cff,
-              #ff5f6d
+              #6b7280,
+              #94a3b8,
+              #cbd5e1,
+              #60a5fa,
+              #3b82f6,
+              #94a3b8,
+              #6b7280
             );
             background-size: 260% 260%;
             padding: 2px;
@@ -366,6 +374,7 @@ export function MobileHero({
           .gps-gps-button:not(:disabled):hover::before {
             opacity: 0;
           }
+
 
           .gps-gps-button[data-loading="true"]::before {
             opacity: 1;
@@ -387,13 +396,13 @@ export function MobileHero({
             border-radius: 4px;
             background: linear-gradient(
               90deg,
-              #ff5f6d,
-              #ff9a44,
-              #ffd93d,
-              #7bdcb5,
-              #6bcbef,
-              #8f7cff,
-              #ff5f6d
+              #6b7280,
+              #94a3b8,
+              #cbd5e1,
+              #60a5fa,
+              #3b82f6,
+              #94a3b8,
+              #6b7280
             );
             background-size: 260% 260%;
             padding: 2px;
@@ -403,8 +412,8 @@ export function MobileHero({
             -webkit-mask-composite: xor;
             mask-composite: exclude;
             box-shadow:
-              0 0 0 1px rgba(90, 150, 176, 0.22),
-              0 0 12px rgba(143, 124, 255, 0.18);
+              0 0 0 1px rgba(96, 165, 250, 0.2),
+              0 0 12px rgba(148, 163, 184, 0.18);
             opacity: 0;
             transform: scale(0.985);
             animation: gps-burst-shimmer 4.2s ease-in-out infinite;

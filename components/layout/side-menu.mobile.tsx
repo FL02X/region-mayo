@@ -13,6 +13,7 @@ import {
   Instagram,
   Facebook,
   Church,
+  MessageSquare,
   Settings,
   Smartphone,
   ChevronDown,
@@ -65,8 +66,10 @@ export function MobileMenu({
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [activePath, setActivePath] = useState("");
   const [iglesiasOpen, setIglesiasOpen] = useState(false);
+  const [helpTouchFeedback, setHelpTouchFeedback] = useState(false);
   const isMobile = useIsMobile();
   const { isInstalled } = useInstallPrompt();
+  const openChatbotTimerRef = useRef<number | null>(null);
 
   const showSettings = isMounted && isMobile && isInstalled;
   const showInstall = isMounted && isMobile && !isInstalled;
@@ -84,6 +87,9 @@ export function MobileMenu({
       if (touchFeedbackTimerRef.current !== null) {
         window.clearTimeout(touchFeedbackTimerRef.current);
       }
+      if (openChatbotTimerRef.current !== null) {
+        window.clearTimeout(openChatbotTimerRef.current);
+      }
     };
   }, []);
 
@@ -98,6 +104,31 @@ export function MobileMenu({
       setTouchFeedbackHref(null);
       touchFeedbackTimerRef.current = null;
     }, 220);
+  };
+
+  const openHelpChatbot = () => {
+    triggerTouchFeedback("/ayuda");
+    setHelpTouchFeedback(true);
+
+    if (touchFeedbackTimerRef.current !== null) {
+      window.clearTimeout(touchFeedbackTimerRef.current);
+    }
+
+    if (openChatbotTimerRef.current !== null) {
+      window.clearTimeout(openChatbotTimerRef.current);
+    }
+
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(60);
+    }
+
+    setOpen(false);
+
+    openChatbotTimerRef.current = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("open-chatbot"));
+      setHelpTouchFeedback(false);
+      openChatbotTimerRef.current = null;
+    }, 160);
   };
 
   return (
@@ -352,6 +383,32 @@ export function MobileMenu({
               </div>
             );
           })}
+
+          <button
+            type="button"
+            onClick={openHelpChatbot}
+            onTouchStart={() => {
+              triggerTouchFeedback("/ayuda");
+            }}
+            className={cn(
+              "relative flex w-full items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] text-left transition-colors duration-150",
+              helpTouchFeedback && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
+              helpTouchFeedback
+                ? "bg-[#e8f1ff] shadow-[inset_0_0_0_1px_rgba(63,109,181,0.2)]"
+                : "hover:bg-gray-100 active:bg-[#e8f1ff]"
+            )}
+            aria-label="Abrir ayuda"
+          >
+            <MessageSquare className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="text-[16px] leading-tight uppercase font-normal text-[#00508F]">
+                Ayuda
+              </p>
+              <p className="mt-0.5 text-[14px] leading-tight uppercase font-normal text-[#00508F]/80">
+                Asistente virtual
+              </p>
+            </div>
+          </button>
 
           {pwaItem && (() => {
             const PwaIcon = pwaItem.icon;

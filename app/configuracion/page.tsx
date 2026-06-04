@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/app-header";
+import Chatbot from "@/components/shared/chatbot";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { PermissionsPanel } from "@/components/pwa/permissions-panel";
@@ -161,6 +162,7 @@ export default function ConfiguracionPage() {
           </div>
         </section>
       </div>
+      <Chatbot />
     </main>
   );
 }
