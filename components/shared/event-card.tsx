@@ -57,6 +57,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   formatRegionDateRange,
   formatRegionDayMonth,
+  getRegionCalendarParts,
 } from "@/lib/region-date";
 import { useTime } from "@/lib/time-context";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
@@ -156,6 +157,36 @@ const MONTHS = [
   "Noviembre",
   "Diciembre",
 ];
+
+function formatCompactEventDateRange(start: Date, end?: Date) {
+  const startParts = getRegionCalendarParts(start);
+  const startLabel = `${startParts.day} ${startParts.monthLabel}`;
+
+  if (!end || Number.isNaN(end.getTime()) || end.getTime() < start.getTime()) {
+    return startLabel;
+  }
+
+  const endParts = getRegionCalendarParts(end);
+  const isSameDay =
+    startParts.year === endParts.year &&
+    startParts.month === endParts.month &&
+    startParts.day === endParts.day;
+
+  if (isSameDay) return startLabel;
+
+  if (
+    startParts.year === endParts.year &&
+    startParts.month === endParts.month
+  ) {
+    return `${startParts.day}–${endParts.day} ${startParts.monthLabel}`;
+  }
+
+  if (startParts.year === endParts.year) {
+    return `${startParts.day} ${startParts.monthLabel}–${endParts.day} ${endParts.monthLabel}`;
+  }
+
+  return `${startParts.day} ${startParts.monthLabel} ${startParts.year}–${endParts.day} ${endParts.monthLabel} ${endParts.year}`;
+}
 
 const PASTOR_PENDING_LABEL = "Por confirmar";
 
@@ -262,6 +293,7 @@ export function EventCard({
   const dateLabel = isMultiDay
     ? formatRegionDateRange(event.date, event.endDate!)
     : formatRegionDayMonth(event.date);
+  const visualDateLabel = formatCompactEventDateRange(event.date, event.endDate);
   const eventDateTimeLabel = `${dateLabel} | ${event.time}`;
   const eventCoordinates = getEventCoordinates(event);
   const eventMapsUrl = buildEventMapsUrl(event);
@@ -1026,7 +1058,7 @@ export function EventCard({
               <div className="min-w-0 space-y-2.5 text-left">
                 <p className="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[16px] font-bold leading-none text-foreground md:mb-3 md:text-[18px]">
                   <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
-                  <span>{dateLabel}</span>
+                  <span>{visualDateLabel}</span>
                   <span className="text-[#2f5e93]" aria-hidden="true">
                     ·
                   </span>
@@ -1237,7 +1269,7 @@ export function EventCard({
               className="h-5 w-5 shrink-0 text-foreground mr-0.5"
               aria-hidden="true"
             />
-            <span className="truncate">{dateLabel}</span>
+            <span className="truncate">{visualDateLabel}</span>
           </div>
           <span className="shrink-0 tabular-nums text-foreground">
             {event.time}
