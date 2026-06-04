@@ -216,7 +216,7 @@ export function MobileHero({
 
   return (
     <section className="md:hidden w-full max-w-[950px] mx-auto bg-white" aria-label="Imagen principal móvil">
-      <div className="w-full aspect-[1.57] bg-black overflow-hidden flex items-center justify-center">
+      <div className="w-full aspect-[1.25] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
@@ -271,7 +271,7 @@ export function MobileHero({
               onClick={handleActivateGps}
               disabled={locationPhase === "loading"}
               data-loading={locationPhase === "loading"}
-              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-2 py-3 text-left text-[15px] font-bold leading-none transition-all duration-300 ease-in-out ${
+              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-2 py-3 text-left text-[14px] font-bold leading-none transition-all duration-300 ease-in-out ${
                 locationPhase === "success"
                   ? "border-[#4d7a68] bg-[#4d7a68] text-white shadow-[0_8px_22px_rgba(26,58,52,0.22)]"
                   : locationPhase === "loading"

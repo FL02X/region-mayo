@@ -383,10 +383,8 @@ export function EventCard({
     "hidden h-8 w-fit items-center gap-1.5 rounded-sm bg-primary px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
   const compactMobileMapsButtonClass = eventPrimaryMapsButtonClass;
   const gridMapsButtonClass = canRegister
-    ? `${eventUtilityButtonSmallClass} ml-2 shrink-0 self-center`
-    : `${eventPrimaryMapsButtonSmallClass} ml-2 shrink-0 self-center`;
-  const speakerBlockClass =
-    variant === "grid" ? "space-y-2 mt-[2px]" : "space-y-2 mt-[-4px]";
+    ? eventUtilityButtonSmallClass
+    : eventPrimaryMapsButtonSmallClass;
   const registerActionButton = !isPastEvent && canRegister ? (
     <Button
       onClick={() => onRegister(event)}
@@ -446,87 +444,92 @@ export function EventCard({
     <div className={containerClassName}>
       {/* En compact desktop la descripcion ya esta visible; aqui solo va cuando haga falta. */}
       {options.showDescription && hasDescription && (
-        <div className="space-y-1 mb-6">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            DESCRIPCION
+        <section className="space-y-3">
+          <p className="text-sm font-bold text-foreground">
+            Descripción
           </p>
-          <p className="text-[15px] leading-relaxed">{event.description}</p>
-        </div>
+          <p className="text-[15px] leading-relaxed mb-6">{event.description}</p>
+        </section>
       )}
 
-      {event.vestimenta && (
-        <div className="space-y-1">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-            INFORMACION
+      {(event.vestimenta ||
+        event.speakers?.pastorMensaje ||
+        event.speakers?.jovenPreside) && (
+        <section className="space-y-4">
+          <p className="mb-6 text-sm font-bold text-foreground">
+            Información
           </p>
-          <div className="flex items-start gap-2.5">
-            <Shirt
-              className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1.5"
-              aria-hidden="true"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="flex items-start gap-1.5 text-sm text-foreground">
-                <span className="min-w-0">
-                  <span className="text-foreground">Vestimenta: </span>
-                  <span className="text-muted-foreground">
-                    {formatVestimentaValue(event)}
-                  </span>
-                </span>
-                <button
-                  ref={vestimentaHelpRef}
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setShowVestimentaHelp((value) => !value);
-                  }}
-                  onPointerEnter={(event) => {
-                    if (event.pointerType === "mouse") setShowVestimentaHelp(true);
-                  }}
-                  onPointerLeave={(event) => {
-                    if (event.pointerType === "mouse") setShowVestimentaHelp(false);
-                  }}
-                  className="inline-flex h-5 w-5 items-center justify-center text-muted-foreground hover:text-foreground"
-                  aria-label="Informacion sobre la vestimenta"
-                  aria-expanded={showVestimentaHelp}
-                  style={{ minHeight: "unset", minWidth: "unset" }}
-                >
-                  <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                </button>
-              </p>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {event.vestimenta && (
+              <div className="flex items-start gap-2.5 border-l-2 border-[#2f5e93]/20 pl-3">
+                <Shirt
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Vestimenta
+                  </p>
+                  <div className="mt-1 mb-2 flex items-start gap-1.5 text-sm leading-snug text-foreground">
+                    <span className="min-w-0">{formatVestimentaValue(event)}</span>
+                    <button
+                      ref={vestimentaHelpRef}
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setShowVestimentaHelp((value) => !value);
+                      }}
+                      onPointerEnter={(event) => {
+                        if (event.pointerType === "mouse") setShowVestimentaHelp(true);
+                      }}
+                      onPointerLeave={(event) => {
+                        if (event.pointerType === "mouse") setShowVestimentaHelp(false);
+                      }}
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+                      aria-label="Información sobre la vestimenta"
+                      aria-expanded={showVestimentaHelp}
+                      style={{ minHeight: "unset", minWidth: "unset" }}
+                    >
+                      <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {event.speakers?.pastorMensaje && (
+              <div className="mb-2 flex items-start gap-2.5 border-l-2 border-[#2f5e93]/20 pl-3">
+                <User
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Pastor a cargo
+                  </p>
+                  <div className="mt-1 text-sm leading-snug text-foreground">
+                    {pastorNameNode}
+                  </div>
+                </div>
+              </div>
+            )}
+            {event.speakers?.jovenPreside && (
+              <div className="mb-5 flex items-start gap-2.5 border-l-2 border-[#2f5e93]/20 pl-3">
+                <Mic
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Preside
+                  </p>
+                  <p className="mt-1 text-sm leading-snug text-foreground">
+                    {event.speakers.jovenPreside}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
-
-      {(event.speakers?.pastorMensaje || event.speakers?.jovenPreside) && (
-        <div className={speakerBlockClass}>
-          {event.speakers.pastorMensaje && (
-            <div className="flex items-start gap-2.5">
-              <User
-                className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
-                aria-hidden="true"
-              />
-              <p className="text-sm text-foreground">
-                <span className="text-foreground">Pastor a cargo: </span>
-                <span className="text-muted-foreground">{pastorNameNode}</span>
-              </p>
-            </div>
-          )}
-          {event.speakers.jovenPreside && (
-            <div className="flex items-start gap-2.5 mb-7 mt-[-4px]">
-              <Mic
-                className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
-                aria-hidden="true"
-              />
-              <p className="text-sm text-foreground">
-                <span className="text-foreground">Preside: </span>
-                <span className="text-muted-foreground">
-                  {event.speakers.jovenPreside}
-                </span>
-              </p>
-            </div>
-          )}
-        </div>
+        </section>
       )}
 
       {event.alimentos?.enabled && (
@@ -917,7 +920,7 @@ export function EventCard({
             className="border border-border bg-background px-3 py-2 text-left text-xs leading-relaxed text-muted-foreground shadow-lg"
             style={vestimentaTooltipStyle}
           >
-            Todos pueden llevar cualquier ropa. Esta vestimenta es solo para jovenes miembros de la iglesia.
+            Todos pueden llevar cualquier ropa. Esta vestimenta es solo para jóvenes miembros de la iglesia.
           </div>,
           document.body,
         )
@@ -964,7 +967,7 @@ export function EventCard({
       aria-modal="true"
       aria-label="Información adicional del evento"
     >
-      {/* En offline evitamos abrir imagenes ampliadas que no siempre estan cacheadas. */}
+      {/* En offline evitamos abrir imágenes ampliadas que no siempre están cacheadas. */}
       {shouldShowOfflineNotice ? (
         <div
           className="relative w-full max-w-[360px] border border-border bg-background p-5 text-center shadow-2xl"
@@ -983,10 +986,10 @@ export function EventCard({
             <Wifi className="h-6 w-6 text-primary" aria-hidden="true" />
           </div>
           <p className="text-sm font-bold uppercase tracking-wide text-foreground">
-            Requiere conexion a internet
+            Requiere conexión a internet
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Para ahorrar datos y almacenamiento, las imagenes ampliadas no se descargan para uso sin conexion.
+            Para ahorrar datos y almacenamiento, las imágenes ampliadas no se descargan para uso sin conexión.
           </p>
         </div>
       ) : (
@@ -999,7 +1002,7 @@ export function EventCard({
             size="icon"
             onClick={() => setShowMoreInfoImage(false)}
             className="absolute -top-12 right-0 text-white hover:bg-white/20 rounded-full"
-            aria-label="Cerrar imagen de informacion"
+            aria-label="Cerrar imagen de información"
           >
             <X className="h-6 w-6" aria-hidden="true" />
           </Button>
@@ -1037,8 +1040,8 @@ export function EventCard({
             </span>
           </p>
 
-          <div className="flex gap-4 pb-5 pt-4 md:gap-5 md:pb-6 md:pt-5">
-            <div className="offline-hide-when-offline relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-[2px] bg-muted md:h-[128px] md:w-[128px]">
+          <div className="flex gap-4 pb-1 pt-4 md:gap-5 md:pb-0 md:pt-5">
+            <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted md:h-[136px] md:w-[136px]">
               {event.image ? (
                 <>
                   <Image
@@ -1046,18 +1049,18 @@ export function EventCard({
                     alt={event.title}
                     fill
                     className="offline-image-online object-cover"
-                    sizes="(min-width: 768px) 128px, 104px"
+                    sizes="(min-width: 768px) 136px, 112px"
                   />
                   {event.image !== "/placeholder.svg" ? (
                     <button
                       type="button"
                       onClick={() => setShowEventImage(true)}
-                      className="absolute bottom-1.5 left-1.5 inline-flex h-7 w-7 items-center justify-center rounded-[2px] border border-white/50 bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                      className="absolute bottom-1.5 left-1.5 inline-flex h-6 w-6 items-center justify-center rounded-[2px] border border-white/40 bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                       aria-haspopup="dialog"
                       aria-label={`Ampliar imagen de ${event.title}`}
                       style={{ minHeight: "unset", minWidth: "unset" }}
                     >
-                      <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      <Maximize2 className="h-3 w-3" aria-hidden="true" />
                     </button>
                   ) : null}
                 </>
@@ -1078,9 +1081,25 @@ export function EventCard({
                   <span>{eventTypeLabels[eventType]}</span>
                 </span>
 
-                <h3 className="mt-1 text-[17px] font-semibold leading-[1.35] text-foreground md:mt-0 md:text-[20px]">
-                  {event.title}
-                </h3>
+                <div className="mt-1 md:mt-0">
+                  <h3 className="text-[17px] font-semibold leading-[1.35] text-foreground md:text-[20px]">
+                    {event.title}
+                  </h3>
+                  <button
+                    onClick={handleToggle}
+                    className="mt-4 inline-flex max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:hidden"
+                    aria-expanded={isExpanded}
+                    aria-controls={`details-${event.id}`}
+                  >
+                    <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
 
                 {event.location && (
                   <p className="hidden min-w-0 items-start gap-2 text-[15px] text-muted-foreground leading-snug text-foreground md:flex md:text-[15px] md:mt-4 md:mb-0.5">
@@ -1134,7 +1153,7 @@ export function EventCard({
 
               <button
                 onClick={handleToggle}
-                className="mt-5 inline-flex max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                className="mt-5 hidden max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:inline-flex"
                 aria-expanded={isExpanded}
                 aria-controls={`details-${event.id}`}
               >
@@ -1146,6 +1165,7 @@ export function EventCard({
                   aria-hidden="true"
                 />
               </button>
+
             </div>
           </div>
 
@@ -1163,65 +1183,69 @@ export function EventCard({
                 }}
                 className="overflow-hidden"
               >
-                <div className="bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-1">
+                <div className="p-1 bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-1">
                   {hasDropdownCtas && (
                     <div className="pb-0 pt-4 md:pt-5">
                       {dropdownCtaButtons}
                     </div>
                   )}
                   {hasMobileCompactDetails && (
-                    <div className={`space-y-4 py-4 md:hidden ${hasDropdownCtas ? "pt-5" : ""}`}>
+                    <div className={`py-4 md:hidden ${hasDropdownCtas ? "pt-5" : ""}`}>
                       {(event.location || event.address) && (
-                        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                          <span>UBICACION</span>
-                        </p>
-                      )}
-                      {event.location && (
-                        <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground mt-[-7px]">
-                          <Church
-                            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                            aria-hidden="true"
-                          />
-                          <span className="min-w-0">{event.location}</span>
-                        </div>
-                      )}
+                        <section className="space-y-3">
+                          <p className="text-sm font-bold text-foreground">
+                            Ubicación
+                          </p>
+                          {event.location && (
+                            <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground">
+                              <Church
+                                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                aria-hidden="true"
+                              />
+                              <span className="min-w-0">{event.location}</span>
+                            </div>
+                          )}
 
-                      {event.address && (
-                        <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug mt-[-12px]">
-                          <MapPin
-                            className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                            aria-hidden="true"
-                          />
-                          <span className="min-w-0">{event.address}</span>
-                        </div>
-                      )}
+                          {event.address && (
+                            <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug">
+                              <MapPin
+                                className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                aria-hidden="true"
+                              />
+                              <span className="min-w-0">{event.address}</span>
+                            </div>
+                          )}
 
-                      {event.location && (
-                        <button
-                          onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
-                          className={compactMobileMapsButtonClass}
-                          aria-label={`Abrir ${event.location} en Google Maps`}
-                          style={{ minHeight: "unset", minWidth: "unset" }}
-                        >
-                          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                          Maps
-                        </button>
+                          {event.location && (
+                            <button
+                              onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
+                              className={compactMobileMapsButtonClass}
+                              aria-label={`Abrir ${event.location} en Google Maps`}
+                              style={{ minHeight: "unset", minWidth: "unset" }}
+                            >
+                              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                              Abrir en Maps
+                            </button>
+                          )}
+                        </section>
                       )}
 
                       {hasDescription && (
-                        <div className="space-y-1">
-                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-3">
-                            DESCRIPCION
+                        <section className={`${event.location || event.address ? "mt-5 pt-5" : ""} space-y-3`}>
+                          <p className="text-sm font-bold text-foreground">
+                            Descripción
                           </p>
                           <p className="text-[15px] leading-relaxed">
                             {event.description}
                           </p>
-                        </div>
+                        </section>
                       )}
                     </div>
                   )}
                   {hasDetails &&
-                    renderExpandedDetails("space-y-2 py-4 md:py-5")}
+                    renderExpandedDetails(
+                      `${hasMobileCompactDetails ? "pt-5" : "pt-4"} space-y-5 pb-4 md:py-5`,
+                    )}
                   <div className={`pb-4 md:pb-5 ${hasDetails || hasDropdownCtas ? "" : "pt-4 md:pt-5"}`}>
                     <div className="[&>div]:mt-0">
                       {eventActionButtons}
@@ -1321,8 +1345,8 @@ export function EventCard({
 
             {/* Location — shown before action buttons */}
             {event.location && (
-              <div className="mt-1 flex items-center gap-2.5">
-                <div className="flex-1 min-w-0 space-y-1">
+              <div className="mt-1 space-y-3">
+                <div className="min-w-0 space-y-1">
                   <div className="flex items-start gap-2">
                     <Church
                       className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
@@ -1353,7 +1377,7 @@ export function EventCard({
                   style={{ minHeight: "unset", minWidth: "unset" }}
                 >
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  Maps
+                  Abrir en Maps
                 </button>
               </div>
             )}
