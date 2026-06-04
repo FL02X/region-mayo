@@ -40,8 +40,10 @@ import {
   Music,
   GraduationCap,
   Gem,
+  Maximize2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Lightbox } from "@/components/shared/lightbox";
 import {
   CopyPrintActions,
   CopyToast,
@@ -209,6 +211,7 @@ export function EventCard({
   variant = "grid",
 }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showEventImage, setShowEventImage] = useState(false);
   const [showMoreInfoImage, setShowMoreInfoImage] = useState(false);
   const [showVestimentaHelp, setShowVestimentaHelp] = useState(false);
   const [showCopyToast, setShowCopyToast] = useState(false);
@@ -330,8 +333,9 @@ export function EventCard({
   const hasMobileCompactDetails =
     hasDescription || !!event.location || !!event.address;
   const hasDropdownCtas = hasAlbum || hasFacebookPost;
-  const actionMenuLabel = hasDetails ? "Ver más información" : "Opciones";
-  const actionMenuExpandedLabel = hasDetails
+  const compactHasDetails = variant === "compact" && hasMobileCompactDetails;
+  const actionMenuLabel = hasDetails || compactHasDetails ? "Ver detalles" : "Opciones";
+  const actionMenuExpandedLabel = hasDetails || compactHasDetails
     ? "Ocultar información"
     : "Ocultar opciones";
   const eventUtilityButtonClass =
@@ -985,18 +989,29 @@ export function EventCard({
         {eventPortals}
         <article
           id={event.id}
-          className=" scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
+          className="overflow-hidden rounded-[2px] border border-border/80 bg-card shadow-[0_8px_22px_-20px_rgba(15,25,40,0.38)] scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
-          <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-0 md:py-0 md:pb-[35px]">
-            <div className="offline-hide-when-offline relative h-[72px] w-[72px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
+          <div className="flex gap-4 p-4 md:gap-5 md:p-5">
+            <div className="offline-hide-when-offline relative h-[96px] w-[96px] shrink-0 overflow-hidden rounded-[2px] bg-muted md:h-[116px] md:w-[124px]">
               {event.image ? (
-                <Image
-                  src={event.image}
-                  alt={event.title}
-                  fill
-                  className="offline-image-online object-cover"
-                  sizes="(min-width: 768px) 112px, 72px"
-                />
+                <>
+                  <Image
+                    src={event.image}
+                    alt={event.title}
+                    fill
+                    className="offline-image-online object-cover"
+                    sizes="(min-width: 768px) 124px, 96px"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEventImage(true)}
+                    className="absolute bottom-1.5 left-1.5 inline-flex h-7 w-7 items-center justify-center rounded-[2px] border border-white/50 bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/75"
+                    aria-label={`Ampliar imagen de ${event.title}`}
+                    style={{ minHeight: "unset", minWidth: "unset" }}
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </>
               ) : (
                 <div className="offline-image-online absolute inset-0 flex items-center justify-center">
                   <Church
@@ -1008,22 +1023,22 @@ export function EventCard({
             </div>
 
           <div className="min-w-0 flex-1">
-              <div className="min-w-0 space-y-3 text-left">
-                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[17px] font-bold leading-snug text-foreground md:text-[19px] mb-3 md:mb-4">
-                  <CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <div className="min-w-0 space-y-2.5 text-left">
+                <p className="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[16px] font-bold leading-none text-foreground md:mb-3 md:text-[18px]">
+                  <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
                   <span>{dateLabel}</span>
-                  <span className="text-muted-foreground/70" aria-hidden="true">
-                    |
+                  <span className="text-[#2f5e93]" aria-hidden="true">
+                    ·
                   </span>
                   <span className="tabular-nums">{event.time}</span>
                 </p>
 
-                <span className={`mb-0.5 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] md:text-xs mb-2.5 ${eventTypeBadgeClass}`}>
+                <span className={`mb-1 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] md:text-xs ${eventTypeBadgeClass}`}>
                   <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>{eventTypeLabels[eventType]}</span>
                 </span>
 
-                <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px] mt-1 md:mt-0">
+                <h3 className="mt-1 text-[17px] font-bold leading-[1.28] text-foreground md:mt-0 md:text-[21px]">
                   {event.title}
                 </h3>
 
@@ -1055,55 +1070,41 @@ export function EventCard({
 
               </div>
 
-              <div className="mt-3 flex flex-col items-start gap-2 md:flex-row md:flex-wrap md:items-center md:mt-6">
-                {registerActionButton}
+              {(registerActionButton || event.location) && (
+                <div className="mt-4 flex flex-col items-start gap-2 md:mt-6 md:flex-row md:flex-wrap md:items-center">
+                  {registerActionButton}
 
-                <button
-                  onClick={handleToggle}
-                  className="inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10 md:hidden"
-                  aria-expanded={isExpanded}
-                  aria-controls={`details-${event.id}`}
-                  style={{ minHeight: "unset", minWidth: "unset" }}
-                >
-                  <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
-                  <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                      isExpanded ? "rotate-180" : ""
-                    }`}
-                    aria-hidden="true"
-                  />
-                </button>
-
-                <button
-                  onClick={handleToggle}
-                  className="hidden h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10 md:inline-flex"
-                  aria-expanded={isExpanded}
-                  aria-controls={`details-${event.id}`}
-                  style={{ minHeight: "unset", minWidth: "unset" }}
-                >
-                  <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
-                  <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                      isExpanded ? "rotate-180" : ""
-                    }`}
-                    aria-hidden="true"
-                  />
-                </button>
-
-                {event.location && (
-                  <button
-                    onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
-                    className={compactDesktopMapsButtonClass}
-                    aria-label={`Abrir ${event.location} en Google Maps`}
-                    style={{ minHeight: "unset", minWidth: "unset" }}
-                  >
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    Maps
-                  </button>
-                )}
-              </div>
+                  {event.location && (
+                    <button
+                      onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
+                      className={compactDesktopMapsButtonClass}
+                      aria-label={`Abrir ${event.location} en Google Maps`}
+                      style={{ minHeight: "unset", minWidth: "unset" }}
+                    >
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      Maps
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
+
+          <button
+            onClick={handleToggle}
+            className="flex w-full items-center justify-between border-t border-border/80 bg-muted/20 px-4 py-3 text-[14px] font-semibold text-[var(--brand-ink)] transition-colors hover:bg-primary/10"
+            aria-expanded={isExpanded}
+            aria-controls={`details-${event.id}`}
+            style={{ minHeight: "unset", minWidth: "unset" }}
+          >
+            <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+              aria-hidden="true"
+            />
+          </button>
 
           <AnimatePresence initial={false}>
             {isExpanded && (
@@ -1190,6 +1191,13 @@ export function EventCard({
 
         {vestimentaTooltipNode}
         {moreInfoModal}
+        {showEventImage && event.image ? (
+          <Lightbox
+            src={event.image}
+            alt={event.title}
+            onClose={() => setShowEventImage(false)}
+          />
+        ) : null}
       </>
     );
   }

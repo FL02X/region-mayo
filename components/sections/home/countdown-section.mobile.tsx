@@ -581,33 +581,33 @@ export function CountdownSection({
 
             <div className="p-5">
               <p
-                className="text-[11px] font-bold uppercase tracking-[0.18em] mb-3"
+                className="text-[12px] font-bold uppercase tracking-[0.18em] mb-4 ml-[-2px] mt-[-5px]"
                 style={{ color: "#2f5e93" }}
               >
                 Nuestro Próximo Evento
               </p>
 
               {/* Event title — serif for editorial weight */}
-              <h3 className="text-xl font-bold text-foreground leading-snug mb-3">
+              <h3 className="mb-4.5 text-[22px] font-bold leading-snug text-foreground">
                 {countdownEvent.title}
               </h3>
 
               {/* Meta: date + location */}
               <div className="space-y-1.5 mb-5 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-foreground">
                   <Calendar
-                    className="h-3.5 w-3.5 shrink-0"
+                    className="h-4 w-4 shrink-0"
                     aria-hidden="true"
                   />
-                  <span>
-                    <span className="font-bold">
-                      {formatRegionWeekdayDayMonth(countdownEvent.date)}
+                  <span className="inline-flex items-baseline gap-2 text-[15px] font-bold leading-none tabular-nums">
+                    <span>{formatRegionWeekdayDayMonth(countdownEvent.date)}</span>
+                    <span className="text-[#2f5e93]" aria-hidden="true">
+                      ·
                     </span>
-                    {" | "}
-                    {countdownEvent.time}
+                    <span>{countdownEvent.time}</span>
                   </span>
                 </div>
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 mt-2">
                   <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate text-foreground/80">
                     {countdownEvent.address || countdownEvent.location}

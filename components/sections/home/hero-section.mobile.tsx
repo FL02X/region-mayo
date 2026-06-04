@@ -216,7 +216,7 @@ export function MobileHero({
 
   return (
     <section className="md:hidden w-full max-w-[950px] mx-auto bg-white" aria-label="Imagen principal móvil">
-      <div className="w-full aspect-[1.38] bg-black overflow-hidden flex items-center justify-center">
+      <div className="w-full aspect-[1.57] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
@@ -252,7 +252,7 @@ export function MobileHero({
             <p className="text-[12px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
               Iglesia Gentil de Cristo
             </p>
-            <p className="font-sans mt-1 mb-1 text-[36px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
+            <p className="font-sans mt-1 mb-1 text-[30px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
               Calendario de la Región Mayo
             </p>
             <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">

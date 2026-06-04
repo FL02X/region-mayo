@@ -135,10 +135,10 @@ export function MonthNavigator({
   return (
     <>
       {/* Desktop: horizontal month picker */}
-      <div className="hidden md:flex items-center border border-border bg-card h-12 px-2">
+      <div className="hidden h-14 items-center gap-2 rounded-[2px] border border-border/80 bg-card px-3 shadow-[0_8px_22px_-20px_rgba(15,25,40,0.38)] md:flex">
         <button
           onClick={() => navigateMonth("prev")}
-          className="inline-flex items-center gap-1 h-9 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="inline-flex h-9 items-center gap-1 rounded-[2px] px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           aria-label="Mes anterior"
           title="Mes anterior"
           style={{ minHeight: "unset", minWidth: "unset" }}
@@ -150,7 +150,7 @@ export function MonthNavigator({
         <Popover open={isDesktopPickerOpen} onOpenChange={setIsDesktopPickerOpen}>
           <PopoverTrigger asChild>
             <button
-              className="mx-1 flex-1 h-9 px-3 border border-border text-sm font-semibold text-foreground bg-background hover:bg-muted/60 transition-colors inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-[2px] bg-muted/50 px-4 text-sm font-bold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               aria-label="Seleccionar mes y año"
               style={{ minHeight: "unset", minWidth: "unset" }}
             >
@@ -227,7 +227,7 @@ export function MonthNavigator({
 
         <button
           onClick={() => navigateMonth("next")}
-          className="inline-flex items-center gap-1 h-9 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="inline-flex h-9 items-center gap-1 rounded-[2px] px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           aria-label="Mes siguiente"
           title="Mes siguiente"
           style={{ minHeight: "unset", minWidth: "unset" }}
@@ -238,10 +238,10 @@ export function MonthNavigator({
       </div>
 
       {/* Mobile: month picker similar to desktop but adapted */}
-      <div className="md:hidden border border-border bg-card h-11 px-2 flex items-center">
+      <div className="flex h-14 items-center gap-2 rounded-[2px] border border-border/80 bg-card px-2.5 shadow-[0_8px_22px_-20px_rgba(15,25,40,0.38)] md:hidden">
         <button
           onClick={() => handleMobileMonthNavClick("prev")}
-          className="inline-flex items-center gap-1 h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="inline-flex h-10 items-center gap-0.5 rounded-[2px] px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           aria-label="Mes anterior"
           title="Mes anterior"
           style={{ minHeight: "unset", minWidth: "unset" }}
@@ -253,7 +253,7 @@ export function MonthNavigator({
         <Popover open={isMobilePickerOpen} onOpenChange={setIsMobilePickerOpen}>
           <PopoverTrigger asChild>
             <button
-              className="mx-1 flex-1 h-8 px-2 border border-border text-sm font-semibold text-foreground bg-background hover:bg-muted/60 transition-colors inline-flex items-center justify-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[2px] bg-muted/55 px-3 text-[15px] font-bold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               aria-label="Seleccionar mes y año"
               style={{ minHeight: "unset", minWidth: "unset" }}
             >
@@ -331,7 +331,7 @@ export function MonthNavigator({
 
         <button
           onClick={() => handleMobileMonthNavClick("next")}
-          className="inline-flex items-center gap-1 h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="inline-flex h-10 items-center gap-0.5 rounded-[2px] px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           aria-label="Mes siguiente"
           title="Mes siguiente"
           style={{ minHeight: "unset", minWidth: "unset" }}

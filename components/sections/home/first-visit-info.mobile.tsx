@@ -215,7 +215,7 @@ export function FirstVisitInfoMobile() {
             onClick={() => setIsOpen(true)}
             className="ml-14.5 flex h-8.5 items-center justify-between bg-[#255792] px-3 text-left text-[17px] font-normal leading-none text-white"
           >
-            <span>Ver información</span>
+            <span>Qué esperar al asistir</span>
             <ChevronRight className="h-6 w-6 stroke-[1.4]" aria-hidden="true" />
           </button>
         </div>
