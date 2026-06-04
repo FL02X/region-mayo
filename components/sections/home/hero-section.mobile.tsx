@@ -20,6 +20,9 @@ const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
 const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
 const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
 const GPS_CTA_COLOR = "";
+const HERO_WATERMARK_LEFT = "82%";
+const HERO_WATERMARK_TOP = "45%";
+const HERO_WATERMARK_OPACITY = 0.05;
 
 const bodyFont = Inter({
   subsets: ["latin"],
@@ -229,21 +232,31 @@ export function MobileHero({
         />
       </div>
 
-      <div className={`${bodyFont.className} w-full bg-[#21252b] text-white px-5 py-4`}>
-        <div className="flex items-center gap-0">
-          <img
-            src="/images/logo_hero.png"
-            alt="Logo de Iglesia Gentil de Cristo"
-            className="ml-[-0px] h-20 w-20 shrink-0 rounded-[2px] object-contain"
-            loading="eager"
-            decoding="async"
-          />
-          <div className="min-w-0 ml-2">
+      <div className={`${bodyFont.className} relative w-full overflow-hidden bg-[#21252b] px-5 py-4 text-white`}>
+        <img
+          src="/images/logo_hero.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute h-[155px] w-[155px] select-none object-contain"
+          style={{
+            left: HERO_WATERMARK_LEFT,
+            top: HERO_WATERMARK_TOP,
+            opacity: HERO_WATERMARK_OPACITY,
+            transform: "translate(-50%, -50%)",
+          }}
+          loading="eager"
+          decoding="async"
+        />
+        <div className="relative z-10 flex items-center">
+          <div className="ml-1 min-w-0">
             <p className="text-[12px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
               Iglesia Gentil de Cristo
             </p>
-            <p className="font-sans mt-1 mb-1 text-[24px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
-              Calendario de la Region Mayo
+            <p className="font-sans mt-1 mb-1 text-[36px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
+              Calendario de la Región Mayo
+            </p>
+            <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">
+              Eventos, avisos e información de nuestras iglesias de la Región Mayo.
             </p>
           </div>
         </div>
@@ -258,12 +271,12 @@ export function MobileHero({
               onClick={handleActivateGps}
               disabled={locationPhase === "loading"}
               data-loading={locationPhase === "loading"}
-              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-5.5 py-3.5 text-left text-[15px] font-bold leading-none transition-all duration-300 ease-in-out ${
+              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-2 py-3 text-left text-[15px] font-bold leading-none transition-all duration-300 ease-in-out ${
                 locationPhase === "success"
                   ? "border-[#4d7a68] bg-[#4d7a68] text-white shadow-[0_8px_22px_rgba(26,58,52,0.22)]"
                   : locationPhase === "loading"
                     ? "border-transparent bg-[#21252b] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
-                    : "border-[#005998] bg-transparent text-white shadow-[0_7px_40px_rgba(0,89,152,0.24)] hover:border-[#0b6ea6] hover:bg-[#0b6ea6]"
+                    : "border-[#005998] bg-transparent text-white hover:border-[#0b6ea6] hover:bg-[#0b6ea6]"
               }`}
               aria-label={
                 locationPhase === "success"
@@ -290,7 +303,7 @@ export function MobileHero({
                   <span className="min-w-0 transition-all duration-300 ease-in-out">
                     {locationPhase === "loading"
                       ? "Buscando iglesia cercana..."
-                      : "Encontrar iglesia cercana"}
+                      : "Ubicar la iglesia más cercana"}
                   </span>
                 )}
               </span>

@@ -660,7 +660,7 @@ export function CountdownSection({
             <div className="p-3">
               <p className="mb-2.5 inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#1f2833]">
                 <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Aviso</span>
+                <span>Aviso a la congregacion</span>
               </p>
                     <div>
                       <button
