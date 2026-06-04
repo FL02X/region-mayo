@@ -366,9 +366,10 @@ export function EventCard({
     hasDescription || !!event.location || !!event.address;
   const hasDropdownCtas = hasAlbum || hasFacebookPost;
   const compactHasDetails = variant === "compact" && hasMobileCompactDetails;
-  const actionMenuLabel = hasDetails || compactHasDetails ? "Ver detalles" : "Opciones";
-  const actionMenuExpandedLabel = hasDetails || compactHasDetails
-    ? "Ocultar información"
+  const gridHasDetails = variant === "grid" && hasDescription;
+  const actionMenuLabel = hasDetails || compactHasDetails || gridHasDetails ? "Ver detalles" : "Opciones";
+  const actionMenuExpandedLabel = hasDetails || compactHasDetails || gridHasDetails
+    ? "Ocultar detalles"
     : "Ocultar opciones";
   const eventUtilityButtonClass =
     "mt-[-25px] inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
@@ -442,7 +443,7 @@ export function EventCard({
     containerClassName = "space-y-2 pb-5 pt-5 px-5",
     options: { showDescription?: boolean } = {},
   ) => (
-    <div id={`details-${event.id}`} className={containerClassName}>
+    <div className={containerClassName}>
       {/* En compact desktop la descripcion ya esta visible; aqui solo va cuando haga falta. */}
       {options.showDescription && hasDescription && (
         <div className="space-y-1 mb-6">
@@ -1021,17 +1022,19 @@ export function EventCard({
         {eventPortals}
         <article
           id={event.id}
-          className="overflow-hidden bg-card scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
+          className="overflow-hidden bg-transparent scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 pt-5 text-[16px] font-semibold leading-none text-foreground md:px-5 md:pt-6 md:text-[17px]">
             <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
-            <span className="inline-flex items-center gap-2 whitespace-nowrap">
-              <span>{visualDateLabel}</span>
-              <span className="text-[#2f5e93]" aria-hidden="true">
-                ·
+            <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              <span className="whitespace-nowrap">{visualDateLabel}</span>
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <span className="text-[#2f5e93]" aria-hidden="true">
+                  ·
+                </span>
+                <span className="tabular-nums">{event.time}</span>
               </span>
             </span>
-            <span className="whitespace-nowrap tabular-nums">{event.time}</span>
           </p>
 
           <div className="flex gap-4 px-4 pb-5 pt-4 md:gap-5 md:px-5 md:pb-6 md:pt-5">
@@ -1049,7 +1052,8 @@ export function EventCard({
                     <button
                       type="button"
                       onClick={() => setShowEventImage(true)}
-                      className="absolute bottom-1.5 left-1.5 inline-flex h-7 w-7 items-center justify-center rounded-[2px] border border-white/50 bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/75"
+                      className="absolute bottom-1.5 left-1.5 inline-flex h-7 w-7 items-center justify-center rounded-[2px] border border-white/50 bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                      aria-haspopup="dialog"
                       aria-label={`Ampliar imagen de ${event.title}`}
                       style={{ minHeight: "unset", minWidth: "unset" }}
                     >
@@ -1107,7 +1111,11 @@ export function EventCard({
               </div>
 
               {(registerActionButton || event.location) && (
-                <div className="mt-4 flex flex-col items-start gap-2 md:mt-6 md:flex-row md:flex-wrap md:items-center">
+                <div
+                  className={`mt-3 flex-col items-start gap-2 md:mt-5 md:flex-row md:flex-wrap md:items-center ${
+                    registerActionButton ? "flex" : "hidden md:flex"
+                  }`}
+                >
                   {registerActionButton}
 
                   {event.location && (
@@ -1123,29 +1131,29 @@ export function EventCard({
                   )}
                 </div>
               )}
+
+              <button
+                onClick={handleToggle}
+                className="mt-5 inline-flex max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                aria-expanded={isExpanded}
+                aria-controls={`details-${event.id}`}
+              >
+                <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
             </div>
           </div>
-
-          <button
-            onClick={handleToggle}
-            className="flex w-full items-center justify-between px-4 pb-4 pt-1 text-[14px] font-semibold text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] md:px-5 md:pb-5"
-            aria-expanded={isExpanded}
-            aria-controls={`details-${event.id}`}
-            style={{ minHeight: "unset", minWidth: "unset" }}
-          >
-            <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
-            <ChevronDown
-              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                isExpanded ? "rotate-180" : ""
-              }`}
-              aria-hidden="true"
-            />
-          </button>
 
           <AnimatePresence initial={false}>
             {isExpanded && (
               <motion.div
                 key="compact-details"
+                id={`details-${event.id}`}
                 initial={isMobile ? { height: 0, opacity: 0 } : false}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={isMobile ? { height: 0, opacity: 0 } : undefined}
@@ -1155,7 +1163,7 @@ export function EventCard({
                 }}
                 className="overflow-hidden"
               >
-                <div className="border-t border-border/80 bg-muted/20">
+                <div className="bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-1">
                   {hasDropdownCtas && (
                     <div className="px-3 pb-0 pt-4 md:px-5 md:pt-5">
                       {dropdownCtaButtons}
@@ -1227,7 +1235,7 @@ export function EventCard({
 
         {vestimentaTooltipNode}
         {moreInfoModal}
-        {showEventImage && event.image ? (
+        {showEventImage && event.image && event.image !== "/placeholder.svg" ? (
           <Lightbox
             src={event.image}
             alt={event.title}
@@ -1244,19 +1252,35 @@ export function EventCard({
       <article
         id={event.id}
         data-eq-card
-        className="desktop-card-lift self-start bg-card border border-border/80 overflow-hidden scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+        className="self-start overflow-hidden border border-border/70 bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
       >
         {/* ── Image with date/time strip ── */}
         <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
           {event.image ? (
-            <Image
-              src={event.image}
-              alt={event.title}
-              fill
-              className="offline-image-online object-cover"
-              loading="eager"
-              priority
-            />
+            <>
+              <Image
+                src={event.image}
+                alt={event.title}
+                fill
+                className="offline-image-online object-cover"
+                loading="eager"
+                priority
+              />
+              {event.image !== "/placeholder.svg" ? (
+                <button
+                  type="button"
+                  onClick={() => setShowEventImage(true)}
+                  className="group absolute inset-0 z-10 cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  aria-haspopup="dialog"
+                  aria-label={`Ampliar imagen de ${event.title}`}
+                  style={{ minHeight: "unset", minWidth: "unset" }}
+                >
+                  <span className="absolute bottom-2 left-2 inline-flex h-8 w-8 items-center justify-center rounded-[2px] border border-white/50 bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors group-hover:bg-black/75">
+                    <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                </button>
+              ) : null}
+            </>
           ) : (
             <div className="offline-image-online absolute inset-0 flex items-center justify-center">
               <Church
@@ -1267,16 +1291,17 @@ export function EventCard({
           )}
         </div>
 
-        <div className="flex w-full items-center justify-between gap-3 border-b border-border/80 bg-[#ffffff] px-4 py-3 text-[17px] font-semibold leading-tight text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] md:text-[17px]">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <CalendarDays
-              className="h-5 w-5 shrink-0 text-foreground mr-0.5"
-              aria-hidden="true"
-            />
-            <span className="truncate">{visualDateLabel}</span>
-          </div>
-          <span className="shrink-0 tabular-nums text-foreground">
-            {event.time}
+        <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 bg-transparent px-4 py-3 text-[17px] font-semibold leading-tight text-foreground md:text-[17px]">
+          <CalendarDays
+            className="h-5 w-5 shrink-0 text-[#2f5e93]"
+            aria-hidden="true"
+          />
+          <span className="whitespace-nowrap">{visualDateLabel}</span>
+          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+            <span className="text-[#2f5e93]" aria-hidden="true">
+              ·
+            </span>
+            <span className="tabular-nums">{event.time}</span>
           </span>
         </div>
 
@@ -1290,13 +1315,13 @@ export function EventCard({
             </span>
 
             {/* Title — Playfair Display for stronger editorial weight */}
-            <h3 className="mb-7 text-[21px] font-semibold leading-[1.35] tracking-tight text-foreground md:text-[22px]">
+            <h3 className={`${event.location ? "mb-5" : "mb-0"} text-[21px] font-semibold leading-[1.35] tracking-tight text-foreground md:text-[22px]`}>
               {event.title}
             </h3>
 
             {/* Location — shown before action buttons */}
             {event.location && (
-              <div className="mt-1 mb-4 flex items-center gap-2.5">
+              <div className="mt-1 flex items-center gap-2.5">
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-start gap-2">
                     <Church
@@ -1347,73 +1372,70 @@ export function EventCard({
             </div>
           )}
 
-          {/* El menu siempre incluye copiar/imprimir, aunque no haya mas detalles. */}
-          <div className="-mx-5 mb-0 mt-6 border-t border-border">
-            <button
-              onClick={handleToggle}
-              className="w-full px-5 flex items-center justify-between py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              aria-expanded={isExpanded}
-              aria-controls={`details-${event.id}`}
-              style={{
-                minHeight: "unset",
-                minWidth: "unset",
-                background: "none",
-                border: "none",
-              }}
-            >
-              <span>
-                {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
-              </span>
-              <ChevronDown
-                className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                  isExpanded ? "rotate-180" : ""
-                }`}
-                aria-hidden="true"
-              />
-            </button>
+          <button
+            onClick={handleToggle}
+            className="mt-8 inline-flex max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            aria-expanded={isExpanded}
+            aria-controls={`details-${event.id}`}
+          >
+            <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+              aria-hidden="true"
+            />
+          </button>
 
-            {/* El mismo renderer alimenta grid y compact para evitar duplicar detalles. */}
-            <AnimatePresence initial={false}>
-              {isExpanded && (
-                <motion.div
-                  key="grid-details"
-                  initial={isMobile ? { height: 0, opacity: 0 } : false}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={isMobile ? { height: 0, opacity: 0 } : undefined}
-                  transition={isMobile ? expandTransition : { duration: 0 }}
-                  onAnimationComplete={() => {
-                    if (isExpanded) scrollExpandedDetailsIntoView();
-                  }}
-                  className="overflow-hidden"
-                >
-                  {hasDropdownCtas && (
-                    <div className="px-5 pb-0 pt-2.5 md:pt-2.5 mt-1">
-                      {dropdownCtaButtons}
-                    </div>
-                  )}
-                  {(hasDetails || hasDescription) &&
-                    renderExpandedDetails(
-                      hasDropdownCtas
-                        ? "space-y-1 pb-0 pt-5 px-5"
-                        : "space-y-1 pb-0 pt-2.5 md:pt-2.5 px-5 mt-1",
-                      { showDescription: true },
-                    )}
-                  <div
-                    className={`px-5 pb-5 ${
-                      hasDetails || hasDropdownCtas ? "[&>div]:mt-5" : "[&>div]:mt-0"
-                    }`}
-                  >
-                    {eventActionButtons}
+          {/* El mismo renderer alimenta grid y compact para evitar duplicar detalles. */}
+          <AnimatePresence initial={false}>
+            {isExpanded && (
+              <motion.div
+                key="grid-details"
+                id={`details-${event.id}`}
+                initial={isMobile ? { height: 0, opacity: 0 } : false}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+                transition={isMobile ? expandTransition : { duration: 0 }}
+                onAnimationComplete={() => {
+                  if (isExpanded) scrollExpandedDetailsIntoView();
+                }}
+                className="-mx-5 mt-1 overflow-hidden bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-2"
+              >
+                {hasDropdownCtas && (
+                  <div className="px-5 pb-0 pt-4">
+                    {dropdownCtaButtons}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                )}
+                {(hasDetails || hasDescription) &&
+                  renderExpandedDetails(
+                    hasDropdownCtas
+                      ? "space-y-1 pb-0 pt-5 px-5"
+                      : "space-y-1 pb-0 pt-4 px-5",
+                    { showDescription: true },
+                  )}
+                <div
+                  className={`px-5 pb-5 ${
+                    hasDetails || hasDropdownCtas ? "[&>div]:mt-5" : "[&>div]:mt-4"
+                  }`}
+                >
+                  {eventActionButtons}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </article>
 
       {vestimentaTooltipNode}
       {moreInfoModal}
+      {showEventImage && event.image && event.image !== "/placeholder.svg" ? (
+        <Lightbox
+          src={event.image}
+          alt={event.title}
+          onClose={() => setShowEventImage(false)}
+        />
+      ) : null}
     </>
   );
 }
