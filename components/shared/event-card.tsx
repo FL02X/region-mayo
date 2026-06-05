@@ -2,6 +2,7 @@
 
 import {
   type CSSProperties,
+  type MouseEvent,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -234,6 +235,8 @@ const expandTransition = {
   duration: 0.24,
   ease: [0.22, 1, 0.36, 1] as const,
 };
+const DETAILS_TOGGLE_TOP_MARGIN = 96;
+const DETAILS_PREVIEW_BOTTOM_MARGIN = 180;
 
 export function EventCard({
   event,
@@ -256,6 +259,7 @@ export function EventCard({
   const activePrintEventRef = useRef<Event | null>(null);
   const printCleanupTimerRef = useRef<number | null>(null);
   const printInFlightRef = useRef(false);
+  const detailsToggleButtonRef = useRef<HTMLButtonElement | null>(null);
   const { isStandalone } = useInstallPrompt();
   const { isOnline } = useConnectivity();
   const shouldShowOfflineNotice = isStandalone && !isOnline;
@@ -271,13 +275,51 @@ export function EventCard({
     if (event.facebookPostUrl) window.open(event.facebookPostUrl, "_blank");
   };
 
-  const handleToggle = () => {
+  const handleToggle = (toggleEvent: MouseEvent<HTMLButtonElement>) => {
+    detailsToggleButtonRef.current = toggleEvent.currentTarget;
     setIsExpanded((prev) => !prev);
   };
 
   const scrollExpandedDetailsIntoView = () => {
-    const el = document.getElementById(`details-${event.id}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const button = detailsToggleButtonRef.current;
+    const details = document.getElementById(`details-${event.id}`);
+    if (!button || !details) return;
+    if (button.getAttribute("aria-expanded") !== "true") return;
+
+    const buttonRect = button.getBoundingClientRect();
+    const detailsRect = details.getBoundingClientRect();
+    const viewportHeight =
+      window.innerHeight || document.documentElement.clientHeight;
+    const currentScrollY = window.scrollY;
+
+    if (buttonRect.top < DETAILS_TOGGLE_TOP_MARGIN) {
+      window.scrollTo({
+        top: Math.max(
+          0,
+          currentScrollY + buttonRect.top - DETAILS_TOGGLE_TOP_MARGIN,
+        ),
+        behavior: "smooth",
+      });
+      return;
+    }
+
+    const detailsPreviewTop = viewportHeight - DETAILS_PREVIEW_BOTTOM_MARGIN;
+    const scrollDownForDetails = Math.max(0, detailsRect.top - detailsPreviewTop);
+    const scrollDownWhileKeepingButtonVisible = Math.max(
+      0,
+      buttonRect.top - DETAILS_TOGGLE_TOP_MARGIN,
+    );
+    const scrollDown = Math.min(
+      scrollDownForDetails,
+      scrollDownWhileKeepingButtonVisible,
+    );
+
+    if (scrollDown > 0) {
+      window.scrollTo({
+        top: currentScrollY + scrollDown,
+        behavior: "smooth",
+      });
+    }
   };
 
   /* ── state derivations ── */
@@ -459,9 +501,9 @@ export function EventCard({
           <p className="mb-6 text-sm font-bold text-foreground">
             Información
           </p>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-3 border-l-2 border-[#2f5e93]/20 py-0.5 pl-3 mb-8">
             {event.vestimenta && (
-              <div className="flex items-start gap-2.5 border-l-2 border-[#2f5e93]/20 pl-3">
+              <div className="flex items-start gap-2.5">
                 <Shirt
                   className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   aria-hidden="true"
@@ -497,7 +539,7 @@ export function EventCard({
               </div>
             )}
             {event.speakers?.pastorMensaje && (
-              <div className="mb-2 flex items-start gap-2.5 border-l-2 border-[#2f5e93]/20 pl-3">
+              <div className="flex items-start gap-2.5">
                 <User
                   className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   aria-hidden="true"
@@ -513,7 +555,7 @@ export function EventCard({
               </div>
             )}
             {event.speakers?.jovenPreside && (
-              <div className="mb-5 flex items-start gap-2.5 border-l-2 border-[#2f5e93]/20 pl-3">
+              <div className="flex items-start gap-2.5">
                 <Mic
                   className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   aria-hidden="true"

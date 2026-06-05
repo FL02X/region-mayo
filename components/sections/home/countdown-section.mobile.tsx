@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
 import Image from "next/image";
+import { IBM_Plex_Sans } from "next/font/google";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -46,6 +47,12 @@ interface TimeUnit {
 }
 
 const CUSTOM_BANNER_ACCENT = "#e36600";
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["700"],
+  display: "swap",
+  fallback: ["Arial", "Arial Unicode MS", "sans-serif"],
+});
 const MOBILE_FLOATING_CARD_CLASS =
   "rounded-[2px] shadow-[0_12px_24px_-22px_rgba(15,25,40,0.42),0_3px_10px_-9px_rgba(15,25,40,0.22),0_1px_0_rgba(255,255,255,0.82)_inset]";
 const MOBILE_FLOATING_BORDER_CLASS =
@@ -569,26 +576,28 @@ export function CountdownSection({
 
   return (
     <section
-      className="pt-[30px] bg-background px-4 pt-[13px] pb-0 mb-7"
+      className="pt-[30px] bg-background px-4 pt-[10px] pb-0 mb-0"
       data-countdown-section
       aria-label="Sección destacada"
     >
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* Spotlight: event */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
-          <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-8 ${MOBILE_FLOATING_CARD_CLASS}`}>
+          <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="h-[3px]" style={{ backgroundColor: "#2f5e93" }} aria-hidden="true" />
 
             <div className="p-5">
               <p
-                className="text-[12px] font-bold uppercase tracking-[0.18em] mb-4 ml-[-2px] mt-[-5px]"
+                className="text-[11px] font-bold uppercase tracking-[0.22em] mb-2.5 ml-[-2px] mt-[-5px]"
                 style={{ color: "#2f5e93" }}
               >
                 Nuestro Próximo Evento
               </p>
 
               {/* Event title — serif for editorial weight */}
-              <h3 className="mb-4.5 text-[22px] font-bold leading-snug text-foreground">
+              <h3
+                className={`${ibmPlexSans.className} mb-5.5 text-[25px] font-extrabold leading-snug text-foreground leading-[1.13] tracking-[-0.025em]`}
+              >
                 {countdownEvent.title}
               </h3>
 

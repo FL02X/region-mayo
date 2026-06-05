@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Inter } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Home,
@@ -217,6 +217,7 @@ export function AppHeader({
   behavior = "fixed",
 }: AppHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
   const [activePath, setActivePath] = useState<string>("");
   const desktopTrackRef = useRef<HTMLDivElement | null>(null);
@@ -270,8 +271,70 @@ export function AppHeader({
 
   useEffect(() => {
     setIsMounted(true);
-    setActivePath(window.location.pathname);
   }, []);
+
+  useEffect(() => {
+    setActivePath(pathname || window.location.pathname);
+  }, [pathname]);
+
+  /*
+   * Previous mobile title reveal behavior:
+   *
+   * const isHomePath = pathname === "/";
+   * const [mobileTitleVisible, setMobileTitleVisible] = useState(false);
+   *
+   * useEffect(() => {
+   *   if (!isHomePath) {
+   *     setMobileTitleVisible(true);
+   *     return;
+   *   }
+   *
+   *   const mobileQuery = window.matchMedia("(max-width: 767px)");
+   *   let frameId = 0;
+   *
+   *   const updateMobileTitleVisibility = () => {
+   *     if (!mobileQuery.matches) {
+   *       setMobileTitleVisible(true);
+   *       return;
+   *     }
+   *
+   *     const heroTitleBand = document.querySelector<HTMLElement>("[data-mobile-hero-title-band]");
+   *     if (!heroTitleBand) {
+   *       setMobileTitleVisible(true);
+   *       return;
+   *     }
+   *
+   *     const header = document.querySelector<HTMLElement>("[data-app-header]");
+   *     const headerHeight = header?.offsetHeight ?? 51;
+   *     const shouldShowMobileTitle = heroTitleBand.getBoundingClientRect().bottom <= headerHeight + 1;
+   *     setMobileTitleVisible((current) =>
+   *       current === shouldShowMobileTitle ? current : shouldShowMobileTitle
+   *     );
+   *   };
+   *
+   *   const scheduleUpdate = () => {
+   *     if (frameId) return;
+   *     frameId = window.requestAnimationFrame(() => {
+   *       frameId = 0;
+   *       updateMobileTitleVisibility();
+   *     });
+   *   };
+   *
+   *   updateMobileTitleVisibility();
+   *   window.addEventListener("scroll", scheduleUpdate, { passive: true });
+   *   window.addEventListener("resize", scheduleUpdate);
+   *   mobileQuery.addEventListener("change", scheduleUpdate);
+   *
+   *   return () => {
+   *     if (frameId) {
+   *       window.cancelAnimationFrame(frameId);
+   *     }
+   *     window.removeEventListener("scroll", scheduleUpdate);
+   *     window.removeEventListener("resize", scheduleUpdate);
+   *     mobileQuery.removeEventListener("change", scheduleUpdate);
+   *   };
+   * }, [isHomePath]);
+   */
 
   const handleDesktopTrackMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const track = desktopTrackRef.current;
@@ -311,7 +374,10 @@ export function AppHeader({
 
   return (
     <>
-      <header className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[51px] md:h-[45px] shadow-none`}>
+      <header
+        data-app-header
+        className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-[#21252b] border-b border-white/10 text-white h-[51px] md:h-[45px] shadow-none`}
+      >
         <div className="h-full max-w-[950px] mx-auto relative z-[61]">
           {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
           <div
@@ -453,6 +519,26 @@ export function AppHeader({
                 </span>
                 <span className="text-[#c9c9c9] text-[11px] opacity-90">Region Mayo</span>
               </div>
+
+              {/*
+              Previous mobile title reveal JSX:
+
+              <div className="ml-2 h-[29px] overflow-hidden">
+                <div
+                  className={cn(
+                    "flex flex-col justify-center leading-tight transition-transform duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none will-change-transform",
+                    !isHomePath || mobileTitleVisible
+                      ? "translate-y-0"
+                      : "pointer-events-none -translate-y-full"
+                  )}
+                >
+                  <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
+                    IGC
+                  </span>
+                  <span className="text-[#c9c9c9] text-[11px] opacity-90">Region Mayo</span>
+                </div>
+              </div>
+              */}
             </div>
 
             {/* Spacer */}

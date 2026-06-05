@@ -576,7 +576,7 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
 
   return (
     <div
-      className="w-full relative pb-20 bg-[#f1f1f1]"
+      className="w-full relative bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
     >
@@ -590,7 +590,7 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
         </div>,
         document.body
       )}
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] focus:outline-none">
         {/* Main Content Area */}
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}

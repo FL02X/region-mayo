@@ -232,7 +232,10 @@ export function MobileHero({
         />
       </div>
 
-      <div className={`${bodyFont.className} relative w-full overflow-hidden bg-[#21252b] px-5 py-4 text-white`}>
+      <div
+        data-mobile-hero-title-band
+        className={`${bodyFont.className} relative w-full overflow-hidden bg-[#21252b] px-5 py-4 text-white`}
+      >
         <img
           src="/images/logo_hero.png"
           alt=""
@@ -252,7 +255,7 @@ export function MobileHero({
             <p className="text-[12px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
               Iglesia Gentil de Cristo
             </p>
-            <p className="font-sans mt-1 mb-1 text-[30px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
+            <p className="font-sans mt-1 mb-1 text-[27px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
               Calendario de la Región Mayo
             </p>
             <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">

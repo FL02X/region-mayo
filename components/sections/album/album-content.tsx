@@ -406,10 +406,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
       (forcePortraitLayout || (!forceLandscapeLayout && selectedVideoOrientation === "portrait"));
 
     return (
-      <div className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1] pb-20" id="main-content">
+      <div className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
         <motion.div
           key={`album-detail-${album.slug}-${shouldAnimate ? "mobile" : "static"}`}
-          className="desktop-content-pane mx-auto min-h-screen max-w-[950px] overflow-x-clip bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]"
+          className="desktop-content-pane mx-auto max-w-[950px] overflow-x-clip bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]"
           {...pageMotionProps}
         >
           <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
@@ -603,10 +603,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   }
 
   return (
-    <div className="w-full overflow-x-clip bg-[#f1f1f1] pb-20" id="main-content">
+    <div className="w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
       <motion.div
         key={`album-list-${shouldAnimate ? "mobile" : "static"}`}
-        className="desktop-content-pane mx-auto min-h-screen max-w-[950px] overflow-x-clip bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]"
+        className="desktop-content-pane mx-auto max-w-[950px] overflow-x-clip bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]"
         {...pageMotionProps}
       >
         <div className="mx-auto max-w-4xl md:px-4 md:pt-1">

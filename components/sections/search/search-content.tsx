@@ -269,8 +269,8 @@ function SearchContentInner({ data }: SearchContentProps) {
 
   if (isEntering && isMobile) {
     return (
-      <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
-        <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
+      <div className="w-full relative bg-[#f1f1f1]" id="main-content">
+        <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] focus:outline-none">
           <div className="max-w-4xl mx-auto">
             <div className="py-14 flex items-center justify-center" aria-live="polite" aria-label="Cargando resultados">
               <Loader2 className="h-16 w-16 text-[#9ca3af] animate-spin" strokeWidth={2.25} />
@@ -282,8 +282,8 @@ function SearchContentInner({ data }: SearchContentProps) {
   }
 
   return (
-    <div className="w-full relative pb-20 bg-[#f1f1f1]" id="main-content">
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen focus:outline-none">
+    <div className="w-full relative bg-[#f1f1f1]" id="main-content">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] focus:outline-none">
         
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           <div className="mb-4 space-y-3 rounded-[2px] border border-[#d7dbe1] bg-[#e9eaec] px-2.5 py-2.5">

@@ -4,27 +4,54 @@ import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 export function GoToCalendar() {
-  const [visible, setVisible] = useState(false);
-
-  const hiddenForNow = true;
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const checkTop = () => {
-      setVisible(window.scrollY <= 8);
+    let frameId = 0;
+
+    const updateVisibility = () => {
+      const target = document.getElementById("calendario");
+      if (!target) {
+        setVisible(true);
+        return;
+      }
+
+      const header = document.querySelector<HTMLElement>("[data-app-header]");
+      const headerHeight = header?.offsetHeight ?? 51;
+      const calendarTop = target.getBoundingClientRect().top + window.scrollY;
+      const shouldShow = window.scrollY < calendarTop - headerHeight - 1;
+
+      setVisible((current) => (current === shouldShow ? current : shouldShow));
     };
 
-    checkTop();
-    window.addEventListener("scroll", checkTop, { passive: true });
-    return () => window.removeEventListener("scroll", checkTop);
-  }, []);
+    const scheduleUpdate = () => {
+      if (frameId) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0;
+        updateVisibility();
+      });
+    };
 
-  if (hiddenForNow || !visible) return null;
+    updateVisibility();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, []);
 
   const handleClick = () => {
     const target = document.getElementById("calendario");
     if (target) {
+      const header = document.querySelector<HTMLElement>("[data-app-header]");
+      const headerHeight = header?.offsetHeight ?? 51;
       const rect = target.getBoundingClientRect();
-      const top = rect.top + window.scrollY - 54;
+      const top = rect.top + window.scrollY - headerHeight;
       window.scrollTo({ top, behavior: "smooth" });
     }
   };
@@ -32,24 +59,24 @@ export function GoToCalendar() {
   return (
     <div
       aria-hidden={!visible}
-      className="fixed left-0 right-0 bottom-0 z-[40] md:hidden pointer-events-none"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 12px)" }}
+      className="fixed bottom-4 right-4 z-[50] md:hidden pointer-events-none"
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingRight: "env(safe-area-inset-right)",
+      }}
     >
-      {/* Overlay removed per request; button will sit flush to content */}
-
-      <div className="pointer-events-auto w-full relative z-10">
-        <div className="absolute -top-6 left-0 right-0 h-8 pointer-events-none">
-          <div className="h-full bg-gradient-to-t from-[#2f5e93]/24 to-transparent backdrop-blur-sm" />
-        </div>
-        <button
-          onClick={handleClick}
-          aria-label="Ir al Calendario"
-          className="w-full flex items-center justify-center gap-2 h-14 rounded-none bg-gradient-to-t from-[#2f5e93]/20 to-[#2f5e93]/8 backdrop-blur-sm text-[#05223a] text-base font-semibold px-3"
-        >
-          <span className="leading-tight">Ir al Calendario</span>
-          <ChevronDown className="h-6 w-8 transform scale-x-125" strokeWidth={2} />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-label="Ir al inicio del calendario"
+        className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#21252b] text-white shadow-[0_8px_22px_rgba(15,23,42,0.24)] transition-[opacity,transform,box-shadow,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:translate-y-0.5 active:shadow-[0_5px_14px_rgba(15,23,42,0.2)] ${
+          visible
+            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+            : "pointer-events-none translate-y-2 scale-95 opacity-0"
+        }`}
+      >
+        <ChevronDown className="h-4 w-4" aria-hidden="true" strokeWidth={1.9} />
+      </button>
     </div>
   );
 }

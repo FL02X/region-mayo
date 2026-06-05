@@ -251,8 +251,8 @@ export function EventsFeed({
   };
 
   return (
-    <div className="w-full relative bg-[#f1f1f1] mb-20" /* [#f1f1f1] */ data-events-feed="true">
-      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] min-h-screen pb-20">
+    <div className="w-full relative bg-[#f1f1f1]" /* [#f1f1f1] */ data-events-feed="true">
+      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a]">
         {/* Priority spotlight section (mobile only) */}
         <div className="offline-hide-when-offline md:hidden">
           <CountdownSection
@@ -369,7 +369,7 @@ export function EventsFeed({
                 animate={{ opacity: 1, y: 0 }}
                 exit={isMobile ? { opacity: 0, y: -4 } : undefined}
                 transition={isMobile ? calendarFadeTransition : { duration: 0 }}
-                className="p-2 mx-0 flex flex-col gap-5 pb-14 md:gap-6"
+                className="p-0.5 mx-0 flex flex-col gap-5 pb-14 md:gap-6"
               >
                 {filteredEvents.map((event) => (
                   <EventCard
