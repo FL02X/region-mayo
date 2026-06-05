@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
 import Image from "next/image";
-import { IBM_Plex_Sans } from "next/font/google";
+import { Newsreader } from "next/font/google";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -47,16 +47,17 @@ interface TimeUnit {
 }
 
 const CUSTOM_BANNER_ACCENT = "#e36600";
-const ibmPlexSans = IBM_Plex_Sans({
+const editorialFont = Newsreader({
   subsets: ["latin"],
-  weight: ["700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
-  fallback: ["Arial", "Arial Unicode MS", "sans-serif"],
+  preload: false,
 });
+// Paper aesthetic: shadows were removed from the shared mobile card helpers.
 const MOBILE_FLOATING_CARD_CLASS =
-  "rounded-[2px] shadow-[0_12px_24px_-22px_rgba(15,25,40,0.42),0_3px_10px_-9px_rgba(15,25,40,0.22),0_1px_0_rgba(255,255,255,0.82)_inset]";
+  "rounded-[2px]";
 const MOBILE_FLOATING_BORDER_CLASS =
-  "rounded-[2px] shadow-[0_8px_18px_-17px_rgba(15,25,40,0.36),0_2px_7px_-6px_rgba(15,25,40,0.18)]";
+  "rounded-[2px]";
 
 function FlipCountdownCell({ value, label }: TimeUnit) {
   const [displayValue, setDisplayValue] = useState(value);
@@ -246,10 +247,10 @@ function MobilePrayerSpotlightCard({
 
         {mode === "collect" ? (
           <>
-            <h3 className="mb-2 text-[22px] font-bold leading-snug text-[#1f2833]">
+            <h3 className={`${editorialFont.className} type-human-title mb-2 text-[22px] font-bold leading-snug`}>
               Muro de oraciones · comparte tu petición
             </h3>
-            <p className="mb-5 text-[15px] leading-relaxed text-[#5b6876]">
+            <p className="type-system mb-5 text-[15px] leading-relaxed">
               Tu mensaje es anónimo y será revisado por el equipo.
             </p>
             <button
@@ -268,7 +269,7 @@ function MobilePrayerSpotlightCard({
                 <div className="w-full mt-3.5 px-[3px] ml-[-15px]">
                   <p
                     ref={prayerTextRef}
-                    className={`${textSize} text-justify font-normal italic leading-[1.62] text-[#1f2833] px-[2px]`}
+                    className={`${editorialFont.className} type-human ${textSize} text-justify font-normal italic leading-[1.62] px-[2px]`}
                     style={{
                       display: "-webkit-box",
                       WebkitBoxOrient: "vertical",
@@ -301,7 +302,7 @@ function MobilePrayerSpotlightCard({
                   )}
                 </div>
               ) : (
-                <p className="text-center text-[18px] leading-relaxed text-[#1f2833]">
+                <p className={`${editorialFont.className} type-human text-center text-[18px] leading-relaxed`}>
                   La comunidad está orando · únete
                 </p>
               )}
@@ -374,7 +375,7 @@ function MobilePrayerSpotlightCard({
                   </button>
                 </div>
                 <div className="max-h-[calc(80vh-64px)] overflow-y-auto p-6">
-                  <p className="text-[16px] italic leading-relaxed text-[#1f2833]">
+                  <p className={`${editorialFont.className} type-human text-[16px] italic leading-relaxed`}>
                     “{currentPrayer.text}”
                   </p>
                 </div>
@@ -583,12 +584,12 @@ export function CountdownSection({
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* Spotlight: event */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
-          <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
+          <div className={`desktop-card-lift border border-border overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="h-[3px]" style={{ backgroundColor: "#2f5e93" }} aria-hidden="true" />
 
             <div className="p-5">
               <p
-                className="text-[11px] font-bold uppercase tracking-[0.22em] mb-2.5 ml-[-2px] mt-[-5px]"
+                className="text-[11px] font-bold uppercase tracking-[0.22em] mb-3.5 ml-[-2px] mt-[-2px]"
                 style={{ color: "#2f5e93" }}
               >
                 Nuestro Próximo Evento
@@ -596,7 +597,7 @@ export function CountdownSection({
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className={`${ibmPlexSans.className} mb-5.5 text-[25px] font-extrabold leading-snug text-foreground leading-[1.13] tracking-[-0.025em]`}
+                className={`${editorialFont.className} type-human-title mb-5 text-[27px] font-extrabold leading-[1.13] tracking-[-0.045em]`}
               >
                 {countdownEvent.title}
               </h3>
@@ -667,7 +668,7 @@ export function CountdownSection({
           <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="h-[3px]" style={{ backgroundColor: spotlightAccent }} aria-hidden="true" />
             <div className="p-3">
-              <p className="mb-2.5 inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#1f2833]">
+              <p className="type-system mb-2.5 inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.12em]">
                 <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Aviso a la congregacion</span>
               </p>
@@ -700,7 +701,7 @@ export function CountdownSection({
 
                           {/* Mobile: icon bottom-right */}
                           <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
-                            <div className="rounded-[2px] border-2 border-[#111827]/20 bg-white p-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.22)]">
+                            <div className="rounded-[2px] border-2 border-[#111827]/20 bg-white p-1.5">
                               <Maximize2 className="h-4 w-4 text-[#111827]" aria-hidden="true" />
                             </div>
                           </div>
@@ -797,7 +798,7 @@ export function CountdownSection({
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-foreground mb-0.5 truncate">
+                <h4 className={`${editorialFont.className} type-human-title text-sm font-semibold mb-0.5 truncate`}>
                   {event.title}
                 </h4>
                 <p className="text-xs text-muted-foreground mb-3">

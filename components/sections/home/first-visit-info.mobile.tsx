@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Newsreader } from "next/font/google";
 import Image from "next/image";
 import { createPortal } from "react-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
+
+const editorialFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 const QUESTIONS = [
   {
@@ -90,7 +98,7 @@ export function FirstVisitInfoMobile() {
 
   const modal = mounted && isOpen
     ? createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden sm:p-4">
+        <div className= "fixed inset-0 z-[100] flex items-center justify-center overflow-hidden sm:p-4">
           <button
             type="button"
             aria-label="Cerrar información"
@@ -199,7 +207,7 @@ export function FirstVisitInfoMobile() {
           </div>
 
           <div className="min-w-0 flex-1 pt-0.5">
-            <h2 className="text-[19px] font-bold leading-[1.18]">
+            <h2 className={`${editorialFont.className} text-[22px] font-bold leading-[1.18]`}>
               ¿Vienes por primera vez?
             </h2>
             <p className="mt-2.5 text-[15px] font-normal leading-[1.5] text-[#071329]">

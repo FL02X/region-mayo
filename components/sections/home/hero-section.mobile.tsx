@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Inter } from "next/font/google";
+import { Newsreader } from "next/font/google";
 import { ArrowRight, LocateFixed } from "lucide-react";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { findNearestChurch } from "@/lib/location-service";
@@ -23,12 +23,11 @@ const GPS_CTA_COLOR = "";
 const HERO_WATERMARK_LEFT = "82%";
 const HERO_WATERMARK_TOP = "45%";
 const HERO_WATERMARK_OPACITY = 0.05;
-
-const bodyFont = Inter({
+const editorialFont = Newsreader({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
-  fallback: ["Arial", "Arial Unicode MS", "sans-serif"],
+  preload: false,
 });
 
 export function MobileHero({
@@ -234,7 +233,7 @@ export function MobileHero({
 
       <div
         data-mobile-hero-title-band
-        className={`${bodyFont.className} relative w-full overflow-hidden bg-[#21252b] px-5 py-4 text-white`}
+        className="relative w-full overflow-hidden bg-[#21252b] px-5 py-4 font-sans text-white"
       >
         <img
           src="/images/logo_hero.png"
@@ -252,10 +251,10 @@ export function MobileHero({
         />
         <div className="relative z-10 flex items-center">
           <div className="ml-1 min-w-0">
-            <p className="text-[12px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
+            <p className="text-[11px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
               Iglesia Gentil de Cristo
             </p>
-            <p className="font-sans mt-1 mb-1 text-[27px] pr-[-5px] leading-[1.05] font-bold tracking-[0.01em] text-white">
+            <p className={`${editorialFont.className} mt-1.5 mb-1.5 text-[32px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}>
               Calendario de la Región Mayo
             </p>
             <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { Newsreader } from "next/font/google";
 import { Calendar } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MonthNavigator } from "@/components/shared/month-navigator";
@@ -35,6 +36,12 @@ const months = [
   "Noviembre",
   "Diciembre",
 ];
+const editorialFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 type CalendarViewMode = ViewMode;
 const calendarFadeTransition = { duration: 0.18, ease: "easeOut" as const };
@@ -290,11 +297,11 @@ export function EventsFeed({
           <div className="mb-5">
             <h2
               id="calendar-title"
-              className="text-[1.625rem] font-semibold text-foreground tracking-tight mb-2"
+              className={`${editorialFont.className} type-human-title text-[1.625rem] font-semibold tracking-tight mb-2`}
             >
               Calendario 2026
             </h2>
-            <p className="text-[15px] text-muted-foreground mt-0.5">
+            <p className="type-system text-[15px] mt-0.5">
               Selecciona un mes para ver los eventos
             </p>
           </div>
@@ -319,10 +326,10 @@ export function EventsFeed({
           {/* Month label */}
           <div className="mb-6 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h3 className="font-semibold text-[1.425rem] text-foreground tracking-tight">
+              <h3 className={`${editorialFont.className} type-human-title font-semibold text-[1.425rem] tracking-tight`}>
                 {months[getRegionCalendarParts(selectedMonth).month - 1]} {getRegionCalendarParts(selectedMonth).year}
               </h3>
-              <p className="text-[15px] text-muted-foreground/90 mt-1">
+              <p className="type-system text-[15px] mt-1">
                 {filteredEvents.length === 0
                   ? "No hay eventos programados"
                   : `${filteredEvents.length} ${
@@ -378,6 +385,7 @@ export function EventsFeed({
                     onRegister={handleRegister}
                     showAlbumButton={event.status === "past"}
                     variant="compact"
+                    tone="editorial"
                   />
                 ))}
               </motion.div>
@@ -394,6 +402,7 @@ export function EventsFeed({
                   event={filteredEvents[0]}
                   onRegister={handleRegister}
                   showAlbumButton={filteredEvents[0].status === "past"}
+                  tone="editorial"
                 />
               </motion.div>
             ) : (
@@ -411,6 +420,7 @@ export function EventsFeed({
                     event={event}
                     onRegister={handleRegister}
                     showAlbumButton={event.status === "past"}
+                    tone="editorial"
                   />
                 ))}
               </motion.div>

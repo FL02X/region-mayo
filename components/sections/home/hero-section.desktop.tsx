@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { Playfair_Display } from "next/font/google";
+import { Newsreader, Playfair_Display } from "next/font/google";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -37,15 +37,20 @@ import type {
 import type { HeroCandidate } from "@/lib/ranker";
 import { pickHeroAndDeck, getAccentColor } from "@/lib/ranker";
 
+const CUSTOM_BANNER_ACCENT = "#e36600";
+const CUSTOM_BANNER_CTA = "#e98432";
+const editorialFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 const heroTitleFont = Playfair_Display({
   subsets: ["latin"],
   weight: ["600", "700"],
   display: "swap",
   preload: false,
 });
-
-const CUSTOM_BANNER_ACCENT = "#e36600";
-const CUSTOM_BANNER_CTA = "#e98432";
 
 interface HeroSectionProps {
   heroImages?: HeroImage[];
@@ -153,10 +158,10 @@ function HeroPrayerCard({
 
         {mode === "collect" ? (
           <>
-            <h3 className="mb-2 text-[22px] font-bold leading-snug text-[#1f2833]">
+            <h3 className={`${editorialFont.className} type-human-title mb-2 text-[22px] font-bold leading-snug`}>
               Muro de oraciones · comparte tu petición
             </h3>
-            <p className="mb-5 text-[15px] leading-relaxed text-[#5b6876]">
+            <p className="type-system mb-5 text-[15px] leading-relaxed">
               Tu mensaje es anónimo y será revisado por el equipo.
             </p>
             <button
@@ -175,7 +180,7 @@ function HeroPrayerCard({
                 <div className="w-full">
                   <p
                     ref={prayerTextRef}
-                    className={`${textSize} text-center font-normal italic leading-[1.62] text-[#1f2833]`}
+                    className={`${editorialFont.className} type-human ${textSize} text-center font-normal italic leading-[1.62]`}
                     style={{
                       display: "-webkit-box",
                       WebkitBoxOrient: "vertical",
@@ -198,7 +203,7 @@ function HeroPrayerCard({
                   )}
                 </div>
               ) : (
-                <p className="text-center text-[18px] leading-relaxed text-[#1f2833]">
+                <p className={`${editorialFont.className} type-human text-center text-[18px] leading-relaxed`}>
                   La comunidad está orando · únete
                 </p>
               )}
@@ -271,7 +276,7 @@ function HeroPrayerCard({
                   </button>
                 </div>
                 <div className="max-h-[calc(80vh-64px)] overflow-y-auto p-6">
-                  <p className="text-[16px] italic leading-relaxed text-[#1f2833]">
+                  <p className={`${editorialFont.className} type-human text-[16px] italic leading-relaxed`}>
                     “{currentPrayer.text}”
                   </p>
                 </div>
@@ -630,10 +635,10 @@ export function HeroSection({
                     >
                       Nuestro Próximo Evento
                     </p>
-                    <h3 className="text-[34px] font-bold text-[#1f2833] leading-[1.04] mb-2.5">
+                    <h3 className={`${editorialFont.className} type-human-title text-[34px] font-bold leading-[1.04] mb-2.5`}>
                       {spotlightEvent.title}
                     </h3>
-                    <div className="space-y-1.5 text-[13px] text-[#425060] mb-3.5">
+                    <div className="type-system space-y-1.5 text-[13px] mb-3.5">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                         <span>{formatRegionEventDate(spotlightEvent.date)} · {spotlightEvent.time}</span>
@@ -686,7 +691,7 @@ export function HeroSection({
 
                 {showCustomCard && customHeroCard && (
                   <article className="desktop-next-event-lift overflow-hidden rounded-[2px] bg-white/93 p-3 backdrop-blur-[1px]">
-                    <p className="mb-1.5 inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em] text-[#1f2833]">
+                    <p className="type-system mb-1.5 inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em]">
                       <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
                       <span>AVISO</span>
                     </p>

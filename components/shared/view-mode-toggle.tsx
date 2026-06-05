@@ -37,7 +37,7 @@ export function ViewModeToggle({ value, onChange, ariaLabel, disableGrid = false
       <span className="hidden text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-foreground sm:inline">
         Cambiar vista
       </span>
-      <div className="flex border border-border bg-card" role="group" aria-label={ariaLabel}>
+      <div className="flex border border-border bg-paper-alt" role="group" aria-label={ariaLabel}>
         <button
           type="button"
           onClick={() => handleChange("grid")}

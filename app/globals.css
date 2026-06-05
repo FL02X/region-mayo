@@ -14,7 +14,7 @@
  *    overrides for bg/border classes, and input paper shading.
  * 3. To revert only the display/body type, change --font-sans back to:
  *    var(--font-inter), "Segoe UI", "Tahoma", "Arial", system-ui, sans-serif
- *    and --font-serif back to a system serif stack.
+ *    and keep editorial fonts applied manually at component level.
  *
  * Previous digital values:
  * --background: oklch(0.992 0.003 240);
@@ -65,15 +65,23 @@
   --app-font-scale: 1;
 
   /* Newsletter skeuomorphism layer: paper/newsprint palette helpers. */
+  --bg-paper: #F7F5EE;
+  --bg-paper-alt: #FCFBF7;
+  --text-ink: #1C1917;
+  --text-ink-soft: #292524;
+  --text-muted: #57534E;
+  --text-muted-light: #78716C;
+  --accent-navy: #1E3A8A;
+  --border-line: #D6D3D1;
   --surface-shell: #eeeeea;
-  --surface-pane: #fffefa;
-  --surface-pane-soft: #fbfaf5;
-  --surface-newsprint: #f7f5ed;
+  --surface-pane: var(--bg-paper);
+  --surface-pane-soft: var(--bg-paper-alt);
+  --surface-newsprint: var(--bg-paper);
   --paper-fiber: rgba(76, 59, 33, 0.05);
   --paper-ink-soft: rgba(35, 42, 51, 0.08);
   --paper-crease: rgba(108, 89, 56, 0.12);
-  --brand-ink: #2f5e93;
-  --brand-ink-strong: #264d79;
+  --brand-ink: var(--accent-navy);
+  --brand-ink-strong: #172E6F;
 }
 
 .dark {
@@ -113,7 +121,7 @@
 
 @theme inline {
   --font-sans: var(--font-inter), "Inter", "Segoe UI", "Tahoma", "Arial", system-ui, sans-serif;
-  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -290,7 +298,7 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     line-height: 1.25;
     letter-spacing: 0;
   }
@@ -360,6 +368,26 @@ body[data-user-interacted="true"] :target {
   background-color: inherit !important;
 }
 
+.type-system {
+  color: var(--text-muted);
+}
+
+.type-system-light {
+  color: var(--text-muted-light);
+}
+
+.type-human {
+  color: var(--text-ink-soft);
+}
+
+.type-human-title {
+  color: var(--text-ink);
+}
+
+.type-accent {
+  color: var(--accent-navy);
+}
+
 /* ─── Flick animation — quick visual feedback on mobile menu click ─── */
 @keyframes flick {
   0% {
@@ -400,10 +428,8 @@ body[data-user-interacted="true"] :target {
       radial-gradient(circle at 14% 22%, var(--paper-fiber) 0 0.7px, transparent 1px),
       radial-gradient(circle at 72% 48%, rgba(42, 35, 24, 0.04) 0 0.6px, transparent 1px);
     background-size: 100% 100%, 100% 19px, 21px 21px, 29px 29px;
-    box-shadow:
-      0 22px 42px -30px rgba(15, 25, 40, 0.38),
-      0 6px 16px -12px rgba(15, 25, 40, 0.18),
-      0 0 0 1px rgba(122, 111, 91, 0.18);
+    /* Paper aesthetic: keep a faint edge only; heavy shadows clash with print. */
+    box-shadow: 0 0 0 1px rgba(122, 111, 91, 0.18);
   }
 
   .desktop-content-pane::before,
@@ -425,7 +451,7 @@ body[data-user-interacted="true"] :target {
       rgba(108, 89, 56, 0.1) 88%,
       transparent
     );
-    box-shadow: 12px 0 18px -14px rgba(15, 25, 40, 0.48);
+    box-shadow: none;
   }
 
   .desktop-content-pane::after {
@@ -437,28 +463,23 @@ body[data-user-interacted="true"] :target {
       rgba(108, 89, 56, 0.08) 86%,
       transparent
     );
-    box-shadow: -12px 0 18px -14px rgba(15, 25, 40, 0.48);
+    box-shadow: none;
   }
 
   .desktop-card-lift {
     background-color: var(--surface-pane);
     background-image: none;
-    box-shadow:
-      0 11px 20px -18px rgba(15, 25, 40, 0.48),
-      0 1px 0 rgba(255, 255, 255, 0.88) inset,
-      0 0 0 1px rgba(126, 113, 91, 0.08);
-    transition: box-shadow 180ms ease;
+    /* Shadow intentionally removed for the flatter printed-paper direction. */
+    box-shadow: none;
+    transition: none;
   }
 
   .desktop-next-event-lift {
     position: relative;
     background-color: rgba(255, 254, 250, 0.94);
     background-image: none;
-    box-shadow:
-      0 18px 34px -22px rgba(11, 20, 34, 0.56),
-      0 3px 10px rgba(11, 20, 34, 0.22),
-      0 0 0 1px rgba(88, 130, 182, 0.22),
-      inset 0 1px 0 rgba(255, 255, 255, 0.86);
+    /* Shadow intentionally removed for the flatter printed-paper direction. */
+    box-shadow: none;
   }
 
   .desktop-next-event-lift::after {
@@ -622,23 +643,19 @@ select,
 
 
 .dark .desktop-content-pane {
-  box-shadow:
-    0 16px 32px -26px rgba(0, 0, 0, 0.68),
-    0 2px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px rgba(122, 111, 91, 0.18);
 }
 
 .dark .desktop-content-pane::before {
-  box-shadow: 12px 0 18px -14px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
 }
 
 .dark .desktop-content-pane::after {
-  box-shadow: -12px 0 18px -14px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
 }
 
 .dark .desktop-card-lift {
-  box-shadow:
-    0 10px 18px -18px rgba(0, 0, 0, 0.75),
-    0 1px 2px rgba(0, 0, 0, 0.42);
+  box-shadow: none;
 }
 
 .offline-aware-image:not(.offline-aware-image--fixed) {

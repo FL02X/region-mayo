@@ -10,6 +10,7 @@ import {
 } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Newsreader } from "next/font/google";
 import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -68,6 +69,7 @@ interface EventCardProps {
   onRegister: (event: Event) => void;
   showAlbumButton?: boolean;
   variant?: "grid" | "compact";
+  tone?: "default" | "editorial";
 }
 
 const eventTypeLabels: Record<EventType, string> = {
@@ -190,6 +192,12 @@ function formatCompactEventDateRange(start: Date, end?: Date) {
 }
 
 const PASTOR_PENDING_LABEL = "Por confirmar";
+const editorialFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 type EventWithCoordinates = Event & {
   latitude?: number;
@@ -243,6 +251,7 @@ export function EventCard({
   onRegister,
   showAlbumButton = false,
   variant = "grid",
+  tone = "default",
 }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showEventImage, setShowEventImage] = useState(false);
@@ -265,6 +274,13 @@ export function EventCard({
   const shouldShowOfflineNotice = isStandalone && !isOnline;
   const isMobile = useIsMobile();
   const { currentTime } = useTime();
+  const isEditorialTone = tone === "editorial";
+  const editorialTitleClass = isEditorialTone
+    ? `${editorialFont.className} type-human-title`
+    : "text-foreground";
+  const editorialTextClass = isEditorialTone
+    ? `${editorialFont.className} type-human`
+    : "text-foreground";
 
   const openAlbum = () => {
     if (event.googleDriveAlbumUrl)
@@ -487,10 +503,10 @@ export function EventCard({
       {/* En compact desktop la descripcion ya esta visible; aqui solo va cuando haga falta. */}
       {options.showDescription && hasDescription && (
         <section className="space-y-3">
-          <p className="text-sm font-bold text-foreground">
+          <p className={`text-sm font-bold ${editorialTitleClass}`}>
             Descripción
           </p>
-          <p className="text-[15px] leading-relaxed mb-6">{event.description}</p>
+          <p className={`text-[15px] leading-relaxed mb-0 ${editorialTextClass}`}>{event.description}</p>
         </section>
       )}
 
@@ -498,7 +514,7 @@ export function EventCard({
         event.speakers?.pastorMensaje ||
         event.speakers?.jovenPreside) && (
         <section className="space-y-4">
-          <p className="mb-6 text-sm font-bold text-foreground">
+          <p className={`mb-6 text-[17px] font-bold ${editorialTitleClass}`}>
             Información
           </p>
           <div className="space-y-3 border-l-2 border-[#2f5e93]/20 py-0.5 pl-3 mb-8">
@@ -512,7 +528,7 @@ export function EventCard({
                   <p className="text-xs font-semibold text-muted-foreground">
                     Vestimenta
                   </p>
-                  <div className="mt-1 mb-2 flex items-start gap-1.5 text-sm leading-snug text-foreground">
+                  <div className={`mt-1 mb-2 flex items-start gap-1.5 text-sm leading-snug ${editorialTextClass}`}>
                     <span className="min-w-0">{formatVestimentaValue(event)}</span>
                     <button
                       ref={vestimentaHelpRef}
@@ -548,7 +564,7 @@ export function EventCard({
                   <p className="text-xs font-semibold text-muted-foreground">
                     Pastor a cargo
                   </p>
-                  <div className="mt-1 text-sm leading-snug text-foreground">
+                  <div className={`mt-1 text-sm leading-snug ${editorialTextClass}`}>
                     {pastorNameNode}
                   </div>
                 </div>
@@ -564,7 +580,7 @@ export function EventCard({
                   <p className="text-xs font-semibold text-muted-foreground">
                     Preside
                   </p>
-                  <p className="mt-1 text-sm leading-snug text-foreground">
+                  <p className={`mt-1 text-sm leading-snug ${editorialTextClass}`}>
                     {event.speakers.jovenPreside}
                   </p>
                 </div>
@@ -1124,7 +1140,7 @@ export function EventCard({
                 </span>
 
                 <div className="mt-1 md:mt-0">
-                  <h3 className="text-[17px] font-semibold leading-[1.35] text-foreground md:text-[20px]">
+                  <h3 className={`text-[20px] font-semibold leading-[1.35] md:text-[20px] ${editorialTitleClass}`}>
                     {event.title}
                   </h3>
                   <button
@@ -1144,7 +1160,7 @@ export function EventCard({
                 </div>
 
                 {event.location && (
-                  <p className="hidden min-w-0 items-start gap-2 text-[15px] text-muted-foreground leading-snug text-foreground md:flex md:text-[15px] md:mt-4 md:mb-0.5">
+                  <p className={`hidden min-w-0 items-start gap-2 text-[15px] leading-snug md:flex md:text-[15px] md:mt-4 md:mb-0.5`}>
                     <Church
                       className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                       aria-hidden="true"
@@ -1164,7 +1180,7 @@ export function EventCard({
                 )}
 
                 {hasDescription && (
-                  <p className="hidden text-[15px] leading-snug md:block md:text-[16px]">
+                  <p className={`hidden text-[15px] leading-snug md:block md:text-[16px] ${editorialTextClass}`}>
                     {event.description}
                   </p>
                 )}
@@ -1195,7 +1211,7 @@ export function EventCard({
 
               <button
                 onClick={handleToggle}
-                className="mt-5 hidden max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:inline-flex"
+                className="mt-5 hidden max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:inline-flex"
                 aria-expanded={isExpanded}
                 aria-controls={`details-${event.id}`}
               >
@@ -1235,11 +1251,11 @@ export function EventCard({
                     <div className={`py-4 md:hidden ${hasDropdownCtas ? "pt-5" : ""}`}>
                       {(event.location || event.address) && (
                         <section className="space-y-3">
-                          <p className="text-sm font-bold text-foreground">
+                          <p className={`text-[17px] font-bold ${editorialTitleClass}`}>
                             Ubicación
                           </p>
                           {event.location && (
-                            <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground">
+                            <div className={`flex min-w-0 items-start gap-2 text-[15px] leading-snug`}>
                               <Church
                                 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                                 aria-hidden="true"
@@ -1249,7 +1265,7 @@ export function EventCard({
                           )}
 
                           {event.address && (
-                            <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug">
+                            <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug mt-[-6px] mb-6">
                               <MapPin
                                 className="mt-0.5 h-3.5 w-3.5 shrink-0"
                                 aria-hidden="true"
@@ -1274,10 +1290,10 @@ export function EventCard({
 
                       {hasDescription && (
                         <section className={`${event.location || event.address ? "mt-5 pt-5" : ""} space-y-3`}>
-                          <p className="text-sm font-bold text-foreground">
+                          <p className={`text-[17px] font-bold ${editorialTitleClass}`}>
                             Descripción
                           </p>
-                          <p className="text-[15px] leading-relaxed">
+                          <p className={`text-[17px] leading-relaxed ${editorialTextClass}`}>
                             {event.description}
                           </p>
                         </section>
@@ -1380,8 +1396,8 @@ export function EventCard({
               <span>{eventTypeLabels[eventType]}</span>
             </span>
 
-            {/* Title — Playfair Display for stronger editorial weight */}
-            <h3 className={`${event.location ? "mb-5" : "mb-0"} text-[21px] font-semibold leading-[1.35] tracking-tight text-foreground md:text-[22px]`}>
+            {/* Title — editorial type only when this card is opted into Home's bulletin tone. */}
+            <h3 className={`${event.location ? "mb-5" : "mb-0"} text-[21px] font-semibold leading-[1.35] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
               {event.title}
             </h3>
 
@@ -1394,7 +1410,7 @@ export function EventCard({
                       className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                       aria-hidden="true"
                     />
-                    <p className="text-[15px] font-medium text-foreground leading-snug">
+                    <p className={`text-[15px] font-medium leading-snug`}>
                       {event.location}
                     </p>
                   </div>
@@ -1404,7 +1420,7 @@ export function EventCard({
                         className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                         aria-hidden="true"
                       />
-                      <p className="text-[15px] leading-snug text-foreground/85">
+                      <p className={`text-[15px] leading-snug ${isEditorialTone ? "type-system" : "text-foreground/85"}`}>
                         {event.address}
                       </p>
                     </div>

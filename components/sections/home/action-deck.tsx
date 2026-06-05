@@ -3,6 +3,7 @@
 import { useMemo, useRef, useEffect, useState, useCallback, useLayoutEffect, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Newsreader } from "next/font/google";
 import {
   Calendar,
   MapPin,
@@ -96,6 +97,12 @@ type DeckItemType = DeckItem["type"];
 const MS_HOUR = 60 * 60 * 1000;
 const MS_DAY = 24 * MS_HOUR;
 const CUSTOM_BANNER_ACCENT = "#e36600";
+const editorialFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 function isSocialVideoUrl(url?: string): boolean {
   if (!url) return false;
@@ -530,7 +537,7 @@ export function ActionDeck({
         className="w-full bg-[#fffefa] md:pt-8 pb-8 md:pb-10"
       >
       <div className="flex items-center justify-between px-4 md:px-6 mb-2.5">
-        <h2 className="text-[15px] mb-3 mt-3 font-bold uppercase tracking-[0.18em] text-[#425060]">
+        <h2 className="type-system text-[15px] mb-3 mt-3 font-bold uppercase tracking-[0.18em]">
           Destacado para ti
         </h2>
         {/* Mobile only: swipe hint - hide if only one element */}
@@ -577,7 +584,7 @@ export function ActionDeck({
           {mobileHasOverflow && mobileCanScrollLeft && (
             <button
               onClick={() => handleMobileArrow("left")}
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1 shadow-md"
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1"
               aria-label="Ver elementos anteriores"
             >
               <ChevronLeft className="h-5 w-5 text-[#425060]" />
@@ -587,7 +594,7 @@ export function ActionDeck({
           {mobileHasOverflow && mobileCanScrollRight && (
             <button
               onClick={() => handleMobileArrow("right")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1 shadow-md"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1"
               aria-label="Ver más elementos"
             >
               <ChevronRight className="h-5 w-5 text-[#425060]" />
@@ -785,7 +792,7 @@ function PrayerMiniCarousel({
 
   if (prayers.length === 0) {
     return (
-      <p className="text-[15px] leading-relaxed text-[#1f2833]">La comunidad está orando · únete</p>
+      <p className={`${editorialFont.className} type-human text-[15px] leading-relaxed`}>La comunidad está orando · únete</p>
     );
   }
 
@@ -853,7 +860,7 @@ function PrayerMiniCarousel({
         <div className="w-full">
           <p
             ref={prayerTextRef}
-            className={`${textSize} text-[#1f2833] italic leading-[1.62] ${textAlign}`}
+            className={`${editorialFont.className} type-human ${textSize} italic leading-[1.62] ${textAlign}`}
             style={{
               display: "-webkit-box",
               WebkitBoxOrient: "vertical",
@@ -1001,7 +1008,8 @@ function DeckCard({
         "bg-white",
         "border-[0.5px] border-black/20",
         "rounded-[2px]",
-        "shadow-[0_12px_24px_-22px_rgba(15,25,40,0.42),0_3px_10px_-9px_rgba(15,25,40,0.22),0_1px_0_rgba(255,255,255,0.82)_inset] transition-shadow hover:shadow-[0_14px_26px_-22px_rgba(15,25,40,0.46),0_4px_12px_-9px_rgba(15,25,40,0.24),0_1px_0_rgba(255,255,255,0.82)_inset]",
+        // Paper aesthetic: previous lift shadows removed to keep cards flatter.
+        "transition-colors",
         "w-full h-full",
       ].join(" ")}
     >
@@ -1083,7 +1091,7 @@ function DeckCard({
 
             {item.type !== "instagram" && item.type !== "facebook" && (
               <h3
-                className="font-bold text-[#1f2833] leading-snug line-clamp-2 mb-1.5 text-[16px]"
+                className={`${editorialFont.className} type-human-title font-bold leading-snug line-clamp-2 mb-1.5 text-[16px]`}
               >
                 {item.title}
               </h3>
@@ -1093,13 +1101,13 @@ function DeckCard({
 
         {item.type === "event" && (
           <div className="space-y-0.5 mb-2">
-            <p className="text-[15px] text-[#1f2833] flex items-center gap-1.5">
+            <p className="type-system text-[15px] flex items-center gap-1.5">
               <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
               {formatEventDate(item.date)}
               {item.time ? ` · ${item.time}` : ""}
             </p>
             {item.location && (
-              <p className="text-[15px] text-[#1f2833] flex items-center gap-1.5 min-w-0">
+              <p className={`${editorialFont.className} type-human text-[15px] flex items-center gap-1.5 min-w-0`}>
                 <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
                 <span className="truncate">{item.location}</span>
               </p>
@@ -1287,7 +1295,7 @@ function DeckCard({
               </button>
             </div>
             <div className="max-h-[calc(80vh-64px)] overflow-y-auto p-6">
-              <p className="text-[16px] text-[#1f2833] italic leading-[1.75]">
+              <p className={`${editorialFont.className} type-human text-[16px] italic leading-[1.75]`}>
                 "{fullPrayerText}"
               </p>
             </div>
