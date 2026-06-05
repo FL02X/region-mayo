@@ -1,5 +1,6 @@
 import { defineField, defineType } from 'sanity'
 import { EVENT_TYPES, enumToSanityOptions } from './enums'
+import { AlbumUploadLinkInput } from '../components/inputs/album-upload-link-input'
 
 export default defineType({
   name: 'album',
@@ -8,6 +9,7 @@ export default defineType({
   groups: [
     { name: 'basic', title: 'Datos principales' },
     { name: 'media', title: 'Contenido' },
+    { name: 'submissions', title: 'Subida comunitaria' },
     { name: 'settings', title: 'Configuracion' },
   ],
   fields: [
@@ -114,6 +116,65 @@ export default defineType({
       title: 'Descripcion',
       type: 'text',
       group: 'basic',
+    }),
+    defineField({
+      name: 'allowSubmissions',
+      title: 'Permitir subida comunitaria',
+      type: 'boolean',
+      group: 'submissions',
+      initialValue: false,
+      description: 'Permite que personas con el enlace QR suban fotos para revision.',
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if (value && context.document?.albumType === 'youtube') {
+            return 'La subida comunitaria solo esta disponible para albumes de imagenes'
+          }
+          return true
+        }),
+    }),
+    defineField({
+      name: 'uploadTokenHash',
+      title: 'Token de subida',
+      type: 'string',
+      group: 'submissions',
+      hidden: ({ document }) =>
+        !document?.allowSubmissions || (document?.albumType ?? 'photos') !== 'photos',
+      components: {
+        input: AlbumUploadLinkInput,
+      },
+      description:
+        'Genera el enlace privado para el QR. Sanity guarda solo el hash; el token real no se almacena.',
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          if (
+            context.document?.allowSubmissions &&
+            (context.document?.albumType ?? 'photos') === 'photos' &&
+            !value
+          ) {
+            return 'Genera un enlace de subida antes de activar las contribuciones'
+          }
+          return true
+        }),
+    }),
+    defineField({
+      name: 'submissionsCloseAt',
+      title: 'Cerrar recepcion de fotos',
+      type: 'datetime',
+      group: 'submissions',
+      hidden: ({ document }) =>
+        !document?.allowSubmissions || (document?.albumType ?? 'photos') !== 'photos',
+      description: 'Despues de esta fecha el enlace ya no permitira subir fotos.',
+    }),
+    defineField({
+      name: 'uploadInstructions',
+      title: 'Instrucciones de subida',
+      type: 'text',
+      group: 'submissions',
+      rows: 3,
+      hidden: ({ document }) =>
+        !document?.allowSubmissions || (document?.albumType ?? 'photos') !== 'photos',
+      description: 'Texto opcional que se mostrara en la pantalla de subida.',
+      validation: (Rule) => Rule.max(280),
     }),
     defineField({
       name: 'coverImage',

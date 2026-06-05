@@ -1,6 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { SANITY_CACHE_TAG } from "@/lib/sanity/client";
+import { sanityQueryNoStore } from "@/lib/sanity/write-client";
 
 // Secret token to verify webhook requests from Sanity
 const REVALIDATION_TOKEN = process.env.SANITY_REVALIDATION_TOKEN;
@@ -28,6 +29,65 @@ function getDocumentType(body: unknown): string | undefined {
   return typeof candidate === "string" && candidate.length > 0
     ? candidate
     : undefined;
+}
+
+function getStringPath(value: unknown, path: string[]): string | undefined {
+  let current = value;
+
+  for (const key of path) {
+    if (!current || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+
+  return typeof current === "string" && current.length > 0 ? current : undefined;
+}
+
+function getAlbumSlug(body: unknown): string | undefined {
+  const paths = [
+    ["slug", "current"],
+    ["document", "slug", "current"],
+    ["albumSlug"],
+    ["document", "albumSlug"],
+    ["album", "slug", "current"],
+    ["document", "album", "slug", "current"],
+  ];
+
+  for (const path of paths) {
+    const slug = getStringPath(body, path);
+    if (slug) return slug;
+  }
+
+  return undefined;
+}
+
+function getDocumentId(body: unknown): string | undefined {
+  return (
+    getStringPath(body, ["_id"]) ||
+    getStringPath(body, ["document", "_id"]) ||
+    getStringPath(body, ["id"]) ||
+    getStringPath(body, ["documentId"])
+  );
+}
+
+async function getAlbumSlugFromPhotoSubmission(body: unknown): Promise<string | undefined> {
+  const rawId = getDocumentId(body);
+  if (!rawId) return undefined;
+
+  const id = rawId.replace(/^drafts\./, "");
+
+  try {
+    const slug = await sanityQueryNoStore<string | null>(
+      `*[
+        _type == "albumPhotoSubmission" &&
+        _id in [$id, "drafts." + $id]
+      ][0].album->slug.current`,
+      { id },
+    );
+
+    return slug || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -62,6 +122,20 @@ export async function POST(request: NextRequest) {
 
     // Map specific document types to routes
     switch (_type) {
+      case "album": {
+        const albumSlug = getAlbumSlug(body);
+        pathsToRevalidate.push("/album");
+        if (albumSlug) pathsToRevalidate.push(`/album/${albumSlug}`);
+        tagsToRevalidate.push("album");
+        break;
+      }
+      case "albumPhotoSubmission": {
+        const albumSlug = getAlbumSlug(body) || (await getAlbumSlugFromPhotoSubmission(body));
+        pathsToRevalidate.push("/album");
+        if (albumSlug) pathsToRevalidate.push(`/album/${albumSlug}`);
+        tagsToRevalidate.push("album", "albumPhotoSubmission");
+        break;
+      }
       case "event":
         pathsToRevalidate.push("/");
         pathsToRevalidate.push("/album");

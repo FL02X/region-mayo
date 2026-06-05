@@ -165,7 +165,12 @@ function albumAlt(albumTitle: string, index: number, alt?: string): string {
   return cleanAlt.length > 0 ? cleanAlt : `${albumTitle} - foto ${index + 1}`;
 }
 
-function mapAlbumImage(raw: any, albumTitle: string, index: number): AlbumImage | null {
+function mapAlbumImage(
+  raw: any,
+  albumTitle: string,
+  index: number,
+  source: AlbumImage["source"] = "official",
+): AlbumImage | null {
   const url = sanityImageUrl(raw?.image ?? raw);
   if (!url || url === "/placeholder.svg") return null;
 
@@ -176,6 +181,7 @@ function mapAlbumImage(raw: any, albumTitle: string, index: number): AlbumImage 
       typeof raw?.caption === "string" && raw.caption.trim().length > 0
         ? raw.caption.trim()
         : undefined,
+    source,
   };
 }
 
@@ -358,20 +364,36 @@ async function mapAlbum(raw: any): Promise<Album> {
     "/placeholder.svg";
   const additionalImages = Array.isArray(raw?.images)
     ? raw.images
-        .map((image: any, index: number) => mapAlbumImage(image, title, index + 1))
+        .map((image: any, index: number) => mapAlbumImage(image, title, index + 1, "official"))
         .filter((image: AlbumImage | null) => image?.url !== coverImage)
         .filter(Boolean)
     : [];
-  const images =
+  const officialImages =
     coverImage && coverImage !== "/placeholder.svg"
       ? [
           {
             url: coverImage,
             alt: albumAlt(title, 0),
+            source: "official" as const,
           },
           ...additionalImages,
         ]
       : additionalImages;
+  const communityImages = Array.isArray(raw?.communityImages)
+    ? raw.communityImages
+        .map((image: any, index: number) =>
+          mapAlbumImage(image, title, officialImages.length + index, "community"),
+        )
+        .filter(Boolean)
+    : [];
+  const images = [...officialImages, ...communityImages];
+  const submissionsCloseAt = raw.submissionsCloseAt ? toDate(raw.submissionsCloseAt) : undefined;
+  const hasUploadToken = Boolean(raw.hasUploadToken);
+  const canSubmitPhotos =
+    albumType === "photos" &&
+    Boolean(raw.allowSubmissions) &&
+    hasUploadToken &&
+    (!submissionsCloseAt || submissionsCloseAt.getTime() > Date.now());
 
   return {
     id: raw._id,
@@ -394,6 +416,13 @@ async function mapAlbum(raw: any): Promise<Album> {
         ? (raw.youtubeLayout as AlbumYoutubeLayout)
         : "auto",
     hidden: Boolean(raw.hidden),
+    allowSubmissions: Boolean(raw.allowSubmissions),
+    submissionsCloseAt,
+    uploadInstructions:
+      typeof raw.uploadInstructions === "string" && raw.uploadInstructions.trim().length > 0
+        ? raw.uploadInstructions.trim()
+        : undefined,
+    canSubmitPhotos,
     relatedEvent: relatedEvent
       ? {
           id: relatedEvent._id,
@@ -654,6 +683,10 @@ const ALBUM_PROJECTION = `{
   youtubeUrl,
   youtubeLayout,
   hidden,
+  allowSubmissions,
+  "hasUploadToken": defined(uploadTokenHash),
+  submissionsCloseAt,
+  uploadInstructions,
   relatedEvent->{
     _id,
     title,
@@ -668,6 +701,16 @@ const ALBUM_PROJECTION = `{
     image{asset->{url}},
     alt,
     caption
+  },
+  "communityImages": *[
+    _type == "albumPhotoSubmission" &&
+    album._ref == ^._id &&
+    status == "approved"
+  ] | order(uploadedAt asc){
+    photo{asset->{url}},
+    "image": photo,
+    "alt": submittedByName,
+    "caption": ""
   }
 }`;
 

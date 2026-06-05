@@ -22,6 +22,7 @@ import prayerWall from './prayerWall'
 import prayer from './prayer'
 import socialPostCache from './socialPostCache'
 import album from './album'
+import albumPhotoSubmission from './albumPhotoSubmission'
 
 export const schemaTypes = [
   region,
@@ -37,6 +38,7 @@ export const schemaTypes = [
   prayer,
   socialPostCache,
   album,
+  albumPhotoSubmission,
 ]
 
 export default schemaTypes

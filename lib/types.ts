@@ -111,6 +111,7 @@ export interface AlbumImage {
   url: string;
   alt: string;
   caption?: string;
+  source?: "official" | "community";
 }
 
 export type AlbumType = "photos" | "youtube";
@@ -148,6 +149,10 @@ export interface Album {
   youtubeUrl?: string;
   youtubeLayout?: AlbumYoutubeLayout;
   hidden: boolean;
+  allowSubmissions?: boolean;
+  submissionsCloseAt?: Date;
+  uploadInstructions?: string;
+  canSubmitPhotos?: boolean;
   relatedEvent?: AlbumRelatedEvent;
   images: AlbumImage[];
   videos: AlbumVideo[];

@@ -40,8 +40,58 @@ const AUDITABLE_DOCUMENT_TYPES = [
 ]
 
 const HERO_CARD_TYPE = 'heroCard'
+const PHOTO_SUBMISSION_TYPE = 'albumPhotoSubmission'
+const HIDDEN_DOCUMENT_TYPES = new Set([PHOTO_SUBMISSION_TYPE])
 
 const isDraftDocumentId = (id?: string) => Boolean(id && id.startsWith('drafts.'))
+
+const photoSubmissionList = (S: any, title: string, status: string) =>
+  S.documentList()
+    .title(title)
+    .schemaType(PHOTO_SUBMISSION_TYPE)
+    .filter('_type == $type && status == $status')
+    .params({ type: PHOTO_SUBMISSION_TYPE, status })
+    .defaultOrdering([{ field: 'uploadedAt', direction: 'desc' }])
+
+const studioStructure = (S: any) =>
+  S.list()
+    .title('Contenido')
+    .items([
+      S.listItem()
+        .title('Fotos pendientes')
+        .schemaType(PHOTO_SUBMISSION_TYPE)
+        .child(photoSubmissionList(S, 'Fotos pendientes', 'pending')),
+      S.listItem()
+        .title('Fotos pendientes por album')
+        .schemaType('album')
+        .child(
+          S.documentTypeList('album')
+            .title('Albumes')
+            .filter('_type == "album" && !defined(deletedAt)')
+            .defaultOrdering([{ field: 'startDate', direction: 'desc' }])
+            .child((albumId: string) =>
+              S.documentList()
+                .title('Pendientes del album')
+                .schemaType(PHOTO_SUBMISSION_TYPE)
+                .filter('_type == $type && status == "pending" && album._ref == $albumId')
+                .params({ type: PHOTO_SUBMISSION_TYPE, albumId })
+                .defaultOrdering([{ field: 'uploadedAt', direction: 'desc' }]),
+            ),
+        ),
+      S.listItem()
+        .title('Fotos aprobadas')
+        .schemaType(PHOTO_SUBMISSION_TYPE)
+        .child(photoSubmissionList(S, 'Fotos aprobadas', 'approved')),
+      S.listItem()
+        .title('Fotos rechazadas')
+        .schemaType(PHOTO_SUBMISSION_TYPE)
+        .child(photoSubmissionList(S, 'Fotos rechazadas', 'rejected')),
+      S.divider(),
+      ...S.documentTypeListItems().filter((item: any) => {
+        const id = item.getId()
+        return typeof id !== 'string' || !HIDDEN_DOCUMENT_TYPES.has(id)
+      }),
+    ])
 
 export default defineConfig({
   name: 'default',
@@ -60,6 +110,7 @@ export default defineConfig({
   plugins: [
     structureTool({
       title: 'Estructura del proyecto',
+      structure: studioStructure,
     }),
     esESLocale(),
   ],

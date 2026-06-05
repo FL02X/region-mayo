@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Calendar,
+  Camera,
   ChevronDown,
   ExternalLink,
   Info,
@@ -319,6 +320,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
   const [selectedType, setSelectedType] = useState<string>(ALL_FILTER);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [isSubmissionNoticeOpen, setIsSubmissionNoticeOpen] = useState(false);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -359,6 +361,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isFilterOpen]);
+
+  useEffect(() => {
+    setIsSubmissionNoticeOpen(false);
+  }, [album?.slug]);
 
   const filteredAlbums = useMemo(() => {
     if (selectedType === VIDEO_FILTER) {
@@ -469,6 +475,34 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   </Button>
                 ) : null}
               </div>
+              {!isYoutubeAlbum && album.canSubmitPhotos ? (
+                <div className="mt-4 border border-[#dbe7f1] bg-[#f6f9fc] p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">
+                        ¿Tienes fotos de esta actividad?
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        Ayúdanos a completar este álbum compartiendo tus fotos.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      className="h-11 rounded-none sm:w-auto"
+                      onClick={() => setIsSubmissionNoticeOpen((open) => !open)}
+                    >
+                      <Camera className="h-4 w-4" aria-hidden="true" />
+                      Compartir fotos
+                    </Button>
+                  </div>
+                  {isSubmissionNoticeOpen ? (
+                    <p className="mt-3 border-t border-[#dbe7f1] pt-3 text-sm leading-6 text-muted-foreground">
+                      Usa el código QR compartido por los encargados para abrir el formulario seguro
+                      de este álbum.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             {isYoutubeAlbum ? (
