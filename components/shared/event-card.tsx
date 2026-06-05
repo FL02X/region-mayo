@@ -1248,7 +1248,7 @@ export function EventCard({
                     </div>
                   )}
                   {hasMobileCompactDetails && (
-                    <div className={`py-4 md:hidden ${hasDropdownCtas ? "pt-5" : ""}`}>
+                    <div className={`py-2 md:hidden pb-[-4px] ${hasDropdownCtas ? "pt-5" : ""}`}>
                       {(event.location || event.address) && (
                         <section className="space-y-3">
                           <p className={`text-[17px] font-bold ${editorialTitleClass}`}>
@@ -1289,7 +1289,7 @@ export function EventCard({
                       )}
 
                       {hasDescription && (
-                        <section className={`${event.location || event.address ? "mt-5 pt-5" : ""} space-y-3`}>
+                        <section className={`${event.location || event.address ? "mt-3 pt-5" : ""} space-y-3`}>
                           <p className={`text-[17px] font-bold ${editorialTitleClass}`}>
                             Descripción
                           </p>
