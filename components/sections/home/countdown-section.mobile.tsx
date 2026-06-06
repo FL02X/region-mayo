@@ -597,7 +597,7 @@ export function CountdownSection({
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className={`${editorialFont.className} type-human-title mb-5 text-[27px] font-extrabold leading-[1.13] tracking-[-0.045em]`}
+                className={`${editorialFont.className} type-human-title mb-5 text-[27px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
               >
                 {countdownEvent.title}
               </h3>

@@ -254,7 +254,7 @@ export function MobileHero({
             <p className="text-[11px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
               Iglesia Gentil de Cristo
             </p>
-            <p className={`${editorialFont.className} mt-1.5 mb-1.5 text-[32px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}>
+            <p className={`${editorialFont.className} mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}>
               Calendario de la Región Mayo
             </p>
             <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">
