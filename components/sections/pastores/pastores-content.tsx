@@ -137,7 +137,7 @@ function PastorCard({
     }
   };
   const compactUtilityButtonClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
 
   const hasDetails = true;
   const actionButtons = (

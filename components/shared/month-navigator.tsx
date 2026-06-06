@@ -150,7 +150,7 @@ export function MonthNavigator({
         <Popover open={isDesktopPickerOpen} onOpenChange={setIsDesktopPickerOpen}>
           <PopoverTrigger asChild>
             <button
-              className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-[2px] bg-[var(--surface-pane-soft)] px-4 text-sm font-semibold text-[var(--brand-ink)] transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-[2px] bg-surface-pane-soft px-4 text-sm font-semibold text-brand-ink transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               aria-label="Seleccionar mes y año"
               style={{ minHeight: "unset", minWidth: "unset" }}
             >
@@ -238,7 +238,7 @@ export function MonthNavigator({
       </div>
 
       {/* Mobile: month picker similar to desktop but adapted */}
-      <div className="flex h-14 items-center gap-2 rounded-[2px] border border-border/80 bg-paper px-2.5 md:hidden">
+      <div className="flex h-14 items-center gap-2 rounded-[2px] border border-border/80 bg-paper-highlight px-2.5 md:hidden">
         <button
           onClick={() => handleMobileMonthNavClick("prev")}
           className="inline-flex h-10 items-center gap-0.5 rounded-[2px] px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
@@ -253,7 +253,7 @@ export function MonthNavigator({
         <Popover open={isMobilePickerOpen} onOpenChange={setIsMobilePickerOpen}>
           <PopoverTrigger asChild>
             <button
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[2px] bg-paper px-3 text-[15px] font-semibold text-[var(--brand-ink)] transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[2px] bg-paper px-3 text-[15px] font-semibold text-brand-ink transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               aria-label="Seleccionar mes y año"
               style={{ minHeight: "unset", minWidth: "unset" }}
             >

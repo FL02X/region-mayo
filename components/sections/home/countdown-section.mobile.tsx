@@ -577,14 +577,14 @@ export function CountdownSection({
 
   return (
     <section
-      className="pt-[30px] bg-background px-4 pt-[10px] pb-0 mb-0"
+      className="pt-[30px] bg-paper px-4 pt-[10px] pb-0 mb-0"
       data-countdown-section
       aria-label="Sección destacada"
     >
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* Spotlight: event */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
-          <div className={`desktop-card-lift border bg-paper-alt border-border overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
+          <div className={`desktop-card-lift border bg-paper-highlight border-border overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="h-[3px]" style={{ backgroundColor: "#2f5e93" }} aria-hidden="true" />
 
             <div className="p-5">

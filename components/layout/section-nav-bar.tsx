@@ -35,7 +35,7 @@ const ICONS: Record<SectionIconName, LucideIcon> = {
 };
 
 const sectionNavActionButtonClass =
-  "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-transparent bg-transparent px-3 text-sm font-medium text-black transition-[background-color,border-color] duration-150 hover:border-[var(--border)] hover:bg-[var(--surface-pane)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005998]";
+  "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-transparent bg-transparent px-3 text-sm font-medium text-black transition-[background-color,border-color] duration-150 hover:border-[var(--border)] hover:bg-surface-pane focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005998]";
 
 const ALBUM_TRANSITION_STORAGE_KEY = "rm-album-transition-next";
 

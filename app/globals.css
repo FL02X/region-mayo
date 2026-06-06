@@ -66,7 +66,8 @@
 
   /* Newsletter skeuomorphism layer: paper/newsprint palette helpers. */
   --bg-paper: #f7f3ed;
-  --bg-paper-alt: #FCFBF7;
+  --bg-paper-highlight: #FBF8F4;
+  --bg-paper-dark: #EAE6DF;
   --text-ink: #1C1917;
   --text-ink-soft: #292524;
   --text-muted: #57534E;
@@ -75,7 +76,7 @@
   --border-line: #D6D3D1;
   --surface-shell: #eeeeea;
   --surface-pane: var(--bg-paper);
-  --surface-pane-soft: var(--bg-paper-alt);
+  --surface-pane-soft: var(--bg-paper-highlight);
   --surface-newsprint: var(--bg-paper);
   --paper-fiber: rgba(76, 59, 33, 0.05);
   --paper-ink-soft: rgba(35, 42, 51, 0.08);
@@ -147,6 +148,21 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-paper: var(--bg-paper);
+  --color-paper-highlight: var(--bg-paper-highlight);
+  --color-paper-dark: var(--bg-paper-dark);
+  --color-ink: var(--text-ink);
+  --color-ink-soft: var(--text-ink-soft);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-muted-light: var(--text-muted-light);
+  --color-accent-navy: var(--accent-navy);
+  --color-border-line: var(--border-line);
+  --color-surface-shell: var(--surface-shell);
+  --color-surface-pane: var(--surface-pane);
+  --color-surface-pane-soft: var(--surface-pane-soft);
+  --color-surface-newsprint: var(--surface-newsprint);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-ink-strong: var(--brand-ink-strong);
   /*
    * Radius scale — with --radius at 0.375rem (6px):
    *   sm  = 2px   (was 12px)

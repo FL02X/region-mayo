@@ -430,9 +430,9 @@ export function EventCard({
     ? "Ocultar detalles"
     : "Ocultar opciones";
   const eventUtilityButtonClass =
-    "mt-[-25px] inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+    "mt-[-25px] inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventUtilityButtonSmallClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventPrimaryMapsButtonClass =
     "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm bg-primary px-3 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const eventPrimaryMapsButtonSmallClass =
@@ -459,7 +459,7 @@ export function EventCard({
           <Button
             onClick={openFacebookPost}
             variant="outline"
-            className="h-10 w-fit justify-start rounded-none border-border bg-[var(--surface-pane)] px-3 text-sm font-medium text-[var(--brand-ink)] hover:border-[var(--brand-ink)] hover:bg-primary/10"
+            className="h-10 w-fit justify-start rounded-none border-border bg-surface-pane px-3 text-sm font-medium text-brand-ink hover:border-brand-ink hover:bg-primary/10"
           >
             <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="ml-1.5">Ver en Facebook</span>
@@ -470,7 +470,7 @@ export function EventCard({
           <Button
             onClick={openAlbum}
             variant="outline"
-            className="h-10 w-fit justify-start rounded-none border-border bg-[var(--surface-pane)] px-3 text-sm font-medium text-[var(--brand-ink)] hover:border-[var(--brand-ink)] hover:bg-primary/10"
+            className="h-10 w-fit justify-start rounded-none border-border bg-surface-pane px-3 text-sm font-medium text-brand-ink hover:border-brand-ink hover:bg-primary/10"
           >
             <Images className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="ml-1.5">Ver Álbum</span>
@@ -1145,7 +1145,7 @@ export function EventCard({
                   </h3>
                   <button
                     onClick={handleToggle}
-                    className="mt-4 inline-flex max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:hidden"
+                    className="mt-4 inline-flex max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:hidden"
                     aria-expanded={isExpanded}
                     aria-controls={`details-${event.id}`}
                   >
@@ -1211,7 +1211,7 @@ export function EventCard({
 
               <button
                 onClick={handleToggle}
-                className="mt-5 hidden max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:inline-flex"
+                className="mt-5 hidden max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:inline-flex"
                 aria-expanded={isExpanded}
                 aria-controls={`details-${event.id}`}
               >
@@ -1373,7 +1373,7 @@ export function EventCard({
           )}
         </div>
 
-        <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 bg-transparent px-4 py-3 text-[17px] font-semibold leading-tight text-foreground md:text-[17px]">
+        <div className="bg-paper-highlight flex w-full flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 px-4 py-3 text-[17px] font-semibold leading-tight text-foreground md:text-[17px]">
           <CalendarDays
             className="h-5 w-5 shrink-0 text-[#2f5e93]"
             aria-hidden="true"
@@ -1388,7 +1388,7 @@ export function EventCard({
         </div>
 
         {/* ── Card body ── */}
-        <div className="p-5">
+        <div className="p-5 bg-paper-highlight">
           <div data-eq-head>
             {/* Event type — plain uppercase label */}
             <span className={`mb-2.5 inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[13px] font-medium uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}>
@@ -1456,7 +1456,7 @@ export function EventCard({
 
           <button
             onClick={handleToggle}
-            className="mt-8 inline-flex max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-[var(--brand-ink)] transition-colors hover:text-[var(--brand-ink-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="mt-8 inline-flex max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             aria-expanded={isExpanded}
             aria-controls={`details-${event.id}`}
           >

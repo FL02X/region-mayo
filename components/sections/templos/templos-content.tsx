@@ -502,7 +502,7 @@ function TemploCard({
     typeof templo.latitude === "number" ||
     typeof templo.longitude === "number";
   const compactUtilityButtonClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 border border-border bg-[var(--surface-pane)] px-2.5 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150 hover:border-[var(--brand-ink)] hover:bg-primary/10";
+    "inline-flex h-8 w-fit items-center gap-1.5 border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const compactMapsButtonClass =
     "inline-flex h-8 w-fit items-center gap-1.5 border border-[#005998] bg-[#005998] px-2.5 text-sm font-medium text-white transition-[background-color,border-color] duration-0 hover:border-[#1a6aa1] hover:bg-[#1a6aa1] hover:text-white";
 
@@ -513,7 +513,7 @@ function TemploCard({
         onClick={handleCopyTempleInfo}
         onMouseEnter={() => setIsCopyHovered(true)}
         onMouseLeave={() => setIsCopyHovered(false)}
-        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-sm rounded-r-none border border-r-0 px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
+        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-sm rounded-r-none border border-r-0 px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150"
         style={{
           backgroundColor: isCopyActive || isCopyHovered
             ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"
@@ -530,7 +530,7 @@ function TemploCard({
         onClick={() => onPrint(templo)}
         onMouseEnter={() => setIsPrintHovered(true)}
         onMouseLeave={() => setIsPrintHovered(false)}
-        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border px-3 text-sm font-medium text-[var(--brand-ink)] transition-[background-color,border-color] duration-150"
+        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150"
         style={{
           backgroundColor: isPrintHovered
             ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"

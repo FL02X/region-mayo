@@ -274,7 +274,7 @@ export function EventsFeed({
         </div>
 
         {/* ActionDeck (mobile only; desktop renders in page.tsx) */}
-        <div className="offline-hide-when-offline md:hidden pt-2">
+        <div className="offline-hide-when-offline md:hidden">
           <ActionDeck
             events={events}
             instagramUrl={instagramUrl}

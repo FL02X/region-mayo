@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Newsreader } from "next/font/google";
 import Image from "next/image";
 import { createPortal } from "react-dom";
@@ -16,17 +16,17 @@ const editorialFont = Newsreader({
 
 const QUESTIONS = [
   {
-    question: "¿Puedo ir aunque no sea miembro?",
-    answer: "Sí. Todos son bienvenidos.",
+    question: "¿Puedo asistir aunque no sea miembro?",
+    answer: "¡Sí! Todos son bienvenidos.",
   },
   {
     question: "¿Necesito registrarme?",
-    answer: "No. Puedes asistir directamente.",
+    answer: "¡No es necesario! Puedes asistir directamente.",
   },
   {
-    question: "¿Cómo debo vestir?",
+    question: "¿Que ropa permiten llevar?",
     answer:
-      "Puedes asistir con ropa respetuosa. Algunos miembros usan uniforme en ciertos eventos.",
+      "Puedes asistir con cualquier ropa respetuosa. ¡Algunos miembros usan uniforme en ciertos eventos!",
   },
   {
     question: "¿Tiene costo?",
@@ -34,7 +34,7 @@ const QUESTIONS = [
   },
   {
     question: "¿Qué habrá en la reunión?",
-    answer: "Alabanza, predicación y convivencia cristiana.",
+    answer: "Alabanza, agradecimiento a Dios por parte de los hermanos, predicación y convivencia al terminar.",
   },
   {
     question: "¿Cómo llego?",
@@ -42,14 +42,18 @@ const QUESTIONS = [
   },
 ];
 
+const INITIAL_OPEN_QUESTION = QUESTIONS[0]?.question ?? null;
+
 export function FirstVisitInfoMobile() {
   const [isOpen, setIsOpen] = useState(false);
   const [openQuestion, setOpenQuestion] = useState<string | null>(
-    QUESTIONS[0]?.question ?? null,
+    INITIAL_OPEN_QUESTION,
   );
   const [mounted, setMounted] = useState(false);
   const [modalActive, setModalActive] = useState(false);
   const [isStandalonePwa, setIsStandalonePwa] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     setMounted(true);
@@ -92,13 +96,45 @@ export function FirstVisitInfoMobile() {
     return () => cancelAnimationFrame(raf);
   }, [isOpen]);
 
+  const scrollToQuestion = (question: string) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+        const questionElement = questionRefs.current[question];
+
+        if (!container || !questionElement) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const questionRect = questionElement.getBoundingClientRect();
+        const top = container.scrollTop + questionRect.top - containerRect.top - 8;
+
+        container.scrollTo({
+          top: Math.max(top, 0),
+          behavior: "auto",
+        });
+      });
+    });
+  };
+
+  const handleQuestionToggle = (question: string) => {
+    setOpenQuestion((current) => {
+      const nextQuestion = current === question ? null : question;
+
+      if (nextQuestion) {
+        scrollToQuestion(nextQuestion);
+      }
+
+      return nextQuestion;
+    });
+  };
+
   if (isStandalonePwa) {
     return null;
   }
 
   const modal = mounted && isOpen
     ? createPortal(
-        <div className= "fixed inset-0 z-[100] flex items-center justify-center overflow-hidden sm:p-4">
+        <div className= "fixed inset-0 z-[150] flex items-center justify-center overflow-hidden sm:p-4">
           <button
             type="button"
             aria-label="Cerrar información"
@@ -117,10 +153,10 @@ export function FirstVisitInfoMobile() {
               transition: "transform 180ms ease, opacity 180ms ease",
             }}
           >
-            <div className="z-10 flex items-center justify-between bg-[#21252b] px-4 py-3">
+            <div className="z-10 flex items-center justify-between bg-[#21252b] py-2 pl-4 pr-2">
               <h3
                 id="first-visit-title"
-                className="m-0 text-base font-bold uppercase text-white"
+                className="m-0 text-base font-semibold uppercase text-white"
               >
                 ¿Vienes por primera vez?
               </h3>
@@ -128,37 +164,38 @@ export function FirstVisitInfoMobile() {
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label="Cerrar información"
-                className="flex h-10 w-10 items-center justify-center text-white"
+                className="flex h-[48px] w-[52px] items-center justify-center text-white"
               >
-                <span className="text-[22px] leading-none">×</span>
+                <span className="flex h-[30px] items-center text-[30px] leading-none mb-1 -translate-y-px">
+                  ×
+                </span>
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-[#f9fafb] px-5 py-5 text-left text-[#111827]">
+            <div
+              ref={scrollContainerRef}
+              className={`flex-1 overflow-y-auto bg-paper px-5 py-5 text-left`}
+            >
               <div className="mx-auto max-w-[520px]">
-                <p className="mb-4 text-[15px] leading-6 text-[#1f2937]">
-                  Queremos que te sientas bienvenido. Aqui tienes respuestas rapidas antes de asistir.
-                </p>
                 {QUESTIONS.map((item) => (
                   <div
                     key={item.question}
-                    className="border-b border-[#d9dee7] bg-[#f9fafb]"
+                    ref={(node) => {
+                      questionRefs.current[item.question] = node;
+                    }}
+                    className={`border-b border-[#d9dee7] bg-paper`}
                   >
                     <button
                       type="button"
-                      className={`flex min-h-[62px] w-full items-center justify-between gap-4 bg-[#f9fafb] px-3 py-3 text-left text-[17px] leading-snug text-[#111827] ${
+                      className={`${editorialFont.className} flex min-h-[62px] w-full items-center justify-between gap-4 bg-paper px-3 py-3 text-left text-ink text-[24px] leading-snug ${
                         openQuestion === item.question ? "font-bold" : "font-normal"
                       }`}
                       aria-expanded={openQuestion === item.question}
-                      onClick={() =>
-                        setOpenQuestion((current) =>
-                          current === item.question ? null : item.question,
-                        )
-                      }
+                      onClick={() => handleQuestionToggle(item.question)}
                     >
                       <span>{item.question}</span>
                       <ChevronDown
-                        className={`h-5 w-5 shrink-0 text-[#2f6eb8] transition-transform duration-200 ${
+                        className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
                           openQuestion === item.question ? "rotate-180" : ""
                         }`}
                         strokeWidth={1.8}
@@ -174,7 +211,7 @@ export function FirstVisitInfoMobile() {
                       }`}
                     >
                       <div className="min-h-0">
-                        <p className="px-2 pb-4 pt-0 text-[16px] leading-6 text-[#1f2937]">
+                        <p className={`px-2 pb-4 pt-0 text-[20px] leading-6 bg-paper-dark text-ink pt-3.5`}>
                           {item.answer}
                         </p>
                       </div>
@@ -220,8 +257,11 @@ export function FirstVisitInfoMobile() {
         <div className="mt-0.5 pt-5">
           <button
             type="button"
-            onClick={() => setIsOpen(true)}
-            className="ml-14.5 flex h-8.5 items-center justify-between bg-[#255792] px-3 text-left text-[17px] font-normal leading-none text-white"
+            onClick={() => {
+              setOpenQuestion(INITIAL_OPEN_QUESTION);
+              setIsOpen(true);
+            }}
+            className={`ml-14.5 flex h-8.5 items-center justify-between bg-[#255792] px-3 text-left text-[17px] font-normal leading-none text-white`}
           >
             <span>Qué esperar al asistir</span>
             <ChevronRight className="h-6 w-6 stroke-[1.4]" aria-hidden="true" />
