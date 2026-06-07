@@ -577,7 +577,7 @@ export function CountdownSection({
 
   return (
     <section
-      className="pt-[30px] bg-paper px-4 pt-[10px] pb-0 mb-0"
+      className="pt-[38px] bg-paper px-4 pb-0 mb-0"
       data-countdown-section
       aria-label="Sección destacada"
     >

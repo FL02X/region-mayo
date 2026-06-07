@@ -233,7 +233,7 @@ export function MobileHero({
 
       <div
         data-mobile-hero-title-band
-        className="relative w-full overflow-hidden bg-[#21252b] px-5 py-4 font-sans text-white"
+        className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] px-5 pb-4 pt-4 font-sans text-white"
       >
         <img
           src="/images/logo_hero.png"

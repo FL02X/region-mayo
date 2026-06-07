@@ -635,7 +635,7 @@ export function HeroSection({
                     >
                       Nuestro Próximo Evento
                     </p>
-                    <h3 className={`${editorialFont.className} type-human-title text-[34px] font-bold leading-[1.04] mb-2.5`}>
+                    <h3 className={`type-human-title text-[34px] font-bold leading-[1.04] mb-2.5`}>
                       {spotlightEvent.title}
                     </h3>
                     <div className="type-system space-y-1.5 text-[13px] mb-3.5">

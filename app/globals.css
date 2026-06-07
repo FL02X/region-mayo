@@ -631,6 +631,60 @@ select,
   box-shadow: none;
 }
 
+.paper-cut-y {
+  --paper-cut-intensity: 2px;
+  --paper-cut-top-depth: 10px;
+  --paper-cut-bottom-depth: 10px;
+  isolation: isolate;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.paper-cut-y::before,
+.paper-cut-y::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  display: block;
+  background: inherit;
+  pointer-events: none;
+}
+
+.paper-cut-y::before {
+  top: calc(0px - var(--paper-cut-top-depth) - var(--paper-cut-intensity));
+  height: calc(var(--paper-cut-top-depth) + var(--paper-cut-intensity) + var(--paper-cut-intensity));
+  clip-path: polygon(
+    0 calc(50% + var(--paper-cut-intensity)),
+    9% calc(50% - var(--paper-cut-intensity)),
+    24% calc(50% + 1px),
+    41% calc(50% - var(--paper-cut-intensity)),
+    58% calc(50% + 2px),
+    76% calc(50% - 2px),
+    91% calc(50% + var(--paper-cut-intensity)),
+    100% calc(50% - 1px),
+    100% 100%,
+    0 100%
+  );
+}
+
+.paper-cut-y::after {
+  bottom: calc(0px - var(--paper-cut-bottom-depth) - var(--paper-cut-intensity));
+  height: calc(var(--paper-cut-bottom-depth) + var(--paper-cut-intensity) + var(--paper-cut-intensity));
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(50% + 1px),
+    88% calc(50% + var(--paper-cut-intensity)),
+    70% calc(50% - 2px),
+    52% calc(50% + var(--paper-cut-intensity)),
+    35% calc(50% - 1px),
+    16% calc(50% + 2px),
+    0 calc(50% - var(--paper-cut-intensity))
+  );
+}
+
 @media (min-width: 768px) {
   .album-detail-surface button:hover,
   .album-detail-surface [role="button"]:hover,
