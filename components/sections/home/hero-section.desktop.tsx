@@ -808,7 +808,7 @@ export function HeroSection({
                 </p>
                 <h1 className={`${heroTitleFont.className} mb-5 text-[2.05rem] font-semibold leading-[1.04] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)] sm:text-[2.45rem]`}>
                   <span className="block">Calendario</span>
-                  <span className="block">Región Mayo</span>
+                  <span className="block font-normal">Región Mayo</span>
                 </h1>
                 <button
                   onClick={scrollToContent}

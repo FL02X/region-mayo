@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Newsreader } from "next/font/google";
-import { ArrowRight, LocateFixed } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { findNearestChurch } from "@/lib/location-service";
 import type { Templo } from "@/lib/types";
@@ -215,7 +215,7 @@ export function MobileHero({
 
   return (
     <section className="md:hidden w-full max-w-[950px] mx-auto bg-white" aria-label="Imagen principal móvil">
-      <div className="w-full aspect-[1.25] bg-black overflow-hidden flex items-center justify-center">
+      <div className="mobile-hero-print-image w-full aspect-[1.25] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
@@ -255,7 +255,7 @@ export function MobileHero({
               Iglesia Gentil de Cristo
             </p>
             <p className={`${editorialFont.className} mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}>
-              Calendario de la Región Mayo
+              Calendario de la <span className="font-normal">Región Mayo</span>
             </p>
             <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">
               Eventos, avisos e información de nuestras iglesias de la Región Mayo.
@@ -264,21 +264,23 @@ export function MobileHero({
         </div>
         <div className="mt-5 mb-1 flex w-full flex-col items-start">
           <div className="relative w-fit">
-            {locationPhase === "loading" ? (
-              <span className="gps-burst-ring gps-burst-ring--visible" aria-hidden="true" />
-            ) : null}
-
+            <span
+              className={`pointer-events-none absolute inset-0 translate-x-[5px] translate-y-[5px] rounded-[2px] border-2 border-paper/45 transition-opacity duration-300 ${
+                locationPhase === "loading" ? "opacity-0" : "opacity-100"
+              }`}
+              aria-hidden="true"
+            />
             <button
               type="button"
               onClick={handleActivateGps}
               disabled={locationPhase === "loading"}
               data-loading={locationPhase === "loading"}
-              className={`gps-gps-button inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-gray-200/20 px-2 py-3 text-left text-[14px] font-bold leading-none transition-all duration-300 ease-in-out ${
+              className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-3 text-left text-[15px] font-bold leading-none text-ink transition-all duration-300 ease-in-out ${
                 locationPhase === "success"
-                  ? "border-[#4d7a68] bg-[#4d7a68] text-white shadow-[0_8px_22px_rgba(26,58,52,0.22)]"
+                  ? "btn-sucess border-[#4E7A68] text-white shadow-none"
                   : locationPhase === "loading"
-                    ? "border-transparent bg-[#21252b] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
-                    : "border-[#005998] bg-transparent text-white hover:border-[#0b6ea6] hover:bg-[#0b6ea6]"
+                    ? "border-transparent bg-transparent text-white shadow-none"
+                    : "border-ink bg-paper hover:bg-paper-highlight"
               }`}
               aria-label={
                 locationPhase === "success"
@@ -287,17 +289,19 @@ export function MobileHero({
               }
             >
               <span className="relative flex min-w-0 items-center gap-2 ">
-                <LocateFixed
-                  className="h-4 w-4 shrink-0 text-white transition-colors duration-300"
+                <MapPin
+                  className={`h-4 w-4 shrink-0 transition-colors duration-300 ${
+                    locationPhase === "success" || locationPhase === "loading" ? "text-white" : "text-ink"
+                  }`}
                   aria-hidden="true"
                   strokeWidth={2}
                 />
                 {locationPhase === "success" ? (
                   <span className="flex min-w-0 flex-col items-start gap-1 transition-all duration-300 ease-in-out">
-                    <span className="text-[12px] font-bold leading-none text-white/80">
+                    <span className="text-[11px] font-semibold leading-none text-white/80">
                       Iglesia más cercana
                     </span>
-                    <span className="min-w-0 text-[15px] leading-tight text-white">
+                    <span className="min-w-0 text-[15px] font-extrabold leading-tight text-white">
                       {nearestChurchName} · {nearestChurchDistanceKm ?? 0} km
                     </span>
                   </span>
@@ -331,21 +335,6 @@ export function MobileHero({
         </div>
 
         <style>{`
-          @keyframes gps-burst-shimmer {
-            0% {
-              opacity: 0;
-              transform: scale(0.985);
-            }
-            50% {
-              opacity: 1;
-              transform: scale(1);
-            }
-            100% {
-              opacity: 0;
-              transform: scale(1.01);
-            }
-          }
-
           @keyframes gps-burst-rainbow {
             0% { background-position: 0% 50%; opacity: 0.45; }
             50% { background-position: 100% 50%; opacity: 0.9; }
@@ -390,7 +379,6 @@ export function MobileHero({
             opacity: 0;
           }
 
-
           .gps-gps-button[data-loading="true"]::before {
             opacity: 1;
             transform: scale(1);
@@ -403,42 +391,6 @@ export function MobileHero({
               background-color 320ms ease-in-out,
               color 320ms ease-in-out,
               box-shadow 320ms ease-in-out;
-          }
-
-          .gps-burst-ring {
-            position: absolute;
-            inset: -3px;
-            border-radius: 4px;
-            background: linear-gradient(
-              90deg,
-              #6b7280,
-              #94a3b8,
-              #cbd5e1,
-              #60a5fa,
-              #3b82f6,
-              #94a3b8,
-              #6b7280
-            );
-            background-size: 260% 260%;
-            padding: 2px;
-            -webkit-mask:
-              linear-gradient(#fff 0 0) content-box,
-              linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            box-shadow:
-              0 0 0 1px rgba(96, 165, 250, 0.2),
-              0 0 12px rgba(148, 163, 184, 0.18);
-            opacity: 0;
-            transform: scale(0.985);
-            animation: gps-burst-shimmer 4.2s ease-in-out infinite;
-            pointer-events: none;
-            transition: opacity 320ms ease-in-out, transform 320ms ease-in-out;
-          }
-
-          .gps-burst-ring--visible {
-            opacity: 1;
-            transform: scale(1);
           }
         `}</style>
       </div>
