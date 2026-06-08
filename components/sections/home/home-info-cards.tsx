@@ -141,7 +141,7 @@ export function HomeInfoCards() {
             </>
           );
           return (
-            <div key={card.id} className="bg-white border border-[#E5E7EB] overflow-hidden h-full flex flex-col">
+            <div key={card.id} className="bg-paper-highlight border border-[#E5E7EB] overflow-hidden h-full flex flex-col">
               {content}
             </div>
           );

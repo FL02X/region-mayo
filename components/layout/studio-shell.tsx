@@ -12,8 +12,25 @@ const sharedStyle = `
   @media (max-width: 768px) {
     .studio-shell {
       --studio-scale: 1;
-      display: contents;
+      display: block;
+      height: 100dvh;
+      min-height: 100svh;
+      overflow: hidden;
       transform: none;
+      width: 100%;
+    }
+
+    .studio-shell [data-ui='PaneLayout'],
+    .studio-shell [data-ui='Pane'],
+    .studio-shell [data-testid='pane-content'],
+    .studio-shell [data-ui='Scroller'] {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      touch-action: pan-y;
+    }
+
+    .studio-shell [data-testid='pane-content'] {
+      padding-bottom: max(4rem, env(safe-area-inset-bottom));
     }
   }
 

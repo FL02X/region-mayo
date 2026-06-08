@@ -624,7 +624,7 @@ export function CountdownSection({
                   {countdownEvent.googleMapsUrl ? (
                     <button
                       onClick={() => openGoogleMaps(countdownEvent.googleMapsUrl!)}
-                      className="inline-flex shrink-0 items-center gap-1 text-[16px] font-semibold text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2 leading-tight"
+                      className="inline-flex shrink-0 items-center gap-1 text-[16px] font-semibold text-brand-text transition-colors hover:text-brand-text/80 hover:underline underline-offset-2 leading-tight"
                       aria-label="Abrir ubicación del evento en Google Maps"
                     >
                       <ExternalLink className="h-3.5 w-3.5 stroke-3 shrink-0" aria-hidden="true" />

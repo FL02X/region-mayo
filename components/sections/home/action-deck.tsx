@@ -1005,7 +1005,7 @@ function DeckCard({
     <article
       className={[
         "snap-center relative overflow-hidden flex flex-col",
-        "bg-white",
+        "bg-paper-highlight",
         "border-[0.5px] border-black/20",
         "rounded-[2px]",
         // Paper aesthetic: previous lift shadows removed to keep cards flatter.

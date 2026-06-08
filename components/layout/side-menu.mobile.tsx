@@ -51,8 +51,8 @@ const menuItems: MobileMenuItem[] = [
 ];
 
 const iglesiasItems: MobileMenuItem[] = [
-  { href: "/templos", label: "Templos", icon: Church, description: "Ubica las congregaciones de la región" },
-  { href: "/pastores", label: "Pastores", icon: Users, description: "Consulta el directorio pastoral regional" },
+  { href: "/templos", label: "Congregaciones", icon: Church },
+  { href: "/pastores", label: "Pastores", icon: Users},
 ];
 
 export function MobileMenu({
@@ -157,9 +157,9 @@ export function MobileMenu({
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <path d="M1.25 4.5H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-            <path d="M1.25 10H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-            <path d="M1.25 15.5H18.75" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M1.25 4.5H18.75" stroke="currentColor" strokeWidth="1" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+            <path d="M1.25 10H18.75" stroke="currentColor" strokeWidth="1" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+            <path d="M1.25 15.5H18.75" stroke="currentColor" strokeWidth="1" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
           </svg>
           {open && (
             <span
@@ -203,8 +203,8 @@ export function MobileMenu({
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="M3 3L17 17" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-              <path d="M17 3L3 17" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M3 3L17 17" stroke="currentColor" strokeWidth="1" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+              <path d="M17 3L3 17" stroke="currentColor" strokeWidth="1" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
             </svg>
           </Button>
         </div>
@@ -264,6 +264,8 @@ export function MobileMenu({
                   <Icon
                     className={cn("h-5 w-5 shrink-0", "text-[#8b929c]")}
                     aria-hidden="true"
+                    strokeWidth={1.5}
+                    absoluteStrokeWidth
                   />
                   <div className="min-w-0">
                     <p className={cn("text-[16px] leading-tight uppercase", isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
@@ -304,14 +306,14 @@ export function MobileMenu({
                         aria-expanded={iglesiasOpen}
                         aria-controls="mobile-iglesias-submenu"
                       >
-                        <Church className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" />
+                        <Church className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
                         <div className="min-w-0 flex-1">
                           <p className="text-[16px] font-normal leading-tight uppercase text-[#00508F]">
                             Iglesias
                           </p>
                         </div>
                         <span className="absolute right-5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center border border-[#d3d7dd] bg-[#f5f5f5] text-[#7d858f] shadow-[0_0_0_1px_rgba(63,109,181,0.08)]">
-                          <ToggleIcon className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
+                          <ToggleIcon className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
                         </span>
                       </button>
 
@@ -361,7 +363,7 @@ export function MobileMenu({
                                   )}
                                   aria-current={iglesiaItemActive ? "page" : undefined}
                                 >
-                                  <IglesiaIcon className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" />
+                                  <IglesiaIcon className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
                                   <div className="min-w-0">
                                     <p className={cn("text-[17px] leading-tight", iglesiaItemActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
                                       {iglesiaItem.label}
@@ -399,7 +401,7 @@ export function MobileMenu({
             )}
             aria-label="Abrir ayuda"
           >
-            <MessageSquare className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" />
+            <MessageSquare className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
             <div className="min-w-0">
               <p className="text-[16px] leading-tight uppercase font-normal text-[#00508F]">
                 Ayuda
@@ -445,7 +447,7 @@ export function MobileMenu({
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
-                <PwaIcon className={cn("h-5 w-5 shrink-0", "text-[#8b929c]")} aria-hidden="true" />
+                <PwaIcon className={cn("h-5 w-5 shrink-0", "text-[#8b929c]")} aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
                 <div className="min-w-0">
                   <p
                     className={cn(
@@ -474,7 +476,7 @@ export function MobileMenu({
               className="flex items-center gap-2.5 text-[16px] font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
               aria-label="Síguenos en Instagram"
             >
-              <Instagram className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <Instagram className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
               Instagram
             </a>
             <a
@@ -484,7 +486,7 @@ export function MobileMenu({
               className="flex items-center gap-2.5 text-[16px] font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
               aria-label="Síguenos en Facebook"
             >
-              <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
               Facebook
             </a>
           </div>

@@ -136,6 +136,11 @@ export function PwaBootstrap() {
     const handleInstalled = () => {
       setDeferredInstallPrompt(null);
       markPwaInstalled();
+      if (navigator.onLine) {
+        warmCacheRoutes()
+          .then(() => writeLastSync(Date.now()))
+          .catch(() => undefined);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);

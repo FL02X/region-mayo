@@ -401,6 +401,7 @@ export function AppHeader({
               <Image
                 src="/images/region-mayo-logo-64.jpg"
                 alt="Región Mayo"
+                data-offline-required="true"
                 width={30}
                 height={30}
                 className="rounded-full shrink-0 select-none"
@@ -503,6 +504,7 @@ export function AppHeader({
                 <Image
                   src="/images/region-mayo-logo-64.jpg"
                   alt="Región Mayo"
+                  data-offline-required="true"
                   width={30}
                   height={30}
                   className="rounded-full shrink-0 select-none"
@@ -550,7 +552,7 @@ export function AppHeader({
               className="mr-2 mb-1 flex items-center justify-center h-9 w-9 shrink-0 text-white hover:text-white transition-colors"
               aria-label="Ir a búsqueda"
             >
-              <Search className="h-[23px] w-[23px]" strokeWidth={1.75} />
+              <Search className="h-[23px] w-[23px]" strokeWidth={1} />
             </Link>
 
             {/* Mobile/Tablet only: hamburger menu */}

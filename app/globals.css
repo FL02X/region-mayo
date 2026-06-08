@@ -4,8 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Newsletter skeuomorphism layer.
- * Goal: subtle printed bulletin texture, not a full paper simulation.
+ * Paper palette layer.
+ * Goal: flat paper surfaces without simulated fibers or sheet effects.
  *
  * Revert instructions:
  * 1. Restore the "previous digital values" listed below in :root.
@@ -30,7 +30,7 @@
 :root {
   --background: oklch(0.982 0.006 92);
   --foreground: oklch(0.14 0.02 240);
-  --card: oklch(0.997 0.006 92);
+  --card: var(--bg-paper-highlight);
   --card-foreground: oklch(0.14 0.02 240);
   --popover: oklch(0.997 0.006 92);
   --popover-foreground: oklch(0.14 0.02 240);
@@ -238,7 +238,6 @@
 
   body {
     @apply bg-background text-foreground;
-    /* Newsletter skeuomorphism layer: off-white shell with faint paper fibers. */
     background-color: var(--surface-shell);
     background-image:
       radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.72) 0 1px, transparent 1.4px),
@@ -442,71 +441,42 @@ body[data-user-interacted="true"] :target {
 }
 
 @media (min-width: 768px) {
-  /* Newsletter skeuomorphism layer: desktop page reads like one printed sheet.
-     Revert by restoring the old .desktop-content-pane, .desktop-card-lift,
-     and .desktop-next-event-lift declarations from git history or removing
-     the paper background-image/background-color additions below. */
   .desktop-content-pane {
     position: relative;
     isolation: isolate;
-    background-color: var(--surface-pane);
-    background-image:
-      linear-gradient(90deg, rgba(255, 255, 255, 0.76), transparent 18%, transparent 82%, rgba(209, 197, 175, 0.22)),
-      repeating-linear-gradient(0deg, transparent 0 18px, rgba(63, 76, 91, 0.018) 18px 19px),
-      radial-gradient(circle at 14% 22%, var(--paper-fiber) 0 0.7px, transparent 1px),
-      radial-gradient(circle at 72% 48%, rgba(42, 35, 24, 0.04) 0 0.6px, transparent 1px);
-    background-size: 100% 100%, 100% 19px, 21px 21px, 29px 29px;
-    /* Paper aesthetic: keep a faint edge only; heavy shadows clash with print. */
-    box-shadow: 0 0 0 1px rgba(122, 111, 91, 0.18);
+    background-color: var(--bg-paper);
+    background-image: none;
+    box-shadow: none;
   }
 
   .desktop-content-pane::before,
   .desktop-content-pane::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1px;
+    content: none;
+    display: none;
     pointer-events: none;
   }
 
   .desktop-content-pane::before {
-    left: 0;
-    background: linear-gradient(
-      180deg,
-      transparent,
-      rgba(108, 89, 56, 0.18) 12%,
-      rgba(108, 89, 56, 0.1) 88%,
-      transparent
-    );
+    background: none;
     box-shadow: none;
   }
 
   .desktop-content-pane::after {
-    right: 0;
-    background: linear-gradient(
-      180deg,
-      transparent,
-      rgba(108, 89, 56, 0.12) 14%,
-      rgba(108, 89, 56, 0.08) 86%,
-      transparent
-    );
+    background: none;
     box-shadow: none;
   }
 
   .desktop-card-lift {
-    background-color: var(--surface-pane);
+    background-color: var(--bg-paper-highlight);
     background-image: none;
-    /* Shadow intentionally removed for the flatter printed-paper direction. */
     box-shadow: none;
     transition: none;
   }
 
   .desktop-next-event-lift {
     position: relative;
-    background-color: rgba(255, 254, 250, 0.94);
+    background-color: var(--bg-paper-highlight);
     background-image: none;
-    /* Shadow intentionally removed for the flatter printed-paper direction. */
     box-shadow: none;
   }
 
@@ -613,8 +583,7 @@ body[data-user-interacted="true"] :target {
   }
 }
 
-/* Newsletter skeuomorphism layer: map existing utility colors to paper tones.
-   Revert by deleting this utility override group. */
+/* Map older utility colors to the flat paper palette. */
 .bg-\[\#f1f1f1\] {
   background-color: var(--surface-shell);
 }
@@ -767,7 +736,7 @@ select,
 
 
 .dark .desktop-content-pane {
-  box-shadow: 0 0 0 1px rgba(122, 111, 91, 0.18);
+  box-shadow: none;
 }
 
 .dark .desktop-content-pane::before {

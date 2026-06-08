@@ -1,11 +1,17 @@
-const VERSION = "v10";
+const VERSION = "v11";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
+const REQUIRED_CACHE = `rm-required-${VERSION}`;
 const OFFLINE_URL = "/offline";
 const IMAGE_FALLBACK_URL = "/placeholder.svg";
 const PRECACHE_ROUTES = [
   "/offline",
   IMAGE_FALLBACK_URL,
+];
+const REQUIRED_ASSET_URLS = [
+  "/images/region-mayo-logo-64.jpg",
+  "/images/logo_hero.png",
+  "/images/event-conference.jpg",
 ];
 const DEV_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const IS_DEV_HOST = DEV_HOSTS.has(self.location.hostname);
@@ -13,20 +19,10 @@ const IS_DEV_HOST = DEV_HOSTS.has(self.location.hostname);
 self.addEventListener("install", (event) => {
   if (!IS_DEV_HOST) {
     event.waitUntil(
-      caches.open(STATIC_CACHE).then(async (cache) => {
-        await Promise.allSettled(
-          PRECACHE_ROUTES.map(async (route) => {
-            try {
-              const response = await fetch(route, { credentials: "same-origin" });
-              if (isCacheableResponse(response)) {
-                await cache.put(route, response);
-              }
-            } catch (error) {
-              // Avoid blocking install if any single route fails.
-            }
-          }),
-        );
-      }),
+      Promise.all([
+        cacheUrls(PRECACHE_ROUTES, STATIC_CACHE),
+        cacheUrls(REQUIRED_ASSET_URLS, REQUIRED_CACHE),
+      ]),
     );
   }
   self.skipWaiting();
@@ -95,6 +91,22 @@ async function imageFallbackResponse() {
   return new Response("", { status: 204 });
 }
 
+async function cacheUrls(urls, cacheName) {
+  const cache = await caches.open(cacheName);
+  await Promise.allSettled(
+    urls.map(async (url) => {
+      try {
+        const response = await fetch(url, { credentials: "same-origin" });
+        if (isCacheableResponse(response)) {
+          await cache.put(url, response);
+        }
+      } catch (error) {
+        // Avoid blocking install if any single asset fails.
+      }
+    }),
+  );
+}
+
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
@@ -116,7 +128,8 @@ async function networkOnlyWithFallback(request, fallbackUrl) {
     return await fetch(request);
   } catch (error) {
     if (isImageRequest(new URL(request.url), request)) {
-      return imageFallbackResponse();
+      const cached = await caches.match(request, { ignoreSearch: true });
+      return cached || imageFallbackResponse();
     }
     if (fallbackUrl) {
       const fallback = await caches.match(fallbackUrl, { ignoreSearch: true });

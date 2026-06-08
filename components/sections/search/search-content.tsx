@@ -289,7 +289,7 @@ function SearchContentInner({ data }: SearchContentProps) {
           <div className="mb-4 space-y-3 rounded-[2px] border border-[#d7dbe1] bg-[#e9eaec] px-2.5 py-2.5">
             <form
               onSubmit={(e) => e.preventDefault()}
-              className="relative w-full h-[42px] bg-white rounded-[2px] flex items-center overflow-hidden border border-[#b8c1cc]"
+              className="relative w-full h-[42px] bg-paper-highlight rounded-[2px] flex items-center overflow-hidden border border-[#b8c1cc]"
               role="search"
               aria-label="Buscar dentro de resultados"
             >

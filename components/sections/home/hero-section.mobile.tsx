@@ -24,6 +24,7 @@ const HERO_WATERMARK_LEFT = "82%";
 const HERO_WATERMARK_TOP = "45%";
 const HERO_WATERMARK_LAYER_HEIGHT = "170px";
 const HERO_WATERMARK_OPACITY = 0.05;
+const MOBILE_HERO_IMAGE_WIDTH = 828;
 const editorialFont = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -36,7 +37,7 @@ export function MobileHero({
   alt = "Imagen principal móvil",
   templos,
 }: MobileHeroProps) {
-  const safeInitialSrc = src?.trim() ? src : MOBILE_HERO_FALLBACK_SRC;
+  const safeInitialSrc = getMobileHeroImageSrc(src);
   const [displaySrc, setDisplaySrc] = useState(safeInitialSrc);
   const geolocation = useGeolocationState();
   const [locationPhase, setLocationPhase] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -220,6 +221,7 @@ export function MobileHero({
         <img
           src={displaySrc}
           alt={alt}
+          data-offline-required="true"
           className="h-full w-full object-cover object-center"
           loading="eager"
           decoding="async"
@@ -244,6 +246,7 @@ export function MobileHero({
           <img
             src="/images/logo_hero.png"
             alt=""
+            data-offline-required="true"
             className="absolute h-[155px] w-[155px] select-none object-contain"
             style={{
               left: HERO_WATERMARK_LEFT,
@@ -394,4 +397,22 @@ export function MobileHero({
       </div>
     </section>
   );
+}
+
+function getMobileHeroImageSrc(value: string | undefined) {
+  const source = value?.trim() ? value : MOBILE_HERO_FALLBACK_SRC;
+  if (source.startsWith("/")) return source;
+
+  try {
+    const url = new URL(source);
+    if (url.hostname !== "cdn.sanity.io") return source;
+
+    url.searchParams.set("w", String(MOBILE_HERO_IMAGE_WIDTH));
+    url.searchParams.set("q", "58");
+    url.searchParams.set("fit", "max");
+    url.searchParams.set("auto", "format");
+    return url.toString();
+  } catch {
+    return source;
+  }
 }

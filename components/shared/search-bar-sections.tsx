@@ -54,7 +54,7 @@ export function SearchBar({
           value={query}
           onChange={handleChange}
           placeholder={placeholder}
-          className={`w-full h-[42px] pl-10 ${rightAction ? "pr-16" : "pr-10"} bg-white border border-[#b8c1cc] rounded-[5px] text-[15px] text-foreground focus:outline-none focus:ring-1 focus:ring-[#2f5e93] focus:ring-offset-0`}
+          className={`w-full h-[42px] pl-10 ${rightAction ? "pr-16" : "pr-10"} bg-paper-highlight border border-[#b8c1cc] rounded-[5px] text-[15px] text-foreground focus:outline-none focus:ring-1 focus:ring-[#2f5e93] focus:ring-offset-0`}
           aria-label="Buscador"
           suppressHydrationWarning
         />
@@ -76,4 +76,3 @@ export function SearchBar({
     </div>
   );
 }
-
