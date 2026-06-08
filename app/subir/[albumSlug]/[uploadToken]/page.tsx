@@ -1,8 +1,11 @@
 import Link from 'next/link'
-import { Camera, CheckCircle2, ImagePlus, ShieldAlert } from 'lucide-react'
+import { ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { AppHeader } from '@/components/layout/app-header'
+import { SectionNavBar } from '@/components/layout/section-nav-bar'
 import { AlbumUploadForm } from '@/components/sections/album/album-upload-form'
 import { getAlbumUploadPageAccess } from '@/lib/album-submissions'
+import { getRegionConfig } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -24,7 +27,7 @@ function UploadUnavailable({
   albumPath?: string
 }) {
   return (
-    <main className="min-h-screen bg-[#f1f1f1] px-4 py-6" id="main-content">
+    <div className="px-4 py-6">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-[520px] items-center">
         <section className="w-full border border-border bg-white p-5 shadow-sm">
           <div className="mb-4 flex h-12 w-12 items-center justify-center bg-[#eef3f8] text-primary">
@@ -43,13 +46,16 @@ function UploadUnavailable({
           )}
         </section>
       </div>
-    </main>
+    </div>
   )
 }
 
 export default async function AlbumUploadPage({ params }: UploadPageProps) {
   const { albumSlug, uploadToken } = await params
-  const access = await getAlbumUploadPageAccess(albumSlug, uploadToken)
+  const [region, access] = await Promise.all([
+    getRegionConfig("region-mayo"),
+    getAlbumUploadPageAccess(albumSlug, uploadToken),
+  ])
 
   if (access.status !== 'valid' || !access.album) {
     const title =
@@ -60,71 +66,42 @@ export default async function AlbumUploadPage({ params }: UploadPageProps) {
           : 'Enlace no valido'
 
     return (
-      <UploadUnavailable
-        title={title}
-        message={access.message || 'Este enlace de subida no es valido.'}
-        albumPath={access.album?.publicAlbumPath}
-      />
+      <main className="min-h-screen bg-[#f1f1f1]" id="main-content">
+        <AppHeader
+          instagramUrl={region?.socialLinks.instagram}
+          facebookUrl={region?.socialLinks.facebook}
+        />
+        <UploadUnavailable
+          title={title}
+          message={access.message || 'Este enlace de subida no es valido.'}
+          albumPath={access.album?.publicAlbumPath}
+        />
+      </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-[#f1f1f1] px-4 py-5" id="main-content">
-      <div className="mx-auto w-full max-w-[560px]">
-        <header className="mb-4 flex items-center justify-between gap-3">
-          <Link
-            href={access.album.publicAlbumPath}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-2 hover:underline"
-          >
-            Volver al album
-          </Link>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            <Camera className="h-4 w-4" aria-hidden="true" />
-            IGC Region Mayo
-          </div>
-        </header>
-
-        <section className="border border-border bg-white shadow-sm">
-          <div className="border-b border-border p-5">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center bg-[#eef3f8] text-primary">
-              <ImagePlus className="h-6 w-6" aria-hidden="true" />
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-              Compartir fotos
-            </h1>
-            <p className="mt-1 text-base font-medium text-foreground">{access.album.title}</p>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Sube tus fotos de esta actividad. Un encargado las revisara antes de publicarlas en
-              el album.
-            </p>
-          </div>
-
-          <div className="p-5">
-            <div className="mb-5 border border-[#dbe7f1] bg-[#f6f9fc] p-4">
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
-                Reglas de subida
-              </div>
-              <ul className="space-y-1 text-sm leading-6 text-muted-foreground">
-                <li>Maximo 10 fotos por envio.</li>
-                <li>Maximo 5 MB por foto.</li>
-                <li>Formatos permitidos: JPG, PNG o WEBP.</li>
-              </ul>
-              {access.album.uploadInstructions ? (
-                <p className="mt-3 border-t border-[#dbe7f1] pt-3 text-sm leading-6 text-foreground">
-                  {access.album.uploadInstructions}
-                </p>
-              ) : null}
-            </div>
-
-            <AlbumUploadForm
-              albumSlug={access.album.slug}
-              uploadToken={uploadToken}
-              albumPath={access.album.publicAlbumPath}
-              turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
-            />
-          </div>
-        </section>
+    <main className="bg-[#f1f1f1]" id="main-content">
+      <AppHeader
+        instagramUrl={region?.socialLinks.instagram}
+        facebookUrl={region?.socialLinks.facebook}
+      />
+      <SectionNavBar
+        currentLabel={`Compartir fotos - ${access.album.title}`}
+        parentHref={access.album.publicAlbumPath}
+        parentLabel="Volver al album"
+        icon="album"
+      />
+      <div className="-mt-px mx-auto w-full max-w-[950px] bg-white focus:outline-none md:max-w-[952px] md:border-x-2 md:border-[#d6d0c5] dark:border-[#27272a]">
+        <AlbumUploadForm
+          albumSlug={access.album.slug}
+          uploadToken={uploadToken}
+          albumPath={access.album.publicAlbumPath}
+          albumTitle={access.album.title}
+          coverImage={access.album.coverImage}
+          uploadInstructions={access.album.uploadInstructions}
+          turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
+        />
       </div>
     </main>
   )

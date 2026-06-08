@@ -16,6 +16,7 @@ export type AlbumUploadPageAccess = {
     id: string
     title: string
     slug: string
+    coverImage: string
     uploadInstructions?: string
     publicAlbumPath: string
   }
@@ -33,6 +34,7 @@ type AlbumUploadRecord = {
   _id: string
   title?: string
   slug?: { current?: string } | string
+  coverImage?: string
   albumType?: 'photos' | 'youtube'
   allowSubmissions?: boolean
   uploadTokenHash?: string
@@ -85,6 +87,7 @@ export async function validateAlbumUploadAccess(
       _id,
       title,
       slug,
+      "coverImage": coverImage.asset->url,
       albumType,
       allowSubmissions,
       uploadTokenHash,
@@ -108,6 +111,7 @@ export async function validateAlbumUploadAccess(
     id: album._id,
     title: album.title || 'Album',
     slug,
+    coverImage: album.coverImage || '/placeholder.svg',
     albumType,
     submissionsCloseAt: album.submissionsCloseAt,
     uploadInstructions:
@@ -165,6 +169,7 @@ export async function getAlbumUploadPageAccess(
       id: access.album.id,
       title: access.album.title,
       slug: access.album.slug,
+      coverImage: access.album.coverImage,
       uploadInstructions: access.album.uploadInstructions,
       publicAlbumPath: access.album.publicAlbumPath,
     },

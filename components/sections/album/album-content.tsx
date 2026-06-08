@@ -476,7 +476,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 ) : null}
               </div>
               {!isYoutubeAlbum && album.canSubmitPhotos ? (
-                <div className="mt-4 border border-[#dbe7f1] bg-[#f6f9fc] p-4">
+                <div className="mt-4 border border bg-paper-highlight p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">

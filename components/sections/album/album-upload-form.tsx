@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Script from "next/script"
+import NextImage from "next/image"
 import Link from "next/link"
-import { CheckCircle2, ImagePlus, Loader2, UploadCloud } from "lucide-react"
+import { CheckCircle2, ImagePlus, Loader2, UploadCloud, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { sanityImageVariantUrl } from "@/lib/sanity/image"
 import {
   ALBUM_SUBMISSION_ALLOWED_TYPES,
   ALBUM_SUBMISSION_MAX_FILE_SIZE,
@@ -37,6 +39,9 @@ type AlbumUploadFormProps = {
   albumSlug: string
   uploadToken: string
   albumPath: string
+  albumTitle: string
+  coverImage: string
+  uploadInstructions?: string
   turnstileSiteKey: string
 }
 
@@ -44,6 +49,13 @@ type ProgressState = {
   current: number
   total: number
   label: string
+}
+
+type FilePreview = {
+  key: string
+  name: string
+  size: number
+  url: string
 }
 
 const MAX_CANVAS_DIMENSION = 1800
@@ -82,6 +94,15 @@ function validateFiles(files: File[]): string | null {
   }
 
   return null
+}
+
+function isUploadRuleError(message: string | null): message is string {
+  if (!message) return false
+  return (
+    message.includes("maximo 10 fotos") ||
+    message.includes("supera el limite") ||
+    message.includes("Solo se permiten")
+  )
 }
 
 function getCompressedFilename(fileName: string): string {
@@ -146,6 +167,9 @@ export function AlbumUploadForm({
   albumSlug,
   uploadToken,
   albumPath,
+  albumTitle,
+  coverImage,
+  uploadInstructions,
   turnstileSiteKey,
 }: AlbumUploadFormProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -153,8 +177,10 @@ export function AlbumUploadForm({
   const turnstileWidgetIdRef = useRef<string | null>(null)
   const [submittedByName, setSubmittedByName] = useState("")
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [filePreviews, setFilePreviews] = useState<FilePreview[]>([])
   const [turnstileToken, setTurnstileToken] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [uploadRulesError, setUploadRulesError] = useState<string | null>(null)
   const [progress, setProgress] = useState<ProgressState | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successCount, setSuccessCount] = useState(0)
@@ -165,6 +191,18 @@ export function AlbumUploadForm({
     if (selectedFiles.length === 0) return "Ninguna foto seleccionada"
     return `${selectedFiles.length} ${selectedFiles.length === 1 ? "foto seleccionada" : "fotos seleccionadas"}`
   }, [selectedFiles])
+
+  const coverImageUrl = useMemo(
+    () =>
+      sanityImageVariantUrl(coverImage, {
+        width: 640,
+        height: 640,
+        quality: 88,
+        format: "webp",
+        fit: "crop",
+      }),
+    [coverImage],
+  )
 
   const resetTurnstile = useCallback(() => {
     setTurnstileToken("")
@@ -199,11 +237,27 @@ export function AlbumUploadForm({
     }
   }, [renderTurnstile])
 
+  useEffect(() => {
+    const previews = selectedFiles.map((file) => ({
+      key: `${file.name}-${file.size}-${file.lastModified}`,
+      name: file.name,
+      size: file.size,
+      url: URL.createObjectURL(file),
+    }))
+
+    setFilePreviews(previews)
+
+    return () => {
+      previews.forEach((preview) => URL.revokeObjectURL(preview.url))
+    }
+  }, [selectedFiles])
+
   const handleSelectFiles = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? [])
     const validationError = validateFiles(files)
 
     setError(validationError)
+    setUploadRulesError(isUploadRuleError(validationError) ? validationError : null)
     setSuccessCount(0)
 
     if (validationError) {
@@ -213,6 +267,20 @@ export function AlbumUploadForm({
     }
 
     setSelectedFiles(files)
+    setUploadRulesError(null)
+  }
+
+  const removeSelectedFile = (fileKey: string) => {
+    const nextFiles = selectedFiles.filter(
+      (file) => `${file.name}-${file.size}-${file.lastModified}` !== fileKey,
+    )
+
+    setSelectedFiles(nextFiles)
+    setSuccessCount(0)
+    const validationError = nextFiles.length === 0 ? null : validateFiles(nextFiles)
+    setError(validationError)
+    setUploadRulesError(isUploadRuleError(validationError) ? validationError : null)
+    if (nextFiles.length === 0 && fileInputRef.current) fileInputRef.current.value = ""
   }
 
   const submitOneFile = async ({
@@ -262,11 +330,13 @@ export function AlbumUploadForm({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
+    setUploadRulesError(null)
     setSuccessCount(0)
 
     const validationError = validateFiles(selectedFiles)
     if (validationError) {
       setError(validationError)
+      setUploadRulesError(isUploadRuleError(validationError) ? validationError : null)
       return
     }
 
@@ -292,6 +362,7 @@ export function AlbumUploadForm({
 
       setSuccessCount(uploadedCount)
       setSelectedFiles([])
+      setUploadRulesError(null)
       if (fileInputRef.current) fileInputRef.current.value = ""
     } catch (submitError) {
       const message =
@@ -340,114 +411,184 @@ export function AlbumUploadForm({
         />
       ) : null}
 
-      <form className="space-y-5" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <Label htmlFor="submittedByName">Nombre, opcional</Label>
-          <Input
-            id="submittedByName"
-            value={submittedByName}
-            onChange={(event) => setSubmittedByName(event.target.value.slice(0, 80))}
-            placeholder="Tu nombre"
-            disabled={isSubmitting}
-            className="h-12 rounded-none bg-white"
-          />
-        </div>
+      <form className="bg-white" onSubmit={handleSubmit}>
+        <section className="border-b border-border px-4 py-4 md:px-8 md:py-6">
+          <div className="grid grid-cols-[96px_minmax(0,1fr)] items-start gap-x-3 gap-y-3 sm:grid-cols-[128px_minmax(0,1fr)] md:gap-x-5">
+            <div className="relative h-24 w-24 overflow-hidden border border-border bg-muted sm:h-32 sm:w-32">
+              <NextImage
+                src={coverImageUrl}
+                alt={albumTitle}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 96px, 128px"
+                priority
+              />
+            </div>
+            <div className="min-w-0 pt-0.5">
+              <p className="text-[13px] font-bold uppercase text-primary sm:text-sm">Compartir fotos</p>
+              <h1 className="mt-1 text-[clamp(1.55rem,7vw,2rem)] font-semibold leading-[1.05] text-foreground md:mt-2 md:text-[2rem]">
+                {albumTitle}
+              </h1>
+              <p className="mt-3 hidden max-w-2xl text-[15px] leading-7 text-muted-foreground md:block">
+                Sube tus fotos de esta actividad. Un encargado las revisara antes de publicarlas en
+                el album.
+              </p>
+            </div>
+            <p className="col-span-2 max-w-2xl text-[15px] leading-7 text-muted-foreground md:hidden">
+              Sube tus fotos de esta actividad. Un encargado las revisara antes de publicarlas en
+              el album.
+            </p>
+          </div>
+        </section>
 
-        <div className="space-y-3">
-          <Label htmlFor="album-upload-files">Fotos</Label>
-          <input
-            ref={fileInputRef}
-            id="album-upload-files"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            className="sr-only"
-            onChange={handleSelectFiles}
-            disabled={isSubmitting}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            className="h-14 w-full rounded-none border-dashed"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isSubmitting}
-          >
-            <ImagePlus className="h-5 w-5" aria-hidden="true" />
-            Seleccionar fotos
-          </Button>
-          <div className="border border-border bg-[#fafafa] p-3">
-            <p className="text-sm font-medium text-foreground">{selectedSummary}</p>
-            {selectedFiles.length > 0 ? (
-              <div className="mt-2 space-y-1">
-                {selectedFiles.slice(0, 4).map((file) => (
-                  <p key={`${file.name}-${file.size}`} className="truncate text-xs text-muted-foreground">
-                    {file.name} - {formatBytes(file.size)}
-                  </p>
-                ))}
-                {selectedFiles.length > 4 ? (
-                  <p className="text-xs text-muted-foreground">
-                    Y {selectedFiles.length - 4} mas.
+        <section className="grid md:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="border-b border-border px-4 py-4 md:border-b-0 md:border-r md:px-8 md:py-6">
+            <Label htmlFor="album-upload-files" className="text-base font-semibold">Seleccionar fotos</Label>
+            <input
+              ref={fileInputRef}
+              id="album-upload-files"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="sr-only"
+              onChange={handleSelectFiles}
+              disabled={isSubmitting}
+            />
+            <button
+              type="button"
+              className="mt-3 flex min-h-[140px] w-full flex-col items-center justify-center gap-2 border border-dashed border-[#9aa8b6] bg-paper-highlight p-5 text-center transition-colors touch-manipulation hover:border-primary/70 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60 md:min-h-[190px]"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSubmitting}
+            >
+              <span className="flex h-12 w-12 items-center justify-center bg-white text-primary shadow-sm md:h-14 md:w-14">
+                <ImagePlus className="h-6 w-6 md:h-7 md:w-7" aria-hidden="true" />
+              </span>
+              <span className="text-lg font-semibold leading-tight text-foreground">Agregar fotos</span>
+              <span className="max-w-sm text-sm leading-6 text-muted-foreground md:max-w-md">
+                Selecciona hasta 10 imagenes desde este dispositivo.
+              </span>
+            </button>
+            <div className="mt-3 border border-border bg-white p-3">
+              <p className="text-sm font-semibold text-foreground">{selectedSummary}</p>
+              {filePreviews.length > 0 ? (
+                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {filePreviews.map((preview) => (
+                    <div key={preview.key} className="min-w-0 border border-border bg-paper-highlight p-2">
+                      <div className="relative aspect-square overflow-hidden bg-muted">
+                        <img
+                          src={preview.url}
+                          alt={preview.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center bg-white/95 text-foreground shadow-sm"
+                          onClick={() => removeSelectedFile(preview.key)}
+                          disabled={isSubmitting}
+                          aria-label={`Quitar ${preview.name}`}
+                        >
+                          <X className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                      <p className="mt-2 truncate text-xs font-medium text-foreground">{preview.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatBytes(preview.size)}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="space-y-4 px-4 py-4 md:px-6 md:py-6">
+            {uploadRulesError ? (
+              <div className="border border-red-200 bg-red-50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-red-800">
+                  <CheckCircle2 className="h-4 w-4 text-red-700" aria-hidden="true" />
+                  Reglas de subida
+                </div>
+                <p className="mb-2 text-sm font-medium leading-6 text-red-700">{uploadRulesError}</p>
+                <ul className="space-y-1 text-sm leading-6 text-red-700">
+                  <li>Maximo 10 fotos por envio.</li>
+                  <li>Maximo 5 MB por foto.</li>
+                  <li>Formatos permitidos: JPG, PNG o WEBP.</li>
+                </ul>
+                {uploadInstructions ? (
+                  <p className="mt-3 border-t border-red-200 pt-3 text-sm leading-6 text-red-800">
+                    {uploadInstructions}
                   </p>
                 ) : null}
               </div>
             ) : null}
-          </div>
-        </div>
 
-        {allowDevBypass ? (
-          <div className="border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-            Turnstile no esta configurado. En desarrollo se permite un bypass controlado.
-          </div>
-        ) : turnstileSiteKey ? (
-          <div className="min-h-[72px]">
-            <div ref={turnstileContainerRef} />
-          </div>
-        ) : (
-          <div className="border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700">
-            Falta configurar Turnstile para recibir fotos.
-          </div>
-        )}
-
-        {progress ? (
-          <div className="border border-[#dbe7f1] bg-[#f6f9fc] p-3" aria-live="polite">
-            <div className="mb-2 flex items-center justify-between text-sm font-medium text-foreground">
-              <span>{progress.label}</span>
-              <span>
-                {progress.current}/{progress.total}
-              </span>
-            </div>
-            <div className="h-2 overflow-hidden bg-white">
-              <div
-                className="h-full bg-primary transition-all"
-                style={{ width: `${(progress.current / progress.total) * 100}%` }}
+            <div className="space-y-2">
+              <Label htmlFor="submittedByName">Nombre, opcional</Label>
+              <Input
+                id="submittedByName"
+                value={submittedByName}
+                onChange={(event) => setSubmittedByName(event.target.value.slice(0, 80))}
+                placeholder="Tu nombre"
+                disabled={isSubmitting}
+                className="h-12 rounded-none bg-paper-highlight"
               />
             </div>
-          </div>
-        ) : null}
 
-        {error ? (
-          <div className="border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700" role="alert">
-            {error}
-          </div>
-        ) : null}
+            {allowDevBypass ? (
+              <div className="border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
+                Turnstile no esta configurado. En desarrollo se permite un bypass controlado.
+              </div>
+            ) : turnstileSiteKey ? (
+              <div className="min-h-[72px] overflow-x-auto">
+                <div ref={turnstileContainerRef} />
+              </div>
+            ) : (
+              <div className="border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700">
+                Falta configurar Turnstile para recibir fotos.
+              </div>
+            )}
 
-        <Button
-          type="submit"
-          className="h-14 w-full rounded-none text-base font-semibold"
-          disabled={isSubmitting || selectedFiles.length === 0 || (!allowDevBypass && !turnstileToken)}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-              Enviando fotos
-            </>
-          ) : (
-            <>
-              <UploadCloud className="h-5 w-5" aria-hidden="true" />
-              Enviar fotos
-            </>
-          )}
-        </Button>
+            {progress ? (
+              <div className="border border-[#dbe7f1] bg-[#f6f9fc] p-3" aria-live="polite">
+                <div className="mb-2 flex items-center justify-between text-sm font-medium text-foreground">
+                  <span>{progress.label}</span>
+                  <span>
+                    {progress.current}/{progress.total}
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden bg-white">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {error && error !== uploadRulesError ? (
+              <div className="border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700" role="alert">
+                {error}
+              </div>
+            ) : null}
+
+            <Button
+              type="submit"
+              className="h-14 w-full rounded-none text-base font-semibold"
+              disabled={isSubmitting || selectedFiles.length === 0 || (!allowDevBypass && !turnstileToken)}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  Enviando fotos
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="h-5 w-5" aria-hidden="true" />
+                  Enviar fotos
+                </>
+              )}
+            </Button>
+          </div>
+        </section>
       </form>
     </>
   )
