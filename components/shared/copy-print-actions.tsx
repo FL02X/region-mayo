@@ -94,7 +94,7 @@ export function CopyPrintActions({
         aria-label={printLabel}
       >
         <Printer className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>Imprimir invitacion</span>
+        <span>Imprimir</span>
       </button>
     </div>
   );

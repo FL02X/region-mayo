@@ -30,7 +30,7 @@ function getCalendarMonthDate(year: number, monthIndex: number) {
 
 interface MonthNavigatorProps {
   selectedMonth: Date;
-  onMonthSelect: (date: Date, options?: { suppressScroll?: boolean }) => void;
+  onMonthSelect: (date: Date) => void;
   eventDates?: Date[];
 }
 
@@ -98,24 +98,8 @@ export function MonthNavigator({
     setViewYear(getRegionCalendarParts(next).year);
   };
 
-  // Mobile: navigate without letting the page auto-scroll. We do this by
-  // remembering the current scroll position and restoring it shortly after
-  // the parent/consumer may trigger a scroll. This suppression is only used
-  // for the small prev/next buttons on mobile — selections from the full
-  // month grid should behave normally (allowing scroll).
-  const navigateMonthWithoutScroll = (direction: "prev" | "next") => {
-    const delta = direction === "next" ? 1 : -1;
-    const next = getCalendarMonthDate(
-      selectedParts.year,
-      selectedParts.month - 1 + delta,
-    );
-
-    onMonthSelect(next, { suppressScroll: true });
-    setViewYear(getRegionCalendarParts(next).year);
-  };
-
   const handleMobileMonthNavClick = (direction: "prev" | "next") => {
-    navigateMonthWithoutScroll(direction);
+    navigateMonth(direction);
 
     // Touch devices can keep the tapped button focused, which leaves a ghost
     // selected state behind. Clearing focus restores the original appearance.
@@ -241,7 +225,7 @@ export function MonthNavigator({
       <div className="flex h-14 items-center gap-2 rounded-[2px] border border-border/80 bg-paper-highlight px-2.5 md:hidden">
         <button
           onClick={() => handleMobileMonthNavClick("prev")}
-          className="inline-flex h-10 items-center gap-0.5 rounded-[2px] px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="inline-flex h-10 items-center gap-0.5 rounded-[2px] px-2.5 text-sm font-semibold text-muted-foreground transition-colors duration-100 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           aria-label="Mes anterior"
           title="Mes anterior"
           style={{ minHeight: "unset", minWidth: "unset" }}
@@ -253,7 +237,7 @@ export function MonthNavigator({
         <Popover open={isMobilePickerOpen} onOpenChange={setIsMobilePickerOpen}>
           <PopoverTrigger asChild>
             <button
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[2px] bg-paper px-3 text-[15px] font-semibold text-brand-ink transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[2px] bg-paper px-3 text-[15px] font-semibold text-brand-ink transition-colors duration-100 hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               aria-label="Seleccionar mes y año"
               style={{ minHeight: "unset", minWidth: "unset" }}
             >
@@ -261,7 +245,7 @@ export function MonthNavigator({
                 {months[getRegionCalendarParts(selectedMonth).month - 1].slice(0, 3)} {getRegionCalendarParts(selectedMonth).year}
               </span>
               <ChevronDown
-                className={`h-3 w-3 shrink-0 transition-transform ${
+                className={`h-3 w-3 shrink-0 transition-transform duration-100 ${
                   isMobilePickerOpen ? "rotate-180" : ""
                 }`}
                 aria-hidden="true"
@@ -269,12 +253,12 @@ export function MonthNavigator({
             </button>
           </PopoverTrigger>
 
-          <PopoverContent className="w-[280px] p-3" align="center" sideOffset={6}>
+          <PopoverContent className="w-[280px] p-3 duration-100" align="center" sideOffset={6}>
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <button
                   onClick={() => navigateYear("prev")}
-                  className="flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  className="flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                   aria-label="Año anterior"
                   title="Año anterior"
                   style={{ minHeight: "unset", minWidth: "unset" }}
@@ -284,7 +268,7 @@ export function MonthNavigator({
                 <h3 className="font-semibold text-sm tabular-nums">{viewYear}</h3>
                 <button
                   onClick={() => navigateYear("next")}
-                  className="flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  className="flex items-center justify-center h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                   aria-label="Año siguiente"
                   title="Año siguiente"
                   style={{ minHeight: "unset", minWidth: "unset" }}
@@ -309,7 +293,7 @@ export function MonthNavigator({
                       aria-pressed={selected}
                       aria-label={`${month} ${viewYear}`}
                       className={[
-                        "relative h-12 px-1 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                        "relative h-12 px-1 text-sm font-semibold transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
                         selected
                           ? "bg-primary text-white"
                           : current
@@ -331,7 +315,7 @@ export function MonthNavigator({
 
         <button
           onClick={() => handleMobileMonthNavClick("next")}
-          className="inline-flex h-10 items-center gap-0.5 rounded-[2px] px-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="inline-flex h-10 items-center gap-0.5 rounded-[2px] px-2.5 text-sm font-semibold text-muted-foreground transition-colors duration-100 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           aria-label="Mes siguiente"
           title="Mes siguiente"
           style={{ minHeight: "unset", minWidth: "unset" }}

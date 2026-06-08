@@ -43,6 +43,14 @@ const QUESTIONS = [
 ];
 
 const INITIAL_OPEN_QUESTION = QUESTIONS[0]?.question ?? null;
+const DISMISSED_STORAGE_KEY = "rm-first-visit-info-dismissed";
+const DEBUG_DISMISS_PARAM = "debugFirstVisitDismiss";
+const RESET_DISMISS_PARAM = "resetFirstVisitDismiss";
+const MODAL_CLOSE_DURATION_MS = 180;
+const CARD_HIDE_DELAY_MS = 120;
+const CARD_FADE_DURATION_MS = 200;
+const CARD_COLLAPSE_DELAY_MS = CARD_HIDE_DELAY_MS + CARD_FADE_DURATION_MS;
+const CARD_COLLAPSE_DURATION_MS = 250;
 
 export function FirstVisitInfoMobile() {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,11 +60,56 @@ export function FirstVisitInfoMobile() {
   const [mounted, setMounted] = useState(false);
   const [modalActive, setModalActive] = useState(false);
   const [isStandalonePwa, setIsStandalonePwa] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  const [allowLocalhostDismissal, setAllowLocalhostDismissal] = useState(false);
+  const [dismissalChecked, setDismissalChecked] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
+  const [isHiding, setIsHiding] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const closeModalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hideDelayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dismissTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const local =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    const searchParams = new URLSearchParams(window.location.search);
+    // Local-only debug URLs:
+    // http://localhost:3000/?debugFirstVisitDismiss=1
+    // http://localhost:3000/?resetFirstVisitDismiss=1
+    // http://localhost:3000/?debugFirstVisitDismiss=1&resetFirstVisitDismiss=1
+    const canDismissOnLocalhost =
+      local && searchParams.get(DEBUG_DISMISS_PARAM) === "1";
+    const shouldResetDismissal = searchParams.get(RESET_DISMISS_PARAM) === "1";
+
+    setIsLocalhost(local);
+    setAllowLocalhostDismissal(canDismissOnLocalhost);
+
+    try {
+      if (shouldResetDismissal) {
+        window.localStorage.removeItem(DISMISSED_STORAGE_KEY);
+      }
+
+      if (!local || canDismissOnLocalhost) {
+        setIsDismissed(
+          window.localStorage.getItem(DISMISSED_STORAGE_KEY) === "true",
+        );
+      } else {
+        setIsDismissed(false);
+      }
+    } catch {
+      setIsDismissed(false);
+    }
+
+    setDismissalChecked(true);
   }, []);
 
   useEffect(() => {
@@ -96,6 +149,22 @@ export function FirstVisitInfoMobile() {
     return () => cancelAnimationFrame(raf);
   }, [isOpen]);
 
+  useEffect(() => {
+    return () => {
+      if (closeModalTimeoutRef.current) {
+        clearTimeout(closeModalTimeoutRef.current);
+      }
+
+      if (hideDelayTimeoutRef.current) {
+        clearTimeout(hideDelayTimeoutRef.current);
+      }
+
+      if (dismissTimeoutRef.current) {
+        clearTimeout(dismissTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const scrollToQuestion = (question: string) => {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -128,18 +197,57 @@ export function FirstVisitInfoMobile() {
     });
   };
 
-  if (isStandalonePwa) {
+  const hideCardAfterModalClose = () => {
+    if (isLocalhost && !allowLocalhostDismissal) return;
+
+    try {
+      window.localStorage.setItem(DISMISSED_STORAGE_KEY, "true");
+    } catch {
+      // Preference persistence is best-effort; the hide animation should still run.
+    }
+
+    if (hideDelayTimeoutRef.current) {
+      clearTimeout(hideDelayTimeoutRef.current);
+    }
+
+    hideDelayTimeoutRef.current = setTimeout(() => {
+      setIsHiding(true);
+    }, CARD_HIDE_DELAY_MS);
+
+    if (dismissTimeoutRef.current) {
+      clearTimeout(dismissTimeoutRef.current);
+    }
+
+    dismissTimeoutRef.current = setTimeout(() => {
+      setIsDismissed(true);
+    }, CARD_COLLAPSE_DELAY_MS + CARD_COLLAPSE_DURATION_MS);
+  };
+
+  const closeModal = () => {
+    setModalActive(false);
+
+    if (closeModalTimeoutRef.current) {
+      clearTimeout(closeModalTimeoutRef.current);
+    }
+
+    closeModalTimeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+      hideCardAfterModalClose();
+    }, MODAL_CLOSE_DURATION_MS);
+  };
+
+  if (!dismissalChecked || isDismissed || (isStandalonePwa && !isLocalhost)) {
     return null;
   }
 
   const modal = mounted && isOpen
     ? createPortal(
-        <div className= "fixed inset-0 z-[150] flex items-center justify-center overflow-hidden sm:p-4">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center overflow-hidden sm:p-4">
           <button
             type="button"
             aria-label="Cerrar información"
             className="absolute inset-0 bg-black/60"
-            onClick={() => setIsOpen(false)}
+            onClick={closeModal}
           />
 
           <div
@@ -162,7 +270,7 @@ export function FirstVisitInfoMobile() {
               </h3>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={closeModal}
                 aria-label="Cerrar información"
                 className="flex h-[48px] w-[52px] items-center justify-center text-white"
               >
@@ -230,6 +338,16 @@ export function FirstVisitInfoMobile() {
     <section
       aria-label="Información para primera visita"
       className="md:hidden border-t bg-white px-[20px] pb-[22px] pt-0"
+      style={{
+        opacity: isHiding ? 0 : 1,
+        maxHeight: isHiding ? 0 : 220,
+        marginTop: isHiding ? 0 : undefined,
+        marginBottom: isHiding ? 0 : undefined,
+        paddingTop: isHiding ? 0 : undefined,
+        paddingBottom: isHiding ? 0 : undefined,
+        overflow: "hidden",
+        transition: `opacity ${CARD_FADE_DURATION_MS}ms ease, max-height ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms, margin ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms, padding ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms`,
+      }}
     >
       <div className="pt-8">
         <div className="flex items-start gap-3">
@@ -261,7 +379,7 @@ export function FirstVisitInfoMobile() {
               setOpenQuestion(INITIAL_OPEN_QUESTION);
               setIsOpen(true);
             }}
-            className={`ml-14.5 flex h-8.5 items-center justify-between bg-[#255792] px-3 text-left text-[17px] font-normal leading-none text-white`}
+            className={`ml-14.5 flex h-8.5 items-center justify-between bg-brand px-3 text-left text-[17px] font-normal leading-none text-white`}
           >
             <span>Qué esperar al asistir</span>
             <ChevronRight className="h-6 w-6 stroke-[1.4]" aria-hidden="true" />

@@ -61,6 +61,7 @@ import {
   formatRegionDayMonth,
   getRegionCalendarParts,
 } from "@/lib/region-date";
+import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { useTime } from "@/lib/time-context";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
@@ -144,7 +145,7 @@ const formatVestimentaValue = (event: Event) => {
 };
 
 const pastorLinkClassName =
-  "inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
+  "inline-flex items-center gap-1 w-fit text-[17px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
 
 const MONTHS = [
   "Enero",
@@ -192,6 +193,33 @@ function formatCompactEventDateRange(start: Date, end?: Date) {
 }
 
 const PASTOR_PENDING_LABEL = "Por confirmar";
+const EVENT_COMPACT_THUMBNAIL_WIDTH = 272;
+const EVENT_GRID_THUMBNAIL_WIDTH = 640;
+
+export function getEventCardThumbnailUrl(
+  image: string,
+  variant: "compact" | "grid" = "compact",
+) {
+  if (!image || image === "/placeholder.svg") return image;
+
+  if (variant === "grid") {
+    return sanityImageVariantUrl(image, {
+      width: EVENT_GRID_THUMBNAIL_WIDTH,
+      quality: 35,
+      format: "webp",
+      fit: "crop",
+    });
+  }
+
+  return sanityImageVariantUrl(image, {
+    width: EVENT_COMPACT_THUMBNAIL_WIDTH,
+    height: EVENT_COMPACT_THUMBNAIL_WIDTH,
+    quality: 30,
+    format: "webp",
+    fit: "crop",
+  });
+}
+
 const editorialFont = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -434,15 +462,17 @@ export function EventCard({
   const eventUtilityButtonSmallClass =
     "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventPrimaryMapsButtonClass =
-    "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm bg-primary px-3 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4]";
+    "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-normal text-white transition-colors duration-150 hover:bg-brand-hover";
   const eventPrimaryMapsButtonSmallClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm bg-primary px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4]";
+    "inline-flex ml-4.5 h-8 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const compactDesktopMapsButtonClass =
-    "hidden h-8 w-fit items-center gap-1.5 rounded-sm bg-primary px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
+    "hidden h-8 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
   const compactMobileMapsButtonClass = eventPrimaryMapsButtonClass;
   const gridMapsButtonClass = canRegister
     ? eventUtilityButtonSmallClass
     : eventPrimaryMapsButtonSmallClass;
+  const compactThumbnailUrl = getEventCardThumbnailUrl(event.image, "compact");
+  const gridThumbnailUrl = getEventCardThumbnailUrl(event.image, "grid");
   const registerActionButton = !isPastEvent && canRegister ? (
     <button
       type="button"
@@ -450,7 +480,8 @@ export function EventCard({
       className={eventPrimaryMapsButtonClass}
       style={{ minHeight: "unset", minWidth: "unset" }}
     >
-      Registrarse
+      REGISTRARSE
+      <ChevronRight className="h-5 w-5 ml-2" aria-hidden="true" />
     </button>
   ) : null;
   const dropdownCtaButtons = hasDropdownCtas ? (
@@ -504,10 +535,10 @@ export function EventCard({
       {/* En compact desktop la descripcion ya esta visible; aqui solo va cuando haga falta. */}
       {options.showDescription && hasDescription && (
         <section className="space-y-3">
-          <p className={`text-sm font-bold ${editorialTitleClass}`}>
+          <p className={`text-[17px] font-bold`}>
             Descripción
           </p>
-          <p className={`text-[15px] leading-relaxed mb-0 ${editorialTextClass}`}>{event.description}</p>
+          <p className={`text-[17px] leading-relaxed mb-0 ${editorialTextClass}`}>{event.description}</p>
         </section>
       )}
 
@@ -515,21 +546,21 @@ export function EventCard({
         event.speakers?.pastorMensaje ||
         event.speakers?.jovenPreside) && (
         <section className="space-y-4">
-          <p className={`mb-6 text-[17px] font-bold ${editorialTitleClass}`}>
-            Información
+          <p className={`mb-6 text-[17px] font-bold`}>
+            Información general
           </p>
-          <div className="space-y-3 border-l-2 border-[#2f5e93]/20 py-0.5 pl-3 mb-8">
+          <div className="space-y-3 border-l-2 border-[#2f5e93]/20 py-0.5 pl-3 mb-0">
             {event.vestimenta && (
               <div className="flex items-start gap-2.5">
                 <Shirt
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  className="mt-1.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <p className="text-[15px] font-semibold">
                     Vestimenta
                   </p>
-                  <div className={`mt-1 mb-2 flex items-start gap-1.5 text-sm leading-snug ${editorialTextClass}`}>
+                  <div className={`mt-1 mb-2 flex items-start gap-1.5 text-[17px] leading-snug ${editorialTextClass}`}>
                     <span className="min-w-0">{formatVestimentaValue(event)}</span>
                     <button
                       ref={vestimentaHelpRef}
@@ -562,10 +593,10 @@ export function EventCard({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <p className="text-[15px] font-semibold">
                     Pastor a cargo
                   </p>
-                  <div className={`mt-1 text-sm leading-snug ${editorialTextClass}`}>
+                  <div className={`mt-1 text-[17px] leading-snug ${editorialTextClass}`}>
                     {pastorNameNode}
                   </div>
                 </div>
@@ -578,10 +609,10 @@ export function EventCard({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-muted-foreground">
+                  <p className="text-[15px] font-semibold">
                     Preside
                   </p>
-                  <p className={`mt-1 text-sm leading-snug ${editorialTextClass}`}>
+                  <p className={`mt-1 text-[17px] leading-snug ${editorialTextClass}`}>
                     {event.speakers.jovenPreside}
                   </p>
                 </div>
@@ -592,7 +623,7 @@ export function EventCard({
       )}
 
       {event.alimentos?.enabled && (
-        <div className="p-3 bg-muted/40 border border-border">
+        <div className="p-3 bg-muted/40 border border-border mt-8">
           <div className="flex items-start gap-2.5">
             <Utensils
               className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-1"
@@ -603,12 +634,12 @@ export function EventCard({
                 Alimentos
               </p>
               {event.alimentos.location && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs">
                   {event.alimentos.location}
                 </p>
               )}
               {event.alimentos.description && (
-                <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">
+                <p className="text-xs mt-0.5 whitespace-pre-line">
                   {event.alimentos.description}
                 </p>
               )}
@@ -1084,9 +1115,7 @@ export function EventCard({
         {eventPortals}
         <article
           id={event.id}
-          className={`overflow-hidden border-x border-t border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700 ${
-            isExpanded ? "border-b-0" : "border-b"
-          }`}
+          className="overflow-hidden border-x border-y border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 px-4 pt-5 pb-3 text-[17px] font-semibold leading-none text-foreground md:pt-6 md:pb-3.5 md:text-[18px]">
             <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
@@ -1106,11 +1135,12 @@ export function EventCard({
               {event.image ? (
                 <>
                   <Image
-                    src={event.image}
+                    src={compactThumbnailUrl}
                     alt={event.title}
                     fill
                     className="offline-image-online object-cover"
                     sizes="(min-width: 768px) 136px, 112px"
+                    unoptimized
                   />
                   {event.image !== "/placeholder.svg" ? (
                     <button
@@ -1159,7 +1189,7 @@ export function EventCard({
                   >
                     <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
                     <ChevronDown
-                      className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                      className={`h-6 w-6 shrink-0 transition-transform duration-200 ${
                         isExpanded ? "rotate-180" : ""
                       }`}
                       aria-hidden="true"
@@ -1257,7 +1287,7 @@ export function EventCard({
                     <div className={`py-2 md:hidden pb-[-4px] ${hasDropdownCtas ? "pt-5" : ""}`}>
                       {(event.location || event.address) && (
                         <section className="space-y-3">
-                          <p className={`text-[17px] font-bold ${editorialTitleClass}`}>
+                          <p className={`text-[17px] font-bold`}>
                             Ubicación
                           </p>
                           {event.location && (
@@ -1288,7 +1318,7 @@ export function EventCard({
                               style={{ minHeight: "unset", minWidth: "unset" }}
                             >
                               <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                              Abrir en Maps
+                              Abrir en Google Maps
                             </button>
                           )}
                         </section>
@@ -1296,7 +1326,7 @@ export function EventCard({
 
                       {hasDescription && (
                         <section className={`${event.location || event.address ? "mt-3 pt-5" : ""} space-y-3`}>
-                          <p className={`text-[17px] font-bold ${editorialTitleClass}`}>
+                          <p className={`text-[17px] font-bold`}>
                             Descripción
                           </p>
                           <p className={`text-[17px] leading-relaxed ${editorialTextClass}`}>
@@ -1311,7 +1341,7 @@ export function EventCard({
                       `${hasMobileCompactDetails ? "pt-5" : "pt-4"} space-y-5 pb-4 md:py-5`,
                     )}
                   <div className={`pb-4 md:pb-5 ${hasDetails || hasDropdownCtas ? "" : "pt-4 md:pt-5"}`}>
-                    <div className="[&>div]:mt-0">
+                    <div className="[&>div]:mt-3">
                       {eventActionButtons}
                     </div>
                   </div>
@@ -1347,12 +1377,13 @@ export function EventCard({
           {event.image ? (
             <>
               <Image
-                src={event.image}
+                src={gridThumbnailUrl}
                 alt={event.title}
                 fill
                 className="offline-image-online object-cover"
                 loading="eager"
-                priority
+                sizes="(min-width: 768px) 456px, calc(100vw - 32px)"
+                unoptimized
               />
               {event.image !== "/placeholder.svg" ? (
                 <button
@@ -1403,7 +1434,7 @@ export function EventCard({
             </span>
 
             {/* Title — editorial type only when this card is opted into Home's bulletin tone. */}
-            <h3 className={`${event.location ? "mb-5" : "mb-0"} text-[21px] font-semibold leading-[1.35] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
+            <h3 className={`${event.location ? "mb-5" : "mb-0"} text-[23px] font-semibold leading-[1.35] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
               {event.title}
             </h3>
 
@@ -1441,7 +1472,7 @@ export function EventCard({
                   style={{ minHeight: "unset", minWidth: "unset" }}
                 >
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  Abrir en Maps
+                  Abrir en Google Maps
                 </button>
               </div>
             )}
@@ -1452,7 +1483,7 @@ export function EventCard({
             <div className="pt-1 mt-1">
               <Button
                 onClick={() => onRegister(event)}
-                className="mt-3.5 text-sm py-5 font-bold tracking-[0.01em] bg-primary hover:bg-primary/90 text-white"
+                className="mt-3.5 text-sm py-5 font-bold tracking-[0.01em] bg-brand hover:bg-brand-hover text-white"
               >
                 REGISTRARSE
                 <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
@@ -1462,13 +1493,13 @@ export function EventCard({
 
           <button
             onClick={handleToggle}
-            className="mt-8 inline-flex max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="mt-8 inline-flex max-w-full items-center gap-1 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             aria-expanded={isExpanded}
             aria-controls={`details-${event.id}`}
           >
             <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+              className={`h-6 w-6 shrink-0 transition-transform duration-200 ${
                 isExpanded ? "rotate-180" : ""
               }`}
               aria-hidden="true"
