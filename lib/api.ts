@@ -21,7 +21,7 @@ import type {
   AlbumVideo,
   AlbumYoutubeLayout,
 } from "./types";
-import { getSanityClient, SANITY_CACHE_TAG } from "./sanity/client";
+import { getSanityClient, isSanityNetworkError, SANITY_CACHE_TAG } from "./sanity/client";
 import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
 import {
   regionMayo,
@@ -40,9 +40,74 @@ const SANITY_ENABLED = Boolean(
 );
 
 const PASTOR_PENDING_LABEL = "Por confirmar";
+const YOUTUBE_FETCH_OPTIONS = {
+  next: { revalidate: 60 * 60, tags: [SANITY_CACHE_TAG] },
+} as RequestInit;
 
 function isMayoRegion(input: string): boolean {
   return input === "mayo" || input === "Región Mayo" || input === "region-mayo";
+}
+
+function getMockRegionConfig(regionSlug: string): Region | null {
+  if (isMayoRegion(regionSlug)) return regionMayo;
+  return null;
+}
+
+function getMockEvents(regionSlug: string): Event[] {
+  if (!isMayoRegion(regionSlug)) return [];
+
+  const now = new Date();
+  return eventsData.map((event) => ({
+    ...event,
+    status: computeEventStatus(event.date, event.endDate, now),
+  }));
+}
+
+function getMockPastors(regionSlug: string): Pastor[] {
+  if (isMayoRegion(regionSlug)) return pastorsData;
+  return [];
+}
+
+function getMockCoros(regionSlug: string): Coro[] {
+  if (isMayoRegion(regionSlug)) return corosData;
+  return [];
+}
+
+function getMockDirectiva(regionSlug: string): DirectivaMember[] {
+  if (isMayoRegion(regionSlug)) return directivaData;
+  return [];
+}
+
+function getMockRegionPresident(regionSlug: string): RegionPresident | null {
+  if (isMayoRegion(regionSlug)) return regionPresident;
+  return null;
+}
+
+function getMockSiteSettings(regionSlug: string): SiteSettings | null {
+  if (isMayoRegion(regionSlug)) return siteSettingsData;
+  return null;
+}
+
+function getMockTemplos(regionSlug: string): Templo[] {
+  if (isMayoRegion(regionSlug)) return templosData;
+  return [];
+}
+
+async function readWithDevSanityFallback<T>(
+  label: string,
+  fallback: () => T,
+  read: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await read();
+  } catch (error) {
+    if (process.env.NODE_ENV === "development" && isSanityNetworkError(error)) {
+      console.warn(`[sanity] ${label} failed in development; using mock data instead.`);
+      return fallback();
+    }
+
+    throw error;
+  }
 }
 
 function toDate(value: unknown): Date {
@@ -233,9 +298,7 @@ function decodeXmlText(value: string): string {
 
 async function fetchYoutubePlaylistFeedVideos(playlistId: string): Promise<AlbumVideo[]> {
   const url = `https://www.youtube.com/feeds/videos.xml?playlist_id=${encodeURIComponent(playlistId)}`;
-  const response = await fetch(url, {
-    next: { revalidate: 60 * 60, tags: [SANITY_CACHE_TAG] },
-  });
+  const response = await fetch(url, YOUTUBE_FETCH_OPTIONS);
 
   if (!response.ok) return [];
 
@@ -297,9 +360,7 @@ async function fetchYoutubePlaylistVideos(
       url.searchParams.set("key", apiKey);
       if (pageToken) url.searchParams.set("pageToken", pageToken);
 
-      const response = await fetch(url.toString(), {
-        next: { revalidate: 60 * 60, tags: [SANITY_CACHE_TAG] },
-      });
+      const response = await fetch(url.toString(), YOUTUBE_FETCH_OPTIONS);
 
       if (!response.ok) {
         apiError = `YouTube API respondio ${response.status}.`;
@@ -517,40 +578,41 @@ function mapRegion(raw: any, regionSlugFallback: string): Region {
 export async function getRegionConfig(
   regionSlug: string = "mayo",
 ): Promise<Region | null> {
-  if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return regionMayo;
-    return null;
-  }
+  if (!SANITY_ENABLED) return getMockRegionConfig(regionSlug);
 
-  const client = getSanityClient();
-  const region = await client.fetch(
-    `*[_type == "region" && (slug.current == $slug || name == $slug)][0]{
-      _id,
-      name,
-      slug,
-      socialLinks,
-      primaryColor,
-      secondaryColor
-    }`,
-    { slug: regionSlug },
-  );
+  return readWithDevSanityFallback("getRegionConfig", () => getMockRegionConfig(regionSlug), async () => {
+    const client = getSanityClient();
+    const region = await client.fetch(
+      `*[_type == "region" && (slug.current == $slug || name == $slug)][0]{
+        _id,
+        name,
+        slug,
+        socialLinks,
+        primaryColor,
+        secondaryColor
+      }`,
+      { slug: regionSlug },
+    );
 
-  if (!region) {
-    return null;
-  }
-  return mapRegion(region, regionSlug);
+    if (!region) {
+      return null;
+    }
+    return mapRegion(region, regionSlug);
+  });
 }
 
 export async function getAvailableRegions(): Promise<string[]> {
   if (!SANITY_ENABLED) return availableRegions;
 
-  const client = getSanityClient();
-  const regions = await client.fetch(
-    `*[_type == "region"] | order(name asc){
-      name
-    }`,
-  );
-  return (regions ?? []).map((r: any) => r.name).filter(Boolean);
+  return readWithDevSanityFallback("getAvailableRegions", () => availableRegions, async () => {
+    const client = getSanityClient();
+    const regions = await client.fetch(
+      `*[_type == "region"] | order(name asc){
+        name
+      }`,
+    );
+    return (regions ?? []).map((r: any) => r.name).filter(Boolean);
+  });
 }
 
 // ============================================
@@ -558,66 +620,59 @@ export async function getAvailableRegions(): Promise<string[]> {
 // ============================================
 
 export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
-  if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) {
-      const now = new Date();
-      return eventsData.map((event) => ({
-        ...event,
-        status: computeEventStatus(event.date, event.endDate, now),
-      }));
-    }
-    return [];
-  }
+  if (!SANITY_ENABLED) return getMockEvents(regionSlug);
 
-  const client = getSanityClient();
-  const events = await client.fetch(
-    `*[_type == "event" && (region->slug.current == $slug || region->name == $slug)]
-      | order(date asc){
-        _id,
-        title,
-        eventType,
-        date,
-        endDate,
-        time,
-        location,
-        address,
-        googleMapsUrl,
-        description,
-        vestimenta,
-        vestimentaCustom,
-        typeColor,
-        image{asset->{url}},
-        albumEnabled,
-        googleDriveAlbumUrl,
-        facebookPostUrl,
-        registrationEnabled,
-        photos[]{asset->{url}},
-        templo->{temploName, address, googleMapsUrl, photos[]{asset->{url}}, "pastores": *[
-          _type == "pastor" &&
-          templo._ref == ^._id &&
-          !defined(deletedAt)
-        ]{_id, fullName}},
-        isMultiDayEvent,
-        eventGroupId,
-        alimentosEnabled,
-        alimentosLocation,
-        alimentosGoogleMapsUrl,
-        alimentosDescription,
-        juntaJuvenilEnabled,
-        juntaJuvenilLocation,
-        juntaJuvenilGoogleMapsUrl,
-        juntaJuvenilDescription,
-        pastorMensaje->{_id, fullName},
-        pastorMensajeCustom,
-        jovenPreside,
-        moreInfoEnabled,
-        moreInfoImage{asset->{url}}
-      }`,
-    { slug: regionSlug },
-  );
+  return readWithDevSanityFallback("getEvents", () => getMockEvents(regionSlug), async () => {
+    const client = getSanityClient();
+    const events = await client.fetch(
+      `*[_type == "event" && (region->slug.current == $slug || region->name == $slug)]
+        | order(date asc){
+          _id,
+          title,
+          eventType,
+          date,
+          endDate,
+          time,
+          location,
+          address,
+          googleMapsUrl,
+          description,
+          vestimenta,
+          vestimentaCustom,
+          typeColor,
+          image{asset->{url}},
+          albumEnabled,
+          googleDriveAlbumUrl,
+          facebookPostUrl,
+          registrationEnabled,
+          photos[]{asset->{url}},
+          templo->{temploName, address, googleMapsUrl, photos[]{asset->{url}}, "pastores": *[
+            _type == "pastor" &&
+            templo._ref == ^._id &&
+            !defined(deletedAt)
+          ]{_id, fullName}},
+          isMultiDayEvent,
+          eventGroupId,
+          alimentosEnabled,
+          alimentosLocation,
+          alimentosGoogleMapsUrl,
+          alimentosDescription,
+          juntaJuvenilEnabled,
+          juntaJuvenilLocation,
+          juntaJuvenilGoogleMapsUrl,
+          juntaJuvenilDescription,
+          pastorMensaje->{_id, fullName},
+          pastorMensajeCustom,
+          jovenPreside,
+          moreInfoEnabled,
+          moreInfoImage{asset->{url}}
+        }`,
+      { slug: regionSlug },
+    );
 
-  const now = new Date();
-  return (events ?? []).map((event: any) => mapEvent(event, now));
+    const now = new Date();
+    return (events ?? []).map((event: any) => mapEvent(event, now));
+  });
 }
 
 // ============================================
@@ -717,22 +772,24 @@ const ALBUM_PROJECTION = `{
 export async function getAlbums(regionSlug: string = "mayo"): Promise<Album[]> {
   if (!SANITY_ENABLED) return getMockAlbums(regionSlug);
 
-  const client = getSanityClient();
-  const albums = await client.fetch(
-    `*[
-      _type == "album" &&
-      hidden != true &&
-      !defined(deletedAt) &&
-      (
-        !defined(relatedEvent) ||
-        relatedEvent->region->slug.current == $slug ||
-        relatedEvent->region->name == $slug
-      )
-    ] | order(startDate desc) ${ALBUM_PROJECTION}`,
-    { slug: regionSlug },
-  );
+  return readWithDevSanityFallback("getAlbums", () => getMockAlbums(regionSlug), async () => {
+    const client = getSanityClient();
+    const albums = await client.fetch(
+      `*[
+        _type == "album" &&
+        hidden != true &&
+        !defined(deletedAt) &&
+        (
+          !defined(relatedEvent) ||
+          relatedEvent->region->slug.current == $slug ||
+          relatedEvent->region->name == $slug
+        )
+      ] | order(startDate desc) ${ALBUM_PROJECTION}`,
+      { slug: regionSlug },
+    );
 
-  return Promise.all((albums ?? []).map(mapAlbum));
+    return Promise.all((albums ?? []).map(mapAlbum));
+  });
 }
 
 export async function getAlbumBySlug(
@@ -743,45 +800,57 @@ export async function getAlbumBySlug(
     return getMockAlbums(regionSlug).find((album) => album.slug === slug) ?? null;
   }
 
-  const client = getSanityClient();
-  const album = await client.fetch(
-    `*[
-      _type == "album" &&
-      slug.current == $slug &&
-      hidden != true &&
-      !defined(deletedAt) &&
-      (
-        !defined(relatedEvent) ||
-        relatedEvent->region->slug.current == $regionSlug ||
-        relatedEvent->region->name == $regionSlug
-      )
-    ][0] ${ALBUM_PROJECTION}`,
-    { slug, regionSlug },
-  );
+  return readWithDevSanityFallback(
+    "getAlbumBySlug",
+    () => getMockAlbums(regionSlug).find((album) => album.slug === slug) ?? null,
+    async () => {
+      const client = getSanityClient();
+      const album = await client.fetch(
+        `*[
+          _type == "album" &&
+          slug.current == $slug &&
+          hidden != true &&
+          !defined(deletedAt) &&
+          (
+            !defined(relatedEvent) ||
+            relatedEvent->region->slug.current == $regionSlug ||
+            relatedEvent->region->name == $regionSlug
+          )
+        ][0] ${ALBUM_PROJECTION}`,
+        { slug, regionSlug },
+      );
 
-  return album ? mapAlbum(album) : null;
+      return album ? mapAlbum(album) : null;
+    },
+  );
 }
 
 export async function getAlbumSlugs(regionSlug: string = "mayo"): Promise<string[]> {
   if (!SANITY_ENABLED) return getMockAlbums(regionSlug).map((album) => album.slug);
 
-  const client = getSanityClient();
-  const slugs = await client.fetch(
-    `*[
-      _type == "album" &&
-      hidden != true &&
-      defined(slug.current) &&
-      !defined(deletedAt) &&
-      (
-        !defined(relatedEvent) ||
-        relatedEvent->region->slug.current == $slug ||
-        relatedEvent->region->name == $slug
-      )
-    ].slug.current`,
-    { slug: regionSlug },
-  );
+  return readWithDevSanityFallback(
+    "getAlbumSlugs",
+    () => getMockAlbums(regionSlug).map((album) => album.slug),
+    async () => {
+      const client = getSanityClient();
+      const slugs = await client.fetch(
+        `*[
+          _type == "album" &&
+          hidden != true &&
+          defined(slug.current) &&
+          !defined(deletedAt) &&
+          (
+            !defined(relatedEvent) ||
+            relatedEvent->region->slug.current == $slug ||
+            relatedEvent->region->name == $slug
+          )
+        ].slug.current`,
+        { slug: regionSlug },
+      );
 
-  return (slugs ?? []).filter(Boolean);
+      return (slugs ?? []).filter(Boolean);
+    },
+  );
 }
 
 export async function getUpcomingEvents(
@@ -812,28 +881,27 @@ export async function getEventById(id: string): Promise<Event | undefined> {
 export async function getPastors(
   regionSlug: string = "mayo",
 ): Promise<Pastor[]> {
-  if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return pastorsData;
-    return [];
-  }
+  if (!SANITY_ENABLED) return getMockPastors(regionSlug);
 
-  const client = getSanityClient();
-  const pastors = await client.fetch(
-    `*[_type == "pastor" && (region->slug.current == $slug || region->name == $slug)]
-      | order(fullName asc){
-        _id,
-        fullName,
-        churchName,
-        churchNumber,
-        photo{asset->{url}},
-        googleMapsUrl,
-        phone,
-        templo->{_id, temploName, address, googleMapsUrl}
-      }`,
-    { slug: regionSlug },
-  );
+  return readWithDevSanityFallback("getPastors", () => getMockPastors(regionSlug), async () => {
+    const client = getSanityClient();
+    const pastors = await client.fetch(
+      `*[_type == "pastor" && (region->slug.current == $slug || region->name == $slug)]
+        | order(fullName asc){
+          _id,
+          fullName,
+          churchName,
+          churchNumber,
+          photo{asset->{url}},
+          googleMapsUrl,
+          phone,
+          templo->{_id, temploName, address, googleMapsUrl}
+        }`,
+      { slug: regionSlug },
+    );
 
-  return (pastors ?? []).map(mapPastor);
+    return (pastors ?? []).map(mapPastor);
+  });
 }
 
 export async function getPastorById(id: string): Promise<Pastor | undefined> {
@@ -846,27 +914,26 @@ export async function getPastorById(id: string): Promise<Pastor | undefined> {
 // ============================================
 
 export async function getCoros(regionSlug: string = "mayo"): Promise<Coro[]> {
-  if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return corosData;
-    return [];
-  }
+  if (!SANITY_ENABLED) return getMockCoros(regionSlug);
 
-  const client = getSanityClient();
-  const coros = await client.fetch(
-    `*[_type == "coro" && (region->slug.current == $slug || region->name == $slug)]
-      | order(coroName asc){
-        _id,
-        coroName,
-        photo{asset->{url}},
-        googleMapsUrl,
-        presidentName,
-        presidentPhone,
-        templo->{_id, temploName, address, googleMapsUrl}
-      }`,
-    { slug: regionSlug },
-  );
+  return readWithDevSanityFallback("getCoros", () => getMockCoros(regionSlug), async () => {
+    const client = getSanityClient();
+    const coros = await client.fetch(
+      `*[_type == "coro" && (region->slug.current == $slug || region->name == $slug)]
+        | order(coroName asc){
+          _id,
+          coroName,
+          photo{asset->{url}},
+          googleMapsUrl,
+          presidentName,
+          presidentPhone,
+          templo->{_id, temploName, address, googleMapsUrl}
+        }`,
+      { slug: regionSlug },
+    );
 
-  return (coros ?? []).map(mapCoro);
+    return (coros ?? []).map(mapCoro);
+  });
 }
 
 export async function getCoroById(id: string): Promise<Coro | undefined> {
@@ -881,29 +948,28 @@ export async function getCoroById(id: string): Promise<Coro | undefined> {
 export async function getDirectiva(
   regionSlug: string = "mayo",
 ): Promise<DirectivaMember[]> {
-  if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return directivaData;
-    return [];
-  }
+  if (!SANITY_ENABLED) return getMockDirectiva(regionSlug);
 
-  const client = getSanityClient();
-  const directiva = await client.fetch(
-    `*[_type == "directiva" && (region->slug.current == $slug || region->name == $slug)]
-      | order(order asc){
-        _id,
-        fullName,
-        role,
-        roleCustom,
-        photo{asset->{url}},
-        googleMapsUrl,
-        phone,
-        order,
-        templo->{_id, temploName, address, googleMapsUrl}
-      }`,
-    { slug: regionSlug },
-  );
+  return readWithDevSanityFallback("getDirectiva", () => getMockDirectiva(regionSlug), async () => {
+    const client = getSanityClient();
+    const directiva = await client.fetch(
+      `*[_type == "directiva" && (region->slug.current == $slug || region->name == $slug)]
+        | order(order asc){
+          _id,
+          fullName,
+          role,
+          roleCustom,
+          photo{asset->{url}},
+          googleMapsUrl,
+          phone,
+          order,
+          templo->{_id, temploName, address, googleMapsUrl}
+        }`,
+      { slug: regionSlug },
+    );
 
-  return (directiva ?? []).map(mapDirectivaMember);
+    return (directiva ?? []).map(mapDirectivaMember);
+  });
 }
 
 export async function getDirectivaMemberById(
@@ -916,46 +982,49 @@ export async function getDirectivaMemberById(
 export async function getRegionPresident(
   regionSlug: string = "mayo",
 ): Promise<RegionPresident | null> {
-  if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return regionPresident;
-    return null;
-  }
+  if (!SANITY_ENABLED) return getMockRegionPresident(regionSlug);
 
-  const client = getSanityClient();
+  return readWithDevSanityFallback(
+    "getRegionPresident",
+    () => getMockRegionPresident(regionSlug),
+    async () => {
+      const client = getSanityClient();
 
-  // Preferred: explicit "Presidente Regional" role.
-  const president = await client.fetch(
-    `*[
-      _type == "directiva" &&
-      (region->slug.current == $slug || region->name == $slug) &&
-      role == "Presidente Regional"
-    ][0]{
-      fullName,
-      phone
-    }`,
-    { slug: regionSlug },
+      // Preferred: explicit "Presidente Regional" role.
+      const president = await client.fetch(
+        `*[
+          _type == "directiva" &&
+          (region->slug.current == $slug || region->name == $slug) &&
+          role == "Presidente Regional"
+        ][0]{
+          fullName,
+          phone
+        }`,
+        { slug: regionSlug },
+      );
+
+      if (president?.fullName && president?.phone)
+        return president as RegionPresident;
+
+      // Fallback: first directiva member (keeps the UI working for new/blank CMS setups).
+      const fallback = await client.fetch(
+        `*[
+          _type == "directiva" &&
+          (region->slug.current == $slug || region->name == $slug)
+        ] | order(order asc)[0]{
+          fullName,
+          phone
+        }`,
+        { slug: regionSlug },
+      );
+
+      if (!fallback?.fullName || !fallback?.phone) {
+        return null;
+      }
+
+      return fallback as RegionPresident;
+    },
   );
-
-  if (president?.fullName && president?.phone)
-    return president as RegionPresident;
-
-  // Fallback: first directiva member (keeps the UI working for new/blank CMS setups).
-  const fallback = await client.fetch(
-    `*[
-      _type == "directiva" &&
-      (region->slug.current == $slug || region->name == $slug)
-    ] | order(order asc)[0]{
-      fullName,
-      phone
-    }`,
-    { slug: regionSlug },
-  );
-
-  if (!fallback?.fullName || !fallback?.phone) {
-    return null;
-  }
-
-  return fallback as RegionPresident;
 }
 
 // ============================================
@@ -1041,36 +1110,39 @@ function mapSocialPost(raw: any): SocialPost {
 export async function getSiteSettings(
   regionSlug: string = "mayo",
 ): Promise<SiteSettings | null> {
-  if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return siteSettingsData;
-    return null;
-  }
+  if (!SANITY_ENABLED) return getMockSiteSettings(regionSlug);
 
-  const client = getSanityClient();
-  const settings = await client.fetch(
-    `*[_type == "siteSettings" && (region->slug.current == $slug || region->name == $slug)][0]{
-      _id,
-      siteName,
-      heroImages[]{
-        image{asset->{url}},
-        alt
-      },
-      mobileHeroImage{
-        image{asset->{url}},
-        alt
-      },
-      heroTitle,
-      heroSubtitle
-    }`,
-    { slug: regionSlug },
+  return readWithDevSanityFallback(
+    "getSiteSettings",
+    () => getMockSiteSettings(regionSlug),
+    async () => {
+      const client = getSanityClient();
+      const settings = await client.fetch(
+        `*[_type == "siteSettings" && (region->slug.current == $slug || region->name == $slug)][0]{
+          _id,
+          siteName,
+          heroImages[]{
+            image{asset->{url}},
+            alt
+          },
+          mobileHeroImage{
+            image{asset->{url}},
+            alt
+          },
+          heroTitle,
+          heroSubtitle
+        }`,
+        { slug: regionSlug },
+      );
+
+      if (!settings) {
+        // Return default settings if none found
+        return siteSettingsData;
+      }
+
+      return mapSiteSettings(settings);
+    },
   );
-
-  if (!settings) {
-    // Return default settings if none found
-    return siteSettingsData;
-  }
-
-  return mapSiteSettings(settings);
 }
 
 // ============================================
@@ -1080,73 +1152,79 @@ export async function getSiteSettings(
 export async function getLatestHeroCard(regionSlug: string = "mayo"): Promise<HeroCard | null> {
   if (!SANITY_ENABLED) return null;
 
-  const client = getSanityClient();
-  const card = await client.fetch(
-    `*[_type == "heroCard" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
-      | order(coalesce(pinned, false) desc, coalesce(publishedAt, _updatedAt, _createdAt) desc)[0]{
-        _id,
-        url,
-        ctaText,
-        "publishedAt": coalesce(publishedAt, _updatedAt, _createdAt),
-        pinned,
-        priorityWeight,
-        media{
-          isVertical,
-          alt,
-          file{asset->{url}}
-        }
-      }`,
-    { slug: regionSlug },
-  );
+  return readWithDevSanityFallback("getLatestHeroCard", () => null, async () => {
+    const client = getSanityClient();
+    const card = await client.fetch(
+      `*[_type == "heroCard" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
+        | order(coalesce(pinned, false) desc, coalesce(publishedAt, _updatedAt, _createdAt) desc)[0]{
+          _id,
+          url,
+          ctaText,
+          "publishedAt": coalesce(publishedAt, _updatedAt, _createdAt),
+          pinned,
+          priorityWeight,
+          media{
+            isVertical,
+            alt,
+            file{asset->{url}}
+          }
+        }`,
+      { slug: regionSlug },
+    );
 
-  if (!card) return null;
-  return mapHeroCard(card);
+    if (!card) return null;
+    return mapHeroCard(card);
+  });
 }
 
 export async function getPrayerWallConfig(regionSlug: string = "mayo"): Promise<PrayerWallConfig | null> {
   if (!SANITY_ENABLED) return null;
 
-  const client = getSanityClient();
-  const wall = await client.fetch(
-    `*[_type == "prayerWall" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
-      | order(publishedAt desc)[0]{
-        _id,
-        phase,
-        enabled,
-        publishedAt,
-        selectedPrayers[]->{
+  return readWithDevSanityFallback("getPrayerWallConfig", () => null, async () => {
+    const client = getSanityClient();
+    const wall = await client.fetch(
+      `*[_type == "prayerWall" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
+        | order(publishedAt desc)[0]{
           _id,
-          text,
-          submittedAt,
-          approved,
-          spam
-        }
-      }`,
-    { slug: regionSlug },
-  );
+          phase,
+          enabled,
+          publishedAt,
+          selectedPrayers[]->{
+            _id,
+            text,
+            submittedAt,
+            approved,
+            spam
+          }
+        }`,
+      { slug: regionSlug },
+    );
 
-  if (!wall) return null;
-  return mapPrayerWallConfig(wall);
+    if (!wall) return null;
+    return mapPrayerWallConfig(wall);
+  });
 }
 
 export async function getLatestSocialPosts(limit: number = 6): Promise<SocialPost[]> {
   if (!SANITY_ENABLED) return [];
 
-  const client = getSanityClient();
-  const posts = await client.fetch(
-    `*[_type == "socialPostCache"] | order(postedAt desc)[0...$limit]{
-      _id,
-      network,
-      url,
-      caption,
-      isVertical,
-      postedAt,
-      media{asset->{url}}
-    }`,
-    { limit },
-  );
+  return readWithDevSanityFallback("getLatestSocialPosts", () => [], async () => {
+    const client = getSanityClient();
+    const posts = await client.fetch(
+      `*[_type == "socialPostCache"] | order(postedAt desc)[0...$limit]{
+        _id,
+        network,
+        url,
+        caption,
+        isVertical,
+        postedAt,
+        media{asset->{url}}
+      }`,
+      { limit },
+    );
 
-  return (posts ?? []).map(mapSocialPost).filter((p: SocialPost) => Boolean(p.url));
+    return (posts ?? []).map(mapSocialPost).filter((p: SocialPost) => Boolean(p.url));
+  });
 }
 
 // ============================================
@@ -1242,51 +1320,50 @@ function mapTemplo(raw: any): Templo {
 export async function getTemplos(
   regionSlug: string = "mayo",
 ): Promise<Templo[]> {
-  if (!SANITY_ENABLED) {
-    if (isMayoRegion(regionSlug)) return templosData;
-    return [];
-  }
+  if (!SANITY_ENABLED) return getMockTemplos(regionSlug);
 
-  const client = getSanityClient();
-  const templos = await client.fetch(
-    `*[
-      _type == "templo" &&
-      (region->slug.current == $slug || region->name == $slug) &&
-      !defined(deletedAt)
-    ] | order(churchNumber asc){
-      _id,
-      temploName,
-      churchNumber,
-      address,
-      googleMapsUrl,
-      location,
-      phone,
-      photos[]{asset->{url}},
-      schedule{
-        timezone,
-        services[]{
-          day,
-          startTime,
-          endTime,
-          label
-        }
-      },
-      description,
-      presidenteJovenesName,
-      presidenteJovenesPhone,
-      "pastores": *[
-        _type == "pastor" &&
-        templo._ref == ^._id &&
+  return readWithDevSanityFallback("getTemplos", () => getMockTemplos(regionSlug), async () => {
+    const client = getSanityClient();
+    const templos = await client.fetch(
+      `*[
+        _type == "templo" &&
+        (region->slug.current == $slug || region->name == $slug) &&
         !defined(deletedAt)
-      ]{_id, fullName, phone},
-      "coros": *[
-        _type == "coro" &&
-        templo._ref == ^._id &&
-        !defined(deletedAt)
-      ]{_id, coroName, presidentName, presidentPhone}
-    }`,
-    { slug: regionSlug },
-  );
+      ] | order(churchNumber asc){
+        _id,
+        temploName,
+        churchNumber,
+        address,
+        googleMapsUrl,
+        location,
+        phone,
+        photos[]{asset->{url}},
+        schedule{
+          timezone,
+          services[]{
+            day,
+            startTime,
+            endTime,
+            label
+          }
+        },
+        description,
+        presidenteJovenesName,
+        presidenteJovenesPhone,
+        "pastores": *[
+          _type == "pastor" &&
+          templo._ref == ^._id &&
+          !defined(deletedAt)
+        ]{_id, fullName, phone},
+        "coros": *[
+          _type == "coro" &&
+          templo._ref == ^._id &&
+          !defined(deletedAt)
+        ]{_id, coroName, presidentName, presidentPhone}
+      }`,
+      { slug: regionSlug },
+    );
 
-  return (templos ?? []).map(mapTemplo);
+    return (templos ?? []).map(mapTemplo);
+  });
 }

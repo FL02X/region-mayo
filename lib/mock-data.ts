@@ -380,7 +380,7 @@ export const templosData: Templo[] = [
     address: 'Av. Juárez 123, Navojoa, Sonora',
     googleMapsUrl: 'https://maps.google.com/?q=Templo+Central+Navojoa',
     phone: '6441234567',
-    photo: '/images/coro-placeholder.jpg',
+    photos: ['/images/coro-placeholder.jpg'],
     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     presidenteJovenesName: 'Hno. Miguel Rodríguez',
     presidenteJovenesPhone: '6441111222',

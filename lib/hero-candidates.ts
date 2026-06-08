@@ -11,9 +11,18 @@
  * 4. Social Posts (cached de Meta API)
  */
 
-import { getSanityClient } from '@/lib/sanity/client'
+import { getSanityClient, isSanityNetworkError } from '@/lib/sanity/client'
 import type { HeroCandidate } from '@/lib/ranker'
 import type { Event, HeroCard, PrayerWallConfig, Prayer, SocialPost } from '@/lib/types'
+
+function logHeroCandidateError(label: string, error: unknown) {
+  if (process.env.NODE_ENV === 'development' && isSanityNetworkError(error)) {
+    console.warn(`[sanity] ${label} unavailable in development; skipping hero candidate.`)
+    return
+  }
+
+  console.error(`❌ Error fetching ${label}:`, error)
+}
 
 /**
  * Obtiene el Custom Hero Card más reciente
@@ -42,7 +51,7 @@ async function getLatestHeroCard(): Promise<HeroCandidate | null> {
       priorityWeight: card.priorityWeight,
     }
   } catch (error) {
-    console.error('❌ Error fetching hero card:', error)
+    logHeroCandidateError('hero card', error)
     return null
   }
 }
@@ -74,7 +83,7 @@ async function getPrayerWallCandidate(): Promise<HeroCandidate | null> {
       pinned: false,
     }
   } catch (error) {
-    console.error('❌ Error fetching prayer wall:', error)
+    logHeroCandidateError('prayer wall', error)
     return null
   }
 }
@@ -101,7 +110,7 @@ async function getEventCandidates(regionSlug: string): Promise<HeroCandidate[]> 
       pinned: false,
     }))
   } catch (error) {
-    console.error('❌ Error fetching events:', error)
+    logHeroCandidateError('events', error)
     return []
   }
 }
@@ -131,7 +140,7 @@ async function getSocialPostCandidates(): Promise<HeroCandidate[]> {
       pinned: false,
     }))
   } catch (error) {
-    console.error('❌ Error fetching social posts:', error)
+    logHeroCandidateError('social posts', error)
     return []
   }
 }
@@ -172,7 +181,7 @@ export async function getSelectedPrayers(): Promise<Prayer[]> {
   try {
     return (await client.fetch(query)) as Prayer[]
   } catch (error) {
-    console.error('❌ Error fetching selected prayers:', error)
+    logHeroCandidateError('selected prayers', error)
     return []
   }
 }

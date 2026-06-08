@@ -5,7 +5,12 @@ import { WifiOff, X } from "lucide-react";
 import { applyFontScale, onPreferenceChange, readFontScale } from "@/lib/preferences";
 import { readLastSync, warmCacheRoutes, writeLastSync } from "@/lib/pwa-sync";
 import { useConnectivity } from "@/hooks/use-connectivity";
-import { markPwaInstalled, setDeferredInstallPrompt, type BeforeInstallPromptEvent } from "@/hooks/use-install-prompt";
+import {
+  checkStandalone,
+  markPwaInstalled,
+  setDeferredInstallPrompt,
+  type BeforeInstallPromptEvent,
+} from "@/hooks/use-install-prompt";
 
 const SYNC_INTERVAL_FAST_MS = 6 * 60 * 60 * 1000;
 const SYNC_INTERVAL_SLOW_MS = 12 * 60 * 60 * 1000;
@@ -42,6 +47,7 @@ export function PwaBootstrap() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!isOnline) return;
+    if (!checkStandalone()) return;
 
     const lastSync = readLastSync();
     const now = Date.now();

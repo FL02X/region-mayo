@@ -399,7 +399,7 @@ export function AppHeader({
               draggable={false}
             >
               <Image
-                src="/images/region-mayo-logo.jpg"
+                src="/images/region-mayo-logo-64.jpg"
                 alt="Región Mayo"
                 width={30}
                 height={30}
@@ -501,7 +501,7 @@ export function AppHeader({
                 draggable={false}
               >
                 <Image
-                  src="/images/region-mayo-logo.jpg"
+                  src="/images/region-mayo-logo-64.jpg"
                   alt="Región Mayo"
                   width={26}
                   height={26}

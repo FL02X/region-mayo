@@ -43,7 +43,7 @@ export function markPwaInstalled() {
   listeners.forEach((listener) => listener());
 }
 
-function checkStandalone(): boolean {
+export function checkStandalone(): boolean {
   if (typeof window === "undefined") return false;
   const isStandaloneDisplay = window.matchMedia("(display-mode: standalone)").matches;
   const isIosStandalone = Boolean((navigator as Navigator & { standalone?: boolean }).standalone);

@@ -12,12 +12,12 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#21252b",
     icons: [
       {
-        src: "/images/region-mayo-logo.jpg",
+        src: "/images/region-mayo-logo-192.jpg",
         sizes: "192x192",
         type: "image/jpeg",
       },
       {
-        src: "/images/region-mayo-logo.jpg",
+        src: "/images/region-mayo-logo-512.jpg",
         sizes: "512x512",
         type: "image/jpeg",
       },

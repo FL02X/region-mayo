@@ -597,7 +597,7 @@ export function CountdownSection({
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className={`${editorialFont.className} type-human-title mb-5 text-[27px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
+                className={`${editorialFont.className} type-human-title mb-5 text-[29px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
               >
                 {countdownEvent.title}
               </h3>
@@ -609,7 +609,7 @@ export function CountdownSection({
                     className="h-4 w-4 shrink-0"
                     aria-hidden="true"
                   />
-                  <span className="inline-flex items-baseline gap-2 text-[15px] font-bold leading-none tabular-nums">
+                  <span className="inline-flex items-baseline gap-2 text-[19px] font-bold leading-none tabular-nums">
                     <span>{formatRegionWeekdayDayMonth(countdownEvent.date)}</span>
                     <span className="text-[#2f5e93]" aria-hidden="true">
                       ·

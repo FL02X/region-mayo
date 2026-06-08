@@ -34,6 +34,52 @@ type SanityQueryClient = {
 
 let cachedClient: SanityQueryClient | null = null
 
+export function isSanityNetworkError(error: unknown): boolean {
+  let current: unknown = error
+
+  for (let depth = 0; depth < 5 && current; depth += 1) {
+    if (current instanceof Error) {
+      const name = current.name.toLowerCase()
+      const message = current.message.toLowerCase()
+      if (
+        name.includes("abort") ||
+        name.includes("timeout") ||
+        message.includes("fetch failed") ||
+        message.includes("connect timeout") ||
+        message.includes("network") ||
+        message.includes("enotfound") ||
+        message.includes("eai_again") ||
+        message.includes("econnrefused") ||
+        message.includes("etimedout") ||
+        message.includes("econnreset")
+      ) {
+        return true
+      }
+    }
+
+    if (typeof current === "object" && current !== null) {
+      const code = "code" in current ? String(current.code).toLowerCase() : ""
+      if (
+        code.includes("und_err") ||
+        code.includes("enotfound") ||
+        code.includes("eai_again") ||
+        code.includes("econnrefused") ||
+        code.includes("etimedout") ||
+        code.includes("econnreset")
+      ) {
+        return true
+      }
+
+      current = "cause" in current ? current.cause : null
+      continue
+    }
+
+    break
+  }
+
+  return false
+}
+
 export function getSanityClient() {
   if (cachedClient) return cachedClient
   const env = getSanityEnv()
@@ -52,20 +98,27 @@ export function getSanityClient() {
         headers.Authorization = `Bearer ${env.token}`
       }
 
-      const cacheOptions =
+      const cacheOptions: RequestInit =
         process.env.NODE_ENV === "development"
-          ? ({ cache: "no-store" } as const)
+          ? { cache: "no-store" }
           : ({
               cache: "force-cache",
               next: {
                 tags: [SANITY_CACHE_TAG],
               },
-            } as const)
+            } as RequestInit)
+
+      const devTimeoutMs = Number(process.env.SANITY_DEV_FETCH_TIMEOUT_MS ?? 2000)
+      const signal =
+        process.env.NODE_ENV === "development" && Number.isFinite(devTimeoutMs) && devTimeoutMs > 0
+          ? AbortSignal.timeout(devTimeoutMs)
+          : undefined
 
       const res = await fetch(url, {
         method: "POST",
         headers,
         body: JSON.stringify({ query, params: params ?? {} }),
+        signal,
         ...cacheOptions,
       })
 

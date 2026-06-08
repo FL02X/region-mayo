@@ -30,8 +30,8 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
   },
   icons: {
-    icon: "/images/region-mayo-logo.jpg",
-    apple: "/images/region-mayo-logo.jpg",
+    icon: "/images/region-mayo-logo-192.jpg",
+    apple: "/images/region-mayo-logo-180.jpg",
   },
   openGraph: {
     title: "Iglesia Gentil de Cristo — Región Mayo | Sitio oficial regional",

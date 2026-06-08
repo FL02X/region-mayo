@@ -636,7 +636,7 @@ select,
 }
 
 .paper-cut-y {
-  --paper-cut-intensity: 2px;
+  --paper-cut-intensity: 3px;
   --paper-cut-top-depth: 10px;
   --paper-cut-bottom-depth: 10px;
   isolation: isolate;

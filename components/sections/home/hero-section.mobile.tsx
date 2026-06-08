@@ -215,7 +215,7 @@ export function MobileHero({
 
   return (
     <section className="md:hidden w-full max-w-[950px] mx-auto bg-white" aria-label="Imagen principal móvil">
-      <div className="mobile-hero-print-image w-full aspect-[1.25] bg-black overflow-hidden flex items-center justify-center">
+      <div className="mobile-hero-print-image w-full aspect-[1.60] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
@@ -255,7 +255,7 @@ export function MobileHero({
               Iglesia Gentil de Cristo
             </p>
             <p className={`${editorialFont.className} mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}>
-              Calendario de la <span className="font-normal">Región Mayo</span>
+              Sitio oficial de la <span className="block font-normal">Región Mayo</span>
             </p>
             <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">
               Eventos, avisos e información de nuestras iglesias de la Región Mayo.

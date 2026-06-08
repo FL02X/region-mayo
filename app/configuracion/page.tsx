@@ -37,10 +37,12 @@ export default function ConfiguracionPage() {
     setAnalyticsOptIn(readAnalyticsOptIn());
     setLastSync(readLastSync());
     refreshStorageEstimate();
-    estimateOfflineBundleBytes()
-      .then(setOfflineBundleBytes)
-      .catch(() => setOfflineBundleBytes(OFFLINE_BUNDLE_FALLBACK_BYTES));
-  }, []);
+    if (isInstalled) {
+      estimateOfflineBundleBytes()
+        .then(setOfflineBundleBytes)
+        .catch(() => setOfflineBundleBytes(OFFLINE_BUNDLE_FALLBACK_BYTES));
+    }
+  }, [isInstalled]);
 
   const refreshStorageEstimate = async () => {
     if (!navigator.storage?.estimate) return;
@@ -54,6 +56,14 @@ export default function ConfiguracionPage() {
   };
 
   const handleSyncNow = async () => {
+    if (!isInstalled) {
+      setSyncFeedback({
+        tone: "error",
+        message: "Instala la app para preparar contenido sin conexion.",
+      });
+      return;
+    }
+
     setIsSyncing(true);
     setSyncFeedback(null);
     try {
@@ -122,13 +132,13 @@ export default function ConfiguracionPage() {
                 Almacenamiento usado: {storageUsed === null ? "No disponible" : formatBytes(storageUsed)}
               </p>
               <p className="text-xs text-muted-foreground">
-                Descarga offline estimada: {formatBytes(offlineBundleBytes)}
+                Descarga offline estimada: {isInstalled ? formatBytes(offlineBundleBytes) : "Disponible al instalar"}
               </p>
             </div>
             <div className="flex flex-col gap-2">
               <Button
                 onClick={handleSyncNow}
-                disabled={!isOnline || isSyncing}
+                disabled={!isInstalled || !isOnline || isSyncing}
                 className="rounded-none h-10 px-4 uppercase tracking-wider text-xs"
               >
                 {isSyncing ? "Sincronizando..." : "Sincronizar ahora"}

@@ -1,26 +1,14 @@
-const VERSION = "v9";
+const VERSION = "v10";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
-const IMAGE_CACHE = `rm-images-${VERSION}`;
 const OFFLINE_URL = "/offline";
 const IMAGE_FALLBACK_URL = "/placeholder.svg";
 const PRECACHE_ROUTES = [
-  "/",
   "/offline",
   IMAGE_FALLBACK_URL,
-  "/images/region-mayo-logo.jpg",
-  "/templos",
-  "/pastores",
-  "/coros",
-  "/album",
-  "/directiva",
-  "/buscar",
-  "/configuracion",
-  "/instalar",
 ];
 const DEV_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const IS_DEV_HOST = DEV_HOSTS.has(self.location.hostname);
-const MAX_MOBILE_IMAGE_WIDTH = 828;
 
 self.addEventListener("install", (event) => {
   if (!IS_DEV_HOST) {
@@ -101,11 +89,6 @@ const isFromAlbum = (request) => {
   return !!referrerUrl && referrerUrl.origin === self.location.origin && isAlbumRoute(referrerUrl);
 };
 
-const isDesktopSizedImage = (url) => {
-  const width = Number(url.searchParams.get("w") || "");
-  return Number.isFinite(width) && width > MAX_MOBILE_IMAGE_WIDTH;
-};
-
 async function imageFallbackResponse() {
   const fallback = await caches.match(IMAGE_FALLBACK_URL, { ignoreSearch: true });
   if (fallback) return fallback;
@@ -124,9 +107,6 @@ async function cacheFirst(request, cacheName) {
     }
     return response;
   } catch (error) {
-    if (cacheName === IMAGE_CACHE) {
-      return imageFallbackResponse();
-    }
     throw error;
   }
 }
@@ -217,11 +197,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (isImageRequest(url, request)) {
-    if (isDesktopSizedImage(url)) {
-      event.respondWith(networkOnlyWithFallback(request));
-      return;
-    }
-    event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    event.respondWith(networkOnlyWithFallback(request));
     return;
   }
 
