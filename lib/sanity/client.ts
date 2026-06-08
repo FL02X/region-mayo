@@ -108,7 +108,7 @@ export function getSanityClient() {
               },
             } as RequestInit)
 
-      const devTimeoutMs = Number(process.env.SANITY_DEV_FETCH_TIMEOUT_MS ?? 2000)
+      const devTimeoutMs = Number(process.env.SANITY_DEV_FETCH_TIMEOUT_MS)
       const signal =
         process.env.NODE_ENV === "development" && Number.isFinite(devTimeoutMs) && devTimeoutMs > 0
           ? AbortSignal.timeout(devTimeoutMs)

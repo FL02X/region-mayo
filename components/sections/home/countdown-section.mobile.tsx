@@ -589,8 +589,7 @@ export function CountdownSection({
 
             <div className="p-5">
               <p
-                className="text-[11px] font-bold uppercase tracking-[0.22em] mb-3.5 ml-[-2px] mt-[-2px]"
-                style={{ color: "#2f5e93" }}
+                className="text-[11px] text-brand-text font-bold uppercase tracking-[0.22em] mb-3.5 ml-[-2px] mt-[-2px]"
               >
                 Nuestro Próximo Evento
               </p>
@@ -666,7 +665,8 @@ export function CountdownSection({
         {/* Spotlight: custom media */}
         {showCustomCard && customHeroCard && (
           <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}>
-            <div className="h-[3px]" style={{ backgroundColor: spotlightAccent }} aria-hidden="true" />
+            <div className="h-[3px] bg-brand" 
+            aria-hidden="true" />
             <div className="p-3">
               <p className="type-system mb-2.5 inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.12em]">
                 <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />

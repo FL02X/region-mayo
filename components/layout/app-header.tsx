@@ -503,8 +503,8 @@ export function AppHeader({
                 <Image
                   src="/images/region-mayo-logo-64.jpg"
                   alt="Región Mayo"
-                  width={26}
-                  height={26}
+                  width={30}
+                  height={30}
                   className="rounded-full shrink-0 select-none"
                   draggable={false}
                   loading="eager"

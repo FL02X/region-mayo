@@ -359,7 +359,7 @@ export function EventsFeed({
                 animate={{ opacity: 1, y: 0 }}
                 exit={isMobile ? { opacity: 0, y: -4 } : undefined}
                 transition={isMobile ? calendarFadeTransition : { duration: 0 }}
-                className="bg-card border border-border p-8 text-center max-w-md mx-auto"
+                className="bg-paper-highlight border border-border p-8 text-center max-w-md mx-auto"
               >
                 <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-sm font-medium text-foreground mb-1">
@@ -376,7 +376,7 @@ export function EventsFeed({
                 animate={{ opacity: 1, y: 0 }}
                 exit={isMobile ? { opacity: 0, y: -4 } : undefined}
                 transition={isMobile ? calendarFadeTransition : { duration: 0 }}
-                className="p-0.5 mx-0 flex flex-col gap-5 pb-14 md:gap-6"
+                className="-mx-2.5 p-0.5 flex flex-col gap-5 pb-14 md:gap-6"
               >
                 {filteredEvents.map((event) => (
                   <EventCard

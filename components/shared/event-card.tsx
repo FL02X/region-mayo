@@ -444,13 +444,14 @@ export function EventCard({
     ? eventUtilityButtonSmallClass
     : eventPrimaryMapsButtonSmallClass;
   const registerActionButton = !isPastEvent && canRegister ? (
-    <Button
+    <button
+      type="button"
       onClick={() => onRegister(event)}
-      size="sm"
-      className="h-8 rounded-none bg-primary px-3 text-sm font-bold text-white hover:bg-primary/90"
+      className={eventPrimaryMapsButtonClass}
+      style={{ minHeight: "unset", minWidth: "unset" }}
     >
       Registrarse
-    </Button>
+    </button>
   ) : null;
   const dropdownCtaButtons = hasDropdownCtas ? (
     <div className="space-y-2.5">
@@ -1083,9 +1084,11 @@ export function EventCard({
         {eventPortals}
         <article
           id={event.id}
-          className="overflow-hidden bg-transparent scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
+          className={`overflow-hidden border-x border-t border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700 ${
+            isExpanded ? "border-b-0" : "border-b"
+          }`}
         >
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-5 text-[17px] font-semibold leading-none text-foreground md:pt-6 md:text-[18px]">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 px-4 pt-5 pb-3 text-[17px] font-semibold leading-none text-foreground md:pt-6 md:pb-3.5 md:text-[18px]">
             <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
             <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
               <span className="whitespace-nowrap">{visualDateLabel}</span>
@@ -1098,7 +1101,7 @@ export function EventCard({
             </span>
           </p>
 
-          <div className="flex gap-4 pb-1 pt-4 md:gap-5 md:pb-0 md:pt-5">
+          <div className="flex gap-4 px-4 pb-1 pt-4 md:gap-5 md:pb-0 md:pt-5">
             <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted md:h-[136px] md:w-[136px]">
               {event.image ? (
                 <>
@@ -1143,6 +1146,11 @@ export function EventCard({
                   <h3 className={`text-[20px] font-semibold leading-[1.35] md:text-[20px] ${editorialTitleClass}`}>
                     {event.title}
                   </h3>
+                  {registerActionButton && (
+                    <div className="mt-4 md:hidden">
+                      {registerActionButton}
+                    </div>
+                  )}
                   <button
                     onClick={handleToggle}
                     className="mt-4 inline-flex max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:hidden"
@@ -1189,9 +1197,7 @@ export function EventCard({
 
               {(registerActionButton || event.location) && (
                 <div
-                  className={`mt-3 flex-col items-start gap-2 md:mt-5 md:flex-row md:flex-wrap md:items-center ${
-                    registerActionButton ? "flex" : "hidden md:flex"
-                  }`}
+                  className="mt-3 hidden flex-col items-start gap-2 md:mt-5 md:flex md:flex-row md:flex-wrap md:items-center"
                 >
                   {registerActionButton}
 
@@ -1239,9 +1245,9 @@ export function EventCard({
                 onAnimationComplete={() => {
                   if (isExpanded) scrollExpandedDetailsIntoView();
                 }}
-                className="overflow-hidden"
+                className="mt-4 overflow-hidden border-t border-border/70"
               >
-                <div className="p-1 bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-1">
+                <div className="bg-gradient-to-b from-transparent via-muted/10 to-muted/20 px-3 pb-1 pt-3">
                   {hasDropdownCtas && (
                     <div className="pb-0 pt-4 md:pt-5">
                       {dropdownCtaButtons}

@@ -72,7 +72,13 @@
   --text-ink-soft: #292524;
   --text-muted: #57534E;
   --text-muted-light: #78716C;
-  --accent-navy: #1E3A8A;
+  --brand: #2F5E93;
+  --brand-hover: #284F7B;
+  --brand-active: #213F63;
+  --brand-soft: #EAF2F8;
+  --brand-border: #9CBED8;
+  --brand-text: #254E78;
+  --accent-navy: var(--brand);
   --border-line: #D6D3D1;
   --surface-shell: #eeeeea;
   --surface-pane: var(--bg-paper);
@@ -81,8 +87,8 @@
   --paper-fiber: rgba(76, 59, 33, 0.05);
   --paper-ink-soft: rgba(35, 42, 51, 0.08);
   --paper-crease: rgba(108, 89, 56, 0.12);
-  --brand-ink: var(--accent-navy);
-  --brand-ink-strong: #172E6F;
+  --brand-ink: var(--brand-text);
+  --brand-ink-strong: var(--brand-active);
 }
 
 .dark {
@@ -155,6 +161,12 @@
   --color-ink-soft: var(--text-ink-soft);
   --color-ink-muted: var(--text-muted);
   --color-ink-muted-light: var(--text-muted-light);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-border: var(--brand-border);
+  --color-brand-text: var(--brand-text);
   --color-accent-navy: var(--accent-navy);
   --color-border-line: var(--border-line);
   --color-surface-shell: var(--surface-shell);

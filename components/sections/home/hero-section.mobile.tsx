@@ -22,6 +22,7 @@ const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
 const GPS_CTA_COLOR = "";
 const HERO_WATERMARK_LEFT = "82%";
 const HERO_WATERMARK_TOP = "45%";
+const HERO_WATERMARK_LAYER_HEIGHT = "170px";
 const HERO_WATERMARK_OPACITY = 0.05;
 const editorialFont = Newsreader({
   subsets: ["latin"],
@@ -235,20 +236,25 @@ export function MobileHero({
         data-mobile-hero-title-band
         className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] px-5 pb-4 pt-4 font-sans text-white"
       >
-        <img
-          src="/images/logo_hero.png"
-          alt=""
+        <div
           aria-hidden="true"
-          className="pointer-events-none absolute h-[155px] w-[155px] select-none object-contain"
-          style={{
-            left: HERO_WATERMARK_LEFT,
-            top: HERO_WATERMARK_TOP,
-            opacity: HERO_WATERMARK_OPACITY,
-            transform: "translate(-50%, -50%)",
-          }}
-          loading="eager"
-          decoding="async"
-        />
+          className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden"
+          style={{ height: HERO_WATERMARK_LAYER_HEIGHT }}
+        >
+          <img
+            src="/images/logo_hero.png"
+            alt=""
+            className="absolute h-[155px] w-[155px] select-none object-contain"
+            style={{
+              left: HERO_WATERMARK_LEFT,
+              top: HERO_WATERMARK_TOP,
+              opacity: HERO_WATERMARK_OPACITY,
+              transform: "translate(-50%, -50%)",
+            }}
+            loading="eager"
+            decoding="async"
+          />
+        </div>
         <div className="relative z-10 flex items-center">
           <div className="ml-1 min-w-0">
             <p className="text-[11px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
@@ -264,23 +270,17 @@ export function MobileHero({
         </div>
         <div className="mt-5 mb-1 flex w-full flex-col items-start">
           <div className="relative w-fit">
-            <span
-              className={`pointer-events-none absolute inset-0 translate-x-[5px] translate-y-[5px] rounded-[2px] border-2 border-paper/45 transition-opacity duration-300 ${
-                locationPhase === "loading" ? "opacity-0" : "opacity-100"
-              }`}
-              aria-hidden="true"
-            />
             <button
               type="button"
               onClick={handleActivateGps}
               disabled={locationPhase === "loading"}
               data-loading={locationPhase === "loading"}
-              className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-3 text-left text-[15px] font-bold leading-none text-ink transition-all duration-300 ease-in-out ${
+              className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-3 text-left text-[15px] font-bold leading-none text-white transition-all duration-300 ease-in-out ${
                 locationPhase === "success"
                   ? "btn-sucess border-[#4E7A68] text-white shadow-none"
                   : locationPhase === "loading"
                     ? "border-transparent bg-transparent text-white shadow-none"
-                    : "border-ink bg-paper hover:bg-paper-highlight"
+                    : "border-gray-200/20 bg-transparent hover:border-[#0b6ea6] hover:bg-[#0b6ea6]"
               }`}
               aria-label={
                 locationPhase === "success"
@@ -290,9 +290,7 @@ export function MobileHero({
             >
               <span className="relative flex min-w-0 items-center gap-2 ">
                 <MapPin
-                  className={`h-4 w-4 shrink-0 transition-colors duration-300 ${
-                    locationPhase === "success" || locationPhase === "loading" ? "text-white" : "text-ink"
-                  }`}
+                  className="h-4 w-4 shrink-0 text-white transition-colors duration-300"
                   aria-hidden="true"
                   strokeWidth={2}
                 />
