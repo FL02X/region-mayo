@@ -32,6 +32,50 @@ import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { DirectivaMember } from "@/lib/types";
 
+const DIRECTIVA_ROLE_META: Record<string, { label: string; order: number }> = {
+  "01_presidente_regional": { label: "Presidente Regional", order: 1 },
+  "02_suplente_presidente_regional": { label: "Suplente Presidente Regional", order: 2 },
+  "03_secretario": { label: "Secretario", order: 3 },
+  "04_suplente_secretario": { label: "Suplente Secretario", order: 4 },
+  "05_cronista": { label: "Cronista", order: 5 },
+  "06_suplente_cronista": { label: "Suplente de Cronista", order: 6 },
+  "07_estadistica": { label: "Estadistica", order: 7 },
+  "08_suplente_estadistica": { label: "Suplente de Estadistica", order: 8 },
+  "09_tesorera": { label: "Tesoreria", order: 9 },
+  "10_suplente_tesorera": { label: "Suplente de Tesoreria", order: 10 },
+  "11_director_canto": { label: "Director de Canto", order: 11 },
+  "12_suplente_director_canto": { label: "Suplente de Director de Canto", order: 12 },
+  "13_director_musica": { label: "Director de Musica", order: 13 },
+  "14_suplente_director_musica": { label: "Suplente de Director de Musica", order: 14 },
+
+  // Compatibilidad con valores legacy guardados antes de reordenar tesoreria.
+  "09_director_canto": { label: "Director de Canto", order: 11 },
+  "10_suplente_director_canto": { label: "Suplente de Director de Canto", order: 12 },
+  "11_director_musica": { label: "Director de Musica", order: 13 },
+  "12_suplente_director_musica": { label: "Suplente de Director de Musica", order: 14 },
+};
+
+const getDirectivaRoleLabel = (role?: string) => {
+  if (!role) return "";
+  return DIRECTIVA_ROLE_META[role]?.label ?? role;
+};
+
+const getDirectivaRoleOrder = (role?: string) => {
+  if (!role) return Number.MAX_SAFE_INTEGER;
+
+  const roleOrder = DIRECTIVA_ROLE_META[role]?.order;
+  if (typeof roleOrder === "number") {
+    return roleOrder;
+  }
+
+  const prefixed = Number.parseInt(role.split("_")[0], 10);
+  if (Number.isFinite(prefixed)) {
+    return prefixed;
+  }
+
+  return Number.MAX_SAFE_INTEGER;
+};
+
 const expandTransition = {
   duration: 0.24,
   ease: [0.22, 1, 0.36, 1] as const,
@@ -76,9 +120,10 @@ const getDirectivaImageUrl = (
 };
 
 const buildDirectivaCopyText = (member: DirectivaMember) => {
+  const roleLabel = getDirectivaRoleLabel(member.role);
   const sections = [
     [member.fullName],
-    member.role ? [member.role] : [],
+    roleLabel ? [roleLabel] : [],
     member.temploName ? [member.temploName] : [],
     member.address ? [member.address] : [],
     [formatPhoneForDisplay(member.phone)],
@@ -90,6 +135,7 @@ const buildDirectivaCopyText = (member: DirectivaMember) => {
 
 function PrintableDirectivaSheet({ member }: { member: DirectivaMember }) {
   const imageUrl = getDirectivaImageUrl(member.photo, "print");
+  const roleLabel = getDirectivaRoleLabel(member.role);
 
   return (
     <PrintableInfoSheet
@@ -98,12 +144,12 @@ function PrintableDirectivaSheet({ member }: { member: DirectivaMember }) {
       imageAlt={member.fullName}
       fallbackIcon={<UserCircle className="h-10 w-10" aria-hidden="true" />}
       sections={[
-        ...(member.role
+        ...(roleLabel
           ? [{
               id: "role",
               label: "Cargo",
               icon: <UserCircle className="rm-print-icon" aria-hidden="true" />,
-              content: <p>{member.role}</p>,
+              content: <p>{roleLabel}</p>,
             }]
           : []),
         ...(member.temploName
@@ -145,6 +191,7 @@ function DirectivaCard({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = useIsMobile();
+  const roleLabel = getDirectivaRoleLabel(member.role);
 
   const openGoogleMaps = () => {
     if (member.googleMapsUrl) {
@@ -262,10 +309,10 @@ function DirectivaCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            {member.role && (
+            {roleLabel && (
               <p className="mb-1.5 flex w-fit items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs">
                 <UserCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                <span><HighlightedText text={member.role} query={searchQuery} /></span>
+                <span><HighlightedText text={roleLabel} query={searchQuery} /></span>
               </p>
             )}
             <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px]">
@@ -347,10 +394,10 @@ function DirectivaCard({
           </div>
         )}
         <OfflineImagePlaceholder />
-        {member.role && (
+        {roleLabel && (
           <div className="absolute top-3 left-3">
             <Badge className="bg-foreground/85 text-background text-xs font-medium">
-              <HighlightedText text={member.role} query={searchQuery} />
+              <HighlightedText text={roleLabel} query={searchQuery} />
             </Badge>
           </div>
         )}
@@ -469,7 +516,23 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
   }, []);
 
   const filteredMembers = useMemo(
-    () => searchItems(members, searchQuery, SEARCH_CONFIGS.directiva),
+    () => {
+      const membersWithRoleLabels = members.map((member) => ({
+        ...member,
+        role: getDirectivaRoleLabel(member.role),
+      }));
+
+      const filtered = searchItems(membersWithRoleLabels, searchQuery, SEARCH_CONFIGS.directiva);
+      const filteredIds = new Set(filtered.map((member) => member.id));
+
+      return members
+        .filter((member) => filteredIds.has(member.id))
+        .sort((a, b) => {
+        const roleOrderDiff = getDirectivaRoleOrder(a.role) - getDirectivaRoleOrder(b.role);
+        if (roleOrderDiff !== 0) return roleOrderDiff;
+        return a.fullName.localeCompare(b.fullName, "es", { sensitivity: "base" });
+      });
+    },
     [members, searchQuery],
   );
 

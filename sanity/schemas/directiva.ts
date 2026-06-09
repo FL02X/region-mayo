@@ -20,6 +20,25 @@
 
 import { defineType, defineField } from 'sanity'
 
+const ROLE_OPTIONS = [
+  { title: 'Presidente Regional', value: '01_presidente_regional' },
+  { title: 'Suplente Presidente Regional', value: '02_suplente_presidente_regional' },
+  { title: 'Secretario', value: '03_secretario' },
+  { title: 'Suplente Secretario', value: '04_suplente_secretario' },
+  { title: 'Cronista', value: '05_cronista' },
+  { title: 'Suplente de Cronista', value: '06_suplente_cronista' },
+  { title: 'Estadística', value: '07_estadistica' },
+  { title: 'Suplente de Estadística', value: '08_suplente_estadistica' },
+  { title: 'Tesoreria', value: '09_tesorera' },
+  { title: 'Suplente de Tesoreria', value: '10_suplente_tesorera' },
+  { title: 'Director de Canto', value: '11_director_canto' },
+  { title: 'Suplente de Director de Canto', value: '12_suplente_director_canto' },
+  { title: 'Director de Música', value: '13_director_musica' },
+  { title: 'Suplente de Director de Música', value: '14_suplente_director_musica' },
+]
+
+const ROLE_LABEL_BY_VALUE = Object.fromEntries(ROLE_OPTIONS.map(({ title, value }) => [value, title]))
+
 export default defineType({
   name: 'directiva',
   title: 'Directiva',
@@ -33,21 +52,21 @@ export default defineType({
   indexes: [
     { name: 'byRegion', keys: [['region']] },
     { name: 'byTemplo', keys: [['templo']] },
-    { name: 'byRegionAndOrder', keys: [['region'], ['order']] },
+    { name: 'byRegionAndRole', keys: [['region'], ['role']] },
     { name: 'byRole', keys: [['role']] },
   ],
   fields: [
     defineField({
       name: 'fullName',
-      title: 'Nombre Completo',
+      title: 'NOMBRE COMPLETO',
       type: 'string',
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Nombre oficial y completo del miembro de directiva',
+      description: 'Nombre completo del miembro de directiva',
     }),
     defineField({
       name: 'photo',
-      title: 'Foto',
+      title: 'FOTO',
       type: 'image',
       group: 'basic',
       options: {
@@ -57,36 +76,15 @@ export default defineType({
     }),
     defineField({
       name: 'role',
-      title: 'Cargo o Posición',
+      title: 'CARGO',
       type: 'string',
       group: 'basic',
       validation: (Rule) => Rule.required(),
       options: {
-        list: [
-          { title: 'Presidente Regional', value: 'president_regional' },
-          { title: 'Vicepresidente Regional', value: 'vice_president_regional' },
-          { title: 'Secretaria Regional', value: 'secretary_regional' },
-          { title: 'Tesorera Regional', value: 'treasurer_regional' },
-          { title: 'Presidente Local', value: 'president_local' },
-          { title: 'Vicepresidente Local', value: 'vice_president_local' },
-          { title: 'Secretaria Local', value: 'secretary_local' },
-          { title: 'Tesorera Local', value: 'treasurer_local' },
-          { title: 'Coordinador de Eventos', value: 'event_coordinator' },
-          { title: 'Coordinadora de Ministerio Femenino', value: 'womens_ministry' },
-          { title: 'Coordinador de Ministerio Juvenil', value: 'youth_ministry' },
-          { title: 'Otro', value: 'other' },
-        ],
+        list: ROLE_OPTIONS,
         layout: 'dropdown',
       },
       description: 'Selecciona el cargo que desempeña',
-    }),
-    defineField({
-      name: 'roleCustom',
-      title: 'Especificar Otro Cargo',
-      type: 'string',
-      group: 'basic',
-      hidden: ({ document }) => document?.role !== 'other',
-      description: 'Si seleccionaste "Otro", describe el cargo aquí',
     }),
     defineField({
       name: 'region',
@@ -99,32 +97,32 @@ export default defineType({
     }),
     defineField({
       name: 'templo',
-      title: 'Templo',
+      title: 'TEMPLO AL QUE ASISTE (OBLIGATORIO)',
       type: 'reference',
       to: [{ type: 'templo' }],
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'El templo al que está asignado este miembro de directiva (obligatorio). Se mostrarán la dirección, pastor y detalles del templo.',
+      description: 'El templo al que está asignado este miembro de directiva. Se mostrarán la dirección, pastor y detalles del templo.',
     }),
     defineField({
       name: 'phone',
-      title: 'Teléfono WhatsApp',
+      title: 'TELÉFONO WHATSAPP (OPCIONAL)',
       type: 'string',
       group: 'contact',
       validation: (Rule) => Rule.regex(/^(\d{10})?$/, {
         name: 'phoneNumber',
         invert: false,
       }).error('Debe ser 10 dígitos o dejarse vacío'),
-      description: 'Número de 10 dígitos (opcional). Formato: sin espacios ni +52.',
+      description: 'Número de 10 dígitos. Formato: sin espacios ni +52.',
     }),
     defineField({
       name: 'order',
       title: 'Orden de Aparición',
       type: 'number',
       group: 'order',
-      initialValue: 0,
-      validation: (Rule) => Rule.min(0),
-      description: 'Número para ordenar en la lista (0 = primero)',
+      hidden: true,
+      readOnly: true,
+      description: 'Campo heredado: el orden ahora se determina automáticamente por el cargo.',
     }),
 
     // Auditoría
@@ -177,26 +175,26 @@ export default defineType({
     select: {
       title: 'fullName',
       role: 'role',
-      roleCustom: 'roleCustom',
       temploName: 'templo.temploName',
       regionName: 'region.name',
       media: 'photo',
     },
-    prepare({ title, role, roleCustom, temploName, regionName, media }) {
-      const roleLabel = roleCustom || role
+    prepare({ title, role, temploName, regionName, media }) {
+      const roleLabel = ROLE_LABEL_BY_VALUE[role] || role
+      const roleOrder = role ? Number.parseInt(role.split('_')[0], 10) : NaN
       const location = temploName || regionName || '?'
       return {
         title: title,
-        subtitle: `${roleLabel || '?'} • ${location}`,
+        subtitle: `${Number.isFinite(roleOrder) ? `${roleOrder}. ` : ''}${roleLabel || '?'} • ${location}`,
         media: media,
       }
     },
   },
   orderings: [
     {
-      title: 'Orden de Aparición',
-      name: 'orderAsc',
-      by: [{ field: 'order', direction: 'asc' }, { field: 'fullName', direction: 'asc' }],
+      title: 'Orden Jerárquico',
+      name: 'hierarchyAsc',
+      by: [{ field: 'role', direction: 'asc' }, { field: 'fullName', direction: 'asc' }],
     },
     {
       title: 'Nombre',
@@ -206,7 +204,7 @@ export default defineType({
     {
       title: 'Por Cargo',
       name: 'roleAsc',
-      by: [{ field: 'role', direction: 'asc' }, { field: 'order', direction: 'asc' }],
+      by: [{ field: 'role', direction: 'asc' }, { field: 'fullName', direction: 'asc' }],
     },
   ],
 })

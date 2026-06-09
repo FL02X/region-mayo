@@ -37,26 +37,26 @@ export default defineType({
   fields: [
     defineField({
       name: 'coroName',
-      title: 'Nombre del Coro',
+      title: 'NOMBRE DEL CORO',
       type: 'string',
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Nombre oficial del coro o grupo (ej: "Coro de Jóvenes Centro", "MGR Región X")',
+      description: '',
     }),
     defineField({
       name: 'presidentName',
-      title: 'Nombre del Presidente/Líder',
+      title: 'NOMBRE DEL PRESIDENTE DEL CORO',
       type: 'string',
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'Nombre completo del líder del coro. Nota: Este es el mismo que el Presidente de Jóvenes del templo.',
+      description: '',
     }),
     defineField({
       name: 'presidentPhone',
-      title: 'Teléfono del Presidente',
+      title: 'TELEFONO DEL PRESIDENTE (OPCIONAL)',
       type: 'string',
       group: 'basic',
-      description: 'Número de 10 dígitos (opcional). Formato: sin espacios ni +52.',
+      description: 'Número de 10 dígitos. Formato: SIN espacios NI +52.',
       validation: (Rule) => Rule.regex(/^(\d{10})?$/, {
         name: 'phoneNumber',
         invert: false,
@@ -64,12 +64,12 @@ export default defineType({
     }),
     defineField({
       name: 'templo',
-      title: 'Templo',
+      title: 'TEMPLO DEL CORO (OBLIGATORIO)',
       type: 'reference',
       to: [{ type: 'templo' }],
       group: 'basic',
       validation: (Rule) => Rule.required(),
-      description: 'El templo donde se reúne este coro (obligatorio). En la UI se mostrarán los detalles del templo.',
+      description: 'El templo donde se reúne este coro-',
     }),
     defineField({
       name: 'region',
@@ -83,7 +83,7 @@ export default defineType({
     }),
     defineField({
       name: 'photo',
-      title: 'Foto del Coro',
+      title: 'FOTO DEL CORO',
       type: 'image',
       group: 'basic',
       options: {

@@ -816,14 +816,14 @@ export function EventsFeed({
             <button
               type="button"
               onClick={() => setIsMonthPlannerEnabled((value) => !value)}
-              className="relative grid h-9 w-[260px] grid-cols-2 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
+              className="relative grid h-9 w-[260px] grid-cols-2 mb-3 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
               aria-pressed={isMonthPlannerEnabled}
               aria-label="Alternar vista mensual del calendario"
             >
               <span className="pointer-events-none absolute left-1/2 top-1 h-7 w-px -translate-x-1/2 bg-border-line" />
               <span
-                className={`absolute top-0.5 h-8 w-[56px] bg-brand transition-transform duration-200 ${
-                  isMonthPlannerEnabled ? "translate-x-[58px]" : "translate-x-0"
+                className={`absolute top-0.5 h-8 w-[130px] bg-brand transition-transform duration-200 ${
+                  isMonthPlannerEnabled ? "translate-x-[130px]" : "translate-x-0"
                 }`}
                 aria-hidden="true"
               />

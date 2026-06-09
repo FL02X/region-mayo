@@ -50,25 +50,25 @@ export default defineType({
     // Basic Info
     defineField({
       name: "temploName",
-      title: "Nombre del Templo",
+      title: "NOMBRE DEL TEMPLO",
       type: "string",
       group: "basic",
       validation: (Rule) => Rule.required(),
       description:
-        'Nombre oficial y completo de la iglesia (ej: "1ra Iglesia de Navojoa", "Iglesia el Redentor"). Si la iglesia tiene un número, inclúyelo en el nombre.',
+        '',
     }),
     defineField({
       name: "region",
-      title: "Región",
+      title: "REGIÓN",
       type: "reference",
       to: [{ type: "region" }],
       group: "basic",
       validation: (Rule) => Rule.required(),
-      description: "La región a la que pertenece este templo (obligatorio)",
+      description: "Elige Region Mayo, esto es solo por si en el futuro decidimos añadir nuevas regiones.",
     }),
     defineField({
       name: "photos",
-      title: "Fotos del Templo",
+      title: "FOTOS DEL TEMPLO",
       type: "array",
       group: "basic",
       of: [
@@ -81,15 +81,15 @@ export default defineType({
       ],
       validation: (Rule) => Rule.max(6),
       description:
-        "📸 Añade fotos del templo (máximo 6 fotos). Puedes subir fotos del frente, interior, altar, entrada, etc. " +
-        "Las fotos ayudan a los visitantes a reconocer el lugar. " +
-        "Arrastra y suelta para reordenar las fotos. Las fotos se mostrarán en el sitio web en el orden que las coloques.",
+        "📸 Añade fotos del templo (máximo 6 fotos). Puedes subir fotos de la congregacion frente, interior, altar, entrada, etc. " +
+        "Las fotos ayudan a los oyentes a reconocer el lugar... " +
+        "Arrastra y suelta en los 6 puntitos de la izquierda <- para reordenar las fotos. Las fotos se mostrarán en el sitio web en el orden que las coloques.",
     }),
 
     // Location Info
     defineField({
       name: "address",
-      title: "Dirección Completa",
+      title: "DIRECCION COMPLETA",
       type: "string",
       group: "location",
       description:
@@ -97,30 +97,30 @@ export default defineType({
     }),
     defineField({
       name: "location",
-      title: "Ubicación en Mapa (GPS)",
+      title: "COORDENADAS GPS (OPCIONAL)",
       type: "geopoint",
       group: "location",
       description:
-        "Marca el templo en el mapa. Esto se usa para mostrar la ubicación a los visitantes.",
+        "Esto es para la funcion de geolocalizacion. Dejalo tal como esta si no es necesario modificarlo.",
     }),
     defineField({
       name: "googleMapsUrl",
-      title: "Enlace de Google Maps",
+      title: "ENLACE A GOOGLE MAPS",
       type: "url",
       group: "location",
       description:
-        "Copia el enlace de Google Maps del templo. Esto permite a la gente ver la ruta.",
+        "CONSEJO: En lugar de copiar el URL de arriba en Google Maps, da click a la ubicacion y dale a Compartir, ese enlace es más corto y más util para la pagina.",
     }),
 
     // Schedules (structured, editor-friendly)
     defineField({
       name: "schedule",
-      title: "Horarios de Reunión",
+      title: "HORARIOS DE REUNIÓN",
       type: "object",
       group: "basic",
       description:
-        "Agrega solo los días que sí tienen culto o actividad. " +
-        "Ejemplo común: Martes, Jueves y Domingo.",
+        "IMPORTANTE: Cada dia sera un nuevo Elemento, da click a Añadir Elemento para añadir UN DIA. " +
+        "Ejemplo: Martes, Jueves y Domingo.",
       fields: [
         defineField({
           name: "timezone",
@@ -184,7 +184,7 @@ export default defineType({
                   type: "string",
                   initialValue: "Culto",
                   description:
-                    "Ejemplo: Culto general, Estudio bíblico, Reunión de jóvenes.",
+                    "Ejemplo: Culto general, Culto foraneo semanal, Reunión de jóvenes.",
                 }),
               ],
               preview: {
@@ -215,13 +215,12 @@ export default defineType({
     // Legacy/free text
     defineField({
       name: "description",
-      title: "Notas adicionales de horarios y actividades (opcional)",
+      title: "NOTAS ADICIONALES (opcional)",
       type: "text",
       group: "basic",
       rows: 4,
       description:
-        "Texto libre opcional para aclaraciones. " +
-        "Los horarios principales ahora deben capturarse en 'Horarios de Reunión'.",
+        "Texto libre opcional para aclaraciones." 
     }),
 
     // Auditoría
