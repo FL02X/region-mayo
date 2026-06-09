@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import Image from "next/image";
 import { Newsreader } from "next/font/google";
 import { Calendar } from "lucide-react";
@@ -11,7 +11,10 @@ import {
   getEventCardThumbnailUrl,
 } from "@/components/shared/event-card";
 import { RegistrationModal } from "@/components/shared/registration-modal";
-import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
+import {
+  ViewModeToggle,
+  type ViewMode,
+} from "@/components/shared/view-mode-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   formatRegionDateRange,
@@ -150,7 +153,9 @@ function getPlannerMonthCells(month: Date) {
 function getEventPlannerDates(event: Event) {
   if (Array.isArray(event.schedule) && event.schedule.length > 0) {
     return Array.from(
-      new Set(event.schedule.map((occurrence) => getRegionDateKey(occurrence.date))),
+      new Set(
+        event.schedule.map((occurrence) => getRegionDateKey(occurrence.date)),
+      ),
     );
   }
 
@@ -159,8 +164,12 @@ function getEventPlannerDates(event: Event) {
   const startParts = getRegionCalendarParts(startDate);
   const endParts = getRegionCalendarParts(endDate);
   const dates: string[] = [];
-  const cursor = new Date(Date.UTC(startParts.year, startParts.month - 1, startParts.day, 12));
-  const end = new Date(Date.UTC(endParts.year, endParts.month - 1, endParts.day, 12));
+  const cursor = new Date(
+    Date.UTC(startParts.year, startParts.month - 1, startParts.day, 12),
+  );
+  const end = new Date(
+    Date.UTC(endParts.year, endParts.month - 1, endParts.day, 12),
+  );
 
   while (cursor.getTime() <= end.getTime()) {
     dates.push(getRegionDateKey(cursor));
@@ -225,9 +234,19 @@ function MobileMonthPlanner({
   onRegister,
 }: MobileMonthPlannerProps) {
   const plannerScrollerRef = useRef<HTMLDivElement | null>(null);
-  const plannerScrollFrameRef = useRef<number | null>(null);
-  const plannerReleaseTimerRef = useRef<number | null>(null);
+  const plannerSettleTimerRef = useRef<number | null>(null);
+  const plannerCommitTimerRef = useRef<number | null>(null);
   const isRecenteringPlannerRef = useRef(false);
+  const isPlannerTouchingRef = useRef(false);
+  const isPlannerAnimatingRef = useRef(false);
+  const plannerTouchStartXRef = useRef<number | null>(null);
+  const plannerTouchDeltaXRef = useRef(0);
+  const selectedMonthRef = useRef(selectedMonth);
+  const plannerPendingOffsetRef = useRef<-1 | 0 | 1 | null>(null);
+
+  useEffect(() => {
+    selectedMonthRef.current = selectedMonth;
+  }, [selectedMonth]);
 
   const plannerMonths = useMemo(
     () =>
@@ -242,11 +261,14 @@ function MobileMonthPlanner({
     selectedPlannerEvent &&
     filteredEvents.some((event) => event.id === selectedPlannerEvent.id)
       ? selectedPlannerEvent.id
-      : filteredEvents[0]?.id ?? null;
+      : (filteredEvents[0]?.id ?? null);
   const activePlannerEvent =
     filteredEvents.find((event) => event.id === selectedPlannerEventId) ?? null;
   const activePlannerDateKeys = useMemo(
-    () => new Set(activePlannerEvent ? getEventPlannerDates(activePlannerEvent) : []),
+    () =>
+      new Set(
+        activePlannerEvent ? getEventPlannerDates(activePlannerEvent) : [],
+      ),
     [activePlannerEvent],
   );
 
@@ -268,64 +290,168 @@ function MobileMonthPlanner({
     return dayMap;
   }, [events]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const scroller = plannerScrollerRef.current;
     if (!scroller) return;
 
     isRecenteringPlannerRef.current = true;
-    window.requestAnimationFrame(() => {
-      scroller.scrollTo({
-        left: scroller.clientWidth * PLANNER_CENTER_INDEX,
-        behavior: "auto",
-      });
 
-      if (plannerReleaseTimerRef.current) {
-        window.clearTimeout(plannerReleaseTimerRef.current);
+    const centerPlanner = () => {
+      const monthWidth = scroller.clientWidth;
+
+      if (monthWidth === 0) {
+        window.requestAnimationFrame(centerPlanner);
+        return;
       }
 
-      plannerReleaseTimerRef.current = window.setTimeout(() => {
+      if (plannerSettleTimerRef.current) {
+        window.clearTimeout(plannerSettleTimerRef.current);
+        plannerSettleTimerRef.current = null;
+      }
+
+      const previousScrollBehavior = scroller.style.scrollBehavior;
+
+      scroller.style.scrollBehavior = "auto";
+      scroller.scrollLeft = monthWidth * PLANNER_CENTER_INDEX;
+
+      window.requestAnimationFrame(() => {
+        scroller.style.scrollBehavior = previousScrollBehavior;
         isRecenteringPlannerRef.current = false;
-      }, 160);
-    });
+        isPlannerAnimatingRef.current = false;
+        plannerPendingOffsetRef.current = null;
+      });
+    };
+
+    centerPlanner();
   }, [selectedMonth]);
 
   useEffect(() => {
     return () => {
-      if (plannerScrollFrameRef.current) {
-        window.cancelAnimationFrame(plannerScrollFrameRef.current);
+      if (plannerSettleTimerRef.current) {
+        window.clearTimeout(plannerSettleTimerRef.current);
       }
-      if (plannerReleaseTimerRef.current) {
-        window.clearTimeout(plannerReleaseTimerRef.current);
+
+      if (plannerCommitTimerRef.current) {
+        window.clearTimeout(plannerCommitTimerRef.current);
       }
     };
   }, []);
 
-  const handlePlannerScroll = () => {
-    if (isRecenteringPlannerRef.current) return;
-
-    if (plannerScrollFrameRef.current) {
-      window.cancelAnimationFrame(plannerScrollFrameRef.current);
+  const commitPlannerPosition = (touchDeltaX = 0) => {
+    if (
+      isRecenteringPlannerRef.current ||
+      isPlannerAnimatingRef.current ||
+      plannerPendingOffsetRef.current !== null
+    ) {
+      return;
     }
 
-    plannerScrollFrameRef.current = window.requestAnimationFrame(() => {
-      const scroller = plannerScrollerRef.current;
-      if (!scroller || scroller.clientWidth === 0) return;
+    if (plannerSettleTimerRef.current) {
+      window.clearTimeout(plannerSettleTimerRef.current);
+      plannerSettleTimerRef.current = null;
+    }
 
-      const monthWidth = scroller.clientWidth;
-      const previousThreshold = monthWidth * 0.42;
-      const nextThreshold = monthWidth * 1.58;
-      const nextOffset =
-        scroller.scrollLeft <= previousThreshold
-          ? -1
-          : scroller.scrollLeft >= nextThreshold
-            ? 1
-            : 0;
+    const scroller = plannerScrollerRef.current;
+    if (!scroller || scroller.clientWidth === 0) return;
 
-      if (nextOffset === 0) return;
+    const monthWidth = scroller.clientWidth;
+    const centerLeft = monthWidth * PLANNER_CENTER_INDEX;
+    const displacement = scroller.scrollLeft - centerLeft;
 
-      isRecenteringPlannerRef.current = true;
-      onMonthSelect(getCalendarMonthByOffset(selectedMonth, nextOffset));
+    const positionThreshold = monthWidth * 0.28;
+    const flickThreshold = 42;
+    const minimumVisibleThreshold = monthWidth * 0.12;
+
+    let nextOffset: -1 | 0 | 1 = 0;
+
+    if (displacement <= -positionThreshold) {
+      nextOffset = -1;
+    } else if (displacement >= positionThreshold) {
+      nextOffset = 1;
+    } else if (
+      Math.abs(touchDeltaX) >= flickThreshold &&
+      Math.abs(displacement) >= minimumVisibleThreshold
+    ) {
+      nextOffset = touchDeltaX < 0 ? 1 : -1;
+    }
+
+    const targetLeft = centerLeft + nextOffset * monthWidth;
+
+    isPlannerAnimatingRef.current = true;
+    plannerPendingOffsetRef.current = nextOffset;
+
+    scroller.scrollTo({
+      left: targetLeft,
+      behavior: "smooth",
     });
+
+    if (plannerCommitTimerRef.current) {
+      window.clearTimeout(plannerCommitTimerRef.current);
+    }
+
+    plannerCommitTimerRef.current = window.setTimeout(() => {
+      if (nextOffset === 0) {
+        isPlannerAnimatingRef.current = false;
+        plannerPendingOffsetRef.current = null;
+        return;
+      }
+
+      onMonthSelect(
+        getCalendarMonthByOffset(selectedMonthRef.current, nextOffset),
+      );
+    }, 240);
+  };
+
+  const schedulePlannerSettle = () => {
+    if (
+      isRecenteringPlannerRef.current ||
+      isPlannerTouchingRef.current ||
+      isPlannerAnimatingRef.current ||
+      plannerPendingOffsetRef.current !== null
+    ) {
+      return;
+    }
+
+    if (plannerSettleTimerRef.current) {
+      window.clearTimeout(plannerSettleTimerRef.current);
+    }
+
+    plannerSettleTimerRef.current = window.setTimeout(() => {
+      commitPlannerPosition();
+    }, 120);
+  };
+
+  const handlePlannerTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    isPlannerTouchingRef.current = true;
+    plannerTouchStartXRef.current = event.touches[0]?.clientX ?? null;
+    plannerTouchDeltaXRef.current = 0;
+  };
+
+  const handlePlannerTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (plannerTouchStartXRef.current === null) return;
+
+    const currentX = event.touches[0]?.clientX;
+    if (typeof currentX !== "number") return;
+
+    plannerTouchDeltaXRef.current = currentX - plannerTouchStartXRef.current;
+  };
+
+  const handlePlannerTouchEnd = () => {
+    const touchDeltaX = plannerTouchDeltaXRef.current;
+
+    isPlannerTouchingRef.current = false;
+    plannerTouchStartXRef.current = null;
+    plannerTouchDeltaXRef.current = 0;
+
+    commitPlannerPosition(touchDeltaX);
+  };
+
+  const handlePlannerTouchCancel = () => {
+    isPlannerTouchingRef.current = false;
+    plannerTouchStartXRef.current = null;
+    plannerTouchDeltaXRef.current = 0;
+
+    commitPlannerPosition();
   };
 
   return (
@@ -335,8 +461,12 @@ function MobileMonthPlanner({
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-paper-highlight to-transparent" />
         <div
           ref={plannerScrollerRef}
-          onScroll={handlePlannerScroll}
-          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onScroll={schedulePlannerSettle}
+          onTouchStart={handlePlannerTouchStart}
+          onTouchMove={handlePlannerTouchMove}
+          onTouchEnd={handlePlannerTouchEnd}
+          onTouchCancel={handlePlannerTouchCancel}
+          className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label="Calendario mensual deslizable"
         >
           {plannerMonths.map((month) => {
@@ -385,7 +515,9 @@ function MobileMonthPlanner({
                 <div className="grid grid-cols-7 gap-px bg-border-line/80 border-x border-b border-border-line">
                   {monthCells.map((cell) => {
                     const dayEvents = eventsByDay.get(cell.dateKey) ?? [];
-                    const isSelectedEventDay = activePlannerDateKeys.has(cell.dateKey);
+                    const isSelectedEventDay = activePlannerDateKeys.has(
+                      cell.dateKey,
+                    );
                     const dayLabel =
                       dayEvents.length > 0
                         ? `${cell.day}, ${dayEvents.length} evento${
@@ -422,7 +554,8 @@ function MobileMonthPlanner({
                         {dayEvents.length > 0 && (
                           <span className="mt-2 flex flex-col gap-1">
                             {dayEvents.slice(0, 3).map((event) => {
-                              const color = eventTypePlannerColors[event.eventType];
+                              const color =
+                                eventTypePlannerColors[event.eventType];
 
                               return (
                                 <span
@@ -473,7 +606,10 @@ function MobileMonthPlanner({
         ) : (
           <div className="space-y-2">
             {filteredEvents.map((event) => {
-              const thumbnailUrl = getEventCardThumbnailUrl(event.image, "compact");
+              const thumbnailUrl = getEventCardThumbnailUrl(
+                event.image,
+                "compact",
+              );
               const color = eventTypePlannerColors[event.eventType];
               const isSelected = event.id === selectedPlannerEventId;
 
@@ -487,7 +623,10 @@ function MobileMonthPlanner({
                   }`}
                   style={
                     isSelected
-                      ? { backgroundColor: color.paper, borderColor: color.border }
+                      ? {
+                          backgroundColor: color.paper,
+                          borderColor: color.border,
+                        }
                       : undefined
                   }
                 >
@@ -554,16 +693,23 @@ export function EventsFeed({
   const [selectedMonth, setSelectedMonth] = useState(() =>
     getInitialCalendarMonth(events, nowProp),
   );
-  const [pendingHashEventId, setPendingHashEventId] = useState<string | null>(null);
+  const [pendingHashEventId, setPendingHashEventId] = useState<string | null>(
+    null,
+  );
   const resolvedInitialViewMode = initialViewMode ?? "grid";
-  const [viewMode, setViewMode] = useState<CalendarViewMode>(() => resolvedInitialViewMode);
+  const [viewMode, setViewMode] = useState<CalendarViewMode>(
+    () => resolvedInitialViewMode,
+  );
   const [calendarChangeReason, setCalendarChangeReason] =
     useState<CalendarChangeReason>(null);
   const [isOfflinePwa, setIsOfflinePwa] = useState(false);
   const renderedViewMode = viewMode;
-  const lastOnlineViewModeRef = useRef<CalendarViewMode>(resolvedInitialViewMode);
+  const lastOnlineViewModeRef = useRef<CalendarViewMode>(
+    resolvedInitialViewMode,
+  );
   const [isMonthPlannerEnabled, setIsMonthPlannerEnabled] = useState(false);
-  const [selectedPlannerEvent, setSelectedPlannerEvent] = useState<Event | null>(null);
+  const [selectedPlannerEvent, setSelectedPlannerEvent] =
+    useState<Event | null>(null);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -617,13 +763,19 @@ export function EventsFeed({
   }, [events, selectedMonth]);
 
   const calendarStateKey = `${selectedMonthKey}-${renderedViewMode}-${
-    filteredEvents.length === 0 ? "empty" : filteredEvents.length === 1 ? "single" : "grid"
+    filteredEvents.length === 0
+      ? "empty"
+      : filteredEvents.length === 1
+        ? "single"
+        : "grid"
   }`;
   const shouldAnimateCalendarChange =
     isMobile && calendarChangeReason === "view";
   const compactMobileResultsFloorClass =
     renderedViewMode === "compact" ? "min-h-[560px] md:min-h-0" : "";
-  const legacyCalendarVisibilityClass = isMonthPlannerEnabled ? "hidden md:block" : "";
+  const legacyCalendarVisibilityClass = isMonthPlannerEnabled
+    ? "hidden md:block"
+    : "";
 
   useEffect(() => {
     if (!isMobile || !canPreloadEventThumbnails()) return;
@@ -681,8 +833,11 @@ export function EventsFeed({
 
       const targetEl = document.getElementById(pendingHashEventId);
       if (targetEl) {
-        const existingHighlights = document.querySelectorAll(".global-highlight");
-        existingHighlights.forEach((el) => el.classList.remove("global-highlight"));
+        const existingHighlights =
+          document.querySelectorAll(".global-highlight");
+        existingHighlights.forEach((el) =>
+          el.classList.remove("global-highlight"),
+        );
 
         document.body.removeAttribute("data-user-interacted");
         targetEl.classList.add("global-highlight");
@@ -709,7 +864,10 @@ export function EventsFeed({
     if (!isMonthPlannerEnabled) return;
 
     setSelectedPlannerEvent((currentEvent) => {
-      if (currentEvent && filteredEvents.some((event) => event.id === currentEvent.id)) {
+      if (
+        currentEvent &&
+        filteredEvents.some((event) => event.id === currentEvent.id)
+      ) {
         return currentEvent;
       }
 
@@ -776,7 +934,10 @@ export function EventsFeed({
   };
 
   return (
-    <div className="w-full relative bg-[#f1f1f1]" /* [#f1f1f1] */ data-events-feed="true">
+    <div
+      className="w-full relative bg-[#f1f1f1]"
+      /* [#f1f1f1] */ data-events-feed="true"
+    >
       <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a]">
         {/* Priority spotlight section (mobile only) */}
         <div className="offline-hide-when-offline md:hidden">
@@ -810,185 +971,241 @@ export function EventsFeed({
         {/* <HomeInfoCards /> */}
 
         {/* Calendar section */}
-        <section id="calendario" className="mt-5 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-t md:border-t-0 border-border/70 bg-muted/20">
-        <div className="mt-1 max-w-4xl mx-auto w-full">
-          <div className="md:hidden mb-3 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setIsMonthPlannerEnabled((value) => !value)}
-              className="relative grid h-9 w-[260px] grid-cols-2 mb-3 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
-              aria-pressed={isMonthPlannerEnabled}
-              aria-label="Alternar vista mensual del calendario"
-            >
-              <span className="pointer-events-none absolute left-1/2 top-1 h-7 w-px -translate-x-1/2 bg-border-line" />
-              <span
-                className={`absolute top-0.5 h-8 w-[130px] bg-brand transition-transform duration-200 ${
-                  isMonthPlannerEnabled ? "translate-x-[130px]" : "translate-x-0"
-                }`}
-                aria-hidden="true"
-              />
-              <span
-                className={`relative z-10 flex items-center justify-center text-[11px] font-semibold uppercase ${
-                  isMonthPlannerEnabled ? "text-ink-muted" : "text-primary-foreground"
-                }`}
+        <section
+          id="calendario"
+          className="mt-5 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-t md:border-t-0 border-border/70 bg-muted/20"
+        >
+          <div className="mt-1 max-w-4xl mx-auto w-full">
+            <div className="md:hidden mb-3 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setIsMonthPlannerEnabled((value) => !value)}
+                className="relative grid h-9 w-[260px] grid-cols-2 mb-3 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
+                aria-pressed={isMonthPlannerEnabled}
+                aria-label="Alternar vista mensual del calendario"
               >
-                Lista
-              </span>
-              <span
-                className={`relative z-10 flex items-center justify-center text-[11px] font-semibold uppercase ${
-                  isMonthPlannerEnabled ? "text-primary-foreground" : "text-ink-muted"
-                }`}
+                <span className="pointer-events-none absolute left-1/2 top-1 h-7 w-px -translate-x-1/2 bg-border-line" />
+                <span
+                  className={`absolute top-0.5 h-8 w-[130px] bg-brand transition-transform duration-200 ${
+                    isMonthPlannerEnabled
+                      ? "translate-x-[130px]"
+                      : "translate-x-0"
+                  }`}
+                  aria-hidden="true"
+                />
+                <span
+                  className={`relative z-10 flex items-center justify-center text-[11px] font-semibold uppercase ${
+                    isMonthPlannerEnabled
+                      ? "text-ink-muted"
+                      : "text-primary-foreground"
+                  }`}
+                >
+                  Lista
+                </span>
+                <span
+                  className={`relative z-10 flex items-center justify-center text-[11px] font-semibold uppercase ${
+                    isMonthPlannerEnabled
+                      ? "text-primary-foreground"
+                      : "text-ink-muted"
+                  }`}
+                >
+                  Mes
+                </span>
+              </button>
+            </div>
+            <div className="mb-5">
+              <h2
+                id="calendar-title"
+                className={`${editorialFont.className} type-human-title text-[1.625rem] font-semibold tracking-tight mb-2`}
               >
-                Mes
-              </span>
-            </button>
-          </div>
-          <div className="mb-5">
-            <h2
-              id="calendar-title"
-              className={`${editorialFont.className} type-human-title text-[1.625rem] font-semibold tracking-tight mb-2`}
-            >
-              Calendario 2026
-            </h2>
-            <p className="type-system text-[15px] mt-0.5">
-              Selecciona un mes para ver los eventos
-            </p>
-          </div>
-          {/* Navigator aligned with left content edge on desktop */}
-          <div className={`max-w-md w-full ${legacyCalendarVisibilityClass}`}>
-            <MonthNavigator
-              selectedMonth={selectedMonth}
-              onMonthSelect={handleMonthSelect}
-              eventDates={eventDates}
-            />
-          </div>
-          {isMonthPlannerEnabled && isMobile && (
-            <MobileMonthPlanner
-              events={events}
-              selectedMonth={selectedMonth}
-              filteredEvents={filteredEvents}
-              selectedPlannerEvent={selectedPlannerEvent}
-              onMonthSelect={handleMonthSelect}
-              onEventPreview={handlePlannerEventPreview}
-              onRegister={handleRegister}
-            />
-          )}
-        </div>
-      </section>
-
-      {/* Events list */}
-      <section
-        id="eventos"
-        className={`bg-muted/20 px-4 md:px-[32px] md:py-[24px] pt-4 pb-14 ${legacyCalendarVisibilityClass}`}
-      >
-        <div className="mt-0 max-w-4xl mx-auto w-full">
-          {/* Month label */}
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className={`${editorialFont.className} type-human-title font-semibold text-[1.425rem] tracking-tight`}>
-                {months[getRegionCalendarParts(selectedMonth).month - 1]} {getRegionCalendarParts(selectedMonth).year}
-              </h3>
-              <p className="type-system text-[15px] mt-1">
-                {filteredEvents.length === 0
-                  ? "No hay eventos programados"
-                  : `${filteredEvents.length} ${
-                      filteredEvents.length === 1 ? "evento" : "eventos"
-                    } programados`}
+                Calendario 2026
+              </h2>
+              <p className="type-system text-[15px] mt-0.5">
+                Selecciona un mes para ver los eventos
               </p>
             </div>
-
-            <ViewModeToggle
-              value={renderedViewMode}
-              onChange={handleViewModeChange}
-              ariaLabel="Cambiar vista del calendario"
-              disableGrid={isOfflinePwa}
-            />
+            {/* Navigator aligned with left content edge on desktop */}
+            <div className={`max-w-md w-full ${legacyCalendarVisibilityClass}`}>
+              <MonthNavigator
+                selectedMonth={selectedMonth}
+                onMonthSelect={handleMonthSelect}
+                eventDates={eventDates}
+              />
+            </div>
+            {isMonthPlannerEnabled && isMobile && (
+              <MobileMonthPlanner
+                events={events}
+                selectedMonth={selectedMonth}
+                filteredEvents={filteredEvents}
+                selectedPlannerEvent={selectedPlannerEvent}
+                onMonthSelect={handleMonthSelect}
+                onEventPreview={handlePlannerEventPreview}
+                onRegister={handleRegister}
+              />
+            )}
           </div>
+        </section>
 
-          {/* Cards layout:
+        {/* Events list */}
+        <section
+          id="eventos"
+          className={`bg-muted/20 px-4 md:px-[32px] md:py-[24px] pt-4 pb-14 ${legacyCalendarVisibilityClass}`}
+        >
+          <div className="mt-0 max-w-4xl mx-auto w-full">
+            {/* Month label */}
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h3
+                  className={`${editorialFont.className} type-human-title font-semibold text-[1.425rem] tracking-tight`}
+                >
+                  {months[getRegionCalendarParts(selectedMonth).month - 1]}{" "}
+                  {getRegionCalendarParts(selectedMonth).year}
+                </h3>
+                <p className="type-system text-[15px] mt-1">
+                  {filteredEvents.length === 0
+                    ? "No hay eventos programados"
+                    : `${filteredEvents.length} ${
+                        filteredEvents.length === 1 ? "evento" : "eventos"
+                      } programados`}
+                </p>
+              </div>
+
+              <ViewModeToggle
+                value={renderedViewMode}
+                onChange={handleViewModeChange}
+                ariaLabel="Cambiar vista del calendario"
+                disableGrid={isOfflinePwa}
+              />
+            </div>
+
+            {/* Cards layout:
               - 0 events  → centered empty state (max-w-md)
               - 1 event   → centered single card (max-w-md)
               - 2+ events → 1 col mobile / 2 col md+
           */}
-          <div className={compactMobileResultsFloorClass}>
-            <AnimatePresence mode={shouldAnimateCalendarChange ? "wait" : "sync"} initial={false}>
-              {filteredEvents.length === 0 ? (
-                <motion.div
-                  key={calendarStateKey}
-                  initial={shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={shouldAnimateCalendarChange ? { opacity: 0, y: -4 } : undefined}
-                  transition={shouldAnimateCalendarChange ? calendarFadeTransition : { duration: 0 }}
-                  className="bg-paper-highlight border border-border p-8 text-center max-w-md mx-auto"
-                >
-                  <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-foreground mb-1">
-                    Sin eventos este mes
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Selecciona otro mes en el calendario para ver más actividades.
-                  </p>
-                </motion.div>
-              ) : renderedViewMode === "compact" ? (
-                <motion.div
-                  key={calendarStateKey}
-                  initial={shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={shouldAnimateCalendarChange ? { opacity: 0, y: -4 } : undefined}
-                  transition={shouldAnimateCalendarChange ? calendarFadeTransition : { duration: 0 }}
-                  className="-mx-2.5 p-0.5 flex flex-col gap-5 pb-14 md:gap-6"
-                >
-                  {filteredEvents.map((event) => (
+            <div className={compactMobileResultsFloorClass}>
+              <AnimatePresence
+                mode={shouldAnimateCalendarChange ? "wait" : "sync"}
+                initial={false}
+              >
+                {filteredEvents.length === 0 ? (
+                  <motion.div
+                    key={calendarStateKey}
+                    initial={
+                      shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false
+                    }
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      shouldAnimateCalendarChange
+                        ? { opacity: 0, y: -4 }
+                        : undefined
+                    }
+                    transition={
+                      shouldAnimateCalendarChange
+                        ? calendarFadeTransition
+                        : { duration: 0 }
+                    }
+                    className="bg-paper-highlight border border-border p-8 text-center max-w-md mx-auto"
+                  >
+                    <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-foreground mb-1">
+                      Sin eventos este mes
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Selecciona otro mes en el calendario para ver más
+                      actividades.
+                    </p>
+                  </motion.div>
+                ) : renderedViewMode === "compact" ? (
+                  <motion.div
+                    key={calendarStateKey}
+                    initial={
+                      shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false
+                    }
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      shouldAnimateCalendarChange
+                        ? { opacity: 0, y: -4 }
+                        : undefined
+                    }
+                    transition={
+                      shouldAnimateCalendarChange
+                        ? calendarFadeTransition
+                        : { duration: 0 }
+                    }
+                    className="-mx-2.5 p-0.5 flex flex-col gap-5 pb-14 md:gap-6"
+                  >
+                    {filteredEvents.map((event) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        onRegister={handleRegister}
+                        showAlbumButton={event.status === "past"}
+                        variant="compact"
+                        tone="editorial"
+                      />
+                    ))}
+                  </motion.div>
+                ) : filteredEvents.length === 1 ? (
+                  <motion.div
+                    key={calendarStateKey}
+                    initial={
+                      shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false
+                    }
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      shouldAnimateCalendarChange
+                        ? { opacity: 0, y: -4 }
+                        : undefined
+                    }
+                    transition={
+                      shouldAnimateCalendarChange
+                        ? calendarFadeTransition
+                        : { duration: 0 }
+                    }
+                    className="max-w-md mx-auto"
+                  >
                     <EventCard
-                      key={event.id}
-                      event={event}
+                      event={filteredEvents[0]}
                       onRegister={handleRegister}
-                      showAlbumButton={event.status === "past"}
-                      variant="compact"
+                      showAlbumButton={filteredEvents[0].status === "past"}
                       tone="editorial"
                     />
-                  ))}
-                </motion.div>
-              ) : filteredEvents.length === 1 ? (
-                <motion.div
-                  key={calendarStateKey}
-                  initial={shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={shouldAnimateCalendarChange ? { opacity: 0, y: -4 } : undefined}
-                  transition={shouldAnimateCalendarChange ? calendarFadeTransition : { duration: 0 }}
-                  className="max-w-md mx-auto"
-                >
-                  <EventCard
-                    event={filteredEvents[0]}
-                    onRegister={handleRegister}
-                    showAlbumButton={filteredEvents[0].status === "past"}
-                    tone="editorial"
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={calendarStateKey}
-                  initial={shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={shouldAnimateCalendarChange ? { opacity: 0, y: -4 } : undefined}
-                  transition={shouldAnimateCalendarChange ? calendarFadeTransition : { duration: 0 }}
-                  className="grid grid-cols-1 gap-5 md:grid-cols-2"
-                >
-                  {filteredEvents.map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onRegister={handleRegister}
-                      showAlbumButton={event.status === "past"}
-                      tone="editorial"
-                    />
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={calendarStateKey}
+                    initial={
+                      shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false
+                    }
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      shouldAnimateCalendarChange
+                        ? { opacity: 0, y: -4 }
+                        : undefined
+                    }
+                    transition={
+                      shouldAnimateCalendarChange
+                        ? calendarFadeTransition
+                        : { duration: 0 }
+                    }
+                    className="grid grid-cols-1 gap-5 md:grid-cols-2"
+                  >
+                    {filteredEvents.map((event) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        onRegister={handleRegister}
+                        showAlbumButton={event.status === "past"}
+                        tone="editorial"
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       </div>
 
       {/* Registration modal */}
