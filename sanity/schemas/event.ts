@@ -32,8 +32,8 @@ export default defineType({
   ],
   indexes: [
     { name: 'byRegion', keys: [['region']] },
-    { name: 'byDate', keys: [['date']] },
-    { name: 'byRegionAndDate', keys: [['region'], ['date']] },
+    { name: 'byDate', keys: [['schedule']] },
+    { name: 'byRegionAndDate', keys: [['region'], ['schedule']] },
   ],
   fields: [
     // Basic Info
@@ -73,27 +73,80 @@ export default defineType({
       description: 'Categoría del evento (esto afecta cómo se ve en la página)',
     }),
     defineField({
+      name: 'schedule',
+      title: 'Fechas y horas',
+      type: 'array',
+      group: 'basic',
+      description: 'Agrega cada día del evento con su hora correspondiente. Puedes añadir todos los días que necesites.',
+      of: [
+        defineField({
+          name: 'occurrence',
+          title: 'Fecha y hora',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'date',
+              title: 'Fecha',
+              type: 'date',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'time',
+              title: 'Hora',
+              type: 'string',
+              description: 'Ej: "7:00 PM"',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'note',
+              title: 'Nota de este día (opcional)',
+              type: 'string',
+              description: 'Ej: "Servicio especial de jóvenes" o "Llegar 30 minutos antes".',
+            }),
+          ],
+          preview: {
+            select: {
+              date: 'date',
+              time: 'time',
+              note: 'note',
+            },
+            prepare({ date, time, note }) {
+              return {
+                title: [date, time].filter(Boolean).join(' · ') || 'Fecha sin completar',
+                subtitle: note || undefined,
+              }
+            },
+          },
+        }),
+      ],
+      validation: (Rule) => Rule.required().min(1),
+    }),
+    defineField({
       name: 'date',
-      title: 'Fecha de inicio',
+      title: 'Fecha de inicio (legacy)',
       type: 'datetime',
       group: 'basic',
-      validation: (Rule) => Rule.required(),
-      description: 'Cuándo comienza el evento',
+      hidden: true,
+      readOnly: true,
+      description: 'Campo anterior. Ya no se edita; usa "Fechas y horas".',
     }),
     defineField({
       name: 'endDate',
-      title: 'Fecha de fin (opcional)',
+      title: 'Fecha de fin (legacy)',
       type: 'datetime',
       group: 'basic',
-      description: 'Solo si el evento dura más de un día',
+      hidden: true,
+      readOnly: true,
+      description: 'Campo anterior. Ya no se edita; usa "Fechas y horas".',
     }),
     defineField({
       name: 'time',
-      title: 'Hora corta',
+      title: 'Hora corta (legacy)',
       type: 'string',
       group: 'basic',
-      description: 'La hora que se muestra en las listas (ej: "10:00 AM")',
-      validation: (Rule) => Rule.required(),
+      hidden: true,
+      readOnly: true,
+      description: 'Campo anterior. Ya no se edita; usa "Fechas y horas".',
     }),
     defineField({
       name: 'description',
@@ -494,13 +547,15 @@ export default defineType({
   preview: {
     select: {
       title: 'title',
-      date: 'date',
+      schedule: 'schedule',
       eventType: 'eventType',
       regionName: 'region.name',
       media: 'image',
     },
-    prepare({ title, date, eventType, regionName, media }) {
-      const eventDate = date ? new Date(date).toLocaleDateString('es-MX') : 'Sin fecha'
+    prepare({ title, schedule, eventType, regionName, media }) {
+      const firstOccurrence = Array.isArray(schedule) ? schedule[0] : null
+      const eventDate = firstOccurrence?.date || 'Sin fecha'
+      const eventTime = firstOccurrence?.time ? ` · ${firstOccurrence.time}` : ''
       const typeLabels: Record<string, string> = {
         campana: 'Campaña',
         convencion: 'Convención General',
@@ -519,7 +574,7 @@ export default defineType({
       }
       return {
         title,
-        subtitle: `${typeLabels[eventType] || 'Evento'} • ${eventDate} • ${regionName || '?'}`,
+        subtitle: `${typeLabels[eventType] || 'Evento'} • ${eventDate}${eventTime} • ${regionName || '?'}`,
         media,
       }
     },
@@ -528,12 +583,12 @@ export default defineType({
     {
       title: 'Más antiguos primero',
       name: 'upcomingAsc',
-      by: [{ field: 'date', direction: 'asc' }],
+      by: [{ field: 'schedule.0.date', direction: 'asc' }],
     },
     {
       title: 'Más recientes primero',
       name: 'recentDesc',
-      by: [{ field: 'date', direction: 'desc' }],
+      by: [{ field: 'schedule.0.date', direction: 'desc' }],
     },
   ],
 })

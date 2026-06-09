@@ -76,6 +76,7 @@ type EventDoc = {
   date: string
   endDate?: string
   time: string
+  schedule?: Array<{ date?: string; time?: string }>
   location: string
   address: string
   googleMapsUrl?: string
@@ -465,6 +466,40 @@ function buildIsoWithOffset(
   const hh = String(time24.hour).padStart(2, '0')
   const min = String(time24.minute).padStart(2, '0')
   return `${yyyy}-${mm}-${dd}T${hh}:${min}:00${offset}`
+}
+
+function formatDateInput(dmy: { year: number; month: number; day: number }): string {
+  return [
+    String(dmy.year).padStart(4, '0'),
+    String(dmy.month).padStart(2, '0'),
+    String(dmy.day).padStart(2, '0'),
+  ].join('-')
+}
+
+function addDateInputDays(dateInput: string, days: number): string {
+  const [year, month, day] = dateInput.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day + days, 12))
+  return [
+    String(date.getUTCFullYear()).padStart(4, '0'),
+    String(date.getUTCMonth() + 1).padStart(2, '0'),
+    String(date.getUTCDate()).padStart(2, '0'),
+  ].join('-')
+}
+
+function buildEventSchedule(startDate: string, endDate: string | undefined, time: string) {
+  const lastDate = endDate && endDate >= startDate ? endDate : startDate
+  const schedule = []
+
+  for (let index = 0, currentDate = startDate; currentDate <= lastDate; index += 1, currentDate = addDateInputDays(currentDate, 1)) {
+    schedule.push({
+      _key: `${currentDate.replace(/-/g, '')}-${index}`,
+      _type: 'occurrence',
+      date: currentDate,
+      time,
+    })
+  }
+
+  return schedule
 }
 
 function parseHoraToTime24(input: string): { hour: number; minute: number } | null {
@@ -1071,6 +1106,7 @@ async function upsertEventos(
       date,
       endDate,
       time,
+      schedule[]{date,time},
       location,
       address,
       googleMapsUrl,
@@ -1107,9 +1143,11 @@ async function upsertEventos(
     // Sonora (MST) offset. If you need a different timezone, adjust here.
     const tzOffset = '-07:00'
     const dateIso = buildIsoWithOffset(startDmy, time24, tzOffset)
+    const scheduleDate = formatDateInput(startDmy)
 
     const endDmy = parseMxDateDmy(finalizaRaw)
-    const endIso = endDmy ? buildIsoWithOffset(endDmy, { hour: 23, minute: 59 }, tzOffset) : undefined
+    const endScheduleDate = endDmy ? formatDateInput(endDmy) : undefined
+    const schedule = buildEventSchedule(scheduleDate, endScheduleDate, timeShort)
 
     const placeGuess = tituloRaw || lugarRaw || ''
     const temploMatch = placeGuess ? findBestTemploMatch(placeGuess, templos) : { templo: null, score: 0 }
@@ -1138,15 +1176,16 @@ async function upsertEventos(
     const existingEvent = existing.find((e) => {
       const sameType = normalizeText(e.eventType) === normalizeText(eventType)
       const sameLocation = normalizeText(e.location) === normalizeText(location)
-      const sameStart = normalizeText(e.date) === normalizeText(dateIso)
+      const sameStart =
+        normalizeText(e.schedule?.[0]?.date ?? '') === normalizeText(scheduleDate) ||
+        normalizeText(e.date) === normalizeText(dateIso)
       return sameType && sameLocation && sameStart
     })
 
     if (existingEvent) {
       const patch: Record<string, unknown> = {}
       if (!existingEvent.title?.trim()) patch.title = title
-      if (!existingEvent.endDate && endIso) patch.endDate = endIso
-      if (!existingEvent.time?.trim()) patch.time = timeShort
+      if (!existingEvent.schedule || existingEvent.schedule.length === 0) patch.schedule = schedule
       if (!existingEvent.address?.trim() && address) patch.address = address
       if (!existingEvent.googleMapsUrl?.trim() && googleMapsUrl) patch.googleMapsUrl = googleMapsUrl
       if (!existingEvent.location?.trim() && location) patch.location = location
@@ -1169,9 +1208,7 @@ async function upsertEventos(
       _type: 'event',
       title,
       eventType,
-      date: dateIso,
-      ...(endIso ? { endDate: endIso } : {}),
-      time: timeShort,
+      schedule,
       location,
       address,
       ...(googleMapsUrl ? { googleMapsUrl } : {}),

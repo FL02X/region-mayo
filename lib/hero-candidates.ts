@@ -13,7 +13,8 @@
 
 import { getSanityClient, isSanityNetworkError } from '@/lib/sanity/client'
 import type { HeroCandidate } from '@/lib/ranker'
-import type { Event, HeroCard, PrayerWallConfig, Prayer, SocialPost } from '@/lib/types'
+import { getRegionDateTime } from '@/lib/region-date'
+import type { HeroCard, PrayerWallConfig, Prayer, SocialPost } from '@/lib/types'
 
 function logHeroCandidateError(label: string, error: unknown) {
   if (process.env.NODE_ENV === 'development' && isSanityNetworkError(error)) {
@@ -22,6 +23,21 @@ function logHeroCandidateError(label: string, error: unknown) {
   }
 
   console.error(`❌ Error fetching ${label}:`, error)
+}
+
+type EventHeroCandidate = Extract<HeroCandidate, { type: 'event' }>
+
+function isEventHeroCandidate(candidate: EventHeroCandidate | null): candidate is EventHeroCandidate {
+  return candidate !== null
+}
+
+type ParsedOccurrence = {
+  date: Date
+  time: string
+}
+
+function isParsedOccurrence(occurrence: ParsedOccurrence | null): occurrence is ParsedOccurrence {
+  return occurrence !== null
 }
 
 /**
@@ -93,22 +109,53 @@ async function getPrayerWallCandidate(): Promise<HeroCandidate | null> {
  */
 async function getEventCandidates(regionSlug: string): Promise<HeroCandidate[]> {
   const client = getSanityClient()
-  const query = `*[_type == "event" && region->slug.current == $regionSlug] | order(date asc)[0..10]`
+  const query = `*[_type == "event" && region->slug.current == $regionSlug]{
+    _id,
+    title,
+    schedule[]{date, time},
+    location,
+    address,
+    registrationEnabled
+  }`
 
   try {
-    const events = (await client.fetch(query, { regionSlug })) as Event[]
+    const events = (await client.fetch(query, { regionSlug })) as Array<{
+      _id: string
+      title: string
+      schedule?: Array<{ date?: string; time?: string }>
+      location?: string
+      address?: string
+      registrationEnabled?: boolean
+    }>
 
-    return events.map((event) => ({
-      type: 'event',
-      id: event.id,
-      date: new Date(event.date).getTime(),
-      title: event.title,
-      time: event.time,
-      location: event.location,
-      address: event.address,
-      registrationEnabled: event.registrationEnabled ?? true,
-      pinned: false,
-    }))
+    return events
+      .map((event): EventHeroCandidate | null => {
+        const firstOccurrence = event.schedule
+          ?.map((item): ParsedOccurrence | null => {
+            if (!item.date || !item.time) return null
+            const date = getRegionDateTime(item.date, item.time)
+            return date ? { date, time: item.time } : null
+          })
+          .filter(isParsedOccurrence)
+          .sort((a, b) => a.date.getTime() - b.date.getTime())[0]
+
+        if (!firstOccurrence) return null
+
+        return {
+          type: 'event',
+          id: event._id,
+          date: firstOccurrence.date.getTime(),
+          title: event.title,
+          time: firstOccurrence.time,
+          location: event.location,
+          address: event.address,
+          registrationEnabled: event.registrationEnabled ?? true,
+          pinned: false,
+        } satisfies EventHeroCandidate
+      })
+      .filter(isEventHeroCandidate)
+      .sort((a, b) => a.date - b.date)
+      .slice(0, 11)
   } catch (error) {
     logHeroCandidateError('events', error)
     return []

@@ -14,6 +14,10 @@ import type {
   Templo,
 } from "./types";
 
+type MockEvent = Omit<Event, "schedule"> & {
+  schedule?: Event["schedule"];
+};
+
 export const regionMayo: Region = {
   id: 'region-mayo',
   name: 'Región Mayo',
@@ -26,7 +30,7 @@ export const regionMayo: Region = {
 
 export const regionPresident: RegionPresident = { fullName: 'Hermano Pedro Castillo', phone: '6441112233' };
 
-export const eventsData: Event[] = [
+export const eventsData: MockEvent[] = [
   {
     id: '1',
     title: 'Lorem Ipsum Evento',

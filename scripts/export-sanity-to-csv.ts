@@ -102,10 +102,11 @@ function getCompleteness(
 async function exportEvents() {
   console.log('\n📤 Exporting Events...')
   const events = await client.fetch(
-    `*[_type == 'event' && !defined(deletedAt)] | order(date desc){
+    `*[_type == 'event' && !defined(deletedAt)]{
       _id,
       title,
       eventType,
+      schedule[]{date,time,note},
       date,
       endDate,
       time,
@@ -124,17 +125,20 @@ async function exportEvents() {
     }`
   )
 
-  const rows = events.map((event: any) => {
-    const required = ['title', 'eventType', 'date', 'time', 'location', 'address']
+  const rows = events
+  .sort((a: any, b: any) => String(b.schedule?.[0]?.date ?? b.date ?? '').localeCompare(String(a.schedule?.[0]?.date ?? a.date ?? '')))
+  .map((event: any) => {
+    const required = ['title', 'eventType', 'schedule', 'location', 'address']
     const optional = ['googleMapsUrl', 'description', 'image', 'registrationEnabled']
     const { score, missing } = getCompleteness(event, required, optional)
+    const schedule = Array.isArray(event.schedule) ? event.schedule : []
 
     return {
       ID: event._id,
       Title: event.title,
       Type: event.eventType,
-      Date: event.date ? new Date(event.date).toLocaleDateString('es-MX') : '—',
-      Time: event.time,
+      Date: schedule.map((item: any) => item.date).filter(Boolean).join('; ') || '—',
+      Time: schedule.map((item: any) => item.time).filter(Boolean).join('; ') || '—',
       Location: event.location,
       Address: event.address,
       GoogleMapsUrl: event.googleMapsUrl ? '✓' : '✗',

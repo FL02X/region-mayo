@@ -20,7 +20,9 @@ import type {
   AlbumImage,
   AlbumVideo,
   AlbumYoutubeLayout,
+  EventOccurrence,
 } from "./types";
+import { formatRegionDateInput, getRegionDateTime } from "./region-date";
 import { getSanityClient, isSanityNetworkError, SANITY_CACHE_TAG } from "./sanity/client";
 import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
 import {
@@ -57,10 +59,9 @@ function getMockEvents(regionSlug: string): Event[] {
   if (!isMayoRegion(regionSlug)) return [];
 
   const now = new Date();
-  return eventsData.map((event) => ({
-    ...event,
-    status: computeEventStatus(event.date, event.endDate, now),
-  }));
+  return eventsData
+    .map((event) => mapEvent({ ...event, _id: event.id }, now))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
 function getMockPastors(regionSlug: string): Pastor[] {
@@ -120,6 +121,64 @@ function toDate(value: unknown): Date {
   return date;
 }
 
+function getLegacyEventDateInput(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  try {
+    return formatRegionDateInput(toDate(value));
+  } catch {
+    return null;
+  }
+}
+
+function normalizeEventSchedule(raw: any): EventOccurrence[] {
+  const schedule = Array.isArray(raw?.schedule) ? raw.schedule : [];
+  const normalized = schedule
+    .map((item: any): EventOccurrence | null => {
+      const dateValue = typeof item?.date === "string" ? item.date : "";
+      const time = typeof item?.time === "string" && item.time.trim() ? item.time.trim() : "";
+      const date = dateValue ? getRegionDateTime(dateValue, time) : null;
+      if (!date || !time) return null;
+
+      const note =
+        typeof item?.note === "string" && item.note.trim().length > 0
+          ? item.note.trim()
+          : undefined;
+
+      return { date, time, note };
+    })
+    .filter(Boolean) as EventOccurrence[];
+
+  if (normalized.length > 0) {
+    return normalized.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+
+  const legacyStart = getLegacyEventDateInput(raw?.date);
+  if (!legacyStart) return [];
+
+  const legacyEnd = getLegacyEventDateInput(raw?.endDate);
+  const time = typeof raw?.time === "string" && raw.time.trim() ? raw.time.trim() : "Por confirmar";
+  const startDate = getRegionDateTime(legacyStart, time);
+  const endDate = legacyEnd ? getRegionDateTime(legacyEnd, time) : null;
+  if (!startDate) return [];
+
+  const fallbackSchedule: EventOccurrence[] = [];
+  const endTime = endDate && endDate.getTime() >= startDate.getTime() ? endDate.getTime() : startDate.getTime();
+
+  for (
+    let cursor = new Date(startDate);
+    cursor.getTime() <= endTime;
+    cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000)
+  ) {
+    fallbackSchedule.push({
+      date: cursor,
+      time,
+    });
+  }
+
+  return fallbackSchedule;
+}
+
 const EVENT_ACTIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 function computeEventStatus(date: Date, endDate?: Date, now: Date = new Date()): Event["status"] {
@@ -136,8 +195,14 @@ function computeEventStatus(date: Date, endDate?: Date, now: Date = new Date()):
 }
 
 function mapEvent(raw: any, now: Date): Event {
-  const date = toDate(raw.date);
-  const endDate = raw.endDate ? toDate(raw.endDate) : undefined;
+  const schedule = normalizeEventSchedule(raw);
+  if (schedule.length === 0) {
+    throw new Error(`Event is missing a valid schedule: ${raw?._id ?? raw?.id ?? "unknown"}`);
+  }
+  const date = schedule[0].date;
+  const lastOccurrence = schedule[schedule.length - 1];
+  const endDate = schedule.length > 1 ? lastOccurrence.date : undefined;
+  const time = schedule[0].time;
 
   const hasEventImage = Boolean(raw.image?.asset?.url || (typeof raw.image === "string" && raw.image.length > 0));
   const photos = sanityImagesUrls(raw.photos);
@@ -172,9 +237,11 @@ function mapEvent(raw: any, now: Date): Event {
     eventType: raw.eventType ?? "culto",
     type: typeColor,
     typeColor,
+    schedule,
     date,
     endDate,
-    time: raw.time,
+    time,
+    temploId: raw.templo?._id ?? undefined,
     location: raw.templo?.temploName ?? raw.location,
     address: raw.templo?.address ?? raw.address,
     googleMapsUrl: raw.templo?.googleMapsUrl ?? raw.googleMapsUrl,
@@ -182,7 +249,7 @@ function mapEvent(raw: any, now: Date): Event {
     vestimenta: raw.vestimenta,
     vestimentaCustom: raw.vestimentaCustom,
     image,
-    status: computeEventStatus(date, endDate, now),
+    status: computeEventStatus(date, lastOccurrence.date, now),
     albumEnabled: raw.albumEnabled ?? false,
     googleDriveAlbumUrl: raw.googleDriveAlbumUrl,
     facebookPostUrl: raw.facebookPostUrl,
@@ -412,6 +479,7 @@ async function mapAlbum(raw: any): Promise<Album> {
   const title = raw?.title || "Album";
   const albumType = raw?.albumType === "youtube" ? "youtube" : "photos";
   const relatedEvent = raw?.relatedEvent;
+  const relatedEventSchedule = relatedEvent ? normalizeEventSchedule(relatedEvent) : [];
   const category = relatedEvent?.eventType ?? raw?.category ?? "culto";
   const youtubeResult =
     albumType === "youtube"
@@ -489,8 +557,13 @@ async function mapAlbum(raw: any): Promise<Album> {
           id: relatedEvent._id,
           title: relatedEvent.title,
           eventType: relatedEvent.eventType ?? category,
-          date: toDate(relatedEvent.date),
-          endDate: relatedEvent.endDate ? toDate(relatedEvent.endDate) : undefined,
+          date: relatedEventSchedule[0]?.date ?? toDate(relatedEvent.date),
+          endDate:
+            relatedEventSchedule.length > 1
+              ? relatedEventSchedule.at(-1)?.date
+              : relatedEvent.endDate
+                ? toDate(relatedEvent.endDate)
+                : undefined,
           location: relatedEvent.templo?.temploName ?? relatedEvent.location ?? undefined,
         }
       : undefined,
@@ -625,11 +698,11 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
   return readWithDevSanityFallback("getEvents", () => getMockEvents(regionSlug), async () => {
     const client = getSanityClient();
     const events = await client.fetch(
-      `*[_type == "event" && (region->slug.current == $slug || region->name == $slug)]
-        | order(date asc){
+      `*[_type == "event" && (region->slug.current == $slug || region->name == $slug)]{
           _id,
           title,
           eventType,
+          schedule[]{date, time, note},
           date,
           endDate,
           time,
@@ -646,7 +719,7 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
           facebookPostUrl,
           registrationEnabled,
           photos[]{asset->{url}},
-          templo->{temploName, address, googleMapsUrl, photos[]{asset->{url}}, "pastores": *[
+          templo->{_id, temploName, address, googleMapsUrl, photos[]{asset->{url}}, "pastores": *[
             _type == "pastor" &&
             templo._ref == ^._id &&
             !defined(deletedAt)
@@ -671,7 +744,9 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
     );
 
     const now = new Date();
-    return (events ?? []).map((event: any) => mapEvent(event, now));
+    return (events ?? [])
+      .map((event: any) => mapEvent(event, now))
+      .sort((a: Event, b: Event) => a.date.getTime() - b.date.getTime());
   });
 }
 
@@ -746,6 +821,7 @@ const ALBUM_PROJECTION = `{
     _id,
     title,
     eventType,
+    schedule[]{date, time, note},
     date,
     endDate,
     location,

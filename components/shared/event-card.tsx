@@ -3,6 +3,7 @@
 import {
   type CSSProperties,
   type MouseEvent,
+  type WheelEvent,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -17,6 +18,7 @@ import {
   MapPin,
   ExternalLink,
   ChevronDown,
+  ChevronLeft,
   Images,
   Facebook,
   Shirt,
@@ -57,12 +59,9 @@ import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
-  formatRegionDateRange,
   formatRegionDayMonth,
-  getRegionCalendarParts,
 } from "@/lib/region-date";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
-import { useTime } from "@/lib/time-context";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
 interface EventCardProps {
@@ -147,50 +146,8 @@ const formatVestimentaValue = (event: Event) => {
 const pastorLinkClassName =
   "inline-flex items-center gap-1 w-fit text-[17px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
 
-const MONTHS = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-];
-
-function formatCompactEventDateRange(start: Date, end?: Date) {
-  const startParts = getRegionCalendarParts(start);
-  const startLabel = `${startParts.day} ${startParts.monthLabel}`;
-
-  if (!end || Number.isNaN(end.getTime()) || end.getTime() < start.getTime()) {
-    return startLabel;
-  }
-
-  const endParts = getRegionCalendarParts(end);
-  const isSameDay =
-    startParts.year === endParts.year &&
-    startParts.month === endParts.month &&
-    startParts.day === endParts.day;
-
-  if (isSameDay) return startLabel;
-
-  if (
-    startParts.year === endParts.year &&
-    startParts.month === endParts.month
-  ) {
-    return `${startParts.day}–${endParts.day} ${startParts.monthLabel}`;
-  }
-
-  if (startParts.year === endParts.year) {
-    return `${startParts.day} ${startParts.monthLabel}–${endParts.day} ${endParts.monthLabel}`;
-  }
-
-  return `${startParts.day} ${startParts.monthLabel} ${startParts.year}–${endParts.day} ${endParts.monthLabel} ${endParts.year}`;
-}
+const locationLinkClassName =
+  "inline-flex items-center gap-1 w-fit text-[15px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
 
 const PASTOR_PENDING_LABEL = "Por confirmar";
 const EVENT_COMPACT_THUMBNAIL_WIDTH = 272;
@@ -297,11 +254,15 @@ export function EventCard({
   const printCleanupTimerRef = useRef<number | null>(null);
   const printInFlightRef = useRef(false);
   const detailsToggleButtonRef = useRef<HTMLButtonElement | null>(null);
+  const scheduleScrollerRef = useRef<HTMLDivElement | null>(null);
+  const scheduleTouchScrollStartedRef = useRef(false);
+  const suppressScheduleRightHintRef = useRef(false);
+  const [canScrollScheduleLeft, setCanScrollScheduleLeft] = useState(false);
+  const [canScrollScheduleRight, setCanScrollScheduleRight] = useState(false);
   const { isStandalone } = useInstallPrompt();
   const { isOnline } = useConnectivity();
   const shouldShowOfflineNotice = isStandalone && !isOnline;
   const isMobile = useIsMobile();
-  const { currentTime } = useTime();
   const isEditorialTone = tone === "editorial";
   const editorialTitleClass = isEditorialTone
     ? `${editorialFont.className} type-human-title`
@@ -367,20 +328,26 @@ export function EventCard({
   };
 
   /* ── state derivations ── */
-  const isPastEvent = event.date.getTime() < currentTime.getTime();
+  const eventSchedule =
+    Array.isArray(event.schedule) && event.schedule.length > 0
+      ? event.schedule
+      : [{ date: event.date, time: event.time }];
+  const isPastEvent = event.status === "past";
   const hasAlbum = event.albumEnabled && event.googleDriveAlbumUrl;
   const hasFacebookPost = !!event.facebookPostUrl;
   const canRegister = !isPastEvent && event.registrationEnabled !== false;
   const hasDescription = !!event.description && event.description.length > 0;
-  const isMultiDay = !!(event.endDate && event.endDate > event.date);
   const eventType = event.eventType || "culto";
   const EventTypeIcon = eventTypeIcons[eventType];
   const eventTypeBadgeClass = eventTypeBadgeClasses[eventType];
-  const dateLabel = isMultiDay
-    ? formatRegionDateRange(event.date, event.endDate!)
-    : formatRegionDayMonth(event.date);
-  const visualDateLabel = formatCompactEventDateRange(event.date, event.endDate);
-  const eventDateTimeLabel = `${dateLabel} | ${event.time}`;
+  const eventDateTimeLines = eventSchedule.map((occurrence) => {
+    const label = `${formatRegionDayMonth(occurrence.date)} | ${occurrence.time}`;
+    return occurrence.note ? `${label} - ${occurrence.note}` : label;
+  });
+  const eventDateTimeLabel = eventDateTimeLines.join("\n");
+  const visibleScheduleSlots = !isMobile && variant === "compact" ? 4 : 2;
+  const scheduleItemBasis =
+    100 / Math.min(eventSchedule.length, visibleScheduleSlots);
   const eventCoordinates = getEventCoordinates(event);
   const eventMapsUrl = buildEventMapsUrl(event);
   const eventHighlightUrl =
@@ -399,6 +366,63 @@ export function EventCard({
   ]
     .filter(Boolean)
     .join("\n");
+
+  const updateScheduleScrollIndicators = () => {
+    const scroller = scheduleScrollerRef.current;
+    if (!scroller) {
+      setCanScrollScheduleLeft(false);
+      setCanScrollScheduleRight(false);
+      return;
+    }
+
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    const canScrollLeft = scroller.scrollLeft > 2;
+    const canScrollRight = scroller.scrollLeft < maxScrollLeft - 2;
+
+    if (!canScrollLeft) {
+      scheduleTouchScrollStartedRef.current = false;
+      suppressScheduleRightHintRef.current = false;
+    } else if (scheduleTouchScrollStartedRef.current) {
+      suppressScheduleRightHintRef.current = true;
+    }
+
+    setCanScrollScheduleLeft(canScrollLeft);
+    setCanScrollScheduleRight(
+      canScrollRight && !suppressScheduleRightHintRef.current,
+    );
+  };
+
+  const handleScheduleTouchStart = () => {
+    scheduleTouchScrollStartedRef.current = true;
+  };
+
+  const scrollEventSchedule = (direction: "left" | "right") => {
+    const scroller = scheduleScrollerRef.current;
+    if (!scroller) return;
+    const itemWidth = scroller.scrollWidth / eventSchedule.length;
+    const scrollStep =
+      visibleScheduleSlots === 2 ? itemWidth : scroller.clientWidth;
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    const targetScrollLeft =
+      direction === "right"
+        ? Math.min(scroller.scrollLeft + scrollStep, maxScrollLeft)
+        : Math.max(scroller.scrollLeft - scrollStep, 0);
+
+    scroller.scrollTo({
+      left: targetScrollLeft,
+      behavior: "smooth",
+    });
+  };
+
+  const handleScheduleWheel = (wheelEvent: WheelEvent<HTMLDivElement>) => {
+    const scroller = scheduleScrollerRef.current;
+    if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+    if (Math.abs(wheelEvent.deltaY) <= Math.abs(wheelEvent.deltaX)) return;
+
+    wheelEvent.preventDefault();
+    scroller.scrollLeft += wheelEvent.deltaY;
+    updateScheduleScrollIndicators();
+  };
 
   const buildEventCopyText = () => {
     const sections = [
@@ -462,7 +486,7 @@ export function EventCard({
   const eventUtilityButtonSmallClass =
     "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventPrimaryMapsButtonClass =
-    "inline-flex h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-normal text-white transition-colors duration-150 hover:bg-brand-hover";
+    "inline-flex ml-4.5 h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-normal text-white transition-colors duration-150 hover:bg-brand-hover";
   const eventPrimaryMapsButtonSmallClass =
     "inline-flex ml-4.5 h-8 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const compactDesktopMapsButtonClass =
@@ -526,6 +550,18 @@ export function EventCard({
     ) : (
       <span>{event.speakers?.pastorMensaje}</span>
     );
+  const temploNameNode =
+    event.location && event.temploId ? (
+      <Link
+        href={`/templos#${event.temploId}`}
+        className={locationLinkClassName}
+        aria-label={`Ver información de ${event.location}`}
+      >
+        <span className="inline-block">{event.location}</span>
+      </Link>
+    ) : (
+      <span className="min-w-0">{event.location}</span>
+    );
 
   const renderExpandedDetails = (
     containerClassName = "space-y-2 pb-5 pt-5 px-5",
@@ -538,7 +574,7 @@ export function EventCard({
           <p className={`text-[17px] font-bold`}>
             Descripción
           </p>
-          <p className={`text-[17px] leading-relaxed mb-0 ${editorialTextClass}`}>{event.description}</p>
+          <p className={`text-[17px] leading-relaxed mb-7 ${editorialTextClass}`}>{event.description}</p>
         </section>
       )}
 
@@ -675,7 +711,7 @@ export function EventCard({
                 </p>
               )}
               {event.juntaJuvenil.description && (
-                <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">
+                <p className="text-xs mt-0.5 whitespace-pre-line">
                   {event.juntaJuvenil.description}
                 </p>
               )}
@@ -707,12 +743,91 @@ export function EventCard({
     </div>
   );
 
+  const eventScheduleGrid = (
+    <div className="relative bg-paper-highlight">
+      <div
+        ref={scheduleScrollerRef}
+        onScroll={updateScheduleScrollIndicators}
+        onTouchStart={handleScheduleTouchStart}
+        onWheel={handleScheduleWheel}
+        className="flex w-full touch-pan-x overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {eventSchedule.map((occurrence, index) => (
+          <div
+            key={`${occurrence.date.toISOString()}-${occurrence.time}-${index}`}
+            className={[
+              "flex min-w-0 shrink-0 items-start gap-2 px-3 py-3.5 mt-[-3px] mb-[-3px]",
+              index > 0 ? "border-l border-border/70" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ flexBasis: `${scheduleItemBasis}%` }}
+          >
+            <CalendarDays
+              className="mt-0.5 h-4 w-4 shrink-0 text-[#2f5e93]"
+              aria-hidden="true"
+            />
+            <span className="min-w-0">
+              <span className="block truncate text-[18px] font-extrabold leading-tight text-foreground">
+                {formatRegionDayMonth(occurrence.date)}
+              </span>
+              <span className="mt-0.5 block truncate text-[14px] font-medium leading-tight text-ink-soft tabular-nums">
+                {occurrence.time}
+              </span>
+              {occurrence.note ? (
+                <span className="mt-1 block truncate text-xs font-medium leading-snug text-muted-foreground">
+                  {occurrence.note}
+                </span>
+              ) : null}
+            </span>
+          </div>
+        ))}
+      </div>
+      {canScrollScheduleLeft ? (
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 flex w-14 items-center justify-start bg-gradient-to-r from-brand-soft via-brand-soft/80 to-transparent pl-1.5"
+        >
+          <button
+            type="button"
+            onClick={() => scrollEventSchedule("left")}
+            className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow-sm transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            aria-label="Ver fechas anteriores"
+            style={{ minHeight: "unset", minWidth: "unset" }}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
+      {canScrollScheduleRight ? (
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 flex w-14 items-center justify-end bg-gradient-to-l from-brand-soft via-brand-soft/80 to-transparent pr-1.5"
+        >
+          <button
+            type="button"
+            onClick={() => scrollEventSchedule("right")}
+            className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow-sm transition-colors hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            aria-label="Ver más fechas"
+            style={{ minHeight: "unset", minWidth: "unset" }}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+
   const printableSections = [
     {
       id: "datetime",
       label: "Fecha y hora",
       icon: <CalendarDays className="rm-print-icon" aria-hidden="true" />,
-      content: <p>{eventDateTimeLabel}</p>,
+      content: (
+        <div className="space-y-1">
+          {eventDateTimeLines.map((line, index) => (
+            <p key={`${line}-${index}`}>{line}</p>
+          ))}
+        </div>
+      ),
     },
     ...(event.location || event.address
       ? [{
@@ -1000,6 +1115,14 @@ export function EventCard({
     };
   }, [showVestimentaHelp]);
 
+  useLayoutEffect(() => {
+    updateScheduleScrollIndicators();
+    window.addEventListener("resize", updateScheduleScrollIndicators);
+    return () => {
+      window.removeEventListener("resize", updateScheduleScrollIndicators);
+    };
+  }, [eventSchedule.length, visibleScheduleSlots]);
+
   const vestimentaTooltipNode =
     typeof document !== "undefined" &&
     showVestimentaHelp &&
@@ -1117,18 +1240,9 @@ export function EventCard({
           id={event.id}
           className="overflow-hidden border-x border-y border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 px-4 pt-5 pb-3 text-[17px] font-semibold leading-none text-foreground md:pt-6 md:pb-3.5 md:text-[18px]">
-            <CalendarDays className="h-4 w-4 shrink-0 text-[#2f5e93]" aria-hidden="true" />
-            <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
-              <span className="whitespace-nowrap">{visualDateLabel}</span>
-              <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                <span className="text-[#2f5e93]" aria-hidden="true">
-                  ·
-                </span>
-                <span className="tabular-nums">{event.time}</span>
-              </span>
-            </span>
-          </p>
+          <div className="border-b border-border/70">
+            {eventScheduleGrid}
+          </div>
 
           <div className="flex gap-4 px-4 pb-1 pt-4 md:gap-5 md:pb-0 md:pt-5">
             <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted md:h-[136px] md:w-[136px]">
@@ -1203,7 +1317,7 @@ export function EventCard({
                       className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                       aria-hidden="true"
                     />
-                    <span className="min-w-0">{event.location}</span>
+                    {temploNameNode}
                   </p>
                 )}
 
@@ -1277,7 +1391,7 @@ export function EventCard({
                 }}
                 className="mt-4 overflow-hidden border-t border-border/70"
               >
-                <div className="bg-gradient-to-b from-transparent via-muted/10 to-muted/20 px-3 pb-1 pt-3">
+                <div className="bg-gradient-to-b from-transparent via-muted/10 to-muted/20 px-5 pb-1 pt-3">
                   {hasDropdownCtas && (
                     <div className="pb-0 pt-4 md:pt-5">
                       {dropdownCtaButtons}
@@ -1296,12 +1410,12 @@ export function EventCard({
                                 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                                 aria-hidden="true"
                               />
-                              <span className="min-w-0">{event.location}</span>
+                              {temploNameNode}
                             </div>
                           )}
 
                           {event.address && (
-                            <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug mt-[-6px] mb-6">
+                            <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug mt-[-6px] mb-2">
                               <MapPin
                                 className="mt-0.5 h-3.5 w-3.5 shrink-0"
                                 aria-hidden="true"
@@ -1410,18 +1524,8 @@ export function EventCard({
           )}
         </div>
 
-        <div className="bg-paper-highlight flex w-full flex-wrap items-center gap-x-2 gap-y-1 border-b border-border/70 px-4 py-3 text-[17px] font-semibold leading-tight text-foreground md:text-[17px]">
-          <CalendarDays
-            className="h-5 w-5 shrink-0 text-[#2f5e93]"
-            aria-hidden="true"
-          />
-          <span className="whitespace-nowrap">{visualDateLabel}</span>
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            <span className="text-[#2f5e93]" aria-hidden="true">
-              ·
-            </span>
-            <span className="tabular-nums">{event.time}</span>
-          </span>
+        <div className="border-b border-border/70 bg-paper-highlight">
+          {eventScheduleGrid}
         </div>
 
         {/* ── Card body ── */}
@@ -1434,7 +1538,7 @@ export function EventCard({
             </span>
 
             {/* Title — editorial type only when this card is opted into Home's bulletin tone. */}
-            <h3 className={`${event.location ? "mb-5" : "mb-0"} text-[23px] font-semibold leading-[1.35] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
+            <h3 className={`${event.location ? "mb-5" : "mb-0"} text-[25px] font-semibold leading-[1.35] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
               {event.title}
             </h3>
 
@@ -1448,7 +1552,7 @@ export function EventCard({
                       aria-hidden="true"
                     />
                     <p className={`text-[15px] font-medium leading-snug`}>
-                      {event.location}
+                      {temploNameNode}
                     </p>
                   </div>
                   {event.address && (

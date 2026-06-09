@@ -86,8 +86,7 @@ export const validateEventRegion = {
   validation: `
     Asegura que:
     - event.region IS NOT NULL
-    - event.date IS NOT NULL
-    - event.endDate >= event.date (si endDate existe)
+    - event.schedule tiene al menos una fecha/hora válida
   `,
   errorMessage: 'El evento debe tener una región y fechas válidas',
   severity: 'error',

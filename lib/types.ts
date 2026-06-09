@@ -41,6 +41,12 @@ export type EventTypeColor = "worship" | "tour" | "conference" | "youth";
 
 export type Vestimenta = "uniformeMGR" | "formalCasual" | "informal" | "otro";
 
+export interface EventOccurrence {
+  date: Date;
+  time: string;
+  note?: string;
+}
+
 // Alimentos section
 export interface AlimentosInfo {
   enabled: boolean;
@@ -77,9 +83,12 @@ export interface Event {
   // Legacy field
   type?: string;
   typeColor?: EventTypeColor;
+  schedule: EventOccurrence[];
+  // Derived from the first/last schedule occurrence for ranking and legacy consumers.
   date: Date;
-  endDate?: Date; // For multi-day events
+  endDate?: Date;
   time: string;
+  temploId?: string;
   location: string;
   address: string;
   googleMapsUrl?: string;

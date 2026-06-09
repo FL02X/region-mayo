@@ -502,9 +502,9 @@ function TemploCard({
     typeof templo.latitude === "number" ||
     typeof templo.longitude === "number";
   const compactUtilityButtonClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
+    "mt-3 inline-flex max-w-full items-center gap-2 text-[17px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:hidden";
   const compactMapsButtonClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 border border-[#005998] bg-[#005998] px-2.5 text-sm font-medium text-white transition-[background-color,border-color] duration-0 hover:border-[#1a6aa1] hover:bg-[#1a6aa1] hover:text-white";
+    "inline-flex h-8 w-fit items-center gap-1.5 border bg-brand px-2.5 text-sm font-medium  text-white transition-[background-color,border-color] duration-0 hover:bg-brand-hover hover:text-white";
 
   const actionButtons = (
     <div className="mt-2 flex flex-wrap items-center gap-0">
@@ -661,7 +661,7 @@ function TemploCard({
         id={templo.id}
         className="md:bg-card md:border-y md:border-border/80 scroll-mt-[100px] transition-none target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20 md:border-x md:transition-all md:duration-700"
       >
-        <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-4 md:py-5">
+        <div className="flex gap-3 px-2 py-4 md:gap-5 md:px-4 md:py-5 bg-paper-highlight mx-[-5px] border-x border-y border-border/70">
           <div className="flex shrink-0 flex-col">
             <div className="offline-hide-when-offline offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] bg-muted md:h-[108px] md:w-[112px]">
               {templo.photos && templo.photos.length > 0 ? (
@@ -744,7 +744,7 @@ function TemploCard({
                   style={{ minHeight: "unset", minWidth: "unset" }}
                 >
                   <MapPin className="h-4 w-4" aria-hidden="true" />
-                  Ver ubicación en Maps
+                  Ver en Google Maps
                 </button>
               )}
 
@@ -778,9 +778,9 @@ function TemploCard({
               animate={{ height: "auto", opacity: 1 }}
               exit={isMobile ? { height: 0, opacity: 0 } : undefined}
               transition={isMobile ? expandTransition : { duration: 0 }}
-              className="overflow-hidden"
+              className="-mx-[5px] overflow-hidden"
             >
-              <div className="space-y-5 border-t border-border/80 bg-muted/20 px-3 py-4 md:px-5 md:py-5">
+              <div className="w-full space-y-5 border-l border-r border-b border-border/70 bg-paper-highlight px-3 py-4 md:px-5 md:py-5">
                 {detailsContent}
               </div>
             </motion.div>
@@ -886,7 +886,7 @@ function TemploCard({
             <div className="-mx-4 mb-2 border-t border-border">
               <button
                 onClick={handleToggle}
-                className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/70 transition-colors"
+                className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/70 transition-colors "
                 aria-expanded={isExpanded}
                 aria-controls={`templo-details-${templo.id}`}
                 style={{ background: "none" }}
@@ -991,7 +991,7 @@ function TemploCard({
                       <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5">
                         Horarios de Reunión
                       </p>
                       <ul className="space-y-1">
