@@ -53,44 +53,104 @@ const photoSubmissionList = (S: any, title: string, status: string) =>
     .params({ type: PHOTO_SUBMISSION_TYPE, status })
     .defaultOrdering([{ field: 'uploadedAt', direction: 'desc' }])
 
+const MANUAL_DOCUMENT_TYPES = new Set([
+  PHOTO_SUBMISSION_TYPE,
+  'event',
+  'templo',
+  'pastor',
+  'coro',
+  'directiva',
+  'album',
+])
+
+const documentTypeItem = (S: any, type: string, title: string) =>
+  S.documentTypeListItem(type).title(title)
+
+const remainingDocumentTypes = (S: any) =>
+  S.documentTypeListItems().filter((item: any) => {
+    const id = item.getId()
+
+    return (
+      typeof id !== 'string' ||
+      (!MANUAL_DOCUMENT_TYPES.has(id) && !HIDDEN_DOCUMENT_TYPES.has(id))
+    )
+  })
+
 const studioStructure = (S: any) =>
   S.list()
     .title('Contenido')
     .items([
       S.listItem()
-        .title('Fotos pendientes')
-        .schemaType(PHOTO_SUBMISSION_TYPE)
-        .child(photoSubmissionList(S, 'Fotos pendientes', 'pending')),
-      S.listItem()
-        .title('Fotos pendientes por album')
-        .schemaType('album')
+        .id('secciones')
+        .title('🔵 Secciones')
         .child(
-          S.documentTypeList('album')
-            .title('Albumes')
-            .filter('_type == "album" && !defined(deletedAt)')
-            .defaultOrdering([{ field: 'startDate', direction: 'desc' }])
-            .child((albumId: string) =>
-              S.documentList()
-                .title('Pendientes del album')
-                .schemaType(PHOTO_SUBMISSION_TYPE)
-                .filter('_type == $type && status == "pending" && album._ref == $albumId')
-                .params({ type: PHOTO_SUBMISSION_TYPE, albumId })
-                .defaultOrdering([{ field: 'uploadedAt', direction: 'desc' }]),
-            ),
+          S.list()
+            .title('Secciones')
+            .items([
+              documentTypeItem(S, 'event', 'Eventos'),
+              documentTypeItem(S, 'templo', 'Templos'),
+              documentTypeItem(S, 'pastor', 'Pastores'),
+              documentTypeItem(S, 'coro', 'Coros'),
+              documentTypeItem(S, 'directiva', 'Directiva'),
+            ]),
         ),
+
       S.listItem()
-        .title('Fotos aprobadas')
-        .schemaType(PHOTO_SUBMISSION_TYPE)
-        .child(photoSubmissionList(S, 'Fotos aprobadas', 'approved')),
+        .id('album')
+        .title('🟣 Álbum')
+        .child(
+          S.list()
+            .title('Álbum')
+            .items([
+              documentTypeItem(S, 'album', 'Álbumes'),
+
+              S.divider(),
+
+              S.listItem()
+                .title('Fotos pendientes')
+                .schemaType(PHOTO_SUBMISSION_TYPE)
+                .child(photoSubmissionList(S, 'Fotos pendientes', 'pending')),
+
+              S.listItem()
+                .title('Fotos pendientes por álbum')
+                .schemaType('album')
+                .child(
+                  S.documentTypeList('album')
+                    .title('Álbumes')
+                    .filter('_type == "album" && !defined(deletedAt)')
+                    .defaultOrdering([{ field: 'startDate', direction: 'desc' }])
+                    .child((albumId: string) =>
+                      S.documentList()
+                        .title('Pendientes del álbum')
+                        .schemaType(PHOTO_SUBMISSION_TYPE)
+                        .filter(
+                          '_type == $type && status == "pending" && album._ref == $albumId',
+                        )
+                        .params({ type: PHOTO_SUBMISSION_TYPE, albumId })
+                        .defaultOrdering([{ field: 'uploadedAt', direction: 'desc' }]),
+                    ),
+                ),
+
+              S.listItem()
+                .title('Fotos aprobadas')
+                .schemaType(PHOTO_SUBMISSION_TYPE)
+                .child(photoSubmissionList(S, 'Fotos aprobadas', 'approved')),
+
+              S.listItem()
+                .title('Fotos rechazadas')
+                .schemaType(PHOTO_SUBMISSION_TYPE)
+                .child(photoSubmissionList(S, 'Fotos rechazadas', 'rejected')),
+            ]),
+        ),
+
       S.listItem()
-        .title('Fotos rechazadas')
-        .schemaType(PHOTO_SUBMISSION_TYPE)
-        .child(photoSubmissionList(S, 'Fotos rechazadas', 'rejected')),
-      S.divider(),
-      ...S.documentTypeListItems().filter((item: any) => {
-        const id = item.getId()
-        return typeof id !== 'string' || !HIDDEN_DOCUMENT_TYPES.has(id)
-      }),
+        .id('configuracion-pagina')
+        .title('🟠 Configuración de la página')
+        .child(
+          S.list()
+            .title('Configuración de la página')
+            .items(remainingDocumentTypes(S)),
+        ),
     ])
 
 export default defineConfig({

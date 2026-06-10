@@ -165,3 +165,19 @@ body.hash-cleared :target {
   --tw-ring-color: transparent !important;
   background-color: var(--card) !important;
 }
+
+/* ─── Sanity Studio: force normal-height structure buttons ─── */
+
+html[data-studio-route="true"] [data-ui="Pane"] button,
+html[data-studio-route="true"] [data-ui="Pane"] a,
+body[data-studio-route="true"] [data-ui="Pane"] button,
+body[data-studio-route="true"] [data-ui="Pane"] a {
+  min-height: 46px !important;
+}
+
+html[data-studio-route="true"] [data-ui="Pane"] button > *,
+html[data-studio-route="true"] [data-ui="Pane"] a > *,
+body[data-studio-route="true"] [data-ui="Pane"] button > *,
+body[data-studio-route="true"] [data-ui="Pane"] a > * {
+  min-height: 46px !important;
+}
