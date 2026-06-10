@@ -149,8 +149,8 @@ function FlipCountdownCell({ value, label }: TimeUnit) {
       }}
       aria-live="off"
     >
-      <div className="relative mx-auto h-10 w-full max-w-[70px]">
-        <span className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-foreground tabular-nums leading-none">
+      <div className="relative mx-auto h-8 w-full max-w-[70px]">
+        <span className={`${editorialFont.className} mt-1.5 absolute inset-0 flex items-center justify-center text-[30px] font-bold text-foreground tabular-nums leading-none`}>
           {displayText}
         </span>
       </div>
@@ -584,12 +584,12 @@ export function CountdownSection({
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* Spotlight: event */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
-          <div className={`desktop-card-lift border bg-paper-highlight border-border overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
-            <div className="h-[3px]" style={{ backgroundColor: "#2f5e93" }} aria-hidden="true" />
+          <div className={`desktop-card-lift border bg-paper-highlight border-x border-b border-t-0 overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
+            <div className="h-[5px]" style={{ backgroundColor: "#2f5e93" }} aria-hidden="true" />
 
-            <div className="p-5">
+            <div className="p-4 py-7 pb-9">
               <p
-                className="text-[11px] text-brand-text font-bold uppercase tracking-[0.22em] mb-3.5 ml-[-2px] mt-[-2px]"
+                className="text-[11px] text-brand-text font-bold uppercase tracking-[0.22em] mb-3.5 mt-[-10px]"
               >
                 Nuestro Próximo Evento
               </p>
@@ -597,7 +597,7 @@ export function CountdownSection({
               {/* Event title — serif for editorial weight */}
               <h3
                 className={`${editorialFont.className} type-human-title mb-5 text-[29px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
-              >
+              > 
                 {countdownEvent.title}
               </h3>
 
@@ -636,7 +636,7 @@ export function CountdownSection({
 
               {/* Countdown grid — flat dividers, no background fill */}
               <div
-                className={`grid grid-cols-4 border border-border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS}`}
+                className={`grid grid-cols-4 border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS}`}
                 role="timer"
                 aria-label="Tiempo restante para el evento"
               >

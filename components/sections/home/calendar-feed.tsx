@@ -479,7 +479,7 @@ function MobileMonthPlanner({
             return (
               <div
                 key={`${monthParts.year}-${monthParts.month}`}
-                className={`w-full shrink-0 snap-center px-4 pb-4 pt-3 transition-opacity ${
+                className={`w-full shrink-0 snap-center px-4 pb-4 pt-3 transition-opacity bg-paper-highlight ${
                   isCenterMonth ? "opacity-100" : "opacity-55"
                 }`}
               >
@@ -578,7 +578,7 @@ function MobileMonthPlanner({
       </div>
 
       <div className="mt-5">
-        <div className="mb-3 flex items-end justify-between gap-3 border-b border-border-line pb-2">
+        <div className="mb-3 flex items-end justify-between gap-3 border-b pb-2">
           <div>
             <p className="type-system text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-text">
               Eventos del mes

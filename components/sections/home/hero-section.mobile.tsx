@@ -20,10 +20,10 @@ const GPS_HIGHLIGHT_KEY = "region-mayo-templos-gps-highlight";
 const GPS_HIGHLIGHT_USED_KEY = "region-mayo-templos-gps-highlight-consumed";
 const SKIP_ONLINE_TOAST_KEY = "rm-skip-online-toast";
 const GPS_CTA_COLOR = "";
-const HERO_WATERMARK_LEFT = "82%";
-const HERO_WATERMARK_TOP = "45%";
+const HERO_WATERMARK_LEFT = "84%";
+const HERO_WATERMARK_TOP = "73%";
 const HERO_WATERMARK_LAYER_HEIGHT = "170px";
-const HERO_WATERMARK_OPACITY = 0.05;
+const HERO_WATERMARK_OPACITY = 0.90;
 const MOBILE_HERO_IMAGE_WIDTH = 828;
 const editorialFont = Newsreader({
   subsets: ["latin"],

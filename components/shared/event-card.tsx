@@ -484,9 +484,9 @@ export function EventCard({
   const eventUtilityButtonClass =
     "mt-[-25px] inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventUtilityButtonSmallClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
+    "inline-flex ml-4.5 h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventPrimaryMapsButtonClass =
-    "inline-flex ml-4.5 h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-normal text-white transition-colors duration-150 hover:bg-brand-hover";
+    "inline-flex ml-0 h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-extrabold text-white transition-colors duration-150 hover:bg-brand-hover";
   const eventPrimaryMapsButtonSmallClass =
     "inline-flex ml-4.5 h-8 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const compactDesktopMapsButtonClass =
@@ -757,7 +757,7 @@ export function EventCard({
             key={`${occurrence.date.toISOString()}-${occurrence.time}-${index}`}
             className={[
               "flex min-w-0 shrink-0 items-start gap-2 px-3 py-3.5 mt-[-3px] mb-[-3px]",
-              index > 0 ? "border-l border-border/70" : "",
+              index > 0 ? "border-l border" : "",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -1484,7 +1484,7 @@ export function EventCard({
       <article
         id={event.id}
         data-eq-card
-        className="self-start overflow-hidden border border-border/70 bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+        className="self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
       >
         {/* ── Image with date/time strip ── */}
         <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
@@ -1532,13 +1532,13 @@ export function EventCard({
         <div className="p-5 bg-paper-highlight">
           <div data-eq-head>
             {/* Event type — plain uppercase label */}
-            <span className={`mb-2.5 inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[13px] font-medium uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}>
+            <span className={`mb-3 inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[13px] font-medium uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}>
               <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{eventTypeLabels[eventType]}</span>
             </span>
 
             {/* Title — editorial type only when this card is opted into Home's bulletin tone. */}
-            <h3 className={`${event.location ? "mb-5" : "mb-0"} text-[25px] font-semibold leading-[1.35] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
+            <h3 className={`${event.location ? "mb-4" : "mb-0"} text-[25px] font-extrabold leading-[1.25] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
               {event.title}
             </h3>
 
