@@ -50,7 +50,21 @@ const albumMobileSlideTransition = {
   ease: [0.22, 1, 0.36, 1] as const,
 };
 const ALBUM_TRANSITION_STORAGE_KEY = "rm-album-transition-next";
+type AlbumTileKind = "normal" | "squareLarge" | "tall" | "wide";
 type VideoOrientation = "portrait" | "landscape";
+
+interface AlbumTileLayout {
+  kind: AlbumTileKind;
+  className: string;
+  imageOptions: {
+    width: number;
+    height: number;
+    quality: number;
+    format: "webp";
+    fit: "crop";
+  };
+  sizes: string;
+}
 
 function formatAlbumDate(startDate: Date, endDate: Date) {
   const formatter = new Intl.DateTimeFormat("es-MX", {
@@ -70,6 +84,90 @@ function formatMediaCount(count: number, isVideo: boolean) {
     return `${count} ${count === 1 ? "video" : "videos"}`;
   }
   return `${count} ${count === 1 ? "foto" : "fotos"}`;
+}
+
+function hashString(input: string) {
+  let hash = 5381;
+
+  for (let index = 0; index < input.length; index += 1) {
+    hash = ((hash << 5) + hash) ^ input.charCodeAt(index);
+  }
+
+  return hash >>> 0;
+}
+
+function getAlbumTileLayout(
+  image: AlbumImage,
+  index: number,
+  totalCount: number,
+  albumSlug: string,
+): AlbumTileLayout {
+  const hash = hashString(`${albumSlug}:${image.url}:${index}`);
+  const remainingItems = totalCount - index - 1;
+  const allowSpecial = totalCount > 12 && (index === 0 || (index < totalCount - 8 && remainingItems > 8));
+  const canBeSpecial = allowSpecial && hash % 100 < 24;
+
+  let kind: AlbumTileKind = "normal";
+
+  if (canBeSpecial) {
+    const roll = hash % 100;
+    kind = roll < 68 ? "squareLarge" : roll < 92 || totalCount <= 24 ? "tall" : "wide";
+  }
+
+  const classNameByKind: Record<AlbumTileKind, string> = {
+    normal: "aspect-square col-span-1",
+    squareLarge: "aspect-square col-span-2",
+    tall: "aspect-[2/3] col-span-2",
+    wide: "aspect-[3/2] col-span-3",
+  };
+
+  const imageOptionsByKind: Record<
+    AlbumTileKind,
+    { width: number; height: number; quality: number; format: "webp"; fit: "crop" }
+  > = {
+    normal: {
+      width: 640,
+      height: 640,
+      quality: 60,
+      format: "webp",
+      fit: "crop",
+    },
+    squareLarge: {
+      width: 1120,
+      height: 1120,
+      quality: 64,
+      format: "webp",
+      fit: "crop",
+    },
+    tall: {
+      width: 840,
+      height: 1260,
+      quality: 64,
+      format: "webp",
+      fit: "crop",
+    },
+    wide: {
+      width: 1240,
+      height: 820,
+      quality: 64,
+      format: "webp",
+      fit: "crop",
+    },
+  };
+
+  const sizesByKind: Record<AlbumTileKind, string> = {
+    normal: "(max-width: 767px) 33vw, (max-width: 1024px) 25vw, 220px",
+    squareLarge: "(max-width: 767px) 66vw, (max-width: 1024px) 50vw, 420px",
+    tall: "(max-width: 767px) 66vw, (max-width: 1024px) 50vw, 350px",
+    wide: "(max-width: 767px) 100vw, (max-width: 1024px) 75vw, 720px",
+  };
+
+  return {
+    kind,
+    className: classNameByKind[kind],
+    imageOptions: imageOptionsByKind[kind],
+    sizes: sizesByKind[kind],
+  };
 }
 
 function AlbumCard({ album }: { album: Album }) {
@@ -218,83 +316,30 @@ function YoutubeVideoTile({
   );
 }
 
-function getAlbumTileClass(index: number): string {
-  if (index === 0) {
-    return "col-span-2 row-span-2 md:col-span-4 md:row-span-3";
-  }
-
-  if (index > 0 && index % 18 === 0) {
-    return "col-span-2 row-span-2 md:col-span-4 md:row-span-2";
-  }
-
-  const cycle = index % 16;
-  if (index >= 10 && cycle === 10) {
-    return "col-span-1 row-span-2 md:col-start-1";
-  }
-
-  if (index >= 15 && cycle === 15) {
-    return "col-span-1 row-span-2 md:col-start-4";
-  }
-
-  return "col-span-1 row-span-1";
-}
-
-function getAlbumTileImageOptions(index: number) {
-  if (index === 0 || index % 18 === 0) {
-    return {
-      width: 1360,
-      height: 760,
-      quality: 64,
-      format: "webp" as const,
-      fit: "crop" as const,
-    };
-  }
-
-  if ((index >= 10 && index % 16 === 10) || (index >= 15 && index % 16 === 15)) {
-    return {
-      width: 520,
-      height: 860,
-      quality: 62,
-      format: "webp" as const,
-      fit: "crop" as const,
-    };
-  }
-
-  return {
-    width: 460,
-    height: 460,
-    quality: 60,
-    format: "webp" as const,
-    fit: "crop" as const,
-  };
-}
-
 function AlbumImageTile({
   image,
   index,
+  layout,
   onOpen,
 }: {
   image: AlbumImage;
   index: number;
+  layout: AlbumTileLayout;
   onOpen: (index: number) => void;
 }) {
   return (
     <button
       type="button"
       onClick={() => onOpen(index)}
-      className={`group relative overflow-hidden border border-border bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${getAlbumTileClass(index)}`}
+      className={`group relative overflow-hidden border border-border bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${layout.className}`}
       aria-label={`Abrir foto ${index + 1}`}
     >
       <Image
-        src={sanityImageVariantUrl(image.url, getAlbumTileImageOptions(index))}
+        src={sanityImageVariantUrl(image.url, layout.imageOptions)}
         alt={image.alt}
         fill
         className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-        sizes={
-          index === 0 || index % 18 === 0
-            ? "(max-width: 1024px) 100vw, 900px"
-            : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 220px"
-        }
+        sizes={layout.sizes}
       />
       {image.caption ? (
         <span className="absolute inset-x-0 bottom-0 bg-black/65 px-2 py-1.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -393,6 +438,30 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
         transition: { duration: 0 },
       };
 
+  const albumMobileTileLayouts = useMemo(() => {
+    if (!album) {
+      return [];
+    }
+
+    const visibleImages = album.images.slice(0, visibleCount);
+    return visibleImages.map((image, index) =>
+      getAlbumTileLayout(image, index, visibleImages.length, album.slug),
+    );
+  }, [album, visibleCount]);
+
+  const desktopTileLayout: AlbumTileLayout = {
+    kind: "normal",
+    className: "aspect-square col-span-1",
+    imageOptions: {
+      width: 560,
+      height: 560,
+      quality: 60,
+      format: "webp",
+      fit: "crop",
+    },
+    sizes: "(max-width: 767px) 33vw, (max-width: 1024px) 20vw, 180px",
+  };
+
   if (album) {
     const isYoutubeAlbum = album.albumType === "youtube";
     const forcePortraitLayout = album.youtubeLayout === "vertical";
@@ -415,11 +484,11 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
       <div className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
         <motion.div
           key={`album-detail-${album.slug}-${shouldAnimate ? "mobile" : "static"}`}
-          className="desktop-content-pane mx-auto max-w-[950px] overflow-x-clip bg-white px-4 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-8 dark:border-[#27272a]"
+          className="desktop-content-pane mx-auto max-w-[950px] overflow-x-clip bg-white px-0 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:pt-8 dark:border-[#27272a]"
           {...pageMotionProps}
         >
-          <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
-            <div className="mb-6 border-b border-border pb-5">
+          <div className="mx-auto max-w-4xl">
+            <section className="mb-0 border-b border-border px-4 pb-5 pt-0 md:px-8 md:pb-6">
               <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">
                 {CATEGORY_LABELS[album.category] || album.category}
               </p>
@@ -503,76 +572,54 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   ) : null}
                 </div>
               ) : null}
-            </div>
+            </section>
 
-            {isYoutubeAlbum ? (
-              <>
-                {selectedVideo ? (
-                  <div className="mb-5 overflow-hidden border border-border bg-black">
-                    <div
-                      data-youtube-player-shell
-                      className={`${
-                        selectedVideoIsPortrait
-                          ? "mx-auto aspect-[9/16] w-full max-w-[420px] bg-black"
-                          : "aspect-video"
-                      }`}
-                    >
-                      <iframe
-                        src={`https://www.youtube.com/embed/${selectedVideo.id}`}
-                        title={selectedVideo.title}
-                        className="youtube-embed-frame h-full w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        loading="lazy"
-                      />
+            <section>
+              {isYoutubeAlbum ? (
+                <>
+                  <div className="px-0 pt-4 sm:px-4 md:px-8 md:pt-5">
+                  {selectedVideo ? (
+                    <div className="mb-5 overflow-hidden border border-border bg-black">
+                      <div
+                        data-youtube-player-shell
+                        className={`${
+                          selectedVideoIsPortrait
+                            ? "mx-auto aspect-[9/16] w-full max-w-[420px] bg-black"
+                            : "aspect-video"
+                        }`}
+                      >
+                        <iframe
+                          src={`https://www.youtube.com/embed/${selectedVideo.id}`}
+                          title={selectedVideo.title}
+                          className="youtube-embed-frame h-full w-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          loading="lazy"
+                        />
+                      </div>
                     </div>
+                  ) : (
+                    <div className="border border-border bg-card p-8 text-center">
+                      <Youtube className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
+                      <p className="text-sm font-medium text-foreground">Sin videos disponibles</p>
+                      {album.youtubeError ? (
+                        <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
+                          {album.youtubeError}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
                   </div>
-                ) : (
-                  <div className="border border-border bg-card p-8 text-center">
-                    <Youtube className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
-                    <p className="text-sm font-medium text-foreground">Sin videos disponibles</p>
-                    {album.youtubeError ? (
-                      <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
-                        {album.youtubeError}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
 
-                <div className="hidden grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 md:grid">
-                  {visibleVideos.map((video, index) => (
-                    <YoutubeVideoTile
-                      key={video.id}
-                      video={video}
-                      index={index}
-                      isActive={selectedVideo?.id === video.id}
-                      onSelect={(nextVideo) => setSelectedVideoId(nextVideo.id)}
-                      onThumbnailLoad={(nextVideo, width, height) => {
-                        const orientation: VideoOrientation =
-                          height > width ? "portrait" : "landscape";
-                        setVideoOrientations((current) =>
-                          current[nextVideo.id] === orientation
-                            ? current
-                            : { ...current, [nextVideo.id]: orientation },
-                        );
-                      }}
-                    />
-                  ))}
-                </div>
-                {isMobile && visibleVideos.length > 0 ? (
-                  <div className="mt-5 border-t border-border pt-4">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Seleccionar video
-                    </p>
-                    <div className="flex flex-col gap-3">
+                  <div className="px-4 sm:px-4 md:px-8">
+                    <div className="hidden grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 md:grid">
                       {visibleVideos.map((video, index) => (
                         <YoutubeVideoTile
-                          key={`mobile-${video.id}`}
+                          key={video.id}
                           video={video}
                           index={index}
                           isActive={selectedVideo?.id === video.id}
                           onSelect={(nextVideo) => setSelectedVideoId(nextVideo.id)}
-                          variant="list"
                           onThumbnailLoad={(nextVideo, width, height) => {
                             const orientation: VideoOrientation =
                               height > width ? "portrait" : "landscape";
@@ -585,21 +632,63 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                         />
                       ))}
                     </div>
+                    {isMobile && visibleVideos.length > 0 ? (
+                      <div className="mt-5 border-t border-border pt-4">
+                        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Seleccionar video
+                        </p>
+                        <div className="flex flex-col gap-3">
+                          {visibleVideos.map((video, index) => (
+                            <YoutubeVideoTile
+                              key={`mobile-${video.id}`}
+                              video={video}
+                              index={index}
+                              isActive={selectedVideo?.id === video.id}
+                              onSelect={(nextVideo) => setSelectedVideoId(nextVideo.id)}
+                              variant="list"
+                              onThumbnailLoad={(nextVideo, width, height) => {
+                                const orientation: VideoOrientation =
+                                  height > width ? "portrait" : "landscape";
+                                setVideoOrientations((current) =>
+                                  current[nextVideo.id] === orientation
+                                    ? current
+                                    : { ...current, [nextVideo.id]: orientation },
+                                );
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </>
-            ) : (
-              <div className="grid grid-flow-dense grid-cols-2 gap-2 [grid-auto-rows:8.5rem] sm:[grid-auto-rows:10rem] md:grid-cols-4 md:[grid-auto-rows:9.5rem]">
-                {visibleImages.map((image, index) => (
-                  <AlbumImageTile
-                    key={`${image.url}-${index}`}
-                    image={image}
-                    index={index}
-                    onOpen={setCurrentIndex}
-                  />
-                ))}
-              </div>
-            )}
+                </>
+              ) : (
+                <div className="px-0 pt-4 sm:px-4 md:px-8 md:pt-5">
+                  <div className="grid grid-flow-dense grid-cols-3 gap-[2px] sm:gap-2 md:hidden">
+                    {albumMobileTileLayouts.map((layout, index) => (
+                      <AlbumImageTile
+                        key={`${visibleImages[index].url}-${index}`}
+                        image={visibleImages[index]}
+                        index={index}
+                        layout={layout}
+                        onOpen={setCurrentIndex}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="hidden grid-cols-5 gap-1.5 md:grid">
+                    {visibleImages.map((image, index) => (
+                      <AlbumImageTile
+                        key={`${image.url}-${index}`}
+                        image={image}
+                        index={index}
+                        layout={desktopTileLayout}
+                        onOpen={setCurrentIndex}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
             {hasMoreItems ? (
               <div className="mt-6 flex justify-center">
@@ -630,6 +719,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 alt={album.title}
               />
             ) : null}
+            </section>
           </div>
         </motion.div>
       </div>
