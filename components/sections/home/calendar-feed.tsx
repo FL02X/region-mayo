@@ -976,43 +976,7 @@ export function EventsFeed({
           className="mt-5 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-t md:border-t-0 border-border/70 bg-muted/20"
         >
           <div className="mt-1 max-w-4xl mx-auto w-full">
-            <div className="md:hidden mb-3 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setIsMonthPlannerEnabled((value) => !value)}
-                className="relative grid h-9 w-[260px] grid-cols-2 mb-3 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
-                aria-pressed={isMonthPlannerEnabled}
-                aria-label="Alternar vista mensual del calendario"
-              >
-                <span className="pointer-events-none absolute left-1/2 top-1 h-7 w-px -translate-x-1/2 bg-border-line" />
-                <span
-                  className={`absolute top-0.5 h-8 w-[130px] bg-brand transition-transform duration-200 ${
-                    isMonthPlannerEnabled
-                      ? "translate-x-[130px]"
-                      : "translate-x-0"
-                  }`}
-                  aria-hidden="true"
-                />
-                <span
-                  className={`relative z-10 flex items-center justify-center text-[11px] font-semibold uppercase ${
-                    isMonthPlannerEnabled
-                      ? "text-ink-muted"
-                      : "text-primary-foreground"
-                  }`}
-                >
-                  Lista
-                </span>
-                <span
-                  className={`relative z-10 flex items-center justify-center text-[11px] font-semibold uppercase ${
-                    isMonthPlannerEnabled
-                      ? "text-primary-foreground"
-                      : "text-ink-muted"
-                  }`}
-                >
-                  Mes
-                </span>
-              </button>
-            </div>
+
             <div className="mb-5">
               <h2
                 id="calendar-title"
@@ -1023,6 +987,44 @@ export function EventsFeed({
               <p className="type-system text-[15px] mt-0.5">
                 Selecciona un mes para ver los eventos
               </p>
+            </div>
+            {/* {Boton para cambiar entre Lista y Mes} */}
+            <div className="md:hidden mb-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setIsMonthPlannerEnabled((value) => !value)}
+                className="relative grid h-9 w-full grid-cols-2 overflow-hidden mb-3 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
+                aria-pressed={isMonthPlannerEnabled}
+                aria-label="Alternar vista mensual del calendario"
+              >
+                <span className="pointer-events-none absolute left-1/2 top-1 z-20 h-7 w-px -translate-x-1/2 bg-border-line" />
+                <span
+                  className={`pointer-events-none absolute left-0.5 top-0.5 z-0 h-[calc(100%-4px)] w-[calc(50%-2px)] bg-brand transition-transform duration-200 ${
+                    isMonthPlannerEnabled
+                      ? "translate-x-full"
+                      : "translate-x-0"
+                  }`}
+                  aria-hidden="true"
+                />
+                <span
+                  className={`relative z-30 flex items-center justify-center text-[11px] font-semibold uppercase ${
+                    isMonthPlannerEnabled
+                      ? "text-ink-muted"
+                      : "text-primary-foreground"
+                  }`}
+                >
+                  Lista
+                </span>
+                <span
+                  className={`relative z-30 flex items-center justify-center text-[11px] font-semibold uppercase ${
+                    isMonthPlannerEnabled
+                      ? "text-primary-foreground"
+                      : "text-ink-muted"
+                  }`}
+                >
+                  Mes
+                </span>
+              </button>
             </div>
             {/* Navigator aligned with left content edge on desktop */}
             <div className={`max-w-md w-full ${legacyCalendarVisibilityClass}`}>

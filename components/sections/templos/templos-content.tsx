@@ -502,7 +502,7 @@ function TemploCard({
     typeof templo.latitude === "number" ||
     typeof templo.longitude === "number";
   const compactUtilityButtonClass =
-    "mt-3 inline-flex max-w-full items-center gap-2 text-[17px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:hidden";
+    "mt-3 inline-flex max-w-full items-center gap-2 text-[17px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
   const compactMapsButtonClass =
     "inline-flex h-8 w-fit items-center gap-1.5 border bg-brand px-2.5 text-sm font-medium  text-white transition-[background-color,border-color] duration-0 hover:bg-brand-hover hover:text-white";
 
@@ -659,9 +659,9 @@ function TemploCard({
     return (
       <article
         id={templo.id}
-        className="md:bg-card md:border-y md:border-border/80 scroll-mt-[100px] transition-none target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20 md:border-x md:transition-all md:duration-700"
+        className="border-x border-t border-border/70 md:bg-card md:border-border/80 scroll-mt-[100px] transition-none target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
       >
-        <div className="flex gap-3 px-2 py-4 md:gap-5 md:px-4 md:py-5 bg-paper-highlight mx-[-5px] border-x border-y border-border/70">
+        <div className="flex gap-3 px-2 py-4 md:gap-5 md:px-4 md:py-5 bg-paper-highlight">
           <div className="flex shrink-0 flex-col">
             <div className="offline-hide-when-offline offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] bg-muted md:h-[108px] md:w-[112px]">
               {templo.photos && templo.photos.length > 0 ? (
@@ -735,7 +735,7 @@ function TemploCard({
               )}
             </div>
 
-            <div className="mt-3 flex flex-col items-start gap-2 md:mt-5 md:flex-row md:flex-wrap md:items-center">
+            <div className="mt-3 flex flex-col items-start gap-2 md:mt-5">
               {templo.googleMapsUrl && (
                 <button
                   onClick={openGoogleMaps}
@@ -778,14 +778,16 @@ function TemploCard({
               animate={{ height: "auto", opacity: 1 }}
               exit={isMobile ? { height: 0, opacity: 0 } : undefined}
               transition={isMobile ? expandTransition : { duration: 0 }}
-              className="-mx-[5px] overflow-hidden"
+              className="overflow-hidden"
             >
-              <div className="w-full space-y-5 border-l border-r border-b border-border/70 bg-paper-highlight px-3 py-4 md:px-5 md:py-5">
+              <div className="w-full space-y-5 bg-paper-highlight px-3 py-4 md:px-5 md:py-5">
                 {detailsContent}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        <div className="border-t border-border/70" aria-hidden="true" />
       </article>
     );
   }

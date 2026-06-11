@@ -505,9 +505,9 @@ export function AppHeader({
                   src="/images/region-mayo-logo-64.jpg"
                   alt="Región Mayo"
                   data-offline-required="true"
-                  width={30}
-                  height={30}
-                  className="rounded-full shrink-0 select-none"
+                  width={33}
+                  height={33}
+                  className="rounded-full border-white shrink-0 select-none"
                   draggable={false}
                   loading="eager"
                   priority
@@ -515,7 +515,7 @@ export function AppHeader({
                 />
               </Link>
 
-              <div className="ml-2 flex flex-col justify-center leading-tight">
+              <div className="ml-2.5 flex flex-col justify-center leading-tight">
                 <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
                   IGC
                 </span>

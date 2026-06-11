@@ -486,7 +486,7 @@ export function EventCard({
   const eventUtilityButtonSmallClass =
     "inline-flex ml-4.5 h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventPrimaryMapsButtonClass =
-    "inline-flex ml-0 h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-extrabold text-white transition-colors duration-150 hover:bg-brand-hover";
+    "inline-flex ml-4.5 h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-normal text-white transition-colors duration-150 hover:bg-brand-hover";
   const eventPrimaryMapsButtonSmallClass =
     "inline-flex ml-4.5 h-8 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const compactDesktopMapsButtonClass =

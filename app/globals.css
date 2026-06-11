@@ -88,6 +88,11 @@
   --paper-fiber: rgba(76, 59, 33, 0.05);
   --paper-ink-soft: rgba(35, 42, 51, 0.08);
   --paper-crease: rgba(108, 89, 56, 0.12);
+  --paper-noise-layer:
+    radial-gradient(circle at 18% 24%, rgba(76, 59, 33, 0.08) 0 0.45px, transparent 0.8px),
+    radial-gradient(circle at 72% 38%, rgba(255, 255, 255, 0.34) 0 0.5px, transparent 0.85px),
+    radial-gradient(circle at 42% 78%, rgba(76, 59, 33, 0.06) 0 0.4px, transparent 0.75px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035), rgba(24, 31, 40, 0.018), rgba(255, 255, 255, 0.03));
   --brand-ink: var(--brand-text);
   --brand-ink-strong: var(--brand-active);
 }
@@ -598,6 +603,14 @@ body[data-user-interacted="true"] :target {
 .bg-background,
 .bg-muted\/20 {
   background-image: none;
+}
+
+/* Paper noise for every `bg-paper` surface. Remove this block to revert. */
+.bg-paper {
+  background-image: var(--paper-noise-layer);
+  background-blend-mode: multiply, screen, multiply, overlay;
+  background-repeat: repeat;
+  background-size: 11px 11px, 13px 13px, 17px 17px, 100% 100%;
 }
 
 .btn-sucess {
