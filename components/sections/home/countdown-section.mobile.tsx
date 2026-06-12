@@ -585,7 +585,7 @@ export function CountdownSection({
         {/* Spotlight: event */}
         {countdownEvent && countdownData && !countdownData.isPostEvent && (
           <div className={`desktop-card-lift border bg-paper-highlight border-x border-b border-t-0 overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
-            <div className="h-[5px]" style={{ backgroundColor: "#2f5e93" }} aria-hidden="true" />
+            <div className="h-[5px] bg-brand" aria-hidden="true" />
 
             <div className="p-4 py-7 pb-9">
               <p

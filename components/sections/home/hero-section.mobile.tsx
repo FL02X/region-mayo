@@ -236,7 +236,7 @@ export function MobileHero({
 
       <div
         data-mobile-hero-title-band
-        className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] px-5 pb-4 pt-4 font-sans text-white"
+        className="paper-cut-y relative z-10 -mt-[10px] w-full bg-brand px-5 pb-4 pt-4 font-sans text-white"
       >
         <div
           aria-hidden="true"
