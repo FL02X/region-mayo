@@ -41,7 +41,7 @@ function UploadUnavailable({
             </Button>
           ) : (
             <Button asChild className="mt-6 h-12 w-full rounded-none">
-              <Link href="/album">Volver al album</Link>
+              <Link href="/album/galerias">Volver al album</Link>
             </Button>
           )}
         </section>

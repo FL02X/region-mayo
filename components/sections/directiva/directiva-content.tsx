@@ -672,11 +672,11 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
         </div>,
         document.body
       )}
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[84px] bg-[#ffffff] md:border-x border-[#e5e7eb] dark:border-[#27272a] focus:outline-none">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[88px] bg-[#ffffff] md:border-x focus:outline-none">
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
-        <div className="mb-6 pb-4 border-b border-border">
-          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">Directiva de jovenes</h1>
+        <div className="mb-6 pb-5 border-b border-border/70">
+          <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">Directiva de jovenes</h1>
           <p className="text-sm text-muted-foreground mt-2">
             Miembros de la directiva regional
           </p>

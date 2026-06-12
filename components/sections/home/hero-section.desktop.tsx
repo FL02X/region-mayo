@@ -575,7 +575,7 @@ export function HeroSection({
 
   return (
     <div className="w-full relative bg-[#f1f1f1]">
-      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a]">
+      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x">
         <section
           className="relative overflow-hidden h-[min(60vh,480px)] md:h-[420px] min-h-[280px]"
           aria-label="Bienvenida a Región Mayo"

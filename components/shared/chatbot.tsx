@@ -81,7 +81,18 @@ export default function Chatbot() {
   const [isClearing, setIsClearing] = useState(false);
 
   const pathname = usePathname();
-  const rutasPermitidas = ["/", "/buscar", "/configuracion", "/coros", "/templos", "/pastores", "/directiva", "/album"];
+  const rutasPermitidas = [
+    "/",
+    "/buscar",
+    "/configuracion",
+    "/coros",
+    "/templos",
+    "/pastores",
+    "/directiva",
+    "/album",
+    "/album/galerias",
+    "/album/grabaciones",
+  ];
 
   if (!rutasPermitidas.includes(pathname)) {
     return null;

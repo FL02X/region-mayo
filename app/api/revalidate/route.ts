@@ -12,6 +12,8 @@ const ALL_CONTENT_PATHS = [
   "/directiva",
   "/pastores",
   "/album",
+  "/album/galerias",
+  "/album/grabaciones",
   "/buscar",
 ];
 
@@ -125,20 +127,30 @@ export async function POST(request: NextRequest) {
       case "album": {
         const albumSlug = getAlbumSlug(body);
         pathsToRevalidate.push("/album");
+        pathsToRevalidate.push("/album/galerias");
+        pathsToRevalidate.push("/album/grabaciones");
         if (albumSlug) pathsToRevalidate.push(`/album/${albumSlug}`);
+        if (albumSlug) pathsToRevalidate.push(`/album/galerias/${albumSlug}`);
+        if (albumSlug) pathsToRevalidate.push(`/album/grabaciones/${albumSlug}`);
         tagsToRevalidate.push("album");
         break;
       }
       case "albumPhotoSubmission": {
         const albumSlug = getAlbumSlug(body) || (await getAlbumSlugFromPhotoSubmission(body));
         pathsToRevalidate.push("/album");
+        pathsToRevalidate.push("/album/galerias");
+        pathsToRevalidate.push("/album/grabaciones");
         if (albumSlug) pathsToRevalidate.push(`/album/${albumSlug}`);
+        if (albumSlug) pathsToRevalidate.push(`/album/galerias/${albumSlug}`);
+        if (albumSlug) pathsToRevalidate.push(`/album/grabaciones/${albumSlug}`);
         tagsToRevalidate.push("album", "albumPhotoSubmission");
         break;
       }
       case "event":
         pathsToRevalidate.push("/");
         pathsToRevalidate.push("/album");
+        pathsToRevalidate.push("/album/galerias");
+        pathsToRevalidate.push("/album/grabaciones");
         pathsToRevalidate.push("/buscar");
         tagsToRevalidate.push("events");
         break;

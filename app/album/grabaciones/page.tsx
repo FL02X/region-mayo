@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { AppHeader } from "@/components/layout/app-header";
-import { AlbumHubContent } from "@/components/sections/album/album-content";
+import { SectionNavBar } from "@/components/layout/section-nav-bar";
+import { AlbumSectionContent } from "@/components/sections/album/album-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getAlbums, getRegionConfig } from "@/lib/api";
 
 export const revalidate = false;
 
 export const metadata: Metadata = {
-  title: "Album | IGC Region Mayo",
-  description: "Fotos, galerias y grabaciones recientes de la Region Mayo.",
+  title: "Grabaciones | IGC Region Mayo",
+  description: "Grabaciones y directos de la Region Mayo.",
 };
 
-export default async function AlbumPage() {
+export default async function AlbumGrabacionesPage() {
   const [region, albums] = await Promise.all([
     getRegionConfig("region-mayo"),
     getAlbums("region-mayo"),
@@ -23,17 +24,8 @@ export default async function AlbumPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <div>
-        {region ? (
-          <AlbumHubContent albums={albums} />
-        ) : (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <p className="text-lg text-gray-500">
-              No hay informacion disponible. Por favor, configurala en Sanity Studio.
-            </p>
-          </div>
-        )}
-      </div>
+      <SectionNavBar currentLabel="Grabaciones" parentHref="/album" parentLabel="Album" icon="album" />
+      <AlbumSectionContent albums={albums} section="grabaciones" />
       <Chatbot />
     </main>
   );

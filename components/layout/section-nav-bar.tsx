@@ -88,7 +88,7 @@ export function SectionNavBar({
   };
 
   const markAlbumBackTransition = () => {
-    if (parentHref !== "/album") return;
+    if (!parentHref?.startsWith("/album")) return;
 
     try {
       sessionStorage.setItem(ALBUM_TRANSITION_STORAGE_KEY, "true");

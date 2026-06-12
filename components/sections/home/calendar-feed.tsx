@@ -938,7 +938,7 @@ export function EventsFeed({
       className="w-full relative bg-[#f1f1f1]"
       /* [#f1f1f1] */ data-events-feed="true"
     >
-      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a]">
+      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x">
         {/* Priority spotlight section (mobile only) */}
         <div className="offline-hide-when-offline md:hidden">
           <CountdownSection

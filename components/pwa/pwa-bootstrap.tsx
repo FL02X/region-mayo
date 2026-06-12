@@ -105,7 +105,7 @@ export function PwaBootstrap() {
       const url = new URL(anchor.href);
       if (url.origin !== window.location.origin) return;
 
-      if (!navigator.onLine && url.pathname === "/album") {
+      if (!navigator.onLine && url.pathname.startsWith("/album")) {
         event.preventDefault();
         setIsAlbumOfflineModalOpen(true);
         return;

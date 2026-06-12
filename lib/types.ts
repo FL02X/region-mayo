@@ -132,6 +132,7 @@ export interface AlbumVideo {
   description?: string;
   thumbnailUrl: string;
   publishedAt?: string;
+  durationSeconds?: number;
 }
 
 export interface AlbumRelatedEvent {

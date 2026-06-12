@@ -453,6 +453,8 @@ body[data-user-interacted="true"] :target {
     background-color: var(--bg-paper);
     background-image: none;
     box-shadow: none;
+    border-color: var(--brand);
+    /* border-color: #dce2e9; */
   }
 
   .desktop-content-pane::before,
@@ -751,6 +753,7 @@ select,
 
 .dark .desktop-content-pane {
   box-shadow: none;
+  border-color: rgba(39, 39, 42, 1);
 }
 
 .dark .desktop-content-pane::before {

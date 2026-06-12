@@ -590,12 +590,12 @@ export function DirectorioContent({ pastors, initialViewMode }: DirectorioConten
         </div>,
         document.body
       )}
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] focus:outline-none">
+      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x focus:outline-none">
         {/* Main Content Area */}
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
-          <h1 className="text-[1.825rem] font-semibold text-foreground tracking-tight">
+          <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">
             Directorio de pastores
           </h1>
           <p className="text-[15px] text-muted-foreground mt-1">

@@ -363,6 +363,55 @@ function decodeXmlText(value: string): string {
     .replace(/&gt;/g, ">");
 }
 
+function parseYoutubeDurationSeconds(duration?: string): number | undefined {
+  if (!duration) return undefined;
+
+  const isoMatch = duration.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
+  if (isoMatch) {
+    const hours = Number(isoMatch[1] || 0);
+    const minutes = Number(isoMatch[2] || 0);
+    const seconds = Number(isoMatch[3] || 0);
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+  const numericDuration = Number(duration);
+  return Number.isFinite(numericDuration) ? numericDuration : undefined;
+}
+
+async function fetchYoutubeVideoDurations(
+  videoIds: string[],
+  apiKey: string,
+): Promise<Record<string, number>> {
+  const durations: Record<string, number> = {};
+  const uniqueVideoIds = Array.from(new Set(videoIds.filter(Boolean)));
+
+  for (let index = 0; index < uniqueVideoIds.length; index += 50) {
+    const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+    url.searchParams.set("part", "contentDetails");
+    url.searchParams.set("id", uniqueVideoIds.slice(index, index + 50).join(","));
+    url.searchParams.set("key", apiKey);
+
+    const response = await fetch(url.toString(), YOUTUBE_FETCH_OPTIONS);
+    if (!response.ok) continue;
+
+    const data = await response.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+
+    items.forEach((item: any) => {
+      const videoId = item?.id;
+      const durationSeconds = parseYoutubeDurationSeconds(
+        item?.contentDetails?.duration,
+      );
+
+      if (videoId && typeof durationSeconds === "number") {
+        durations[videoId] = durationSeconds;
+      }
+    });
+  }
+
+  return durations;
+}
+
 async function fetchYoutubePlaylistFeedVideos(playlistId: string): Promise<AlbumVideo[]> {
   const url = `https://www.youtube.com/feeds/videos.xml?playlist_id=${encodeURIComponent(playlistId)}`;
   const response = await fetch(url, YOUTUBE_FETCH_OPTIONS);
@@ -386,6 +435,9 @@ async function fetchYoutubePlaylistFeedVideos(playlistId: string): Promise<Album
       const thumbnailUrl =
         mediaGroup.match(/<media:thumbnail[^>]*url="([^"]+)"/)?.[1] ||
         `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+      const durationSeconds = parseYoutubeDurationSeconds(
+        mediaGroup.match(/duration="([^"]+)"/)?.[1],
+      );
 
       return {
         id,
@@ -393,6 +445,7 @@ async function fetchYoutubePlaylistFeedVideos(playlistId: string): Promise<Album
         description: description || undefined,
         thumbnailUrl,
         publishedAt,
+        durationSeconds,
       };
     })
     .filter(Boolean) as AlbumVideo[];
@@ -462,7 +515,19 @@ async function fetchYoutubePlaylistVideos(
     apiError = "No se pudo conectar con YouTube API.";
   }
 
-  if (videos.length > 0) return { videos };
+  if (videos.length > 0) {
+    const durations = await fetchYoutubeVideoDurations(
+      videos.map((video) => video.id),
+      apiKey,
+    );
+
+    return {
+      videos: videos.map((video) => ({
+        ...video,
+        durationSeconds: durations[video.id],
+      })),
+    };
+  }
 
   const feedVideos = await fetchYoutubePlaylistFeedVideos(cleanPlaylistId);
   return {

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Calendar,
@@ -79,11 +80,791 @@ function formatAlbumDate(startDate: Date, endDate: Date) {
   return start === end ? start : `${start} - ${end}`;
 }
 
+function formatAlbumPreviewDate(startDate: Date) {
+  const formatter = new Intl.DateTimeFormat("es-MX", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+  return formatter.format(startDate);
+}
+
 function formatMediaCount(count: number, isVideo: boolean) {
   if (isVideo) {
     return `${count} ${count === 1 ? "video" : "videos"}`;
   }
   return `${count} ${count === 1 ? "foto" : "fotos"}`;
+}
+
+function getAlbumSectionPath(albumType: Album["albumType"]) {
+  return albumType === "youtube" ? "/album/grabaciones" : "/album/galerias";
+}
+
+function getAlbumDetailPath(album: Album) {
+  return `${getAlbumSectionPath(album.albumType)}/${album.slug}`;
+}
+
+function getAlbumTypeLabel(albumType: Album["albumType"]) {
+  return albumType === "youtube" ? "Grabación" : "Álbum";
+}
+
+function formatHubRecentContext(album: Album) {
+  const isYoutubeAlbum = album.albumType === "youtube";
+  const itemCount = isYoutubeAlbum ? album.videos.length : album.images.length;
+  return `${getAlbumTypeLabel(album.albumType)} · ${formatMediaCount(itemCount, isYoutubeAlbum)}`;
+}
+
+function getRecentAlbums(albums: Album[], limit = 5) {
+  return [...albums]
+    .filter((album) => !album.hidden)
+    .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+    .slice(0, limit);
+}
+
+function getAlbumYear(album: Album) {
+  return album.startDate.getUTCFullYear().toString();
+}
+
+const HUB_TAP_FEEDBACK_CLASS = "bg-[#eaf2fb]";
+
+function useMobileTapFeedback() {
+  const isMobile = useIsMobile();
+  const [isFlicking, setIsFlicking] = useState(false);
+  const flickTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (flickTimerRef.current) {
+        window.clearTimeout(flickTimerRef.current);
+      }
+    };
+  }, []);
+
+  const triggerFlick = () => {
+    if (!isMobile) return;
+
+    setIsFlicking(true);
+
+    if (flickTimerRef.current) {
+      window.clearTimeout(flickTimerRef.current);
+    }
+
+    flickTimerRef.current = window.setTimeout(() => {
+      setIsFlicking(false);
+      flickTimerRef.current = null;
+    }, 180);
+  };
+
+  return { isFlicking, triggerFlick, isMobile };
+}
+
+function getPhotoHubGridClasses(imageCount: number) {
+  if (imageCount <= 1) {
+    return "grid grid-cols-1";
+  }
+
+  if (imageCount === 2) {
+    return "grid grid-cols-2 grid-rows-1";
+  }
+
+  if (imageCount === 3) {
+    return "grid grid-cols-2 grid-rows-2";
+  }
+
+  return "grid grid-cols-2 grid-rows-2";
+}
+
+function getPhotoHubTileClasses(imageCount: number, index: number) {
+  if (imageCount <= 1) {
+    return "relative overflow-hidden";
+  }
+
+  if (imageCount === 2) {
+    return "relative overflow-hidden";
+  }
+
+  if (imageCount === 3) {
+    if (index < 2) {
+      return "relative overflow-hidden";
+    }
+
+    return "relative overflow-hidden col-span-2";
+  }
+
+  return "relative overflow-hidden";
+}
+
+function getGalleryYearGridClasses(albumCount: number) {
+  if (albumCount <= 1) {
+    return "grid grid-cols-1 md:grid-cols-4";
+  }
+
+  if (albumCount === 2) {
+    return "grid grid-cols-2 md:grid-cols-4";
+  }
+
+  return "grid grid-cols-3 md:grid-cols-4";
+}
+
+function getGalleryTileTitleClasses(albumCount: number) {
+  if (albumCount <= 1) {
+    return "text-[38px] md:text-xs";
+  }
+
+  if (albumCount === 2) {
+    return "text-[22px] md:text-xs";
+  }
+
+  return "text-[10px] md:text-xs";
+}
+
+function getGalleryTileMetaClasses(albumCount: number) {
+  if (albumCount <= 1) {
+    return "text-[12px] md:text-[10px]";
+  }
+
+  if (albumCount === 2) {
+    return "text-[11px] md:text-[10px]";
+  }
+
+  return "text-[9px] md:text-[10px]";
+}
+
+function filterAlbumsByChip(albums: Album[], activeFilter: string) {
+  if (activeFilter === "all") {
+    return albums;
+  }
+
+  const [filterType, filterValue] = activeFilter.split(":");
+
+  if (filterType === "year") {
+    return albums.filter((album) => getAlbumYear(album) === filterValue);
+  }
+
+  if (filterType === "category") {
+    return albums.filter((album) => album.category === filterValue);
+  }
+
+  return albums;
+}
+
+function getVideoDurationLabel(video?: AlbumVideo) {
+  if (!video) return undefined;
+
+  const videoWithDuration = video as AlbumVideo & {
+    duration?: string;
+    durationLabel?: string;
+    durationSeconds?: number;
+  };
+
+  if (videoWithDuration.durationLabel) {
+    return videoWithDuration.durationLabel;
+  }
+
+  if (videoWithDuration.duration) {
+    return videoWithDuration.duration;
+  }
+
+  if (typeof videoWithDuration.durationSeconds === "number") {
+    const totalSeconds = Math.max(0, Math.floor(videoWithDuration.durationSeconds));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds
+        .toString()
+        .padStart(2, "0")}`;
+    }
+
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  return undefined;
+}
+
+function AlbumHubEntryCard({
+  href,
+  title,
+  subtitle,
+  isYoutubeAlbum,
+  previewImages = [],
+  previewImage,
+}: {
+  href: string;
+  title: string;
+  subtitle: string;
+  isYoutubeAlbum: boolean;
+  previewImages?: string[];
+  previewImage?: string;
+}) {
+  const router = useRouter();
+  const { isFlicking, triggerFlick, isMobile } = useMobileTapFeedback();
+  const photoPreviewImages = previewImages.slice(0, 4);
+
+  return (
+    <div
+      role={isMobile ? "link" : undefined}
+      tabIndex={isMobile ? 0 : undefined}
+      onClick={() => {
+        if (!isMobile) return;
+        router.push(href);
+      }}
+      onKeyDown={(event) => {
+        if (!isMobile || event.key !== "Enter") return;
+        router.push(href);
+      }}
+      onPointerDown={triggerFlick}
+      className={`relative overflow-hidden rounded border md:border-brand transition-colors ${
+        isFlicking ? HUB_TAP_FEEDBACK_CLASS : "bg-paper-highlight"
+      }`}
+    >
+      <Link
+        href={href}
+        aria-label={`Abrir ${title}`}
+        onClick={(event) => event.stopPropagation()}
+        className="group/tiles block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <div
+          className={`relative overflow-hidden border-b border-border transition-[border-color,box-shadow] md:hover:border-[#2f5e93] md:group-hover/tiles:shadow-[inset_0_0_0_1px_#2f5e93] ${
+            isYoutubeAlbum ? "bg-[#111827]" : "bg-[#d7d0bb]"
+          }`}
+        >
+          {isYoutubeAlbum ? (
+            <div className="relative flex aspect-[4/2.35] items-center justify-center overflow-hidden bg-[#111827]">
+              {previewImage ? (
+                <Image
+                  src={previewImage}
+                  alt={title}
+                  fill
+                  className="object-cover opacity-35 saturate-0"
+                  quality={85}
+                  sizes="(max-width: 767px) 50vw, 460px"
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-[#111827]/45" />
+              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white">
+                <Play className="h-5 w-5 translate-x-[1px]" aria-hidden="true" />
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`aspect-[4/2.35] gap-px bg-[#9aa4af] ${getPhotoHubGridClasses(
+                photoPreviewImages.length,
+              )}`}
+            >
+              {photoPreviewImages.map((tile, index) => {
+                const tileClasses = getPhotoHubTileClasses(
+                  photoPreviewImages.length,
+                  index,
+                );
+
+                return (
+                  <div
+                    key={`${title}-${index}`}
+                    className={tileClasses}
+                  >
+                    {tile ? (
+                      <Image
+                        src={sanityImageVariantUrl(tile, {
+                          width: 920,
+                          height: 540,
+                          quality: 80,
+                          format: "webp",
+                          fit: "crop",
+                        })}
+                        alt={title}
+                        fill
+                        className={`object-cover ${
+                          photoPreviewImages.length === 1 ? "rounded-none" : ""
+                        }`}
+                        quality={85}
+                        sizes="(max-width: 767px) 50vw, 460px"
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </Link>
+      <div className="border-t border-border px-3 py-3">
+        <div className="flex flex-col items-start gap-0">
+          <div className="flex mb-3 h-8 w-8 shrink-0 items-center justify-center border border-border bg-[#f3f5f7] text-[#44505f]">
+            {isYoutubeAlbum ? (
+              <PlayCircle className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Images className="h-4 w-4" aria-hidden="true" />
+            )}
+          </div>
+
+          <Link
+            href={href}
+            aria-label={`Abrir ${title}`}
+            onClick={(event) => event.stopPropagation()}
+            className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          >
+            <span className="truncate">{title}</span>
+          </Link>
+
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AlbumRecentItem({ album }: { album: Album }) {
+  const isYoutubeAlbum = album.albumType === "youtube";
+  const { isFlicking, triggerFlick } = useMobileTapFeedback();
+
+  return (
+    <div
+      className={`relative border-b border-border py-3 transition-colors ${
+        isFlicking ? HUB_TAP_FEEDBACK_CLASS : ""
+      }`}
+    >
+      <Link
+        href={getAlbumDetailPath(album)}
+        aria-label={`Abrir ${album.title}`}
+        onPointerDown={triggerFlick}
+        className="absolute inset-0 z-20 md:hidden"
+      />
+      <div className="flex items-center gap-3">
+        <Link
+          href={getAlbumDetailPath(album)}
+          aria-label={`Abrir ${album.title}`}
+          onPointerDown={triggerFlick}
+          className={`relative h-12 w-12 shrink-0 overflow-hidden rounded border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+            isYoutubeAlbum ? "bg-[#111827]" : "bg-muted"
+          }`}
+        >
+          {isYoutubeAlbum ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-white rounded">
+              <Play className="h-4 w-4" aria-hidden="true" />
+            </div>
+          ) : (
+            <Image
+              src={album.coverImage}
+              alt={album.title}
+              fill
+              className="object-cover"
+              sizes="48px"
+            />
+          )}
+        </Link>
+
+        <div className="min-w-0 flex-1 pr-1">
+          <Link
+            href={getAlbumDetailPath(album)}
+            aria-label={`Abrir ${album.title}`}
+            onPointerDown={triggerFlick}
+            className="block max-w-full text-sm font-normal leading-tight text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          >
+            <span className="block truncate">{album.title}</span>
+          </Link>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
+            {formatAlbumPreviewDate(album.startDate)} ·{" "}
+            {formatHubRecentContext(album)}
+          </p>
+        </div>
+
+        <Link
+          href={getAlbumDetailPath(album)}
+          aria-label={`Abrir ${album.title}`}
+          onPointerDown={triggerFlick}
+          className="inline-flex shrink-0 items-center text-primary transition-colors hover:text-primary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        >
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function GalleryFilterChip({
+  isActive,
+  label,
+  onClick,
+}: {
+  isActive: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+        isActive
+          ? "border-[#111827] bg-[#111827] text-white"
+          : "border-border bg-paper-highlight text-foreground hover:border-primary/40 hover:bg-[#eef4fb]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function GalleryAlbumTile({
+  album,
+  groupAlbumCount,
+}: {
+  album: Album;
+  groupAlbumCount: number;
+}) {
+  const itemLabel = formatMediaCount(album.images.length, false);
+
+  const markAlbumTransition = () => {
+    try {
+      sessionStorage.setItem(ALBUM_TRANSITION_STORAGE_KEY, "true");
+    } catch {
+      // The transition is decorative; ignore storage failures.
+    }
+  };
+
+  return (
+    <Link
+      href={getAlbumDetailPath(album)}
+      aria-label={`Abrir album ${album.title}`}
+      onClick={markAlbumTransition}
+      className="group offline-aware-image offline-aware-image--fixed relative block aspect-square overflow-hidden rounded-[3px] bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <Image
+        src={sanityImageVariantUrl(album.coverImage, {
+          width: 760,
+          height: 760,
+          quality: 76,
+          format: "webp",
+          fit: "crop",
+        })}
+        alt={album.title}
+        fill
+        className="offline-image-online object-cover transition-transform duration-300 md:group-hover:scale-[1.03]"
+        sizes="(max-width: 767px) 100vw, 180px"
+      />
+      <OfflineImagePlaceholder />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/100 via-black/50 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 p-1.5 text-white md:p-2">
+        <h2
+          className={`line-clamp-2 font-bold leading-[1.1] drop-shadow ${getGalleryTileTitleClasses(
+            groupAlbumCount,
+          )}`}
+        >
+          {album.title}
+        </h2>
+        <p
+          className={`mt-0.5 font-normal leading-none text-white/85 ${getGalleryTileMetaClasses(
+            groupAlbumCount,
+          )}`}
+        >
+          {itemLabel}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+function RecordingAlbumListItem({ album }: { album: Album }) {
+  const previewVideo = album.videos[0];
+  const thumbnailUrl = previewVideo?.thumbnailUrl || album.coverImage;
+  const durationLabel = getVideoDurationLabel(previewVideo);
+
+  const markAlbumTransition = () => {
+    try {
+      sessionStorage.setItem(ALBUM_TRANSITION_STORAGE_KEY, "true");
+    } catch {
+      // The transition is decorative; ignore storage failures.
+    }
+  };
+
+  return (
+    <Link
+      href={getAlbumDetailPath(album)}
+      aria-label={`Abrir grabacion ${album.title}`}
+      onClick={markAlbumTransition}
+      className="group flex gap-3 border-b border-border py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:gap-4"
+    >
+      <div className="relative h-[72px] w-[128px] shrink-0 overflow-hidden rounded-[4px] bg-[#111827] md:h-[92px] md:w-[164px]">
+        {thumbnailUrl ? (
+          <Image
+            src={thumbnailUrl}
+            alt={album.title}
+            fill
+            className="object-cover transition-transform duration-300 md:group-hover:scale-[1.03]"
+            sizes="(max-width: 767px) 128px, 164px"
+          />
+        ) : null}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white transition-colors md:group-hover:bg-black/30">
+          <Play className="h-5 w-5 translate-x-[1px]" aria-hidden="true" />
+        </div>
+        {durationLabel ? (
+          <span className="absolute bottom-1 right-1 rounded-[2px] bg-black/85 px-1 py-0.5 text-[10px] font-bold leading-none text-white">
+            {durationLabel}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="-mt-2.5 min-w-0 flex-1 md:mt-0 md:pt-0.5">
+        <span className="mb-1 inline-flex max-w-full items-center rounded-[3px] bg-[#efeee8] px-2 py-1 text-[10px] font-bold uppercase leading-none tracking-wide text-[#56514a]">
+          <span className="truncate">{CATEGORY_LABELS[album.category] || album.category}</span>
+        </span>
+        <h2 className="line-clamp-2 text-sm font-bold leading-snug text-foreground transition-colors md:text-[15px] md:group-hover:text-primary">
+          {album.title}
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {formatAlbumPreviewDate(album.startDate)}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
+  const recentAlbums = getRecentAlbums(albums, 5);
+  const photoAlbums = albums.filter((album) => album.albumType === "photos");
+  const videoAlbums = albums.filter((album) => album.albumType === "youtube");
+  const activeRecentAlbums =
+    recentAlbums.length > 0 ? recentAlbums : photoAlbums.slice(0, 3);
+  const photoHubPreview = photoAlbums
+    .slice(0, 4)
+    .map((album) => album.coverImage);
+  const latestVideoAlbum = [...videoAlbums].sort(
+    (a, b) => b.startDate.getTime() - a.startDate.getTime(),
+  )[0];
+  const latestVideoThumbnail =
+    latestVideoAlbum?.videos[0]?.thumbnailUrl || latestVideoAlbum?.coverImage;
+
+  return (
+    <div className="w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
+      <div className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-paper px-0 pb-0 pt-[85px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:pb-16 md:pt-[92px]">
+        <div className="mx-auto w-full md:w-[calc(100%-32px)]">
+          <section className="px-4 pb-5 pt-0 md:px-8 md:pb-6 ">
+            <h1 className="text-[1.825rem] font-semibold tracking-tight text-brand">
+              Álbum de Actividades
+            </h1>
+            <p className="mt-[4px] max-w-2xl text-[17px] leading-7 text-muted-foreground">
+              Revive los momentos especiales de nuestros eventos ✨
+            </p>
+          </section>
+
+          <section className="px-4 pt-2 md:px-8 md:pt-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <AlbumHubEntryCard
+                href="/album/galerias"
+                title="Galería"
+                subtitle="Fotos y galerías"
+                isYoutubeAlbum={false}
+                previewImages={photoHubPreview}
+              />
+              <AlbumHubEntryCard
+                href="/album/grabaciones"
+                title="Grabaciones"
+                subtitle="Directos y cultos"
+                isYoutubeAlbum={true}
+                previewImage={latestVideoThumbnail}
+              />
+            </div>
+          </section>
+
+          <section className="mt-5 px-4 py-5 md:px-8 md:pt-6">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Añadidos recientemente
+              </h2>
+            </div>
+            <div className="mt-1">
+              {activeRecentAlbums.length > 0 ? (
+                activeRecentAlbums.map((album) => (
+                  <AlbumRecentItem key={album.id} album={album} />
+                ))
+              ) : (
+                <div className="border-b border-border py-6 text-sm text-muted-foreground">
+                  Aún no hay contenido reciente disponible.
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AlbumSectionContent({
+  albums = [],
+  section,
+}: {
+  albums?: Album[];
+  section: "galerias" | "grabaciones";
+}) {
+  const albumType = section === "galerias" ? "photos" : "youtube";
+  const sectionAlbums = albums.filter((album) => album.albumType === albumType);
+  const [activeGalleryFilter, setActiveGalleryFilter] = useState("all");
+  const title = section === "galerias" ? "Galería" : "Grabaciones";
+  const subtitle =
+    section === "galerias"
+      ? "Fotos y galerías publicadas por la región."
+      : "Directos, cultos y grabaciones disponibles.";
+  const galleryYears = useMemo(
+    () =>
+      Array.from(new Set(sectionAlbums.map((album) => getAlbumYear(album)))).sort(
+        (a, b) => Number(b) - Number(a),
+      ),
+    [sectionAlbums],
+  );
+  const galleryCategories = useMemo(
+    () =>
+      Array.from(new Set(sectionAlbums.map((album) => album.category))).sort(
+        (a, b) =>
+          (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b, "es"),
+      ),
+    [sectionAlbums],
+  );
+  const filteredSectionAlbums = useMemo(
+    () => filterAlbumsByChip(sectionAlbums, activeGalleryFilter),
+    [activeGalleryFilter, sectionAlbums],
+  );
+  const galleryAlbumsByYear = useMemo(() => {
+    const groups = new Map<string, Album[]>();
+
+    [...filteredSectionAlbums]
+      .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+      .forEach((album) => {
+        const year = getAlbumYear(album);
+        const yearAlbums = groups.get(year) || [];
+        yearAlbums.push(album);
+        groups.set(year, yearAlbums);
+      });
+
+    return Array.from(groups.entries()).sort(
+      ([yearA], [yearB]) => Number(yearB) - Number(yearA),
+    );
+  }, [filteredSectionAlbums]);
+  const sortedRecordingAlbums = useMemo(
+    () =>
+      [...filteredSectionAlbums].sort(
+        (a, b) => b.startDate.getTime() - a.startDate.getTime(),
+      ),
+    [filteredSectionAlbums],
+  );
+
+  return (
+    <div className="w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
+      <div className="desktop-content-pane mx-auto min-h-[calc(100dvh-95px)] max-w-[950px] overflow-x-clip bg-paper px-0 pb-0 pt-6 focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:pb-16 md:pt-8">
+        <div className="mx-auto w-full md:w-[calc(100%-32px)]">
+          <section className="px-4 pb-5 pt-0 md:px-8 md:pb-6">
+            <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">
+              Álbum de Actividades
+            </p>
+            <h1 className="text-[1.825rem] font-semibold tracking-tight text-foreground">
+              {title}
+            </h1>
+            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+              {subtitle}
+            </p>
+          </section>
+
+          <section className="px-4 pt-0 md:px-8 md:pt-1">
+            {sectionAlbums.length > 0 ? (
+              <>
+                <div className="-mx-4 mb-4 overflow-x-auto px-4 pb-4 md:mx-0 md:px-0">
+                  <div className="flex w-max gap-2">
+                    <GalleryFilterChip
+                      label="Todo"
+                      isActive={activeGalleryFilter === "all"}
+                      onClick={() => setActiveGalleryFilter("all")}
+                    />
+                    {galleryYears.map((year) => (
+                      <GalleryFilterChip
+                        key={year}
+                        label={year}
+                        isActive={activeGalleryFilter === `year:${year}`}
+                        onClick={() => setActiveGalleryFilter(`year:${year}`)}
+                      />
+                    ))}
+                    {galleryCategories.map((category) => (
+                      <GalleryFilterChip
+                        key={category}
+                        label={CATEGORY_LABELS[category] || category}
+                        isActive={activeGalleryFilter === `category:${category}`}
+                        onClick={() =>
+                          setActiveGalleryFilter(`category:${category}`)
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {section === "galerias" && galleryAlbumsByYear.length > 0 ? (
+                  <div className="space-y-7">
+                    {galleryAlbumsByYear.map(([year, yearAlbums]) => (
+                      <div key={year}>
+                        <h2 className="mb-4 text-md font-bold text-muted-foreground">
+                          {year}
+                        </h2>
+                        <div
+                          className={`${getGalleryYearGridClasses(
+                            yearAlbums.length,
+                          )} gap-1 md:gap-2`}
+                        >
+                          {yearAlbums.map((album) => (
+                            <GalleryAlbumTile
+                              key={album.id}
+                              album={album}
+                              groupAlbumCount={yearAlbums.length}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : section === "grabaciones" && sortedRecordingAlbums.length > 0 ? (
+                  <div>
+                    {sortedRecordingAlbums.map((album) => (
+                      <RecordingAlbumListItem key={album.id} album={album} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="border border-border bg-card p-8 text-center">
+                    <Images
+                      className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30"
+                      aria-hidden="true"
+                    />
+                    <p className="text-sm font-medium text-foreground">
+                      {section === "galerias"
+                        ? "Sin álbumes para este filtro"
+                        : "Sin grabaciones para este filtro"}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="border border-border bg-card p-8 text-center">
+                <Images
+                  className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30"
+                  aria-hidden="true"
+                />
+                <p className="text-sm font-medium text-foreground">
+                  {section === "galerias"
+                    ? "Sin álbumes disponibles"
+                    : "Sin grabaciones disponibles"}
+                </p>
+                <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
+                  {section === "galerias"
+                    ? "Las galerías aparecerán aquí cuando estén publicadas."
+                    : "Las grabaciones aparecerán aquí cuando estén disponibles."}
+                </p>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function hashString(input: string) {
@@ -104,14 +885,21 @@ function getAlbumTileLayout(
 ): AlbumTileLayout {
   const hash = hashString(`${albumSlug}:${image.url}:${index}`);
   const remainingItems = totalCount - index - 1;
-  const allowSpecial = totalCount > 12 && (index === 0 || (index < totalCount - 8 && remainingItems > 8));
+  const allowSpecial =
+    totalCount > 12 &&
+    (index === 0 || (index < totalCount - 8 && remainingItems > 8));
   const canBeSpecial = allowSpecial && hash % 100 < 24;
 
   let kind: AlbumTileKind = "normal";
 
   if (canBeSpecial) {
     const roll = hash % 100;
-    kind = roll < 68 ? "squareLarge" : roll < 92 || totalCount <= 24 ? "tall" : "wide";
+    kind =
+      roll < 68
+        ? "squareLarge"
+        : roll < 92 || totalCount <= 24
+          ? "tall"
+          : "wide";
   }
 
   const classNameByKind: Record<AlbumTileKind, string> = {
@@ -123,7 +911,13 @@ function getAlbumTileLayout(
 
   const imageOptionsByKind: Record<
     AlbumTileKind,
-    { width: number; height: number; quality: number; format: "webp"; fit: "crop" }
+    {
+      width: number;
+      height: number;
+      quality: number;
+      format: "webp";
+      fit: "crop";
+    }
   > = {
     normal: {
       width: 640,
@@ -185,7 +979,7 @@ function AlbumCard({ album }: { album: Album }) {
 
   return (
     <Link
-      href={`/album/${album.slug}`}
+      href={getAlbumDetailPath(album)}
       className="group block overflow-hidden border border-border bg-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       aria-label={`Abrir album ${album.title}`}
       onClick={markAlbumTransition}
@@ -207,7 +1001,10 @@ function AlbumCard({ album }: { album: Album }) {
         <OfflineImagePlaceholder />
         {isYoutubeAlbum ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-            <Play className="h-9 w-9 text-white drop-shadow" aria-hidden="true" />
+            <Play
+              className="h-9 w-9 text-white drop-shadow"
+              aria-hidden="true"
+            />
           </div>
         ) : null}
         <div className="absolute right-3 top-3 bg-white/92 px-2 py-1 text-[12px] font-semibold text-foreground shadow-sm">
@@ -228,7 +1025,10 @@ function AlbumCard({ album }: { album: Album }) {
         </div>
         <div className="mt-4 inline-flex items-center text-sm font-semibold text-primary">
           {isYoutubeAlbum ? "Ver video" : "Ver galería"}
-          <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          <ArrowRight
+            className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          />
         </div>
       </div>
     </Link>
@@ -279,9 +1079,7 @@ function YoutubeVideoTile({
     >
       <div
         className={`relative shrink-0 overflow-hidden bg-muted ${
-          isListVariant
-            ? "h-20 w-24"
-            : "aspect-video"
+          isListVariant ? "h-20 w-24" : "aspect-video"
         }`}
       >
         <Image
@@ -295,7 +1093,10 @@ function YoutubeVideoTile({
           }}
         />
         <span className="absolute inset-0 flex items-center justify-center bg-black/15 text-white transition-colors md:group-hover:bg-black/25">
-          <PlayCircle className={`${isListVariant ? "h-8 w-8" : "h-10 w-10"} drop-shadow`} aria-hidden="true" />
+          <PlayCircle
+            className={`${isListVariant ? "h-8 w-8" : "h-10 w-10"} drop-shadow`}
+            aria-hidden="true"
+          />
         </span>
       </div>
       <div className={isListVariant ? "min-w-0 flex-1 py-1 pr-1" : "p-3"}>
@@ -308,7 +1109,9 @@ function YoutubeVideoTile({
         >
           {video.title}
         </p>
-        <p className={`mt-1 text-xs ${isListVariant ? "text-muted-foreground md:group-hover:text-white/85" : "text-muted-foreground md:group-hover:text-white/85"}`}>
+        <p
+          className={`mt-1 text-xs ${isListVariant ? "text-muted-foreground md:group-hover:text-white/85" : "text-muted-foreground md:group-hover:text-white/85"}`}
+        >
           Video {index + 1}
         </p>
       </div>
@@ -359,7 +1162,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const isMobile = useIsMobile();
   const [shouldAnimatePage, setShouldAnimatePage] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
-  const [videoOrientations, setVideoOrientations] = useState<Record<string, VideoOrientation>>({});
+  const [videoOrientations, setVideoOrientations] = useState<
+    Record<string, VideoOrientation>
+  >({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
@@ -371,7 +1176,8 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     if (!isMobile) return;
 
     try {
-      const shouldAnimateNext = sessionStorage.getItem(ALBUM_TRANSITION_STORAGE_KEY) === "true";
+      const shouldAnimateNext =
+        sessionStorage.getItem(ALBUM_TRANSITION_STORAGE_KEY) === "true";
       sessionStorage.removeItem(ALBUM_TRANSITION_STORAGE_KEY);
       if (shouldAnimateNext) {
         setShouldAnimatePage(true);
@@ -473,21 +1279,30 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
       ? visibleVideos.length < album.videos.length
       : visibleImages.length < album.images.length;
     const selectedVideo =
-      album.videos.find((video) => video.id === selectedVideoId) || album.videos[0];
-    const totalItems = isYoutubeAlbum ? album.videos.length : album.images.length;
-    const selectedVideoOrientation = selectedVideo ? videoOrientations[selectedVideo.id] : undefined;
+      album.videos.find((video) => video.id === selectedVideoId) ||
+      album.videos[0];
+    const totalItems = isYoutubeAlbum
+      ? album.videos.length
+      : album.images.length;
+    const selectedVideoOrientation = selectedVideo
+      ? videoOrientations[selectedVideo.id]
+      : undefined;
     const selectedVideoIsPortrait =
       isMobile &&
-      (forcePortraitLayout || (!forceLandscapeLayout && selectedVideoOrientation === "portrait"));
+      (forcePortraitLayout ||
+        (!forceLandscapeLayout && selectedVideoOrientation === "portrait"));
 
     return (
-      <div className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
+      <div
+        className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1]"
+        id="main-content"
+      >
         <motion.div
           key={`album-detail-${album.slug}-${shouldAnimate ? "mobile" : "static"}`}
-          className="desktop-content-pane mx-auto max-w-[950px] overflow-x-clip bg-white px-0 py-8 pt-6 focus:outline-none md:border-x md:border-[#dce2e9] md:pt-8 dark:border-[#27272a]"
+          className="desktop-content-pane mx-auto min-h-[calc(100dvh-95px)] max-w-[950px] overflow-x-clip bg-paper px-0 pb-14 pt-6 focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:pb-16 md:pt-8"
           {...pageMotionProps}
         >
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto w-full md:w-[calc(100%-32px)]">
             <section className="mb-0 border-b border-border px-4 pb-5 pt-0 md:px-8 md:pb-6">
               <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">
                 {CATEGORY_LABELS[album.category] || album.category}
@@ -537,8 +1352,15 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 ) : null}
                 {!isYoutubeAlbum && album.facebookUrl ? (
                   <Button asChild variant="outline" className="rounded-none">
-                    <a href={album.facebookUrl} target="_blank" rel="noreferrer">
-                      <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
+                    <a
+                      href={album.facebookUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink
+                        className="mr-2 h-4 w-4"
+                        aria-hidden="true"
+                      />
                       Facebook
                     </a>
                   </Button>
@@ -566,8 +1388,8 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   </div>
                   {isSubmissionNoticeOpen ? (
                     <p className="mt-3 border-t border-[#dbe7f1] pt-3 text-sm leading-6 text-muted-foreground">
-                      Usa el código QR compartido por los encargados para abrir el formulario seguro
-                      de este álbum.
+                      Usa el código QR compartido por los encargados para abrir
+                      el formulario seguro de este álbum.
                     </p>
                   ) : null}
                 </div>
@@ -578,37 +1400,42 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
               {isYoutubeAlbum ? (
                 <>
                   <div className="px-0 pt-4 sm:px-4 md:px-8 md:pt-5">
-                  {selectedVideo ? (
-                    <div className="mb-5 overflow-hidden border border-border bg-black">
-                      <div
-                        data-youtube-player-shell
-                        className={`${
-                          selectedVideoIsPortrait
-                            ? "mx-auto aspect-[9/16] w-full max-w-[420px] bg-black"
-                            : "aspect-video"
-                        }`}
-                      >
-                        <iframe
-                          src={`https://www.youtube.com/embed/${selectedVideo.id}`}
-                          title={selectedVideo.title}
-                          className="youtube-embed-frame h-full w-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                          loading="lazy"
-                        />
+                    {selectedVideo ? (
+                      <div className="mb-5 overflow-hidden border border-border bg-black">
+                        <div
+                          data-youtube-player-shell
+                          className={`${
+                            selectedVideoIsPortrait
+                              ? "mx-auto aspect-[9/16] w-full max-w-[420px] bg-black"
+                              : "aspect-video"
+                          }`}
+                        >
+                          <iframe
+                            src={`https://www.youtube.com/embed/${selectedVideo.id}`}
+                            title={selectedVideo.title}
+                            className="youtube-embed-frame h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            loading="lazy"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="border border-border bg-card p-8 text-center">
-                      <Youtube className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
-                      <p className="text-sm font-medium text-foreground">Sin videos disponibles</p>
-                      {album.youtubeError ? (
-                        <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
-                          {album.youtubeError}
+                    ) : (
+                      <div className="border border-border bg-card p-8 text-center">
+                        <Youtube
+                          className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30"
+                          aria-hidden="true"
+                        />
+                        <p className="text-sm font-medium text-foreground">
+                          Sin videos disponibles
                         </p>
-                      ) : null}
-                    </div>
-                  )}
+                        {album.youtubeError ? (
+                          <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
+                            {album.youtubeError}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
 
                   <div className="px-4 sm:px-4 md:px-8">
@@ -619,7 +1446,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                           video={video}
                           index={index}
                           isActive={selectedVideo?.id === video.id}
-                          onSelect={(nextVideo) => setSelectedVideoId(nextVideo.id)}
+                          onSelect={(nextVideo) =>
+                            setSelectedVideoId(nextVideo.id)
+                          }
                           onThumbnailLoad={(nextVideo, width, height) => {
                             const orientation: VideoOrientation =
                               height > width ? "portrait" : "landscape";
@@ -644,7 +1473,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                               video={video}
                               index={index}
                               isActive={selectedVideo?.id === video.id}
-                              onSelect={(nextVideo) => setSelectedVideoId(nextVideo.id)}
+                              onSelect={(nextVideo) =>
+                                setSelectedVideoId(nextVideo.id)
+                              }
                               variant="list"
                               onThumbnailLoad={(nextVideo, width, height) => {
                                 const orientation: VideoOrientation =
@@ -652,7 +1483,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                                 setVideoOrientations((current) =>
                                   current[nextVideo.id] === orientation
                                     ? current
-                                    : { ...current, [nextVideo.id]: orientation },
+                                    : {
+                                        ...current,
+                                        [nextVideo.id]: orientation,
+                                      },
                                 );
                               }}
                             />
@@ -690,35 +1524,37 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 </div>
               )}
 
-            {hasMoreItems ? (
-              <div className="mt-6 flex justify-center">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="rounded-none"
-                  onClick={() =>
-                    setVisibleCount((current) =>
-                      Math.min(
-                        current + PHOTOS_PER_PAGE,
-                        isYoutubeAlbum ? album.videos.length : album.images.length,
-                      ),
-                    )
-                  }
-                >
-                  {isYoutubeAlbum ? "Cargar más videos" : "Cargar más fotos"}
-                </Button>
-              </div>
-            ) : null}
+              {hasMoreItems ? (
+                <div className="mt-6 flex justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-none"
+                    onClick={() =>
+                      setVisibleCount((current) =>
+                        Math.min(
+                          current + PHOTOS_PER_PAGE,
+                          isYoutubeAlbum
+                            ? album.videos.length
+                            : album.images.length,
+                        ),
+                      )
+                    }
+                  >
+                    {isYoutubeAlbum ? "Cargar más videos" : "Cargar más fotos"}
+                  </Button>
+                </div>
+              ) : null}
 
-            {currentIndex !== null ? (
-              <ImageGalleryModal
-                images={imageUrls}
-                currentIndex={currentIndex}
-                onClose={() => setCurrentIndex(null)}
-                onNavigate={setCurrentIndex}
-                alt={album.title}
-              />
-            ) : null}
+              {currentIndex !== null ? (
+                <ImageGalleryModal
+                  images={imageUrls}
+                  currentIndex={currentIndex}
+                  onClose={() => setCurrentIndex(null)}
+                  onNavigate={setCurrentIndex}
+                  alt={album.title}
+                />
+              ) : null}
             </section>
           </div>
         </motion.div>
@@ -730,10 +1566,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     <div className="w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
       <motion.div
         key={`album-list-${shouldAnimate ? "mobile" : "static"}`}
-        className="desktop-content-pane mx-auto max-w-[950px] overflow-x-clip bg-white px-4 py-8 pt-[82px] focus:outline-none md:border-x md:border-[#dce2e9] md:px-8 md:pt-[88px] dark:border-[#27272a]"
+        className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-paper px-4 pb-14 pt-[82px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:px-8 md:pb-16 md:pt-[88px]"
         {...pageMotionProps}
       >
-        <div className="mx-auto max-w-4xl md:px-4 md:pt-1">
+        <div className="mx-auto w-full md:w-[calc(100%-32px)] md:px-4 md:pt-1">
           <div className="mb-6 border-b border-border pb-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
@@ -768,8 +1604,8 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                     {selectedType === VIDEO_FILTER
                       ? "Videos"
                       : selectedType === PHOTO_FILTER
-                      ? "Fotos"
-                      : "Mostrar todo"}
+                        ? "Fotos"
+                        : "Mostrar todo"}
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform ${
@@ -789,7 +1625,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                       role="option"
                       aria-selected={selectedType === ALL_FILTER}
                       className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground ${
-                        selectedType === ALL_FILTER ? "bg-[#e8effb]" : "hover:bg-[#e8effb]"
+                        selectedType === ALL_FILTER
+                          ? "bg-[#e8effb]"
+                          : "hover:bg-[#e8effb]"
                       }`}
                       onClick={() => {
                         setSelectedType(ALL_FILTER);
@@ -803,7 +1641,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                       role="option"
                       aria-selected={selectedType === PHOTO_FILTER}
                       className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground ${
-                        selectedType === PHOTO_FILTER ? "bg-[#e8effb]" : "hover:bg-[#e8effb]"
+                        selectedType === PHOTO_FILTER
+                          ? "bg-[#e8effb]"
+                          : "hover:bg-[#e8effb]"
                       }`}
                       onClick={() => {
                         setSelectedType(PHOTO_FILTER);
@@ -817,7 +1657,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                       role="option"
                       aria-selected={selectedType === VIDEO_FILTER}
                       className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground ${
-                        selectedType === VIDEO_FILTER ? "bg-[#e8effb]" : "hover:bg-[#e8effb]"
+                        selectedType === VIDEO_FILTER
+                          ? "bg-[#e8effb]"
+                          : "hover:bg-[#e8effb]"
                       }`}
                       onClick={() => {
                         setSelectedType(VIDEO_FILTER);
@@ -833,9 +1675,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
           ) : null}
 
           {filteredAlbums.length > 0 ? (
-            <div
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredAlbums.map((item) => (
                 <AlbumCard key={item.id} album={item} />
               ))}
@@ -847,7 +1687,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 aria-hidden="true"
               />
               <p className="mb-1 text-sm font-medium text-foreground">
-                {albums.length > 0 ? "Sin álbumes para este tipo" : "Sin álbumes disponibles"}
+                {albums.length > 0
+                  ? "Sin álbumes para este tipo"
+                  : "Sin álbumes disponibles"}
               </p>
               <p className="text-xs text-muted-foreground">
                 {albums.length > 0

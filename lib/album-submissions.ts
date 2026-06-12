@@ -118,7 +118,7 @@ export async function validateAlbumUploadAccess(
       typeof album.uploadInstructions === 'string' && album.uploadInstructions.trim()
         ? album.uploadInstructions.trim()
         : undefined,
-    publicAlbumPath: `/album/${slug}`,
+    publicAlbumPath: `/album/galerias/${slug}`,
   }
 
   if (albumType !== 'photos' || !album.allowSubmissions || !album.uploadTokenHash) {
