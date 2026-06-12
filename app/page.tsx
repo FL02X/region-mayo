@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/layout/app-header";
+import { AppHeader } from "@/components/layout/nav-bar";
 import { readInitialViewMode } from "@/lib/cookie-utils";
 import { LocationNotificationBar } from "@/components/layout/location-notification-bar";
 import { HeroSection } from "@/components/sections/home/hero-section.desktop";

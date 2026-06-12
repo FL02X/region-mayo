@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { AppHeader } from '@/components/layout/app-header'
+import { AppHeader } from '@/components/layout/nav-bar'
 import { SectionNavBar } from '@/components/layout/section-nav-bar'
 import { AlbumUploadForm } from '@/components/sections/album/album-upload-form'
 import { getAlbumUploadPageAccess } from '@/lib/album-submissions'

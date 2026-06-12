@@ -376,7 +376,7 @@ export function AppHeader({
     <>
       <header
         data-app-header
-        className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-brand-hover border-b border-white/10 text-white h-[51px] md:h-[45px] shadow-none`}
+        className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-brand border-b border-black/15 text-white h-[51px] md:h-[45px] shadow-[inset_0_-1px_0_rgba(28,25,23,0.28)]`}
       >
         <div className="h-full max-w-[950px] mx-auto relative z-[61]">
           {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
@@ -399,7 +399,7 @@ export function AppHeader({
                 data-offline-required="true"
                 width={34}
                 height={34}
-                className="mb-0.5 rounded-full shrink-0 select-none brightness-[1.08] contrast-[1.18]]"
+                className="mb-1.5 rounded-full shrink-0 select-none brightness-[1.08] contrast-[1.18]]"
                 draggable={false}
                 loading="eager"
                 priority

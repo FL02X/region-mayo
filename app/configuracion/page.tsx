@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AppHeader } from "@/components/layout/app-header";
+import { AppHeader } from "@/components/layout/nav-bar";
 import Chatbot from "@/components/shared/chatbot";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";

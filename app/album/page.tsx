@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AppHeader } from "@/components/layout/app-header";
+import { AppHeader } from "@/components/layout/nav-bar";
 import { AlbumHubContent } from "@/components/sections/album/album-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getAlbums, getRegionConfig } from "@/lib/api";

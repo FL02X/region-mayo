@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { AppHeader } from "@/components/layout/app-header";
+import { AppHeader } from "@/components/layout/nav-bar";
 import { SearchContent } from "@/components/sections/search/search-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getRegionConfig, getPastors, getCoros, getDirectiva, getTemplos, getEvents } from "@/lib/api";

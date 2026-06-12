@@ -317,7 +317,7 @@ function AlbumHubEntryCard({
         router.push(href);
       }}
       onPointerDown={triggerFlick}
-      className={`relative overflow-hidden rounded border md:border-brand transition-colors ${
+      className={`relative overflow-hidden border border-border md:border-brand transition-colors ${
         isFlicking ? HUB_TAP_FEEDBACK_CLASS : "bg-paper-highlight"
       }`}
     >
@@ -1379,7 +1379,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                     </div>
                     <Button
                       type="button"
-                      className="h-11 rounded-none sm:w-auto"
+                      className="h-11 bg-brand rounded-none sm:w-auto"
                       onClick={() => setIsSubmissionNoticeOpen((open) => !open)}
                     >
                       <Camera className="h-4 w-4" aria-hidden="true" />

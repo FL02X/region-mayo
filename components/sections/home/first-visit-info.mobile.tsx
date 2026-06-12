@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Newsreader } from "next/font/google";
 import Image from "next/image";
 import { createPortal } from "react-dom";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Undo2 } from "lucide-react";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 
 const editorialFont = Newsreader({
@@ -65,6 +65,7 @@ export function FirstVisitInfoMobile() {
   const [dismissalChecked, setDismissalChecked] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
+  const [undoNoticeVisible, setUndoNoticeVisible] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const closeModalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,6 +166,16 @@ export function FirstVisitInfoMobile() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isDismissed) {
+      setUndoNoticeVisible(false);
+      return;
+    }
+
+    const raf = requestAnimationFrame(() => setUndoNoticeVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, [isDismissed]);
+
   const scrollToQuestion = (question: string) => {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -236,8 +247,59 @@ export function FirstVisitInfoMobile() {
     }, MODAL_CLOSE_DURATION_MS);
   };
 
-  if (!dismissalChecked || isDismissed || (isStandalonePwa && !isLocalhost)) {
+  const restoreCard = () => {
+    if (hideDelayTimeoutRef.current) {
+      clearTimeout(hideDelayTimeoutRef.current);
+    }
+
+    if (dismissTimeoutRef.current) {
+      clearTimeout(dismissTimeoutRef.current);
+    }
+
+    try {
+      window.localStorage.removeItem(DISMISSED_STORAGE_KEY);
+    } catch {
+      // Preference persistence is best-effort; the card can still be restored.
+    }
+
+    setUndoNoticeVisible(false);
+    setIsHiding(false);
+    setIsDismissed(false);
+    setOpenQuestion(INITIAL_OPEN_QUESTION);
+  };
+
+  if (!dismissalChecked || (isStandalonePwa && !isLocalhost)) {
     return null;
+  }
+
+  if (isDismissed) {
+    return (
+      <section
+        aria-label="InformaciÃ³n de primera visita ocultada"
+        className="md:hidden border-t bg-white px-[20px] py-3"
+      >
+        <div
+          className="flex items-center justify-between gap-3 border border-[#d9dee7] bg-paper-highlight px-3.5 py-3"
+          style={{
+            opacity: undoNoticeVisible ? 1 : 0,
+            transform: undoNoticeVisible ? "translateY(0)" : "translateY(8px)",
+            transition: "opacity 180ms ease, transform 180ms ease",
+          }}
+        >
+          <p className="min-w-0 text-[14px] font-medium leading-tight text-[#071329]">
+            Seccion ocultada
+          </p>
+          <button
+            type="button"
+            onClick={restoreCard}
+            className="inline-flex shrink-0 items-center gap-1.5 text-[14px] font-semibold leading-none text-brand"
+          >
+            <Undo2 className="h-4 w-4" aria-hidden="true" strokeWidth={2} />
+            <span>Revertir</span>
+          </button>
+        </div>
+      </section>
+    );
   }
 
   const modal = mounted && isOpen

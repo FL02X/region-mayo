@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { readInitialViewMode } from "@/lib/cookie-utils"
-import { AppHeader } from "@/components/layout/app-header"
+import { AppHeader } from "@/components/layout/nav-bar"
 import { CorosContent } from "@/components/sections/coros/coros-content"
 import Chatbot from "@/components/shared/chatbot"
 import { getCoros, getRegionConfig } from "@/lib/api"

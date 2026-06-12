@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AppHeader } from "@/components/layout/app-header";
+import { AppHeader } from "@/components/layout/nav-bar";
 import { SectionNavBar } from "@/components/layout/section-nav-bar";
 import { AlbumSectionContent } from "@/components/sections/album/album-content";
 import Chatbot from "@/components/shared/chatbot";
