@@ -382,7 +382,7 @@ export function AppHeader({
           {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
           <div
             ref={desktopTrackRef}
-            className="desktop-header-track hidden md:flex cursor-default items-center h-full px-4 lg:px-6 gap-2"
+            className="desktop-header-track hidden md:flex cursor-default items-center h-full px-4 lg:px-0 gap-2"
             onMouseMove={handleDesktopTrackMouseMove}
             onMouseLeave={clearDesktopHighlight}
           >
@@ -391,26 +391,28 @@ export function AppHeader({
               style={desktopHighlightStyle}
               aria-hidden="true"
             />
-            <Link
-              href="/"
-              className="desktop-header-item flex items-center gap-2.5 shrink-0 select-none"
-              aria-label="Inicio — Region Mayo"
-              onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
-              draggable={false}
-            >
+            <div className="flex items-center gap-2.5 shrink-0 select-none">
+              <Link href="/" className="shrink-0 select-none" aria-label="Inicio">
               <Image
-                src="/images/region-mayo-logo-64.jpg"
+                src="/images/logo_hero_2.png"
                 alt="Región Mayo"
                 data-offline-required="true"
-                width={30}
-                height={30}
-                className="rounded-full shrink-0 select-none"
+                width={34}
+                height={34}
+                className="mb-0.5 rounded-full shrink-0 select-none brightness-[1.08] contrast-[1.18]]"
                 draggable={false}
                 loading="eager"
                 priority
                 unoptimized
               />
-            </Link>
+              </Link>
+              <div className="hidden min-[1101px]:flex flex-col justify-center leading-tight pr-2">
+                <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
+                  IGC
+                </span>
+                <span className="text-[#c9c9c9] text-[11px] opacity-90">Region Mayo</span>
+              </div>
+            </div>
 
             <nav
               className="flex cursor-default items-center h-full flex-1 min-w-0 max-[914px]:justify-between max-[914px]:px-2"
@@ -446,23 +448,23 @@ export function AppHeader({
 
             <div className="w-[180px] shrink-0 h-full items-center flex">
               <form
-                className="relative w-full h-[34px] max-[914px]:h-[40px] bg-[#f7f7f7] rounded-[2px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
+                className="relative w-full h-[32px] max-[914px]:h-[40px] bg-[#f7f7f7] rounded-[2px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
                 onSubmit={handleSearchSubmit}
               >
                 <input
                   type="search"
                   name="q"
                   placeholder="Buscar"
-                  className="flex-1 min-w-0 h-full bg-transparent border-none text-[13px] leading-none text-[#222] placeholder-[#6f7480] pl-3 pr-2 focus:outline-none focus:ring-0"
+                  className="flex-1 min-w-0 h-full bg-transparent border-none text-[12px] leading-none text-[#222] placeholder-[#6f7480] pl-2.5 pr-2 focus:outline-none focus:ring-0"
                   aria-label="Búsqueda"
                 />
-                <div className="h-[22px] w-px bg-[#b2b8c1] shrink-0" aria-hidden="true" />
+                <div className="h-[20px] w-px bg-[#b2b8c1] shrink-0" aria-hidden="true" />
                 <button
                   type="submit"
-                  className="desktop-search-button w-[40px] max-[914px]:w-[44px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
+                  className="desktop-search-button w-[36px] max-[914px]:w-[44px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
                   aria-label="Ejecutar búsqueda"
                 >
-                  <Search className="desktop-search-icon h-[17px] w-[17px] text-[#4a4a4a]" strokeWidth={1.6} />
+                  <Search className="desktop-search-icon h-[16px] w-[16px] text-[#4a4a4a]" strokeWidth={1.6} />
                 </button>
               </form>
             </div>
@@ -472,21 +474,21 @@ export function AppHeader({
                   href={instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="desktop-header-item flex items-center justify-center h-9 w-9 max-[914px]:h-11 max-[914px]:w-11 text-white hover:text-white transition-colors"
+                  className="desktop-header-item flex items-center justify-center h-8 w-8 max-[914px]:h-11 max-[914px]:w-11 text-white hover:text-white transition-colors"
                   aria-label="Síguenos en Instagram"
                   onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
                 >
-                <Instagram className="desktop-header-icon h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
+                <Instagram className="desktop-header-icon h-[16px] w-[16px]" aria-hidden="true" strokeWidth={1.75} />
               </a>
                 <a
                   href={facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="desktop-header-item flex items-center justify-center h-9 w-9 max-[914px]:h-11 max-[914px]:w-11 text-white hover:text-white transition-colors"
+                  className="desktop-header-item flex items-center justify-center h-8 w-8 max-[914px]:h-11 max-[914px]:w-11 text-white hover:text-white transition-colors"
                   aria-label="Síguenos en Facebook"
                   onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
                 >
-                <Facebook className="desktop-header-icon h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
+                <Facebook className="desktop-header-icon h-[16px] w-[16px]" aria-hidden="true" strokeWidth={1.75} />
               </a>
             </div>
           </div>
@@ -497,17 +499,17 @@ export function AppHeader({
             <div className="flex items-center justify-start h-full relative z-[62] shrink-0">
               <Link
                 href="/"
-                className="flex items-center justify-center h-9 w-9 shrink-0 select-none"
+                className="flex items-center justify-center h-10 w-10 shrink-0 select-none"
                 aria-label="Inicio — Region Mayo"
                 draggable={false}
               >
                 <Image
-                  src="/images/region-mayo-logo-64.jpg"
+                  src="/images/logo_hero_2.png"
                   alt="Región Mayo"
                   data-offline-required="true"
-                  width={33}
-                  height={33}
-                  className="rounded-full border-white shrink-0 select-none"
+                  width={32}
+                  height={32}
+                  className="mb-0.5 shrink-0 select-none brightness-[1.08] contrast-[1.18]]"
                   draggable={false}
                   loading="eager"
                   priority
