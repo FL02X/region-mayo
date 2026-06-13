@@ -607,18 +607,18 @@ async function mapAlbum(raw: any): Promise<Album> {
   const additionalImages = additionalMedia.filter(
     (item): item is AlbumImage => item.type === "image",
   );
-  const officialImages =
+  const coverImageItem =
     coverImage && coverImage !== "/placeholder.svg"
-      ? [
-          {
-            type: "image" as const,
-            url: coverImage,
-            alt: albumAlt(title, 0),
-            source: "official" as const,
-          },
-          ...additionalImages,
-        ]
-      : additionalImages;
+      ? {
+          type: "image" as const,
+          url: coverImage,
+          alt: albumAlt(title, 0),
+          source: "official" as const,
+        }
+      : null;
+  const officialImages = coverImageItem
+    ? [coverImageItem, ...additionalImages]
+    : additionalImages;
   const communityImages = Array.isArray(raw?.communityImages)
     ? (raw.communityImages as any[])
         .map((image: any, index: number) =>
@@ -628,7 +628,7 @@ async function mapAlbum(raw: any): Promise<Album> {
     : [];
   const images = [...officialImages, ...communityImages];
   const media: AlbumGalleryItem[] = [
-    ...officialImages,
+    ...(coverImageItem ? [coverImageItem] : []),
     ...additionalMedia,
     ...(communityImages as AlbumImage[]),
   ];
