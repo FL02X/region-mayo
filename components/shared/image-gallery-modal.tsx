@@ -3,15 +3,31 @@
 import { useEffect } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
-import { Images, Wifi, X, ChevronLeft, ChevronRight, Download } from "lucide-react"
+import { Images, Wifi, X, ChevronLeft, ChevronRight, Download, PlayCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useConnectivity } from "@/hooks/use-connectivity"
 import { useInstallPrompt } from "@/hooks/use-install-prompt"
 import useLockBodyScroll from "@/hooks/use-lock-scroll"
 import { sanityImageVariantUrl } from "@/lib/sanity/image"
 
+export type GalleryModalItem =
+  | {
+      type: "image"
+      url: string
+      alt?: string
+    }
+  | {
+      type: "video"
+      url: string
+      posterUrl?: string
+      title: string
+      alt?: string
+      mimeType?: string
+    }
+
 interface ImageGalleryModalProps {
-  images: string[]
+  images?: string[]
+  items?: GalleryModalItem[]
   currentIndex: number
   onClose: () => void
   onNavigate: (index: number) => void
@@ -23,6 +39,7 @@ interface ImageGalleryModalProps {
  */
 export function ImageGalleryModal({
   images,
+  items,
   currentIndex,
   onClose,
   onNavigate,
@@ -31,11 +48,22 @@ export function ImageGalleryModal({
   const { isStandalone } = useInstallPrompt()
   const { isOnline } = useConnectivity()
   const shouldShowOfflineNotice = isStandalone && !isOnline
-  const currentImageUrl = sanityImageVariantUrl(images[currentIndex], {
-    quality: 92,
-    format: "jpg",
-    fit: "max",
-  })
+  const galleryItems =
+    items ??
+    (images ?? []).map((image) => ({
+      type: "image" as const,
+      url: image,
+      alt,
+    }))
+  const currentItem = galleryItems[currentIndex]
+  const isCurrentVideo = currentItem?.type === "video"
+  const currentImageUrl = !isCurrentVideo && currentItem
+    ? sanityImageVariantUrl(currentItem.url, {
+        quality: 92,
+        format: "jpg",
+        fit: "max",
+      })
+    : ""
   useLockBodyScroll(true)
 
   useEffect(() => {
@@ -46,12 +74,12 @@ export function ImageGalleryModal({
       }
       if (!shouldShowOfflineNotice && e.key === "ArrowLeft") {
         e.preventDefault()
-        const newIndex = (currentIndex - 1 + images.length) % images.length
+        const newIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length
         onNavigate(newIndex)
       }
       if (!shouldShowOfflineNotice && e.key === "ArrowRight") {
         e.preventDefault()
-        const newIndex = (currentIndex + 1) % images.length
+        const newIndex = (currentIndex + 1) % galleryItems.length
         onNavigate(newIndex)
       }
     }
@@ -61,7 +89,9 @@ export function ImageGalleryModal({
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [currentIndex, images.length, onClose, onNavigate, shouldShowOfflineNotice])
+  }, [currentIndex, galleryItems.length, onClose, onNavigate, shouldShowOfflineNotice])
+
+  if (!currentItem) return null
 
   const offlineNotice = (
     <div
@@ -109,27 +139,29 @@ export function ImageGalleryModal({
         <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-white">
           <Images className="h-4 w-4" aria-hidden="true" />
           <span className="text-xs sm:text-sm font-bold tracking-widest uppercase">
-            {currentIndex + 1}/{images.length}
+            {currentIndex + 1}/{galleryItems.length}
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            asChild
-            variant="ghost"
-            size="icon"
-            aria-label="Descargar imagen"
-            className="text-white hover:bg-white/10 rounded-none h-10 w-10 sm:h-12 sm:w-12"
-          >
-            <a
-              href={currentImageUrl}
-              download
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
+          {!isCurrentVideo ? (
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              aria-label="Descargar imagen"
+              className="text-white hover:bg-white/10 rounded-none h-10 w-10 sm:h-12 sm:w-12"
             >
-              <Download className="h-5 w-5 sm:h-6 sm:w-6" />
-            </a>
-          </Button>
+              <a
+                href={currentImageUrl}
+                download
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Download className="h-5 w-5 sm:h-6 sm:w-6" />
+              </a>
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             size="icon"
@@ -143,13 +175,13 @@ export function ImageGalleryModal({
       </div>
 
       <div className="flex items-center justify-center p-3 sm:p-4 relative overflow-y-auto" style={{ height: "calc(100vh - 220px)" }} onClick={onClose}>
-        {images.length > 1 && (
+        {galleryItems.length > 1 && (
           <Button
             variant="ghost"
             size="icon"
             onClick={(e) => {
               e.stopPropagation()
-              const newIndex = (currentIndex - 1 + images.length) % images.length
+              const newIndex = (currentIndex - 1 + galleryItems.length) % galleryItems.length
               onNavigate(newIndex)
             }}
             aria-label="Imagen anterior"
@@ -163,32 +195,62 @@ export function ImageGalleryModal({
           className="relative flex w-full items-center justify-center"
           style={{ maxWidth: "min(920px, 82vw)", maxHeight: "calc(100vh - 320px)" }}
         >
-          <img
-            key={currentIndex}
-            src={sanityImageVariantUrl(images[currentIndex], {
-              quality: 88,
-              format: "webp",
-              fit: "max",
-            })}
-            alt={`${alt} ${currentIndex + 1}`}
-            className="block w-auto h-auto object-contain"
-            style={{
-              maxWidth: "min(920px, 82vw)",
-              maxHeight: "calc(100vh - 320px)",
-            }}
-            loading="eager"
-            decoding="async"
-            onClick={(e) => e.stopPropagation()}
-          />
+          {isCurrentVideo ? (
+            <video
+              key={currentIndex}
+              src={currentItem.url}
+              poster={
+                currentItem.posterUrl
+                  ? sanityImageVariantUrl(currentItem.posterUrl, {
+                      width: 1280,
+                      quality: 76,
+                      format: "webp",
+                      fit: "max",
+                    })
+                  : undefined
+              }
+              controls
+              playsInline
+              preload="none"
+              className="block h-auto w-auto object-contain"
+              style={{
+                maxWidth: "min(920px, 82vw)",
+                maxHeight: "calc(100vh - 320px)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {currentItem.mimeType ? (
+                <source src={currentItem.url} type={currentItem.mimeType} />
+              ) : null}
+            </video>
+          ) : (
+            <img
+              key={currentIndex}
+              src={sanityImageVariantUrl(currentItem.url, {
+                quality: 88,
+                format: "webp",
+                fit: "max",
+              })}
+              alt={currentItem.alt || `${alt} ${currentIndex + 1}`}
+              className="block w-auto h-auto object-contain"
+              style={{
+                maxWidth: "min(920px, 82vw)",
+                maxHeight: "calc(100vh - 320px)",
+              }}
+              loading="eager"
+              decoding="async"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
         </div>
 
-        {images.length > 1 && (
+        {galleryItems.length > 1 && (
           <Button
             variant="ghost"
             size="icon"
             onClick={(e) => {
               e.stopPropagation()
-              const newIndex = (currentIndex + 1) % images.length
+              const newIndex = (currentIndex + 1) % galleryItems.length
               onNavigate(newIndex)
             }}
             aria-label="Siguiente imagen"
@@ -199,13 +261,13 @@ export function ImageGalleryModal({
         )}
       </div>
 
-      {images.length > 1 && (
+      {galleryItems.length > 1 && (
         <div
           className="shrink-0 p-3 sm:p-4 bg-black/50 border-t border-white/10 overflow-x-auto"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex gap-2 sm:gap-3 justify-center md:justify-center">
-            {images.map((image, index) => (
+            {galleryItems.map((item, index) => (
               <button
                 key={index}
                 onClick={(e) => {
@@ -220,19 +282,28 @@ export function ImageGalleryModal({
                     : "opacity-40 hover:opacity-70 h-12 w-12 sm:h-16 sm:w-16"
                 }`}
               >
-                <Image
-                  src={sanityImageVariantUrl(image, {
-                    width: 160,
-                    quality: 58,
-                    format: "webp",
-                    fit: "crop",
-                  })}
-                  alt={`Miniatura ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  quality={58}
-                  sizes="(max-width: 768px) 56px, 88px"
-                />
+                {item.type === "image" || item.posterUrl ? (
+                  <Image
+                    src={sanityImageVariantUrl(item.type === "video" ? item.posterUrl! : item.url, {
+                      width: 160,
+                      quality: 58,
+                      format: "webp",
+                      fit: "crop",
+                    })}
+                    alt={`Miniatura ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    quality={58}
+                    sizes="(max-width: 768px) 56px, 88px"
+                  />
+                ) : (
+                  <span className="absolute inset-0 bg-black" aria-hidden="true" />
+                )}
+                {item.type === "video" ? (
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/25 text-white">
+                    <PlayCircle className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                ) : null}
               </button>
             ))}
           </div>

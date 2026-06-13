@@ -117,11 +117,26 @@ export interface Event {
 }
 
 export interface AlbumImage {
+  type: "image";
   url: string;
   alt: string;
   caption?: string;
   source?: "official" | "community";
 }
+
+export interface AlbumGalleryVideo {
+  type: "video";
+  id: string;
+  url: string;
+  posterUrl?: string;
+  title: string;
+  alt: string;
+  caption?: string;
+  mimeType?: string;
+  source?: "official";
+}
+
+export type AlbumGalleryItem = AlbumImage | AlbumGalleryVideo;
 
 export type AlbumType = "photos" | "youtube";
 export type AlbumYoutubeLayout = "auto" | "vertical" | "horizontal";
@@ -164,6 +179,7 @@ export interface Album {
   uploadInstructions?: string;
   canSubmitPhotos?: boolean;
   relatedEvent?: AlbumRelatedEvent;
+  media: AlbumGalleryItem[];
   images: AlbumImage[];
   videos: AlbumVideo[];
   youtubeError?: string;

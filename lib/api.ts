@@ -17,6 +17,8 @@ import type {
   SocialPost,
   Prayer,
   Album,
+  AlbumGalleryItem,
+  AlbumGalleryVideo,
   AlbumImage,
   AlbumVideo,
   AlbumYoutubeLayout,
@@ -307,6 +309,7 @@ function mapAlbumImage(
   if (!url || url === "/placeholder.svg") return null;
 
   return {
+    type: "image",
     url,
     alt: albumAlt(albumTitle, index, raw?.alt),
     caption:
@@ -315,6 +318,45 @@ function mapAlbumImage(
         : undefined,
     source,
   };
+}
+
+function mapAlbumGalleryVideo(
+  raw: any,
+  albumTitle: string,
+  index: number,
+): AlbumGalleryVideo | null {
+  const url = raw?.video?.asset?.url || raw?.file?.asset?.url;
+  const posterUrl = sanityImageUrl(raw?.poster);
+  if (!url) return null;
+
+  const title =
+    typeof raw?.title === "string" && raw.title.trim().length > 0
+      ? raw.title.trim()
+      : `Video ${index + 1}`;
+  const caption =
+    typeof raw?.caption === "string" && raw.caption.trim().length > 0
+      ? raw.caption.trim()
+      : undefined;
+
+  return {
+    type: "video",
+    id: raw?._key || `${albumTitle}-${index}`,
+    url,
+    posterUrl: posterUrl && posterUrl !== "/placeholder.svg" ? posterUrl : undefined,
+    title,
+    alt: `${albumTitle} - ${title}`,
+    caption,
+    mimeType: raw?.video?.asset?.mimeType || raw?.file?.asset?.mimeType,
+    source: "official",
+  };
+}
+
+function mapAlbumGalleryItem(raw: any, albumTitle: string, index: number): AlbumGalleryItem | null {
+  if (raw?._type === "albumVideo" || raw?.video?.asset?.url || raw?.file?.asset?.url) {
+    return mapAlbumGalleryVideo(raw, albumTitle, index);
+  }
+
+  return mapAlbumImage(raw, albumTitle, index, "official");
 }
 
 function extractYoutubePlaylistId(value?: string): string {
@@ -556,16 +598,20 @@ async function mapAlbum(raw: any): Promise<Album> {
     manualCoverImage ||
     (albumType === "youtube" ? videos[0]?.thumbnailUrl : sanityImageUrl(raw.coverImage)) ||
     "/placeholder.svg";
-  const additionalImages = Array.isArray(raw?.images)
-    ? raw.images
-        .map((image: any, index: number) => mapAlbumImage(image, title, index + 1, "official"))
-        .filter((image: AlbumImage | null) => image?.url !== coverImage)
-        .filter(Boolean)
+  const additionalMedia: AlbumGalleryItem[] = Array.isArray(raw?.images)
+    ? (raw.images as any[])
+        .map((item: any, index: number) => mapAlbumGalleryItem(item, title, index + 1))
+        .filter((item: AlbumGalleryItem | null) => item?.type !== "image" || item.url !== coverImage)
+        .filter((item): item is AlbumGalleryItem => Boolean(item))
     : [];
+  const additionalImages = additionalMedia.filter(
+    (item): item is AlbumImage => item.type === "image",
+  );
   const officialImages =
     coverImage && coverImage !== "/placeholder.svg"
       ? [
           {
+            type: "image" as const,
             url: coverImage,
             alt: albumAlt(title, 0),
             source: "official" as const,
@@ -574,13 +620,18 @@ async function mapAlbum(raw: any): Promise<Album> {
         ]
       : additionalImages;
   const communityImages = Array.isArray(raw?.communityImages)
-    ? raw.communityImages
+    ? (raw.communityImages as any[])
         .map((image: any, index: number) =>
           mapAlbumImage(image, title, officialImages.length + index, "community"),
         )
-        .filter(Boolean)
+        .filter((image: AlbumImage | null): image is AlbumImage => Boolean(image))
     : [];
   const images = [...officialImages, ...communityImages];
+  const media: AlbumGalleryItem[] = [
+    ...officialImages,
+    ...additionalMedia,
+    ...(communityImages as AlbumImage[]),
+  ];
   const submissionsCloseAt = raw.submissionsCloseAt ? toDate(raw.submissionsCloseAt) : undefined;
   const hasUploadToken = Boolean(raw.hasUploadToken);
   const canSubmitPhotos =
@@ -632,6 +683,7 @@ async function mapAlbum(raw: any): Promise<Album> {
           location: relatedEvent.templo?.temploName ?? relatedEvent.location ?? undefined,
         }
       : undefined,
+    media: albumType === "photos" ? media : [],
     images: albumType === "photos" ? (images as AlbumImage[]) : [],
     videos,
     youtubeError: albumType === "youtube" ? youtubeResult.error : undefined,
@@ -855,6 +907,12 @@ function getMockAlbums(regionSlug: string): Album[] {
           location: event.location,
         },
         images: imageUrls.map((url, index) => ({
+          type: "image" as const,
+          url,
+          alt: `${event.title} - foto ${index + 1}`,
+        })),
+        media: imageUrls.map((url, index) => ({
+          type: "image" as const,
           url,
           alt: `${event.title} - foto ${index + 1}`,
         })),
@@ -893,8 +951,14 @@ const ALBUM_PROJECTION = `{
     templo->{temploName}
   },
   images[]{
+    _key,
+    _type,
     asset->{url},
     image{asset->{url}},
+    video{asset->{url, mimeType}},
+    file{asset->{url, mimeType}},
+    poster{asset->{url}},
+    title,
     alt,
     caption
   },

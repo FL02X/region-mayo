@@ -22,7 +22,7 @@ import { OfflineImagePlaceholder } from "@/components/shared/offline-image-place
 import { ImageGalleryModal } from "@/components/shared/image-gallery-modal";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { Album, AlbumImage, AlbumVideo, EventType } from "@/lib/types";
+import type { Album, AlbumGalleryItem, AlbumVideo, EventType } from "@/lib/types";
 
 const CATEGORY_LABELS: Record<EventType, string> = {
   campana: "Campaña",
@@ -98,6 +98,27 @@ function formatMediaCount(count: number, isVideo: boolean) {
   return `${count} ${count === 1 ? "foto" : "fotos"}`;
 }
 
+function getAlbumMediaItems(album: Album): AlbumGalleryItem[] {
+  return album.media?.length > 0 ? album.media : album.images;
+}
+
+function formatGalleryMediaCount(album: Album) {
+  const mediaItems = getAlbumMediaItems(album);
+  const photoCount = mediaItems.filter((item) => item.type === "image").length;
+  const videoCount = mediaItems.filter((item) => item.type === "video").length;
+
+  if (videoCount === 0) return formatMediaCount(photoCount, false);
+  if (photoCount === 0) return formatMediaCount(videoCount, true);
+
+  return `${photoCount} ${photoCount === 1 ? "foto" : "fotos"} / ${videoCount} ${
+    videoCount === 1 ? "video" : "videos"
+  }`;
+}
+
+function getGalleryItemPreviewUrl(item: AlbumGalleryItem): string | undefined {
+  return item.type === "video" ? item.posterUrl : item.url;
+}
+
 function getAlbumSectionPath(albumType: Album["albumType"]) {
   return albumType === "youtube" ? "/album/grabaciones" : "/album/galerias";
 }
@@ -107,13 +128,15 @@ function getAlbumDetailPath(album: Album) {
 }
 
 function getAlbumTypeLabel(albumType: Album["albumType"]) {
-  return albumType === "youtube" ? "Grabación" : "Álbum";
+  return albumType === "youtube" ? "Grabacion" : "Galeria";
 }
 
 function formatHubRecentContext(album: Album) {
   const isYoutubeAlbum = album.albumType === "youtube";
-  const itemCount = isYoutubeAlbum ? album.videos.length : album.images.length;
-  return `${getAlbumTypeLabel(album.albumType)} · ${formatMediaCount(itemCount, isYoutubeAlbum)}`;
+  const itemLabel = isYoutubeAlbum
+    ? formatMediaCount(album.videos.length, true)
+    : formatGalleryMediaCount(album);
+  return `${getAlbumTypeLabel(album.albumType)} · ${itemLabel}`;
 }
 
 function getRecentAlbums(albums: Album[], limit = 5) {
@@ -516,7 +539,8 @@ function GalleryAlbumTile({
   album: Album;
   groupAlbumCount: number;
 }) {
-  const itemLabel = formatMediaCount(album.images.length, false);
+  const hasGalleryVideos = getAlbumMediaItems(album).some((item) => item.type === "video");
+  const itemLabel = formatGalleryMediaCount(album);
 
   const markAlbumTransition = () => {
     try {
@@ -548,6 +572,11 @@ function GalleryAlbumTile({
       />
       <OfflineImagePlaceholder />
       <div className="absolute inset-0 bg-gradient-to-t from-black/100 via-black/50 to-transparent" />
+      {hasGalleryVideos ? (
+        <div className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-white shadow-sm md:right-2 md:top-2">
+          <Play className="h-3.5 w-3.5 translate-x-[1px]" aria-hidden="true" />
+        </div>
+      ) : null}
       <div className="absolute inset-x-0 bottom-0 p-1.5 text-white md:p-2">
         <h2
           className={`line-clamp-2 font-bold leading-[1.1] drop-shadow ${getGalleryTileTitleClasses(
@@ -655,8 +684,8 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
             <div className="grid grid-cols-2 gap-3 md:gap-4">
               <AlbumHubEntryCard
                 href="/album/galerias"
-                title="Galería"
-                subtitle="Fotos y galerías"
+                title="Galeria"
+                subtitle="Fotos y videos"
                 isYoutubeAlbum={false}
                 previewImages={photoHubPreview}
               />
@@ -704,10 +733,10 @@ export function AlbumSectionContent({
   const albumType = section === "galerias" ? "photos" : "youtube";
   const sectionAlbums = albums.filter((album) => album.albumType === albumType);
   const [activeGalleryFilter, setActiveGalleryFilter] = useState("all");
-  const title = section === "galerias" ? "Galería" : "Grabaciones";
+  const title = section === "galerias" ? "Galeria" : "Grabaciones";
   const subtitle =
     section === "galerias"
-      ? "Fotos y galerías publicadas por la región."
+      ? "Fotos y videos publicados por la region."
       : "Directos, cultos y grabaciones disponibles.";
   const galleryYears = useMemo(
     () =>
@@ -878,12 +907,14 @@ function hashString(input: string) {
 }
 
 function getAlbumTileLayout(
-  image: AlbumImage,
+  item: AlbumGalleryItem,
   index: number,
   totalCount: number,
   albumSlug: string,
 ): AlbumTileLayout {
-  const hash = hashString(`${albumSlug}:${image.url}:${index}`);
+  const hash = hashString(
+    `${albumSlug}:${getGalleryItemPreviewUrl(item) || item.type}:${index}`,
+  );
   const remainingItems = totalCount - index - 1;
   const allowSpecial =
     totalCount > 12 &&
@@ -966,8 +997,11 @@ function getAlbumTileLayout(
 
 function AlbumCard({ album }: { album: Album }) {
   const isYoutubeAlbum = album.albumType === "youtube";
-  const itemCount = isYoutubeAlbum ? album.videos.length : album.images.length;
-  const itemLabel = formatMediaCount(itemCount, isYoutubeAlbum);
+  const hasGalleryVideos =
+    !isYoutubeAlbum && getAlbumMediaItems(album).some((item) => item.type === "video");
+  const itemLabel = isYoutubeAlbum
+    ? formatMediaCount(album.videos.length, true)
+    : formatGalleryMediaCount(album);
 
   const markAlbumTransition = () => {
     try {
@@ -999,7 +1033,7 @@ function AlbumCard({ album }: { album: Album }) {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 310px"
         />
         <OfflineImagePlaceholder />
-        {isYoutubeAlbum ? (
+        {isYoutubeAlbum || hasGalleryVideos ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/25">
             <Play
               className="h-9 w-9 text-white drop-shadow"
@@ -1119,34 +1153,48 @@ function YoutubeVideoTile({
   );
 }
 
-function AlbumImageTile({
-  image,
+function AlbumMediaTile({
+  item,
   index,
   layout,
   onOpen,
 }: {
-  image: AlbumImage;
+  item: AlbumGalleryItem;
   index: number;
   layout: AlbumTileLayout;
   onOpen: (index: number) => void;
 }) {
+  const isVideo = item.type === "video";
+  const previewUrl = getGalleryItemPreviewUrl(item);
+  const alt = item.type === "video" ? item.alt : item.alt;
+  const caption = item.type === "video" ? item.caption || item.title : item.caption;
+
   return (
     <button
       type="button"
       onClick={() => onOpen(index)}
       className={`group relative overflow-hidden border border-border bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${layout.className}`}
-      aria-label={`Abrir foto ${index + 1}`}
+      aria-label={`Abrir ${isVideo ? "video" : "foto"} ${index + 1}`}
     >
-      <Image
-        src={sanityImageVariantUrl(image.url, layout.imageOptions)}
-        alt={image.alt}
-        fill
-        className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-        sizes={layout.sizes}
-      />
-      {image.caption ? (
+      {previewUrl ? (
+        <Image
+          src={sanityImageVariantUrl(previewUrl, layout.imageOptions)}
+          alt={alt}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          sizes={layout.sizes}
+        />
+      ) : (
+        <span className="absolute inset-0 bg-black" aria-hidden="true" />
+      )}
+      {isVideo ? (
+        <span className="absolute inset-0 flex items-center justify-center bg-black/20 text-white transition-colors group-hover:bg-black/30">
+          <PlayCircle className="h-10 w-10 drop-shadow" aria-hidden="true" />
+        </span>
+      ) : null}
+      {caption ? (
         <span className="absolute inset-x-0 bottom-0 bg-black/65 px-2 py-1.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-          {image.caption}
+          {caption}
         </span>
       ) : null}
     </button>
@@ -1219,7 +1267,11 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
 
   const filteredAlbums = useMemo(() => {
     if (selectedType === VIDEO_FILTER) {
-      return albums.filter((item) => item.albumType === "youtube");
+      return albums.filter(
+        (item) =>
+          item.albumType === "youtube" ||
+          getAlbumMediaItems(item).some((mediaItem) => mediaItem.type === "video"),
+      );
     }
     if (selectedType === PHOTO_FILTER) {
       return albums.filter((item) => item.albumType !== "youtube");
@@ -1249,9 +1301,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
       return [];
     }
 
-    const visibleImages = album.images.slice(0, visibleCount);
-    return visibleImages.map((image, index) =>
-      getAlbumTileLayout(image, index, visibleImages.length, album.slug),
+    const visibleMedia = getAlbumMediaItems(album).slice(0, visibleCount);
+    return visibleMedia.map((item, index) =>
+      getAlbumTileLayout(item, index, visibleMedia.length, album.slug),
     );
   }, [album, visibleCount]);
 
@@ -1272,18 +1324,21 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     const isYoutubeAlbum = album.albumType === "youtube";
     const forcePortraitLayout = album.youtubeLayout === "vertical";
     const forceLandscapeLayout = album.youtubeLayout === "horizontal";
-    const visibleImages = album.images.slice(0, visibleCount);
+    const albumMedia = getAlbumMediaItems(album);
+    const visibleMedia = albumMedia.slice(0, visibleCount);
     const visibleVideos = album.videos.slice(0, visibleCount);
-    const imageUrls = visibleImages.map((image) => image.url);
     const hasMoreItems = isYoutubeAlbum
       ? visibleVideos.length < album.videos.length
-      : visibleImages.length < album.images.length;
+      : visibleMedia.length < albumMedia.length;
     const selectedVideo =
       album.videos.find((video) => video.id === selectedVideoId) ||
       album.videos[0];
     const totalItems = isYoutubeAlbum
       ? album.videos.length
-      : album.images.length;
+      : albumMedia.length;
+    const totalItemLabel = isYoutubeAlbum
+      ? formatMediaCount(totalItems, true)
+      : formatGalleryMediaCount(album);
     const selectedVideoOrientation = selectedVideo
       ? videoOrientations[selectedVideo.id]
       : undefined;
@@ -1321,7 +1376,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   ) : (
                     <Images className="h-4 w-4" aria-hidden="true" />
                   )}
-                  {formatMediaCount(totalItems, isYoutubeAlbum)}
+                  {totalItemLabel}
                 </span>
               </div>
               {album.description ? (
@@ -1500,9 +1555,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 <div className="px-0 pt-4 sm:px-4 md:px-8 md:pt-5">
                   <div className="grid grid-flow-dense grid-cols-3 gap-[2px] sm:gap-2 md:hidden">
                     {albumMobileTileLayouts.map((layout, index) => (
-                      <AlbumImageTile
-                        key={`${visibleImages[index].url}-${index}`}
-                        image={visibleImages[index]}
+                      <AlbumMediaTile
+                        key={`${getGalleryItemPreviewUrl(visibleMedia[index])}-${index}`}
+                        item={visibleMedia[index]}
                         index={index}
                         layout={layout}
                         onOpen={setCurrentIndex}
@@ -1511,10 +1566,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   </div>
 
                   <div className="hidden grid-cols-5 gap-1.5 md:grid">
-                    {visibleImages.map((image, index) => (
-                      <AlbumImageTile
-                        key={`${image.url}-${index}`}
-                        image={image}
+                    {visibleMedia.map((item, index) => (
+                      <AlbumMediaTile
+                        key={`${getGalleryItemPreviewUrl(item)}-${index}`}
+                        item={item}
                         index={index}
                         layout={desktopTileLayout}
                         onOpen={setCurrentIndex}
@@ -1536,19 +1591,34 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                           current + PHOTOS_PER_PAGE,
                           isYoutubeAlbum
                             ? album.videos.length
-                            : album.images.length,
+                            : albumMedia.length,
                         ),
                       )
                     }
                   >
-                    {isYoutubeAlbum ? "Cargar más videos" : "Cargar más fotos"}
+                    {isYoutubeAlbum ? "Cargar mas videos" : "Cargar mas"}
                   </Button>
                 </div>
               ) : null}
 
               {currentIndex !== null ? (
                 <ImageGalleryModal
-                  images={imageUrls}
+                  items={albumMedia.map((item) =>
+                    item.type === "video"
+                      ? {
+                          type: "video",
+                          url: item.url,
+                          posterUrl: item.posterUrl,
+                          title: item.title,
+                          alt: item.alt,
+                          mimeType: item.mimeType,
+                        }
+                      : {
+                          type: "image",
+                          url: item.url,
+                          alt: item.alt,
+                        },
+                  )}
                   currentIndex={currentIndex}
                   onClose={() => setCurrentIndex(null)}
                   onNavigate={setCurrentIndex}

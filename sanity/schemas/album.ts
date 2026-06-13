@@ -40,7 +40,7 @@ export default defineType({
       initialValue: 'photos',
       options: {
         list: [
-          { title: 'Imagenes', value: 'photos' },
+          { title: 'Galeria de fotos/videos', value: 'photos' },
           { title: 'Videos de YouTube', value: 'youtube' },
         ],
         layout: 'radio',
@@ -183,11 +183,11 @@ export default defineType({
       group: 'media',
       options: { hotspot: true },
       description:
-        'En albumes de imagenes es obligatoria. En YouTube es opcional; si la dejas vacia se usara la miniatura del primer video.',
+        'En galerias de fotos/videos es obligatoria. En YouTube es opcional; si la dejas vacia se usara la miniatura del primer video.',
       validation: (Rule) =>
         Rule.custom((value, context) => {
           if ((context.document?.albumType ?? 'photos') === 'photos' && !value) {
-            return 'La portada es obligatoria para albumes de imagenes'
+            return 'La portada es obligatoria para galerias de fotos/videos'
           }
           return true
         }),
@@ -250,7 +250,7 @@ export default defineType({
     }),
     defineField({
       name: 'images',
-      title: 'Imagenes adicionales',
+      title: 'Imagenes/Videos',
       type: 'array',
       group: 'media',
       hidden: ({ document }) => (document?.albumType ?? 'photos') !== 'photos',
@@ -275,7 +275,7 @@ export default defineType({
           ],
           preview: {
             select: {
-              media: 'image',
+              media: 'asset',
               title: 'caption',
               alt: 'alt',
             },
@@ -287,9 +287,59 @@ export default defineType({
             },
           },
         }),
+        defineField({
+          name: 'albumVideo',
+          title: 'Video',
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'video',
+              title: 'Archivo de video',
+              type: 'file',
+              options: {
+                accept: 'video/mp4,video/webm',
+              },
+              description:
+                'Sube un MP4/WebM comprimido para web. Recomendado: 480p o 540p, H.264, bitrate aproximado 800-1400 kbps.',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'poster',
+              title: 'Miniatura',
+              type: 'image',
+              options: { hotspot: true },
+              description:
+                'Opcional. Si la dejas vacia, la pagina mostrara un recuadro negro con icono de reproduccion.',
+            }),
+            defineField({
+              name: 'title',
+              title: 'Titulo',
+              type: 'string',
+            }),
+            defineField({
+              name: 'caption',
+              title: 'Caption',
+              type: 'string',
+            }),
+          ],
+          preview: {
+            select: {
+              media: 'poster',
+              title: 'title',
+              caption: 'caption',
+            },
+            prepare({ media, title, caption }) {
+              return {
+                title: title || caption || 'Video del album',
+                subtitle: 'Video',
+                media,
+              }
+            },
+          },
+        }),
       ],
       description:
-        'La portada ya cuenta como la primera foto del album. Las fotos adicionales se muestran despues, en el orden en que las arrastres dentro del Studio.',
+        'La portada ya cuenta como el primer elemento del album. Las imagenes y videos se muestran despues, en el orden en que los arrastres dentro del Studio.',
     }),
     defineField({
       name: 'audit',
@@ -344,7 +394,7 @@ export default defineType({
     },
     prepare({ title, startDate, endDate, hidden, albumType, media, eventTitle }) {
       const range = startDate && endDate ? `${startDate} - ${endDate}` : startDate || 'Sin fecha'
-      const typeLabel = albumType === 'youtube' ? 'Videos' : 'Imagenes'
+      const typeLabel = albumType === 'youtube' ? 'Videos' : 'Galeria'
       return {
         title,
         subtitle: `${typeLabel} • ${hidden ? 'Oculto' : 'Publicado'} • ${range}${eventTitle ? ` • ${eventTitle}` : ''}`,
