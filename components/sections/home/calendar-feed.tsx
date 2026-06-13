@@ -57,6 +57,7 @@ const editorialFont = Newsreader({
 });
 
 type CalendarViewMode = ViewMode;
+type CalendarLayoutMode = "list" | "month";
 type CalendarChangeReason = "month" | "view" | null;
 const calendarFadeTransition = { duration: 0.1, ease: "easeOut" as const };
 const PRELOAD_MONTH_OFFSETS = [-1, 0, 1];
@@ -220,6 +221,7 @@ interface EventsFeedProps {
   socialPosts?: SocialPost[];
   now?: number;
   initialViewMode?: CalendarViewMode;
+  initialCalendarLayoutMode?: CalendarLayoutMode;
 }
 
 interface MobileMonthPlannerProps {
@@ -470,9 +472,13 @@ function MobileMonthPlanner({
       nextOffset = touchDeltaX < 0 ? 1 : -1;
     }
 
+    if (source === "touch" && nextOffset === 0) {
+      return;
+    }
+
     const targetLeft = centerLeft + nextOffset * monthWidth;
 
-    if (source === "touch") {
+    if (source === "touch" && nextOffset !== 0) {
       didCommitCurrentTouchRef.current = true;
     }
 
@@ -825,6 +831,7 @@ export function EventsFeed({
   socialPosts,
   now: nowProp,
   initialViewMode,
+  initialCalendarLayoutMode,
 }: EventsFeedProps) {
   const [selectedMonth, setSelectedMonth] = useState(() =>
     getInitialCalendarMonth(events, nowProp),
@@ -843,7 +850,11 @@ export function EventsFeed({
   const lastOnlineViewModeRef = useRef<CalendarViewMode>(
     resolvedInitialViewMode,
   );
-  const [isMonthPlannerEnabled, setIsMonthPlannerEnabled] = useState(false);
+  const resolvedInitialCalendarLayoutMode =
+    initialCalendarLayoutMode ?? "list";
+  const [isMonthPlannerEnabled, setIsMonthPlannerEnabled] = useState(
+    () => resolvedInitialCalendarLayoutMode === "month",
+  );
   const [selectedPlannerEvent, setSelectedPlannerEvent] =
     useState<Event | null>(null);
   const [thumbnailPreloadMonth, setThumbnailPreloadMonth] =
@@ -1087,6 +1098,21 @@ export function EventsFeed({
     }
   };
 
+  const handleCalendarLayoutToggle = () => {
+    setIsMonthPlannerEnabled((value) => {
+      const next = !value;
+      try {
+        document.cookie = `rm-calendar-layout=${
+          next ? "month" : "list"
+        }; path=/; max-age=31536000; samesite=lax`;
+      } catch {
+        // Ignore cookie write failures
+      }
+
+      return next;
+    });
+  };
+
   return (
     <div
       className="w-full relative bg-[#f1f1f1]"
@@ -1146,7 +1172,7 @@ export function EventsFeed({
             <div className="md:hidden mb-2 flex justify-center">
               <button
                 type="button"
-                onClick={() => setIsMonthPlannerEnabled((value) => !value)}
+                onClick={handleCalendarLayoutToggle}
                 className="relative grid h-9 w-full grid-cols-2 overflow-hidden mb-3 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
                 aria-pressed={isMonthPlannerEnabled}
                 aria-label="Alternar vista mensual del calendario"
@@ -1188,7 +1214,7 @@ export function EventsFeed({
                 eventDates={eventDates}
               />
             </div>
-            {isMonthPlannerEnabled && isMobile && (
+            {isMonthPlannerEnabled && (
               <MobileMonthPlanner
                 events={events}
                 selectedMonth={selectedMonth}

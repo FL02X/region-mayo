@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 
 type ViewMode = "grid" | "compact";
+type CalendarLayoutMode = "list" | "month";
 
 const normalizeCookieValue = (value?: string) => {
   if (!value) return undefined;
@@ -51,4 +52,15 @@ export async function readInitialViewMode(name: string): Promise<ViewMode> {
   return MOBILE_USER_AGENT_PATTERN.test(headerStore.get("user-agent") ?? "")
     ? "compact"
     : "grid";
+}
+
+export async function readInitialCalendarLayoutMode(
+  name: string,
+): Promise<CalendarLayoutMode> {
+  const cookieValue = await readCookieValue(name);
+  if (cookieValue === "list" || cookieValue === "month") {
+    return cookieValue;
+  }
+
+  return "list";
 }

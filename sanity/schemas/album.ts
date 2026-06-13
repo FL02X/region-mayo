@@ -1,11 +1,16 @@
 import { defineField, defineType } from 'sanity'
 import { EVENT_TYPES, enumToSanityOptions } from './enums'
 import { AlbumUploadLinkInput } from '../components/inputs/album-upload-link-input'
+import { AlbumRelatedEventInput } from '../components/inputs/album-related-event-input'
+import { AlbumImagesInput } from '../components/inputs/album-images-input'
 
 export default defineType({
   name: 'album',
   title: 'Album',
   type: 'document',
+  components: {
+    input: AlbumRelatedEventInput,
+  },
   groups: [
     { name: 'basic', title: 'Datos principales' },
     { name: 'media', title: 'Contenido' },
@@ -48,33 +53,13 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'startDate',
-      title: 'Fecha de inicio',
-      type: 'date',
-      group: 'basic',
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'endDate',
-      title: 'Fecha de final',
-      type: 'date',
-      group: 'basic',
-      validation: (Rule) =>
-        Rule.required().custom((value, context) => {
-          const startDate = context.document?.startDate
-          if (startDate && value && String(value) < String(startDate)) {
-            return 'La fecha final no puede ser antes de la fecha de inicio'
-          }
-          return true
-        }),
-    }),
-    defineField({
       name: 'relatedEvent',
       title: 'Evento relacionado',
       type: 'reference',
       to: [{ type: 'event' }],
       group: 'basic',
-      description: 'Opcional. Si seleccionas un evento, la categoria se toma automaticamente del evento.',
+      description:
+        'Opcional. Al seleccionar un evento, se copian automaticamente la fecha de inicio, fecha final si aplica y categoria.',
       validation: (Rule) =>
         Rule.custom(async (value, context) => {
           if (!value?._ref) return true
@@ -91,6 +76,27 @@ export default defineType({
           )
 
           return existing ? 'Este evento ya tiene un album relacionado' : true
+        }),
+    }),
+    defineField({
+      name: 'startDate',
+      title: 'Fecha de inicio',
+      type: 'date',
+      group: 'basic',
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'endDate',
+      title: 'Fecha final',
+      type: 'date',
+      group: 'basic',
+      validation: (Rule) =>
+        Rule.custom((value, context) => {
+          const startDate = context.document?.startDate
+          if (startDate && value && String(value) < String(startDate)) {
+            return 'La fecha final no puede ser antes de la fecha de inicio'
+          }
+          return true
         }),
     }),
     defineField({
@@ -253,6 +259,9 @@ export default defineType({
       title: 'Imagenes/Videos',
       type: 'array',
       group: 'media',
+      components: {
+        input: AlbumImagesInput,
+      },
       hidden: ({ document }) => (document?.albumType ?? 'photos') !== 'photos',
       of: [
         defineField({
