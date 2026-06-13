@@ -70,6 +70,7 @@ interface EventCardProps {
   showAlbumButton?: boolean;
   variant?: "grid" | "compact";
   tone?: "default" | "editorial";
+  idPrefix?: string;
 }
 
 const eventTypeLabels: Record<EventType, string> = {
@@ -237,6 +238,7 @@ export function EventCard({
   showAlbumButton = false,
   variant = "grid",
   tone = "default",
+  idPrefix,
 }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showEventImage, setShowEventImage] = useState(false);
@@ -263,6 +265,10 @@ export function EventCard({
   const { isOnline } = useConnectivity();
   const shouldShowOfflineNotice = isStandalone && !isOnline;
   const isMobile = useIsMobile();
+  const articleId = idPrefix ? `${idPrefix}-${event.id}` : event.id;
+  const detailsId = idPrefix
+    ? `${idPrefix}-details-${event.id}`
+    : `details-${event.id}`;
   const isEditorialTone = tone === "editorial";
   const editorialTitleClass = isEditorialTone
     ? `${editorialFont.className} type-human-title`
@@ -287,7 +293,7 @@ export function EventCard({
 
   const scrollExpandedDetailsIntoView = () => {
     const button = detailsToggleButtonRef.current;
-    const details = document.getElementById(`details-${event.id}`);
+    const details = document.getElementById(detailsId);
     if (!button || !details) return;
     if (button.getAttribute("aria-expanded") !== "true") return;
 
@@ -1237,7 +1243,7 @@ export function EventCard({
       <>
         {eventPortals}
         <article
-          id={event.id}
+          id={articleId}
           className="overflow-hidden border-x border-y border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
           <div className="border-b border-border/70">
@@ -1299,7 +1305,7 @@ export function EventCard({
                     onClick={handleToggle}
                     className="mt-4 inline-flex max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:hidden"
                     aria-expanded={isExpanded}
-                    aria-controls={`details-${event.id}`}
+                    aria-controls={detailsId}
                   >
                     <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
                     <ChevronDown
@@ -1363,7 +1369,7 @@ export function EventCard({
                 onClick={handleToggle}
                 className="mt-5 hidden max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:inline-flex"
                 aria-expanded={isExpanded}
-                aria-controls={`details-${event.id}`}
+                aria-controls={detailsId}
               >
                 <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
                 <ChevronDown
@@ -1381,7 +1387,7 @@ export function EventCard({
             {isExpanded && (
               <motion.div
                 key="compact-details"
-                id={`details-${event.id}`}
+                id={detailsId}
                 initial={isMobile ? { height: 0, opacity: 0 } : false}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={isMobile ? { height: 0, opacity: 0 } : undefined}
@@ -1482,7 +1488,7 @@ export function EventCard({
     <>
       {eventPortals}
       <article
-        id={event.id}
+        id={articleId}
         data-eq-card
         className="self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
       >
@@ -1599,7 +1605,7 @@ export function EventCard({
             onClick={handleToggle}
             className="mt-8 inline-flex max-w-full items-center gap-1 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             aria-expanded={isExpanded}
-            aria-controls={`details-${event.id}`}
+            aria-controls={detailsId}
           >
             <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
             <ChevronDown
@@ -1615,7 +1621,7 @@ export function EventCard({
             {isExpanded && (
               <motion.div
                 key="grid-details"
-                id={`details-${event.id}`}
+                id={detailsId}
                 initial={isMobile ? { height: 0, opacity: 0 } : false}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={isMobile ? { height: 0, opacity: 0 } : undefined}

@@ -62,7 +62,10 @@ const calendarFadeTransition = { duration: 0.1, ease: "easeOut" as const };
 const PRELOAD_MONTH_OFFSETS = [-1, 0, 1];
 const MAX_PRELOADED_EVENT_THUMBNAILS = 10;
 const PLANNER_MONTH_OFFSETS = [-1, 0, 1];
+const PLANNER_EVENT_CACHE_OFFSETS = [-1, 0, 1];
 const PLANNER_CENTER_INDEX = 1;
+const PLANNER_COMMIT_DELAY_MS = 200;
+const PLANNER_CACHE_SETTLE_DELAY_MS = 1400;
 const weekDayLabels = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
 
 const eventTypePlannerColors: Record<
@@ -112,6 +115,11 @@ function getCalendarMonthByOffset(month: Date, offset: number) {
 function getRegionDateKey(date: Date) {
   const parts = getRegionCalendarParts(date);
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+}
+
+function getRegionMonthKey(date: Date) {
+  const parts = getRegionCalendarParts(date);
+  return `${parts.year}-${parts.month}`;
 }
 
 function getEventDateRangeLabel(event: Event) {
@@ -217,7 +225,6 @@ interface EventsFeedProps {
 interface MobileMonthPlannerProps {
   events: Event[];
   selectedMonth: Date;
-  filteredEvents: Event[];
   selectedPlannerEvent: Event | null;
   onMonthSelect: (date: Date) => void;
   onEventPreview: (event: Event) => void;
@@ -227,7 +234,6 @@ interface MobileMonthPlannerProps {
 function MobileMonthPlanner({
   events,
   selectedMonth,
-  filteredEvents,
   selectedPlannerEvent,
   onMonthSelect,
   onEventPreview,
@@ -242,10 +248,25 @@ function MobileMonthPlanner({
   const plannerTouchStartXRef = useRef<number | null>(null);
   const plannerTouchDeltaXRef = useRef(0);
   const selectedMonthRef = useRef(selectedMonth);
-  const plannerPendingOffsetRef = useRef<-1 | 0 | 1 | null>(null);
+  const plannerPendingOffsetRef = useRef<number | null>(null);
+  const plannerMonthCellsCacheRef = useRef(
+    new Map<string, ReturnType<typeof getPlannerMonthCells>>(),
+  );
+  const [settledPlannerMonth, setSettledPlannerMonth] =
+    useState(selectedMonth);
+  const isPlannerMonthSettling =
+    getRegionMonthKey(settledPlannerMonth) !== getRegionMonthKey(selectedMonth);
 
   useEffect(() => {
     selectedMonthRef.current = selectedMonth;
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSettledPlannerMonth(selectedMonth);
+    }, PLANNER_CACHE_SETTLE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
   }, [selectedMonth]);
 
   const plannerMonths = useMemo(
@@ -255,15 +276,62 @@ function MobileMonthPlanner({
       ),
     [selectedMonth],
   );
+  const plannerMonthData = useMemo(
+    () =>
+      plannerMonths.map((month) => {
+        const monthParts = getRegionCalendarParts(month);
+        const monthKey = `${monthParts.year}-${monthParts.month}`;
+        let monthCells = plannerMonthCellsCacheRef.current.get(monthKey);
 
-  const selectedMonthParts = getRegionCalendarParts(selectedMonth);
+        if (!monthCells) {
+          monthCells = getPlannerMonthCells(month);
+          plannerMonthCellsCacheRef.current.set(monthKey, monthCells);
+        }
+
+        return {
+          monthParts,
+          monthCells,
+          monthKey,
+        };
+      }),
+    [plannerMonths],
+  );
+  const displayedPlannerEvents = useMemo(() => {
+    const settledParts = getRegionCalendarParts(settledPlannerMonth);
+
+    return events
+      .filter((event) => {
+        const parts = getRegionCalendarParts(event.date);
+        return (
+          parts.month === settledParts.month && parts.year === settledParts.year
+        );
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [events, settledPlannerMonth]);
   const selectedPlannerEventId =
     selectedPlannerEvent &&
-    filteredEvents.some((event) => event.id === selectedPlannerEvent.id)
+    displayedPlannerEvents.some((event) => event.id === selectedPlannerEvent.id)
       ? selectedPlannerEvent.id
-      : (filteredEvents[0]?.id ?? null);
+      : (displayedPlannerEvents[0]?.id ?? null);
   const activePlannerEvent =
-    filteredEvents.find((event) => event.id === selectedPlannerEventId) ?? null;
+    displayedPlannerEvents.find((event) => event.id === selectedPlannerEventId) ??
+    null;
+  const cachedPlannerEvents = useMemo(() => {
+    const targetMonthKeys = new Set(
+      PLANNER_EVENT_CACHE_OFFSETS.map((offset) =>
+        getRegionMonthKey(
+          getCalendarMonthByOffset(settledPlannerMonth, offset),
+        ),
+      ),
+    );
+
+    return events
+      .filter((event) => targetMonthKeys.has(getRegionMonthKey(event.date)))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [events, settledPlannerMonth]);
+  const activeCachedPlannerEvent = activePlannerEvent
+    ? cachedPlannerEvents.find((event) => event.id === activePlannerEvent.id)
+    : null;
   const activePlannerDateKeys = useMemo(
     () =>
       new Set(
@@ -362,12 +430,10 @@ function MobileMonthPlanner({
     const flickThreshold = 42;
     const minimumVisibleThreshold = monthWidth * 0.12;
 
-    let nextOffset: -1 | 0 | 1 = 0;
+    let nextOffset = 0;
 
-    if (displacement <= -positionThreshold) {
-      nextOffset = -1;
-    } else if (displacement >= positionThreshold) {
-      nextOffset = 1;
+    if (Math.abs(displacement) >= positionThreshold) {
+      nextOffset = displacement > 0 ? 1 : -1;
     } else if (
       Math.abs(touchDeltaX) >= flickThreshold &&
       Math.abs(displacement) >= minimumVisibleThreshold
@@ -390,6 +456,8 @@ function MobileMonthPlanner({
     }
 
     plannerCommitTimerRef.current = window.setTimeout(() => {
+      plannerCommitTimerRef.current = null;
+
       if (nextOffset === 0) {
         isPlannerAnimatingRef.current = false;
         plannerPendingOffsetRef.current = null;
@@ -399,7 +467,14 @@ function MobileMonthPlanner({
       onMonthSelect(
         getCalendarMonthByOffset(selectedMonthRef.current, nextOffset),
       );
-    }, 240);
+
+      window.setTimeout(() => {
+        if (plannerPendingOffsetRef.current === nextOffset) {
+          isPlannerAnimatingRef.current = false;
+          plannerPendingOffsetRef.current = null;
+        }
+      }, PLANNER_COMMIT_DELAY_MS + 180);
+    }, PLANNER_COMMIT_DELAY_MS);
   };
 
   const schedulePlannerSettle = () => {
@@ -466,22 +541,14 @@ function MobileMonthPlanner({
           onTouchMove={handlePlannerTouchMove}
           onTouchEnd={handlePlannerTouchEnd}
           onTouchCancel={handlePlannerTouchCancel}
-          className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label="Calendario mensual deslizable"
         >
-          {plannerMonths.map((month) => {
-            const monthParts = getRegionCalendarParts(month);
-            const monthCells = getPlannerMonthCells(month);
-            const isCenterMonth =
-              monthParts.year === selectedMonthParts.year &&
-              monthParts.month === selectedMonthParts.month;
-
+          {plannerMonthData.map(({ monthParts, monthCells, monthKey }) => {
             return (
               <div
-                key={`${monthParts.year}-${monthParts.month}`}
-                className={`w-full shrink-0 snap-center px-4 pb-4 pt-3 transition-opacity bg-paper-highlight ${
-                  isCenterMonth ? "opacity-100" : "opacity-55"
-                }`}
+                key={monthKey}
+                className="w-full shrink-0 snap-center bg-paper-highlight px-4 pb-4 pt-3"
               >
                 <div className="mb-3 flex items-end justify-between border-b border-border-line pb-2">
                   <div>
@@ -584,16 +651,32 @@ function MobileMonthPlanner({
               Eventos del mes
             </p>
             <p className="type-system text-[13px] text-ink-muted">
-              {filteredEvents.length === 0
+              {isPlannerMonthSettling
+                ? "Cargando eventos"
+                : displayedPlannerEvents.length === 0
                 ? "No hay eventos programados"
-                : `${filteredEvents.length} ${
-                    filteredEvents.length === 1 ? "evento" : "eventos"
+                : `${displayedPlannerEvents.length} ${
+                    displayedPlannerEvents.length === 1 ? "evento" : "eventos"
                   }`}
             </p>
           </div>
         </div>
 
-        {filteredEvents.length === 0 ? (
+        {isPlannerMonthSettling ? (
+          <div
+            className="border border-border-line bg-paper-highlight px-5 py-12 text-center"
+            role="status"
+            aria-live="polite"
+          >
+            <div
+              className="mx-auto h-11 w-11 animate-spin rounded-full border-4 border-[#b8cbe1] border-t-[#2f5e93]"
+              aria-hidden="true"
+            />
+            <p className="type-system mt-4 text-sm font-semibold text-ink">
+              Cargando eventos...
+            </p>
+          </div>
+        ) : displayedPlannerEvents.length === 0 ? (
           <div className="border border-border-line bg-paper-highlight px-5 py-7 text-center">
             <Calendar className="mx-auto mb-3 h-8 w-8 text-ink-muted-light/50" />
             <p className="type-system text-sm font-semibold text-ink">
@@ -605,7 +688,7 @@ function MobileMonthPlanner({
           </div>
         ) : (
           <div className="space-y-2">
-            {filteredEvents.map((event) => {
+            {displayedPlannerEvents.map((event) => {
               const thumbnailUrl = getEventCardThumbnailUrl(
                 event.image,
                 "compact",
@@ -664,14 +747,33 @@ function MobileMonthPlanner({
           </div>
         )}
 
-        {activePlannerEvent && (
+        {!isPlannerMonthSettling && activeCachedPlannerEvent && (
           <div className="mt-5 border-t border-border-line pt-4">
-            <EventCard
-              event={activePlannerEvent}
-              onRegister={onRegister}
-              showAlbumButton={activePlannerEvent.status === "past"}
-              tone="editorial"
-            />
+            <div className="relative">
+              {cachedPlannerEvents.map((event) => {
+                const isActive = event.id === activeCachedPlannerEvent.id;
+
+                return (
+                  <div
+                    key={event.id}
+                    aria-hidden={!isActive}
+                    className={
+                      isActive
+                        ? "relative"
+                        : "invisible pointer-events-none absolute inset-x-0 top-0"
+                    }
+                  >
+                    <EventCard
+                      event={event}
+                      onRegister={onRegister}
+                      showAlbumButton={event.status === "past"}
+                      tone="editorial"
+                      idPrefix="month-planner"
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -710,6 +812,8 @@ export function EventsFeed({
   const [isMonthPlannerEnabled, setIsMonthPlannerEnabled] = useState(false);
   const [selectedPlannerEvent, setSelectedPlannerEvent] =
     useState<Event | null>(null);
+  const [thumbnailPreloadMonth, setThumbnailPreloadMonth] =
+    useState(selectedMonth);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -778,11 +882,27 @@ export function EventsFeed({
     : "";
 
   useEffect(() => {
+    if (!isMonthPlannerEnabled) {
+      setThumbnailPreloadMonth(selectedMonth);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setThumbnailPreloadMonth(selectedMonth);
+    }, PLANNER_CACHE_SETTLE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [isMonthPlannerEnabled, selectedMonth]);
+
+  useEffect(() => {
     if (!isMobile || !canPreloadEventThumbnails()) return;
 
     const targetMonthKeys = new Set(
       PRELOAD_MONTH_OFFSETS.map((offset) => {
-        const targetMonth = getCalendarMonthByOffset(selectedMonth, offset);
+        const targetMonth = getCalendarMonthByOffset(
+          thumbnailPreloadMonth,
+          offset,
+        );
         const parts = getRegionCalendarParts(targetMonth);
         return `${parts.year}-${parts.month}`;
       }),
@@ -815,7 +935,7 @@ export function EventsFeed({
         image.src = "";
       });
     };
-  }, [events, isMobile, selectedMonth]);
+  }, [events, isMobile, thumbnailPreloadMonth]);
 
   useEffect(() => {
     if (!pendingHashEventId) return;
@@ -973,7 +1093,7 @@ export function EventsFeed({
         {/* Calendar section */}
         <section
           id="calendario"
-          className="mt-5 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-t md:border-t-0 border-border/70 bg-muted/20"
+          className="mt-0 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-border/70 bg-muted/20"
         >
           <div className="mt-1 max-w-4xl mx-auto w-full">
 
@@ -1038,7 +1158,6 @@ export function EventsFeed({
               <MobileMonthPlanner
                 events={events}
                 selectedMonth={selectedMonth}
-                filteredEvents={filteredEvents}
                 selectedPlannerEvent={selectedPlannerEvent}
                 onMonthSelect={handleMonthSelect}
                 onEventPreview={handlePlannerEventPreview}

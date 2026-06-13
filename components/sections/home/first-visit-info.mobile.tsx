@@ -51,6 +51,7 @@ const CARD_HIDE_DELAY_MS = 120;
 const CARD_FADE_DURATION_MS = 200;
 const CARD_COLLAPSE_DELAY_MS = CARD_HIDE_DELAY_MS + CARD_FADE_DURATION_MS;
 const CARD_COLLAPSE_DURATION_MS = 250;
+const CARD_EXPANDED_MAX_HEIGHT_FALLBACK = 280;
 
 export function FirstVisitInfoMobile() {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,7 +66,12 @@ export function FirstVisitInfoMobile() {
   const [dismissalChecked, setDismissalChecked] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
+  const [undoAvailable, setUndoAvailable] = useState(false);
   const [undoNoticeVisible, setUndoNoticeVisible] = useState(false);
+  const [expandedCardHeight, setExpandedCardHeight] = useState(
+    CARD_EXPANDED_MAX_HEIGHT_FALLBACK,
+  );
+  const cardContentRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const closeModalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -167,14 +173,34 @@ export function FirstVisitInfoMobile() {
   }, []);
 
   useEffect(() => {
-    if (!isDismissed) {
+    if (!isDismissed || !undoAvailable) {
       setUndoNoticeVisible(false);
       return;
     }
 
     const raf = requestAnimationFrame(() => setUndoNoticeVisible(true));
     return () => cancelAnimationFrame(raf);
-  }, [isDismissed]);
+  }, [isDismissed, undoAvailable]);
+
+  useEffect(() => {
+    const content = cardContentRef.current;
+    if (!content) return;
+
+    const syncExpandedCardHeight = () => {
+      setExpandedCardHeight(Math.ceil(content.scrollHeight));
+    };
+
+    syncExpandedCardHeight();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(syncExpandedCardHeight);
+    resizeObserver.observe(content);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const scrollToQuestion = (question: string) => {
     requestAnimationFrame(() => {
@@ -230,6 +256,7 @@ export function FirstVisitInfoMobile() {
     }
 
     dismissTimeoutRef.current = setTimeout(() => {
+      setUndoAvailable(true);
       setIsDismissed(true);
     }, CARD_COLLAPSE_DELAY_MS + CARD_COLLAPSE_DURATION_MS);
   };
@@ -263,6 +290,7 @@ export function FirstVisitInfoMobile() {
     }
 
     setUndoNoticeVisible(false);
+    setUndoAvailable(false);
     setIsHiding(false);
     setIsDismissed(false);
     setOpenQuestion(INITIAL_OPEN_QUESTION);
@@ -272,11 +300,15 @@ export function FirstVisitInfoMobile() {
     return null;
   }
 
+  if (isDismissed && !undoAvailable) {
+    return null;
+  }
+
   if (isDismissed) {
     return (
       <section
         aria-label="InformaciÃ³n de primera visita ocultada"
-        className="md:hidden border-t bg-white px-[20px] py-3"
+        className="md:hidden border-y bg-white px-[20px] py-3"
       >
         <div
           className="flex items-center justify-between gap-3 border border-[#d9dee7] bg-paper-highlight px-3.5 py-3"
@@ -399,19 +431,17 @@ export function FirstVisitInfoMobile() {
   return (
     <section
       aria-label="Información para primera visita"
-      className="md:hidden border-t bg-white px-[20px] pb-[22px] pt-0"
+      className="md:hidden border-y bg-white px-[20px]"
       style={{
         opacity: isHiding ? 0 : 1,
-        maxHeight: isHiding ? 0 : 220,
+        maxHeight: isHiding ? 0 : expandedCardHeight,
         marginTop: isHiding ? 0 : undefined,
         marginBottom: isHiding ? 0 : undefined,
-        paddingTop: isHiding ? 0 : undefined,
-        paddingBottom: isHiding ? 0 : undefined,
         overflow: "hidden",
-        transition: `opacity ${CARD_FADE_DURATION_MS}ms ease, max-height ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms, margin ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms, padding ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms`,
+        transition: `opacity ${CARD_FADE_DURATION_MS}ms ease, max-height ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms, margin ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms`,
       }}
     >
-      <div className="pt-8">
+      <div ref={cardContentRef} className="py-8">
         <div className="flex items-start gap-3">
           <div className="relative mt-1.5 pr-12 h-[50px] w-[50px] shrink-0 overflow-hidden bg-[#1d3765]">
             <Image
