@@ -59,7 +59,7 @@ export default function ConfiguracionPage() {
     if (!isInstalled) {
       setSyncFeedback({
         tone: "error",
-        message: "Instala la app para preparar contenido sin conexion.",
+        message: "Instala la app para preparar contenido sin conexión.",
       });
       return;
     }
@@ -74,9 +74,9 @@ export default function ConfiguracionPage() {
       await refreshStorageEstimate();
       setSyncFeedback({
         tone: "success",
-        message: "Sincronizacion completada.",
+        message: "Sincronización completada.",
       });
-    } catch (error) {
+    } catch {
       setSyncFeedback({
         tone: "error",
         message: "No se pudo sincronizar. Intenta de nuevo.",
@@ -96,14 +96,14 @@ export default function ConfiguracionPage() {
       <AppHeader behavior={headerBehavior} />
       <div className="pt-[51px] md:pt-0 max-w-[950px] mx-auto px-4 md:px-6 py-8 space-y-6">
         <section className="bg-white border border-border/60 p-5">
-          <h1 className="text-lg font-bold text-foreground uppercase tracking-wide">Configuracion</h1>
+          <h1 className="text-lg font-bold text-foreground uppercase tracking-wide">Configuración</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ajusta tus preferencias para usar la app instalada o la version web.
+            Ajusta tus preferencias para usar la app instalada o la versión web.
           </p>
           {!isInstalled && (
             <p className="mt-3 text-xs text-amber-700">
-              Estas opciones se guardan en este dispositivo. Para instalar la app, ve a la seccion
-              de instalacion.
+              Estas opciones se guardan en este dispositivo. Para instalar la app, ve a la sección
+              de instalación.
             </p>
           )}
         </section>
@@ -119,15 +119,15 @@ export default function ConfiguracionPage() {
         </section>
 
         <section className="bg-white border border-border/60 p-5 space-y-4">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Datos y sincronizacion</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Datos y sincronización</h2>
           <div className="flex flex-col gap-4">
             <div>
-              <p className="text-sm font-semibold text-foreground">Estado de conexion</p>
+              <p className="text-sm font-semibold text-foreground">Estado de conexión</p>
               <p className="text-xs text-muted-foreground">
-                {isOnline ? "En linea" : "Sin conexion"}
+                {isOnline ? "En línea" : "Sin conexión"}
                 {connection?.effectiveType ? ` · ${connection.effectiveType}` : ""}
               </p>
-              <p className="text-xs text-muted-foreground">Ultima sincronizacion: {lastSyncLabel}</p>
+              <p className="text-xs text-muted-foreground">Última sincronización: {lastSyncLabel}</p>
               <p className="text-xs text-muted-foreground">
                 Almacenamiento usado: {storageUsed === null ? "No disponible" : formatBytes(storageUsed)}
               </p>
@@ -163,9 +163,9 @@ export default function ConfiguracionPage() {
         <section className="bg-white border border-border/60 p-5 space-y-3">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Analitica</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Analítica</h2>
               <p className="text-xs text-muted-foreground">
-                Ayudanos a mejorar con datos anonimos de uso.
+                Ayúdanos a mejorar con datos anónimos de uso.
               </p>
             </div>
             <Switch checked={analyticsOptIn} onCheckedChange={handleAnalytics} />

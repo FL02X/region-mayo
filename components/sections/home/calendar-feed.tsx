@@ -247,6 +247,7 @@ function MobileMonthPlanner({
   const isPlannerAnimatingRef = useRef(false);
   const plannerTouchStartXRef = useRef<number | null>(null);
   const plannerTouchDeltaXRef = useRef(0);
+  const didCommitCurrentTouchRef = useRef(false);
   const selectedMonthRef = useRef(selectedMonth);
   const plannerPendingOffsetRef = useRef<number | null>(null);
   const plannerMonthCellsCacheRef = useRef(
@@ -308,13 +309,33 @@ function MobileMonthPlanner({
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [events, settledPlannerMonth]);
+  const currentPlannerEvents = useMemo(() => {
+    const selectedParts = getRegionCalendarParts(selectedMonth);
+
+    return events
+      .filter((event) => {
+        const parts = getRegionCalendarParts(event.date);
+        return (
+          parts.month === selectedParts.month && parts.year === selectedParts.year
+        );
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [events, selectedMonth]);
   const selectedPlannerEventId =
     selectedPlannerEvent &&
     displayedPlannerEvents.some((event) => event.id === selectedPlannerEvent.id)
       ? selectedPlannerEvent.id
       : (displayedPlannerEvents[0]?.id ?? null);
+  const selectedCalendarEventId =
+    selectedPlannerEvent &&
+    currentPlannerEvents.some((event) => event.id === selectedPlannerEvent.id)
+      ? selectedPlannerEvent.id
+      : (currentPlannerEvents[0]?.id ?? null);
   const activePlannerEvent =
     displayedPlannerEvents.find((event) => event.id === selectedPlannerEventId) ??
+    null;
+  const activeCalendarEvent =
+    currentPlannerEvents.find((event) => event.id === selectedCalendarEventId) ??
     null;
   const cachedPlannerEvents = useMemo(() => {
     const targetMonthKeys = new Set(
@@ -335,9 +356,9 @@ function MobileMonthPlanner({
   const activePlannerDateKeys = useMemo(
     () =>
       new Set(
-        activePlannerEvent ? getEventPlannerDates(activePlannerEvent) : [],
+        activeCalendarEvent ? getEventPlannerDates(activeCalendarEvent) : [],
       ),
-    [activePlannerEvent],
+    [activeCalendarEvent],
   );
 
   const eventsByDay = useMemo(() => {
@@ -387,6 +408,7 @@ function MobileMonthPlanner({
         isRecenteringPlannerRef.current = false;
         isPlannerAnimatingRef.current = false;
         plannerPendingOffsetRef.current = null;
+        didCommitCurrentTouchRef.current = false;
       });
     };
 
@@ -405,7 +427,14 @@ function MobileMonthPlanner({
     };
   }, []);
 
-  const commitPlannerPosition = (touchDeltaX = 0) => {
+  const commitPlannerPosition = (
+    touchDeltaX = 0,
+    source: "scroll" | "touch" = "scroll",
+  ) => {
+    if (source === "scroll" && didCommitCurrentTouchRef.current) {
+      return;
+    }
+
     if (
       isRecenteringPlannerRef.current ||
       isPlannerAnimatingRef.current ||
@@ -442,6 +471,10 @@ function MobileMonthPlanner({
     }
 
     const targetLeft = centerLeft + nextOffset * monthWidth;
+
+    if (source === "touch") {
+      didCommitCurrentTouchRef.current = true;
+    }
 
     isPlannerAnimatingRef.current = true;
     plannerPendingOffsetRef.current = nextOffset;
@@ -498,6 +531,7 @@ function MobileMonthPlanner({
 
   const handlePlannerTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     isPlannerTouchingRef.current = true;
+    didCommitCurrentTouchRef.current = false;
     plannerTouchStartXRef.current = event.touches[0]?.clientX ?? null;
     plannerTouchDeltaXRef.current = 0;
   };
@@ -518,7 +552,7 @@ function MobileMonthPlanner({
     plannerTouchStartXRef.current = null;
     plannerTouchDeltaXRef.current = 0;
 
-    commitPlannerPosition(touchDeltaX);
+    commitPlannerPosition(touchDeltaX, "touch");
   };
 
   const handlePlannerTouchCancel = () => {
@@ -526,7 +560,7 @@ function MobileMonthPlanner({
     plannerTouchStartXRef.current = null;
     plannerTouchDeltaXRef.current = 0;
 
-    commitPlannerPosition();
+    commitPlannerPosition(0, "touch");
   };
 
   return (

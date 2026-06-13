@@ -1,26 +1,26 @@
-import { Metadata } from "next"
-import { readInitialViewMode } from "@/lib/cookie-utils"
-import { AppHeader } from "@/components/layout/nav-bar"
-import { DirectorioContent } from "@/components/sections/pastores/pastores-content"
-import Chatbot from "@/components/shared/chatbot"
-import { getPastors, getRegionConfig } from "@/lib/api"
+import type { Metadata } from "next";
+import { readInitialViewMode } from "@/lib/cookie-utils";
+import { AppHeader } from "@/components/layout/nav-bar";
+import { DirectorioContent } from "@/components/sections/pastores/pastores-content";
+import Chatbot from "@/components/shared/chatbot";
+import { getPastors, getRegionConfig } from "@/lib/api";
+import { buildPageMetadata } from "@/lib/seo";
 
-// On-demand revalidation: only rebuild when webhook is triggered from Sanity
-// Optimized for free Vercel plan with low traffic
-// Page will be statically generated at build time and NOT revalidated automatically
 export const revalidate = false;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Pastores | IGC Región Mayo",
-  description: "Conoce a los pastores de la Región Mayo y las iglesias que sirven en nuestra comunidad.",
-}
+  description:
+    "Conoce a los pastores de la Región Mayo y las iglesias que sirven en nuestra comunidad.",
+  canonicalPath: "/pastores",
+});
 
 export default async function DirectorioPage() {
-  const initialViewMode = await readInitialViewMode("rm-view-mode-pastores")
+  const initialViewMode = await readInitialViewMode("rm-view-mode-pastores");
   const [region, pastors] = await Promise.all([
     getRegionConfig("region-mayo"),
     getPastors("region-mayo"),
-  ])
+  ]);
 
   return (
     <main className="min-h-screen bg-[#f1f1f1]">
@@ -41,5 +41,5 @@ export default async function DirectorioPage() {
       </div>
       <Chatbot />
     </main>
-  )
+  );
 }

@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { WifiOff } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Sin conexión | IGC Región Mayo",
+  description: "Esta sección necesita internet. Vuelve cuando tengas conexión.",
+  canonicalPath: "/offline",
+  noIndex: true,
+});
 
 export default function OfflinePage() {
   return (
@@ -8,10 +17,10 @@ export default function OfflinePage() {
         <div className="mx-auto h-12 w-12 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
           <WifiOff className="h-6 w-6 text-amber-700" aria-hidden="true" />
         </div>
-        <h1 className="mt-4 text-lg font-bold text-[#1f2937]">Sin conexion</h1>
+        <h1 className="mt-4 text-lg font-bold text-[#1f2937]">Sin conexión</h1>
         <p className="mt-2 text-sm text-[#4b5563]">
-          Esta seccion necesita internet. Si ya habias visitado la pagina, intenta volver cuando
-          tengas conexion.
+          Esta sección necesita internet. Si ya habías visitado la página, intenta volver cuando
+          tengas conexión.
         </p>
         <div className="mt-4">
           <Link

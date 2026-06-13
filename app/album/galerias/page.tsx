@@ -4,13 +4,15 @@ import { SectionNavBar } from "@/components/layout/section-nav-bar";
 import { AlbumSectionContent } from "@/components/sections/album/album-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getAlbums, getRegionConfig } from "@/lib/api";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const revalidate = false;
 
-export const metadata: Metadata = {
-  title: "Galería | IGC Region Mayo",
-  description: "Fotos y galería de la Region Mayo.",
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Galería | IGC Región Mayo",
+  description: "Fotos y galerías de la Región Mayo.",
+  canonicalPath: "/album/galerias",
+});
 
 export default async function AlbumGaleriasPage() {
   const [region, albums] = await Promise.all([
@@ -24,7 +26,12 @@ export default async function AlbumGaleriasPage() {
         instagramUrl={region?.socialLinks.instagram}
         facebookUrl={region?.socialLinks.facebook}
       />
-      <SectionNavBar currentLabel="Galería" parentHref="/album" parentLabel="Album" icon="album" />
+      <SectionNavBar
+        currentLabel="Galería"
+        parentHref="/album"
+        parentLabel="Álbum"
+        icon="album"
+      />
       <AlbumSectionContent albums={albums} section="galerias" />
       <Chatbot />
     </main>

@@ -1,3 +1,4 @@
+﻿import type { Metadata } from "next";
 import { AppHeader } from "@/components/layout/nav-bar";
 import { readInitialViewMode } from "@/lib/cookie-utils";
 import { LocationNotificationBar } from "@/components/layout/location-notification-bar";
@@ -18,6 +19,14 @@ import {
   getLatestSocialPosts,
   getTemplos,
 } from "@/lib/api";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Región Mayo",
+  description:
+    "Consulta el calendario regional, templos, pastores, coros, directorio y álbumes de la Iglesia Gentil de Cristo en la Región Mayo.",
+  canonicalPath: "/",
+});
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity
 // Optimized for free Vercel plan with low traffic

@@ -1,13 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import { TimeProvider } from "@/lib/time-context";
+import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo";
 import { HighlightClearer } from "@/components/layout/highlight-clearer";
 import { RouteBodyFlags } from "@/components/layout/route-body-flags";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { AnalyticsGate } from "@/components/pwa/analytics-gate";
-import { Suspense } from "react";
 import "./globals.css";
+
+const siteUrl = getSiteUrl();
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,24 +22,39 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Iglesia Gentil de Cristo — Región Mayo | Sitio oficial regional",
-  description:
-    "Consulte el calendario regional, templos, pastores, coros y actividades de la Iglesia Gentil de Cristo en la Región Mayo.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
   generator: "Next.js",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Region Mayo",
+    title: SITE_NAME,
     statusBarStyle: "default",
   },
   icons: {
     icon: "/images/region-mayo-logo-192.jpg",
     apple: "/images/region-mayo-logo-180.jpg",
   },
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Iglesia Gentil de Cristo — Región Mayo | Sitio oficial regional",
-    description: "Consulte el calendario regional, templos, pastores, coros y actividades de la Iglesia Gentil de Cristo en la Región Mayo.",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
     type: "website",
+    url: "/",
+    siteName: SITE_NAME,
+    images: [{ url: absoluteUrl("/opengraph-image") }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [absoluteUrl("/opengraph-image")],
   },
 };
 
@@ -56,9 +74,7 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body
-        className={`${inter.variable} font-sans antialiased`}
-      >
+      <body className={`${inter.variable} font-sans antialiased`}>
         <a href="#main-content" className="skip-link">
           Saltar al contenido principal
         </a>

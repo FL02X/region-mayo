@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/layout/nav-bar";
 import { SectionNavBar } from "@/components/layout/section-nav-bar";
 import { AlbumContent } from "@/components/sections/album/album-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getAlbumBySlug, getAlbums, getRegionConfig } from "@/lib/api";
+import { SITE_NAME } from "@/lib/seo";
 
 export const revalidate = false;
 
@@ -29,22 +30,42 @@ export async function generateMetadata({
 
   if (!album || album.albumType !== "photos") {
     return {
-      title: "Album no encontrado | IGC Region Mayo",
+      title: `Álbum no encontrado | ${SITE_NAME}`,
+      alternates: {
+        canonical: "/album/galerias",
+      },
     };
   }
 
+  const title = `${album.title} | Galería | ${SITE_NAME}`;
+  const description = album.description || `Fotos de ${album.title} en la Región Mayo.`;
+
   return {
-    title: `${album.title} | Albumes | IGC Region Mayo`,
-    description: album.description || `Fotos de ${album.title} en la region Mayo.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/album/galerias/${slug}`,
+    },
     openGraph: {
-      title: album.title,
-      description: album.description || `Fotos de ${album.title} en la region Mayo.`,
+      title,
+      description,
+      type: "website",
+      url: `/album/galerias/${slug}`,
+      siteName: SITE_NAME,
       images: [{ url: album.coverImage }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [album.coverImage],
     },
   };
 }
 
-export default async function AlbumGaleriasDetailPage({ params }: AlbumDetailPageProps) {
+export default async function AlbumGaleriasDetailPage({
+  params,
+}: AlbumDetailPageProps) {
   const { slug } = await params;
   const [region, album] = await Promise.all([
     getRegionConfig("region-mayo"),
@@ -62,7 +83,7 @@ export default async function AlbumGaleriasDetailPage({ params }: AlbumDetailPag
       <SectionNavBar
         currentLabel={album.title}
         parentHref="/album/galerias"
-        parentLabel="Galerias"
+        parentLabel="Galería"
         icon="album"
       />
       <AlbumContent album={album} />

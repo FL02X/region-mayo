@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/layout/nav-bar";
 import { SectionNavBar } from "@/components/layout/section-nav-bar";
 import { AlbumContent } from "@/components/sections/album/album-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getAlbumBySlug, getAlbums, getRegionConfig } from "@/lib/api";
+import { SITE_NAME } from "@/lib/seo";
 
 export const revalidate = false;
 
@@ -29,22 +30,42 @@ export async function generateMetadata({
 
   if (!album || album.albumType !== "youtube") {
     return {
-      title: "Grabacion no encontrada | IGC Region Mayo",
+      title: `Grabación no encontrada | ${SITE_NAME}`,
+      alternates: {
+        canonical: "/album/grabaciones",
+      },
     };
   }
 
+  const title = `${album.title} | Grabaciones | ${SITE_NAME}`;
+  const description = album.description || `Grabación de ${album.title} en la Región Mayo.`;
+
   return {
-    title: `${album.title} | Grabaciones | IGC Region Mayo`,
-    description: album.description || `Grabacion de ${album.title} en la region Mayo.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/album/grabaciones/${slug}`,
+    },
     openGraph: {
-      title: album.title,
-      description: album.description || `Grabacion de ${album.title} en la region Mayo.`,
+      title,
+      description,
+      type: "website",
+      url: `/album/grabaciones/${slug}`,
+      siteName: SITE_NAME,
       images: [{ url: album.coverImage }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [album.coverImage],
     },
   };
 }
 
-export default async function AlbumGrabacionesDetailPage({ params }: AlbumDetailPageProps) {
+export default async function AlbumGrabacionesDetailPage({
+  params,
+}: AlbumDetailPageProps) {
   const { slug } = await params;
   const [region, album] = await Promise.all([
     getRegionConfig("region-mayo"),

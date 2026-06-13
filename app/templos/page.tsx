@@ -1,20 +1,19 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { readInitialViewMode } from "@/lib/cookie-utils";
 import { AppHeader } from "@/components/layout/nav-bar";
 import { TemplosContent } from "@/components/sections/templos/templos-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getTemplos, getRegionConfig } from "@/lib/api";
+import { buildPageMetadata } from "@/lib/seo";
 
-// On-demand revalidation: only rebuild when webhook is triggered from Sanity
-// Optimized for free Vercel plan with low traffic
-// Page will be statically generated at build time and NOT revalidated automatically
 export const revalidate = false;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Templos | IGC Región Mayo",
   description:
     "Directorio de iglesias locales de la Región Mayo. Encuentra horarios, pastores y coros de cada templo.",
-};
+  canonicalPath: "/templos",
+});
 
 export default async function TemploPage() {
   const initialViewMode = await readInitialViewMode("rm-view-mode-templos");

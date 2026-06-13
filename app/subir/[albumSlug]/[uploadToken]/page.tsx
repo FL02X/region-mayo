@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from 'next/link'
 import { ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -6,9 +7,16 @@ import { SectionNavBar } from '@/components/layout/section-nav-bar'
 import { AlbumUploadForm } from '@/components/sections/album/album-upload-form'
 import { getAlbumUploadPageAccess } from '@/lib/album-submissions'
 import { getRegionConfig } from '@/lib/api'
+import { buildPageMetadata } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+export const metadata: Metadata = buildPageMetadata({
+  title: "Subida privada | IGC Región Mayo",
+  description: "Página privada para compartir fotos de un álbum.",
+  canonicalPath: "/subir",
+  noIndex: true,
+})
 
 type UploadPageProps = {
   params: Promise<{
