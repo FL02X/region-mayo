@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
+import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME } from "@/lib/seo";
 
 export const runtime = "edge";
 export const size = {
@@ -39,7 +39,7 @@ export default function TwitterImage() {
         />
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
           <div style={{ fontSize: "68px", lineHeight: 1.05, fontWeight: 800 }}>
-            {SITE_NAME}
+            {SITE_FULL_NAME}
           </div>
           <div style={{ fontSize: "28px", lineHeight: 1.35, color: "rgba(255,255,255,0.9)" }}>
             {SITE_DESCRIPTION}

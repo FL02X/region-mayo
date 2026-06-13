@@ -8,7 +8,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const revalidate = false;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Búsqueda | IGC Región Mayo",
+  title: "Búsqueda",
   description: "Busca pastores, coros, directivos, templos y eventos en la Región Mayo.",
   canonicalPath: "/buscar",
   noIndex: true,

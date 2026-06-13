@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const revalidate = false;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Directiva | IGC Región Mayo",
+  title: "Directiva",
   description:
     "Conoce a los miembros de la directiva de la Región Mayo y contacta con ellos.",
   canonicalPath: "/directiva",

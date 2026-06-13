@@ -4,7 +4,7 @@ import { WifiOff } from "lucide-react";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Sin conexión | IGC Región Mayo",
+  title: "Sin conexión",
   description: "Esta sección necesita internet. Vuelve cuando tengas conexión.",
   canonicalPath: "/offline",
   noIndex: true,

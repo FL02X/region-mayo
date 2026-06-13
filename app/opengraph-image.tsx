@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
+import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME } from "@/lib/seo";
 
 export const runtime = "edge";
 export const size = {
@@ -49,7 +49,7 @@ export default function OpenGraphImage() {
                 objectFit: "cover",
               }}
             />
-            <span>{SITE_NAME}</span>
+            <span>{SITE_FULL_NAME}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div

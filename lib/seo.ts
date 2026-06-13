@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 
-export const SITE_NAME = "Iglesia Gentil de Cristo Región Mayo";
+export const SITE_FULL_NAME = "Iglesia Gentil de Cristo Region Mayo";
+export const SITE_NAME = "IGC Region Mayo";
 export const SITE_DESCRIPTION =
   "Calendario regional, templos, pastores, coros, directiva y álbumes de la Iglesia Gentil de Cristo en la Región Mayo.";
 export const DEFAULT_OG_IMAGE_PATH = "/opengraph-image";
@@ -65,7 +66,7 @@ export function buildPageMetadata({
       title,
       description,
       url: canonical,
-      siteName: SITE_NAME,
+      siteName: SITE_FULL_NAME,
       type: "website",
       images: [{ url: ogImage }],
     },

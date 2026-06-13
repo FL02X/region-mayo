@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const revalidate = false;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Grabaciones | IGC Región Mayo",
+  title: "Grabaciones",
   description: "Grabaciones y directos de la Región Mayo.",
   canonicalPath: "/album/grabaciones",
 });

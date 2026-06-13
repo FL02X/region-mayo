@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const revalidate = false;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Pastores | IGC Región Mayo",
+  title: "Pastores",
   description:
     "Conoce a los pastores de la Región Mayo y las iglesias que sirven en nuestra comunidad.",
   canonicalPath: "/pastores",

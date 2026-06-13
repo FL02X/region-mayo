@@ -2,9 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "IGC Region Mayo",
+    name: "Iglesia Gentil de Cristo Region Mayo",
     short_name: "IGC Mayo",
-    description: "Consulte el calendario regional, templos, pastores, coros y actividades de la Iglesia Gentil de Cristo en la Región Mayo.",
+    description:
+      "Consulte el calendario regional, templos, pastores, coros y actividades de la Iglesia Gentil de Cristo en la Region Mayo.",
     start_url: "/",
     scope: "/",
     display: "standalone",

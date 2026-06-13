@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { TimeProvider } from "@/lib/time-context";
-import { absoluteUrl, SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo";
+import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME, SITE_NAME, getSiteUrl } from "@/lib/seo";
 import { HighlightClearer } from "@/components/layout/highlight-clearer";
 import { RouteBodyFlags } from "@/components/layout/route-body-flags";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: SITE_NAME,
+    title: SITE_FULL_NAME,
     statusBarStyle: "default",
   },
   icons: {
@@ -43,16 +43,16 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: SITE_NAME,
+    title: SITE_FULL_NAME,
     description: SITE_DESCRIPTION,
     type: "website",
     url: "/",
-    siteName: SITE_NAME,
+    siteName: SITE_FULL_NAME,
     images: [{ url: absoluteUrl("/opengraph-image") }],
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_NAME,
+    title: SITE_FULL_NAME,
     description: SITE_DESCRIPTION,
     images: [absoluteUrl("/opengraph-image")],
   },

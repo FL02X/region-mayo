@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const revalidate = false;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Coros Locales | IGC Región Mayo",
+  title: "Coros Locales",
   description:
     "Descubre los coros locales de la Región Mayo y contacta a sus presidentes.",
   canonicalPath: "/coros",

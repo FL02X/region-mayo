@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const revalidate = false;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Templos | IGC Región Mayo",
+  title: "Templos",
   description:
     "Directorio de iglesias locales de la Región Mayo. Encuentra horarios, pastores y coros de cada templo.",
   canonicalPath: "/templos",

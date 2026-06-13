@@ -12,7 +12,7 @@ import { buildPageMetadata } from '@/lib/seo'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const metadata: Metadata = buildPageMetadata({
-  title: "Subida privada | IGC Región Mayo",
+  title: "Subida privada",
   description: "Página privada para compartir fotos de un álbum.",
   canonicalPath: "/subir",
   noIndex: true,

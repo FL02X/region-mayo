@@ -8,7 +8,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const revalidate = false;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Álbum | IGC Región Mayo",
+  title: "Álbum",
   description:
     "Fotos, galerías y grabaciones recientes de la Región Mayo.",
   canonicalPath: "/album",

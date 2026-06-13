@@ -5,7 +5,7 @@ import { SectionNavBar } from "@/components/layout/section-nav-bar";
 import { AlbumContent } from "@/components/sections/album/album-content";
 import Chatbot from "@/components/shared/chatbot";
 import { getAlbumBySlug, getAlbums, getRegionConfig } from "@/lib/api";
-import { SITE_NAME } from "@/lib/seo";
+import { SITE_FULL_NAME, SITE_NAME } from "@/lib/seo";
 
 export const revalidate = false;
 
@@ -51,7 +51,7 @@ export async function generateMetadata({
       description,
       type: "website",
       url: `/album/galerias/${slug}`,
-      siteName: SITE_NAME,
+      siteName: SITE_FULL_NAME,
       images: [{ url: album.coverImage }],
     },
     twitter: {
