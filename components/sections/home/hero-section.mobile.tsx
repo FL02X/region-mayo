@@ -23,7 +23,7 @@ const GPS_CTA_COLOR = "";
 const HERO_WATERMARK_LEFT = "84%";
 const HERO_WATERMARK_TOP = "73%";
 const HERO_WATERMARK_LAYER_HEIGHT = "170px";
-const HERO_WATERMARK_OPACITY = 0.90;
+const HERO_WATERMARK_OPACITY = 1;
 const MOBILE_HERO_IMAGE_WIDTH = 828;
 const editorialFont = Newsreader({
   subsets: ["latin"],
@@ -236,26 +236,30 @@ export function MobileHero({
 
       <div
         data-mobile-hero-title-band
-        className="paper-cut-y relative z-10 -mt-[10px] w-full bg-brand border-[#000000] px-5 pb-4 pt-4 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-10px_18px_rgba(20,35,50,0.10)]"
+        className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] border-[#000000] px-5 pb-4 pt-4 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-10px_18px_rgba(20,35,50,0.10)]"
       >
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden"
           style={{ height: HERO_WATERMARK_LAYER_HEIGHT }}
         >
-          <img
-            src="/images/logo_hero.png"
-            alt=""
-            data-offline-required="true"
-            className="absolute h-[155px] w-[155px] select-none object-contain"
+          <span
+            className="absolute h-[155px] w-[155px] select-none bg-brand"
             style={{
               left: HERO_WATERMARK_LEFT,
               top: HERO_WATERMARK_TOP,
               opacity: HERO_WATERMARK_OPACITY,
+              filter: "brightness(1.35) saturate(1.3) contrast(1.15) drop-shadow(0 0 10px rgba(47, 94, 147, 0.42))",
               transform: "translate(-50%, -50%)",
+              WebkitMaskImage: "url('/images/logo_hero.png')",
+              maskImage: "url('/images/logo_hero.png')",
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
+              WebkitMaskPosition: "center",
+              maskPosition: "center",
+              WebkitMaskSize: "contain",
+              maskSize: "contain",
             }}
-            loading="eager"
-            decoding="async"
           />
         </div>
         <div className="relative z-10 flex items-center">
