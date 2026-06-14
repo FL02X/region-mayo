@@ -22,10 +22,13 @@ import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
-import { formatRegionEventDate } from "@/lib/region-date";
+import {
+  formatRegionWeekdayDayMonth,
+  getRegionCalendarParts,
+} from "@/lib/region-date";
+import { getEventMapsUrl } from "@/lib/event-share-text";
 import { useTime } from "@/lib/time-context";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
-import { calculateCountdown } from "@/lib/countdown-utils";
 import type {
   Event,
   HeroImage,
@@ -63,7 +66,42 @@ interface HeroSectionProps {
   regionPresident: RegionPresident | null;
 }
 
-function CompactCountdownCell({ value, label }: { value: number; label: string }) {
+type CountdownOccurrence = {
+  date: Date;
+  time: string;
+  note?: string;
+};
+
+type CountdownDisplay = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isDisabled: boolean;
+};
+
+const getRegionDateKey = (date: Date) => {
+  const parts = getRegionCalendarParts(date);
+  return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+};
+
+const getCountdownDisplay = (target: Date, now: Date): CountdownDisplay => {
+  const diffMs = Math.max(0, target.getTime() - now.getTime());
+  const msPerSecond = 1000;
+  const msPerMinute = msPerSecond * 60;
+  const msPerHour = msPerMinute * 60;
+  const msPerDay = msPerHour * 24;
+
+  return {
+    days: Math.floor(diffMs / msPerDay),
+    hours: Math.floor((diffMs % msPerDay) / msPerHour),
+    minutes: Math.floor((diffMs % msPerHour) / msPerMinute),
+    seconds: Math.floor((diffMs % msPerMinute) / msPerSecond),
+    isDisabled: false,
+  };
+};
+
+function CompactCountdownCell({ value, label, disabled = false }: { value: number; label: string; disabled?: boolean }) {
   const [displayValue, setDisplayValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -83,13 +121,13 @@ function CompactCountdownCell({ value, label }: { value: number; label: string }
   return (
     <div className="py-2.5 text-center">
       <div
-        className={`text-[24px] font-bold text-[#1f2833] tabular-nums leading-none transition-transform duration-200 ${
+        className={`text-[24px] font-bold tabular-nums leading-none transition-transform duration-200 ${
           isAnimating ? "-translate-y-[1px] scale-[0.97]" : "translate-y-0 scale-100"
-        }`}
+        } ${disabled ? "text-[#5b6876]" : "text-[#1f2833]"}`}
       >
         {String(displayValue).padStart(2, "0")}
       </div>
-      <p className="text-[9px] text-[#5b6876] uppercase tracking-[0.14em] mt-1 font-semibold">{label}</p>
+      <p className={`text-[9px] uppercase tracking-[0.14em] mt-1 font-semibold ${disabled ? "text-[#7a8490]" : "text-[#5b6876]"}`}>{label}</p>
     </div>
   );
 }
@@ -341,15 +379,22 @@ export function HeroSection({
     }
 
     events.forEach((event) => {
-      candidates.push({
-        type: "event",
-        id: event.id,
-        title: event.title,
-        date: event.date.getTime(),
-        time: event.time,
-        location: event.location,
-        address: event.address,
-        registrationEnabled: event.registrationEnabled,
+      const eventSchedule =
+        Array.isArray(event.schedule) && event.schedule.length > 0
+          ? event.schedule
+          : [{ date: event.date, time: event.time }];
+
+      eventSchedule.forEach((occurrence) => {
+        candidates.push({
+          type: "event",
+          id: event.id,
+          title: event.title,
+          date: occurrence.date.getTime(),
+          time: occurrence.time,
+          location: event.location,
+          address: event.address,
+          registrationEnabled: event.registrationEnabled,
+        });
       });
     });
 
@@ -427,10 +472,48 @@ export function HeroSection({
     return (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null;
   }, [spotlightHero, socialPosts]);
 
-  const countdownData = useMemo(() => {
-    if (!spotlightEvent) return null;
-    return calculateCountdown(spotlightEvent, currentTime);
-  }, [spotlightEvent, currentTime]);
+  const spotlightEventUrl = useMemo(() => {
+    if (!isDesktop || !spotlightEvent || typeof window === "undefined") return "";
+    return `${window.location.origin}/#${encodeURIComponent(spotlightEvent.id)}`;
+  }, [isDesktop, spotlightEvent]);
+  const spotlightEventSchedule = useMemo<CountdownOccurrence[]>(() => {
+    if (!spotlightEvent) return [];
+    const schedule =
+      Array.isArray(spotlightEvent.schedule) && spotlightEvent.schedule.length > 0
+        ? spotlightEvent.schedule
+        : [{ date: spotlightEvent.date, time: spotlightEvent.time }];
+
+    return [...schedule].sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [spotlightEvent]);
+  const countdownDisplay = useMemo<CountdownDisplay | null>(() => {
+    if (!spotlightEvent || spotlightEventSchedule.length === 0) return null;
+
+    const nowMs = currentTime.getTime();
+    const firstOccurrence = spotlightEventSchedule[0];
+    const currentDayKey = getRegionDateKey(currentTime);
+    const todayOccurrences = spotlightEventSchedule.filter(
+      (occurrence) => getRegionDateKey(occurrence.date) === currentDayKey,
+    );
+    const nextTodayOccurrence = todayOccurrences.find(
+      (occurrence) => occurrence.date.getTime() > nowMs,
+    );
+
+    if (nowMs < firstOccurrence.date.getTime()) {
+      return getCountdownDisplay(firstOccurrence.date, currentTime);
+    }
+
+    if (nextTodayOccurrence) {
+      return getCountdownDisplay(nextTodayOccurrence.date, currentTime);
+    }
+
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      isDisabled: true,
+    };
+  }, [spotlightEvent, spotlightEventSchedule, currentTime]);
 
   const slides = useMemo(() => {
     const cmsSlides = (heroImages ?? [])
@@ -537,14 +620,16 @@ export function HeroSection({
     }
   };
 
-  const timeUnits = countdownData
+  const timeUnits = countdownDisplay
     ? [
-        { value: countdownData.daysRemaining, label: "Días" },
-        { value: countdownData.hoursRemaining, label: "Hrs" },
-        { value: countdownData.minutesRemaining, label: "Min" },
-        { value: countdownData.secondsRemaining, label: "Seg" },
+        { value: countdownDisplay.days, label: "Días" },
+        { value: countdownDisplay.hours, label: "Hrs" },
+        { value: countdownDisplay.minutes, label: "Min" },
+        { value: countdownDisplay.seconds, label: "Seg" },
       ]
     : [];
+  const countdownIsDisabled = countdownDisplay?.isDisabled ?? false;
+  const spotlightEventMapsUrl = spotlightEvent ? getEventMapsUrl(spotlightEvent) : "";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -639,15 +724,25 @@ export function HeroSection({
                       {spotlightEvent.title}
                     </h3>
                     <div className="type-system space-y-1.5 text-[13px] mb-3.5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-start gap-2">
                         <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        <span>{formatRegionEventDate(spotlightEvent.date)} · {spotlightEvent.time}</span>
+                        <div className="space-y-1">
+                          {spotlightEventSchedule.map((occurrence, index) => (
+                            <span
+                              key={`${occurrence.date.toISOString()}-${index}`}
+                              className="block"
+                            >
+                              {formatRegionWeekdayDayMonth(occurrence.date)} · {occurrence.time}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 min-w-0">
                         <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        {spotlightEvent.googleMapsUrl ? (
+                        {spotlightEventMapsUrl ? (
                           <button
-                            onClick={() => window.open(spotlightEvent.googleMapsUrl!, "_blank")}
+                            type="button"
+                            onClick={() => window.open(spotlightEventMapsUrl, "_blank")}
                             className="inline-flex items-center gap-1 min-w-0 text-left hover:underline underline-offset-2 transition-colors"
                             style={{ color: spotlightAccent }}
                             aria-label="Abrir ubicación del próximo evento en Google Maps"
@@ -665,13 +760,14 @@ export function HeroSection({
                       </div>
                     </div>
 
-                    {countdownData && !countdownData.isPostEvent && (
-                      <div className="grid grid-cols-4 border border-[#d5dbe3] divide-x divide-[#d5dbe3] bg-white/95 mb-3">
+                    {countdownDisplay && (
+                      <div className={`grid grid-cols-4 border border-[#d5dbe3] divide-x divide-[#d5dbe3] bg-white/95 mb-3 ${countdownIsDisabled ? "opacity-60 saturate-0" : ""}`}>
                         {timeUnits.map((unit) => (
                           <CompactCountdownCell
                             key={unit.label}
                             value={unit.value}
                             label={unit.label}
+                            disabled={countdownIsDisabled}
                           />
                         ))}
                       </div>

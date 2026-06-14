@@ -61,6 +61,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   formatRegionDayMonth,
 } from "@/lib/region-date";
+import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
@@ -214,11 +215,7 @@ const getEventCoordinates = (event: Event) => {
 const buildGoogleMapsSearchUrl = (address: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
-const buildEventMapsUrl = (event: Event) => {
-  if (event.googleMapsUrl) return event.googleMapsUrl;
-  if (event.address) return buildGoogleMapsSearchUrl(event.address);
-  return "";
-};
+const buildEventMapsUrl = getEventMapsUrl;
 
 const openGoogleMaps = (url?: string, address?: string) => {
   const targetUrl = url || (address ? buildGoogleMapsSearchUrl(address) : "");
@@ -430,45 +427,7 @@ export function EventCard({
     updateScheduleScrollIndicators();
   };
 
-  const buildEventCopyText = () => {
-    const sections = [
-      [event.title],
-      [eventDateTimeLabel],
-      [
-        [event.location, event.address, eventMapsUrl]
-          .filter(Boolean)
-          .join("\n"),
-      ],
-      eventCoordinates ? [eventCoordinates] : [],
-      event.alimentos?.enabled
-        ? [
-            [
-              "Alimentos",
-              event.alimentos.location,
-              event.alimentos.description,
-              event.alimentos.googleMapsUrl,
-            ]
-              .filter(Boolean)
-              .join("\n"),
-          ]
-        : [],
-      event.juntaJuvenil?.enabled
-        ? [
-            [
-              "Junta Juvenil",
-              event.juntaJuvenil.location,
-              event.juntaJuvenil.description,
-              event.juntaJuvenil.googleMapsUrl,
-            ]
-              .filter(Boolean)
-              .join("\n"),
-          ]
-        : [],
-      [eventHighlightUrl],
-    ].filter((section) => section.length > 0 && section.some(Boolean));
-
-    return sections.map((section) => section.join("\n")).join("\n\n");
-  };
+  const buildEventCopyText = () => buildEventShareText(event, eventHighlightUrl);
 
   /* Does the card have any expandable details? */
   const hasDetails =

@@ -10,17 +10,25 @@ import {
   ChevronLeft,
   ChevronRight,
   HeartHandshake,
-  MapPin,
   Images,
+  MapPin,
   ExternalLink,
   Maximize2,
   Megaphone,
+  Copy,
+  Share2,
+  Map as MapIcon,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
-import { formatRegionWeekdayDayMonth } from "@/lib/region-date";
+import {
+  formatRegionWeekdayDayMonth,
+  getRegionCalendarParts,
+} from "@/lib/region-date";
+import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
 import type { HeroCandidate } from "@/lib/ranker";
@@ -28,7 +36,6 @@ import { pickHeroAndDeck, getAccentColor } from "@/lib/ranker";
 import { useTime } from "@/lib/time-context";
 import {
   getAlbumSharingEvents,
-  calculateCountdown,
 } from "@/lib/countdown-utils";
 
 interface CountdownSectionProps {
@@ -59,7 +66,186 @@ const MOBILE_FLOATING_CARD_CLASS =
 const MOBILE_FLOATING_BORDER_CLASS =
   "rounded-[2px]";
 
-function FlipCountdownCell({ value, label }: TimeUnit) {
+type CountdownOccurrence = {
+  date: Date;
+  time: string;
+  note?: string;
+};
+
+type CountdownDisplay = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isDisabled: boolean;
+};
+
+const getRegionDateKey = (date: Date) => {
+  const parts = getRegionCalendarParts(date);
+  return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+};
+
+const getCountdownDisplay = (target: Date, now: Date): CountdownDisplay => {
+  const diffMs = Math.max(0, target.getTime() - now.getTime());
+  const msPerSecond = 1000;
+  const msPerMinute = msPerSecond * 60;
+  const msPerHour = msPerMinute * 60;
+  const msPerDay = msPerHour * 24;
+
+  return {
+    days: Math.floor(diffMs / msPerDay),
+    hours: Math.floor((diffMs % msPerDay) / msPerHour),
+    minutes: Math.floor((diffMs % msPerHour) / msPerMinute),
+    seconds: Math.floor((diffMs % msPerMinute) / msPerSecond),
+    isDisabled: false,
+  };
+};
+
+const canUseNativeShare = () => {
+  if (typeof navigator === "undefined" || !("share" in navigator)) return false;
+
+  const userAgentData = navigator as Navigator & {
+    userAgentData?: { platform?: string };
+  };
+  const platform =
+    userAgentData.userAgentData?.platform ||
+    navigator.platform ||
+    navigator.userAgent;
+
+  return /Android|iPhone|iPad|iPod/i.test(platform);
+};
+
+const WhatsAppLogo = ({ className = "h-8 w-8" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M20.5 3.5A11.4 11.4 0 0 0 12.04 0C5.71 0 .56 5.14.56 11.47c0 2.02.53 4 1.55 5.76L0 24l6.98-2.06a11.45 11.45 0 0 0 5.04 1.17h.01c6.33 0 11.47-5.15 11.47-11.47 0-3.06-1.19-5.93-3.34-8.14Zm-8.46 17.67h-.01c-1.69 0-3.35-.46-4.79-1.34l-.34-.2-4.14 1.22 1.24-4.03-.22-.36a9.34 9.34 0 0 1-1.43-4.99c0-5.16 4.2-9.36 9.37-9.36 2.5 0 4.86.98 6.64 2.74a9.32 9.32 0 0 1 2.74 6.64c0 5.17-4.2 9.36-9.06 9.68Zm5.34-6.6c-.29-.15-1.72-.85-1.98-.95-.27-.1-.46-.15-.66.15-.2.29-.76.95-.93 1.14-.17.2-.34.22-.63.07-.29-.15-1.23-.45-2.34-1.43-.86-.77-1.45-1.72-1.62-2.01-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.52-.07-.15-.66-1.58-.9-2.16-.24-.57-.48-.49-.66-.5h-.56c-.2 0-.52.07-.79.37-.27.29-1.03 1-.99 2.44.05 1.45 1.06 2.85 1.21 3.04.15.2 2.08 3.18 5.04 4.46.71.31 1.27.5 1.71.64.72.23 1.38.2 1.9.12.58-.09 1.72-.7 1.96-1.37.24-.66.24-1.23.17-1.37-.07-.15-.27-.22-.56-.37Z" />
+  </svg>
+);
+
+function ShareFallbackModal({
+  isOpen,
+  title,
+  shareText,
+  onClose,
+}: {
+  isOpen: boolean;
+  title: string;
+  shareText: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  useLockBodyScroll(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  const copyShareText = async () => {
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Compartir evento"
+    >
+      <button
+        type="button"
+        className="absolute inset-0"
+        aria-label="Cerrar compartir"
+        onClick={onClose}
+      />
+      <div
+        className="relative w-full max-w-md overflow-hidden border border-black bg-white shadow-[0_18px_48px_rgba(0,0,0,0.45)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex h-14 items-center justify-between bg-[#757575] pl-5">
+          <h3 className="text-[17px] font-bold text-white">Compartir</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-full w-14 items-center justify-center bg-[#434343] text-white transition-colors hover:bg-[#2f2f2f]"
+            aria-label="Cerrar"
+          >
+            <X className="h-6 w-6" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="p-5">
+          <div className="mb-5 max-h-44 overflow-y-auto border border-border bg-[#f7f7f7] p-3">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              {shareText}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={copyShareText}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-2 hover:underline"
+            >
+              <Copy className="h-4 w-4" aria-hidden="true" />
+              {copied ? "Texto copiado" : "Copiar texto"}
+            </button>
+
+            <a
+              href={whatsappShareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-fit flex-col items-center gap-2 rounded-sm border border-border bg-white px-5 py-4 text-foreground transition-colors hover:bg-muted/40"
+              aria-label={`Compartir ${title} por WhatsApp`}
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white">
+                <WhatsAppLogo className="h-6 w-6" />
+              </span>
+              <span className="text-[12px] font-semibold uppercase tracking-[0.18em] text-ink">
+                WhatsApp
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function FlipCountdownCell({
+  value,
+  label,
+  className = "",
+  labelClassName = "",
+  disabled = false,
+}: TimeUnit & {
+  className?: string;
+  labelClassName?: string;
+  disabled?: boolean;
+}) {
   const [displayValue, setDisplayValue] = useState(value);
   const [reduceMotion, setReduceMotion] = useState(false);
   const cellRef = useRef<HTMLDivElement | null>(null);
@@ -142,7 +328,7 @@ function FlipCountdownCell({ value, label }: TimeUnit) {
   return (
     <div
       ref={cellRef}
-      className="py-3 text-center"
+      className={`py-3 text-center ${className}`}
       style={{
         willChange: "transform, opacity, background-color, box-shadow",
         transformOrigin: "50% 50%",
@@ -150,12 +336,12 @@ function FlipCountdownCell({ value, label }: TimeUnit) {
       aria-live="off"
     >
       <div className="relative mx-auto h-8 w-full max-w-[70px]">
-        <span className={`${editorialFont.className} mt-1.5 absolute inset-0 flex items-center justify-center text-[30px] font-bold text-foreground tabular-nums leading-none`}>
+        <span className={`${editorialFont.className} mt-1.5 absolute inset-0 flex items-center justify-center text-[30px] font-bold tabular-nums leading-none ${disabled ? "text-muted-foreground" : "text-foreground"}`}>
           {displayText}
         </span>
       </div>
 
-      <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-1.5 font-medium">
+      <p className={`mt-1.5 text-[9px] uppercase tracking-widest font-medium ${disabled ? "text-muted-foreground/90" : "text-muted-foreground"} ${labelClassName}`}>
         {label}
       </p>
     </div>
@@ -401,6 +587,7 @@ export function CountdownSection({
   const [isMounted, setIsMounted] = useState(false);
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isShareFallbackOpen, setIsShareFallbackOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -438,15 +625,22 @@ export function CountdownSection({
     }
 
     events.forEach((event) => {
-      candidates.push({
-        type: "event",
-        id: event.id,
-        title: event.title,
-        date: event.date.getTime(),
-        time: event.time,
-        location: event.location,
-        address: event.address,
-        registrationEnabled: event.registrationEnabled,
+      const eventSchedule =
+        Array.isArray(event.schedule) && event.schedule.length > 0
+          ? event.schedule
+          : [{ date: event.date, time: event.time }];
+
+      eventSchedule.forEach((occurrence) => {
+        candidates.push({
+          type: "event",
+          id: event.id,
+          title: event.title,
+          date: occurrence.date.getTime(),
+          time: occurrence.time,
+          location: event.location,
+          address: event.address,
+          registrationEnabled: event.registrationEnabled,
+        });
       });
     });
 
@@ -518,6 +712,52 @@ export function CountdownSection({
     if (!spotlightHero || spotlightHero.type !== "event") return null;
     return events.find((event) => event.id === spotlightHero.id) ?? null;
   }, [spotlightHero, events]);
+  const eventHighlightUrl = useMemo(() => {
+    if (!isMounted || !countdownEvent || typeof window === "undefined") return "";
+    return `${window.location.origin}/#${encodeURIComponent(countdownEvent.id)}`;
+  }, [countdownEvent, isMounted]);
+  const countdownShareText = useMemo(() => {
+    if (!countdownEvent || !eventHighlightUrl) return "";
+    return buildEventShareText(countdownEvent, eventHighlightUrl);
+  }, [countdownEvent, eventHighlightUrl]);
+  const countdownSchedule = useMemo<CountdownOccurrence[]>(() => {
+    if (!countdownEvent) return [];
+    const schedule =
+      Array.isArray(countdownEvent.schedule) && countdownEvent.schedule.length > 0
+        ? countdownEvent.schedule
+        : [{ date: countdownEvent.date, time: countdownEvent.time }];
+
+    return [...schedule].sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [countdownEvent]);
+  const countdownDisplay = useMemo<CountdownDisplay | null>(() => {
+    if (!countdownEvent || countdownSchedule.length === 0) return null;
+
+    const nowMs = currentTime.getTime();
+    const firstOccurrence = countdownSchedule[0];
+    const currentDayKey = getRegionDateKey(currentTime);
+    const todayOccurrences = countdownSchedule.filter(
+      (occurrence) => getRegionDateKey(occurrence.date) === currentDayKey,
+    );
+    const nextTodayOccurrence = todayOccurrences.find(
+      (occurrence) => occurrence.date.getTime() > nowMs,
+    );
+
+    if (nowMs < firstOccurrence.date.getTime()) {
+      return getCountdownDisplay(firstOccurrence.date, currentTime);
+    }
+
+    if (nextTodayOccurrence) {
+      return getCountdownDisplay(nextTodayOccurrence.date, currentTime);
+    }
+
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      isDisabled: true,
+    };
+  }, [countdownEvent, countdownSchedule, currentTime]);
   const spotlightSocialPost = useMemo(() => {
     if (!spotlightHero || spotlightHero.type !== "social") return null;
     return (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null;
@@ -526,10 +766,6 @@ export function CountdownSection({
     () => getAlbumSharingEvents(events, currentTime),
     [events, currentTime],
   );
-  const countdownData = useMemo(() => {
-    if (!countdownEvent) return null;
-    return calculateCountdown(countdownEvent, currentTime);
-  }, [countdownEvent, currentTime]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -550,18 +786,45 @@ export function CountdownSection({
   }
 
   const getTimeUnits = (): TimeUnit[] => {
-    if (!countdownData) return [];
+    if (!countdownDisplay) return [];
     return [
-      { value: countdownData.daysRemaining, label: "Días" },
-      { value: countdownData.hoursRemaining, label: "Hrs" },
-      { value: countdownData.minutesRemaining, label: "Min" },
-      { value: countdownData.secondsRemaining, label: "Seg" },
+      { value: countdownDisplay.days, label: "Días" },
+      { value: countdownDisplay.hours, label: "Hrs" },
+      { value: countdownDisplay.minutes, label: "Min" },
+      { value: countdownDisplay.seconds, label: "Seg" },
     ];
   };
 
   const openGoogleMaps = (url: string) => {
     window.open(url, "_blank");
   };
+
+  const handleShare = async () => {
+    if (!countdownEvent) return;
+
+    const shareData = {
+      title: countdownEvent.title,
+      text: countdownShareText,
+    };
+
+    if (canUseNativeShare()) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        // Fall through to the gray fallback modal.
+      }
+    }
+
+    setIsShareFallbackOpen(true);
+  };
+
+  const countdownIsDisabled = countdownDisplay?.isDisabled ?? false;
+  const countdownGridClassName = countdownIsDisabled
+    ? "opacity-60 saturate-0"
+    : "";
+  const countdownMapsUrl =
+    countdownEvent ? getEventMapsUrl(countdownEvent) : "";
 
   const canRegisterCountdownEvent =
     !!countdownEvent && countdownEvent.registrationEnabled !== false;
@@ -583,7 +846,7 @@ export function CountdownSection({
     >
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* Spotlight: event */}
-        {countdownEvent && countdownData && !countdownData.isPostEvent && (
+        {countdownEvent && countdownDisplay && (
           <div className={`desktop-card-lift border bg-paper-highlight border-x border-b border-t-0 overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
             <div className="h-[5px] bg-brand" aria-hidden="true" />
 
@@ -596,57 +859,89 @@ export function CountdownSection({
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className={`${editorialFont.className} type-human-title mb-5 text-[29px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
+                className={`${editorialFont.className} type-human-title mb-5 text-[34px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
               > 
                 {countdownEvent.title}
               </h3>
 
               {/* Meta: date + location */}
-              <div className="space-y-1.5 mb-5 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2 text-foreground">
+              <div className="space-y-1.5 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2 text-foreground">
                   <Calendar
-                    className="h-4 w-4 shrink-0"
+                    className="mt-0.5 h-4 w-4 shrink-0"
                     aria-hidden="true"
                   />
-                  <span className="inline-flex items-baseline gap-2 text-[19px] font-bold leading-none tabular-nums">
-                    <span>{formatRegionWeekdayDayMonth(countdownEvent.date)}</span>
-                    <span className="text-[#2f5e93]" aria-hidden="true">
-                      ·
-                    </span>
-                    <span>{countdownEvent.time}</span>
-                  </span>
+                  <div className="space-y-1">
+                    {countdownSchedule.map((occurrence, index) => (
+                      <span
+                        key={`${occurrence.date.toISOString()}-${index}`}
+                        className="flex items-baseline gap-2 text-[17px] font-bold leading-tight tabular-nums"
+                      >
+                        <span>{formatRegionWeekdayDayMonth(occurrence.date)}</span>
+                        <span className="text-[#2f5e93]" aria-hidden="true">
+                          ·
+                        </span>
+                        <span>{occurrence.time}</span>
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 min-w-0 mt-2">
+                <div className="flex items-center gap-2 min-w-0 mt-2 mb-5 text-[17px] text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate text-foreground/80">
                     {countdownEvent.address || countdownEvent.location}
                   </span>
-                  {countdownEvent.googleMapsUrl ? (
-                    <button
-                      onClick={() => openGoogleMaps(countdownEvent.googleMapsUrl!)}
-                      className="inline-flex shrink-0 items-center gap-1 text-[16px] font-semibold text-brand-text transition-colors hover:text-brand-text/80 hover:underline underline-offset-2 leading-tight"
-                      aria-label="Abrir ubicación del evento en Google Maps"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 stroke-3 shrink-0" aria-hidden="true" />
-                      <span>Maps</span>
-                    </button>
-                  ) : null}
                 </div>
               </div>
 
               {/* Countdown grid — flat dividers, no background fill */}
               <div
-                className={`grid grid-cols-4 border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS}`}
+                className={`grid grid-cols-4 border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS} ${countdownGridClassName}`}
                 role="timer"
                 aria-label="Tiempo restante para el evento"
+                aria-disabled={countdownIsDisabled}
               >
                 {getTimeUnits().map((unit) => (
                   <FlipCountdownCell
                     key={unit.label}
                     value={unit.value}
                     label={unit.label}
+                    disabled={countdownIsDisabled}
                   />
                 ))}
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {countdownMapsUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => openGoogleMaps(countdownMapsUrl)}
+                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[15px] font-extrabold tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
+                    aria-label="Abrir ubicación del evento"
+                  >
+                    <MapIcon className="h-4 w-4" aria-hidden="true" />
+                    VER UBICACION
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[17px] font-extrabold tracking-[0.02em] text-white opacity-60"
+                  >
+                    <MapIcon className="h-5 w-5" aria-hidden="true" />
+                    VER UBICACION
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  disabled={!countdownEvent || !countdownShareText}
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm border border-border bg-paper-dark px-4 text-[17px] font-bold tracking-[0.02em] text-ink transition-colors hover:bg-muted/40 disabled:opacity-60"
+                >
+                  <Share2 className="h-5 w-5" aria-hidden="true" />
+                  COMPARTIR
+                </button>
               </div>
 
               {canRegisterCountdownEvent && onRegister && (
@@ -824,6 +1119,13 @@ export function CountdownSection({
           </div>
         ))}
       </div>
+
+      <ShareFallbackModal
+        isOpen={isShareFallbackOpen}
+        title={countdownEvent?.title ?? "Evento"}
+        shareText={countdownShareText}
+        onClose={() => setIsShareFallbackOpen(false)}
+      />
 
       <PrayerWallForm
         isOpen={isPrayerModalOpen}
