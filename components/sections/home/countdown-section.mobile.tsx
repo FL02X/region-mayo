@@ -335,7 +335,7 @@ function FlipCountdownCell({
       }}
       aria-live="off"
     >
-      <div className="relative mx-auto h-8 w-full max-w-[70px]">
+      <div className="relative mx-auto h-6 w-full max-w-[70px]">
         <span className={`${editorialFont.className} mt-1.5 absolute inset-0 flex items-center justify-center text-[30px] font-bold tabular-nums leading-none ${disabled ? "text-muted-foreground" : "text-foreground"}`}>
           {displayText}
         </span>
@@ -859,7 +859,7 @@ export function CountdownSection({
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className={`${editorialFont.className} type-human-title mb-5 text-[34px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
+                className={`${editorialFont.className} type-human-title mb-5 text-[30px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
               > 
                 {countdownEvent.title}
               </h3>
@@ -875,7 +875,7 @@ export function CountdownSection({
                     {countdownSchedule.map((occurrence, index) => (
                       <span
                         key={`${occurrence.date.toISOString()}-${index}`}
-                        className="flex items-baseline gap-2 text-[17px] font-bold leading-tight tabular-nums"
+                        className="flex items-baseline gap-2 text-[16px] font-bold leading-tight tabular-nums"
                       >
                         <span>{formatRegionWeekdayDayMonth(occurrence.date)}</span>
                         <span className="text-[#2f5e93]" aria-hidden="true">
@@ -886,7 +886,7 @@ export function CountdownSection({
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 min-w-0 mt-2 mb-5 text-[17px] text-muted-foreground">
+                <div className="flex items-center gap-2 min-w-0 mt-2 mb-5 text-[16px] text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate text-foreground/80">
                     {countdownEvent.address || countdownEvent.location}
@@ -937,7 +937,7 @@ export function CountdownSection({
                   type="button"
                   onClick={handleShare}
                   disabled={!countdownEvent || !countdownShareText}
-                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm border border-border bg-paper-dark px-4 text-[16px] font-bold tracking-[0.02em] text-ink transition-colors hover:bg-muted/40 disabled:opacity-60"
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-sm border border-border bg-paper-dark px-4 text-[16px] font-bold tracking-[0.02em] text-ink transition-colors hover:bg-muted/40 disabled:opacity-60"
                 >
                   <Share2 className="h-4.5 w-4.5" aria-hidden="true" />
                   COMPARTIR
