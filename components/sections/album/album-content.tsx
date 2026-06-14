@@ -228,7 +228,7 @@ function getGalleryYearGridClasses(albumCount: number) {
     return "grid grid-cols-2 md:grid-cols-4";
   }
 
-  return "grid grid-cols-3 md:grid-cols-4";
+  return "grid grid-cols-2 md:grid-cols-4";
 }
 
 function getGalleryTileTitleClasses(albumCount: number) {
@@ -240,7 +240,7 @@ function getGalleryTileTitleClasses(albumCount: number) {
     return "text-[22px] md:text-xs";
   }
 
-  return "text-[10px] md:text-xs";
+  return "text-[15px] md:text-xs";
 }
 
 function getGalleryTileMetaClasses(albumCount: number) {
@@ -252,7 +252,7 @@ function getGalleryTileMetaClasses(albumCount: number) {
     return "text-[11px] md:text-[10px]";
   }
 
-  return "text-[9px] md:text-[10px]";
+  return "text-[11px] md:text-[10px]";
 }
 
 function filterAlbumsByChip(albums: Album[], activeFilter: string) {
