@@ -916,10 +916,10 @@ export function CountdownSection({
                   <button
                     type="button"
                     onClick={() => openGoogleMaps(countdownMapsUrl)}
-                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[15px] font-extrabold tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
+                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[16px] font-extrabold tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
                     aria-label="Abrir ubicación del evento"
                   >
-                    <MapIcon className="h-4 w-4" aria-hidden="true" />
+                    <MapIcon className="h-5 w-5" aria-hidden="true" />
                     VER UBICACION
                   </button>
                 ) : (
@@ -937,9 +937,9 @@ export function CountdownSection({
                   type="button"
                   onClick={handleShare}
                   disabled={!countdownEvent || !countdownShareText}
-                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm border border-border bg-paper-dark px-4 text-[17px] font-bold tracking-[0.02em] text-ink transition-colors hover:bg-muted/40 disabled:opacity-60"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm border border-border bg-paper-dark px-4 text-[16px] font-bold tracking-[0.02em] text-ink transition-colors hover:bg-muted/40 disabled:opacity-60"
                 >
-                  <Share2 className="h-5 w-5" aria-hidden="true" />
+                  <Share2 className="h-4.5 w-4.5" aria-hidden="true" />
                   COMPARTIR
                 </button>
               </div>
