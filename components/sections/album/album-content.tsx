@@ -340,7 +340,7 @@ function AlbumHubEntryCard({
         router.push(href);
       }}
       onPointerDown={triggerFlick}
-      className={`relative overflow-hidden border border-white/10 bg-[#0b0b0b] transition-colors md:hover:border-white/35 ${
+      className={`relative flex min-h-[142px] overflow-hidden border border-white/10 bg-[#0b0b0b] transition-colors md:min-h-[172px] md:hover:border-white/35 ${
         isFlicking ? HUB_TAP_FEEDBACK_CLASS : ""
       }`}
     >
@@ -348,15 +348,15 @@ function AlbumHubEntryCard({
         href={href}
         aria-label={`Abrir ${title}`}
         onClick={(event) => event.stopPropagation()}
-        className="group/tiles block focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+        className="group/tiles block w-[48%] shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:w-[52%]"
       >
         <div
-          className={`relative overflow-hidden border-b border-white/10 transition-[border-color,box-shadow] md:group-hover/tiles:border-white/35 md:group-hover/tiles:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)] ${
+          className={`relative h-full overflow-hidden border-r border-white/10 transition-[border-color,box-shadow] md:group-hover/tiles:border-white/35 md:group-hover/tiles:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)] ${
             isYoutubeAlbum ? "bg-black" : "bg-[#111]"
           }`}
         >
           {isYoutubeAlbum ? (
-            <div className="relative flex aspect-[4/2.35] items-center justify-center overflow-hidden bg-black">
+            <div className="relative flex h-full min-h-[142px] items-center justify-center overflow-hidden bg-black md:min-h-[172px]">
               {previewImage ? (
                 <Image
                   src={previewImage}
@@ -374,7 +374,7 @@ function AlbumHubEntryCard({
             </div>
           ) : (
             <div
-              className={`aspect-[4/2.35] gap-px bg-black ${getPhotoHubGridClasses(
+              className={`h-full min-h-[142px] gap-px bg-black md:min-h-[172px] ${getPhotoHubGridClasses(
                 photoPreviewImages.length,
               )}`}
             >
@@ -414,13 +414,13 @@ function AlbumHubEntryCard({
           )}
         </div>
       </Link>
-      <div className="border-t border-white/[0.06] px-3 py-3">
-        <div className="flex flex-col items-start gap-0">
-          <div className="mb-3 flex h-8 w-8 shrink-0 items-center justify-center text-white/55">
+      <div className="flex min-w-0 flex-1 items-center px-4 py-4 md:px-6">
+        <div className="flex min-w-0 flex-col items-start gap-0">
+          <div className="mb-4 flex h-8 w-8 shrink-0 items-center justify-center text-white/55">
             {isYoutubeAlbum ? (
-              <PlayCircle className="h-5 w-5" aria-hidden="true" />
+              <PlayCircle className="h-7 w-7" aria-hidden="true" />
             ) : (
-              <Images className="h-5 w-5" aria-hidden="true" />
+              <Images className="h-7 w-7" aria-hidden="true" />
             )}
           </div>
 
@@ -428,12 +428,12 @@ function AlbumHubEntryCard({
             href={href}
             aria-label={`Abrir ${title}`}
             onClick={(event) => event.stopPropagation()}
-            className="inline-flex w-fit items-center gap-1 font-serif text-[20px] font-normal leading-tight text-white transition-colors hover:text-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="inline-flex max-w-full items-center gap-1 font-serif text-[24px] font-normal leading-tight text-white transition-colors hover:text-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:text-[30px]"
           >
             <span className="truncate">{title}</span>
           </Link>
 
-          <p className="mt-1 text-[12px] uppercase text-white/45">
+          <p className="mt-2 text-[12px] uppercase text-white/45">
             {subtitle}
           </p>
         </div>
@@ -674,22 +674,22 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
       <div className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-[#050505] px-0 pb-0 pt-[85px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:border-white/10 md:pb-16 md:pt-[92px]">
         <div className="mx-auto w-full md:w-[calc(100%-32px)]">
           <section className="px-4 pb-6 pt-0 md:px-8 md:pb-8">
-            <p className="mb-3 text-[10px] font-semibold uppercase text-white/42">
+            {/* <p className="mb-3 text-[10px] font-semibold uppercase text-white/42">
               Archivo visual
-            </p>
+            </p> */}
             <h1 className="max-w-[11ch] font-serif text-[2.85rem] font-normal leading-[0.95] text-white md:text-[4rem]">
               Álbum de Actividades
             </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/52 md:text-[17px]">
+            <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/80 md:text-[17px]">
               Revive momentos especiales de nuestros eventos ✨
             </p>
           </section>
 
           <section className="px-4 pb-5 pt-2 md:px-8 md:pt-1">
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 gap-3 md:gap-4">
               <AlbumHubEntryCard
                 href="/album/galerias"
-                title="Galeria"
+                title="Galería"
                 subtitle="Fotos y videos"
                 isYoutubeAlbum={false}
                 previewImages={photoHubPreview}
@@ -706,7 +706,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
 
           <section className="mt-3 px-4 py-5 md:px-8 md:pt-7">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[10px] font-semibold uppercase text-white/40">
+              <h2 className="text-[15px] font-semibold uppercase text-white/40">
                 Añadidos recientemente
               </h2>
             </div>
