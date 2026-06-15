@@ -150,7 +150,7 @@ function getAlbumYear(album: Album) {
   return album.startDate.getUTCFullYear().toString();
 }
 
-const HUB_TAP_FEEDBACK_CLASS = "bg-[#eaf2fb]";
+const HUB_TAP_FEEDBACK_CLASS = "bg-white/[0.08]";
 
 function useMobileTapFeedback() {
   const isMobile = useIsMobile();
@@ -340,41 +340,41 @@ function AlbumHubEntryCard({
         router.push(href);
       }}
       onPointerDown={triggerFlick}
-      className={`relative overflow-hidden border border-border md:border-brand transition-colors ${
-        isFlicking ? HUB_TAP_FEEDBACK_CLASS : "bg-paper-highlight"
+      className={`relative overflow-hidden border border-white/10 bg-[#0b0b0b] transition-colors md:hover:border-white/35 ${
+        isFlicking ? HUB_TAP_FEEDBACK_CLASS : ""
       }`}
     >
       <Link
         href={href}
         aria-label={`Abrir ${title}`}
         onClick={(event) => event.stopPropagation()}
-        className="group/tiles block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="group/tiles block focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
       >
         <div
-          className={`relative overflow-hidden border-b border-border transition-[border-color,box-shadow] md:hover:border-[#2f5e93] md:group-hover/tiles:shadow-[inset_0_0_0_1px_#2f5e93] ${
-            isYoutubeAlbum ? "bg-[#111827]" : "bg-[#d7d0bb]"
+          className={`relative overflow-hidden border-b border-white/10 transition-[border-color,box-shadow] md:group-hover/tiles:border-white/35 md:group-hover/tiles:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)] ${
+            isYoutubeAlbum ? "bg-black" : "bg-[#111]"
           }`}
         >
           {isYoutubeAlbum ? (
-            <div className="relative flex aspect-[4/2.35] items-center justify-center overflow-hidden bg-[#111827]">
+            <div className="relative flex aspect-[4/2.35] items-center justify-center overflow-hidden bg-black">
               {previewImage ? (
                 <Image
                   src={previewImage}
                   alt={title}
                   fill
-                  className="object-cover opacity-35 saturate-0"
+                  className="object-cover opacity-45 saturate-0"
                   quality={85}
                   sizes="(max-width: 767px) 50vw, 460px"
                 />
               ) : null}
-              <div className="absolute inset-0 bg-[#111827]/45" />
-              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white">
+              <div className="absolute inset-0 bg-black/45" />
+              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white text-black">
                 <Play className="h-5 w-5 translate-x-[1px]" aria-hidden="true" />
               </div>
             </div>
           ) : (
             <div
-              className={`aspect-[4/2.35] gap-px bg-[#9aa4af] ${getPhotoHubGridClasses(
+              className={`aspect-[4/2.35] gap-px bg-black ${getPhotoHubGridClasses(
                 photoPreviewImages.length,
               )}`}
             >
@@ -400,7 +400,7 @@ function AlbumHubEntryCard({
                         })}
                         alt={title}
                         fill
-                        className={`object-cover ${
+                        className={`object-cover contrast-[1.03] saturate-[0.82] ${
                           photoPreviewImages.length === 1 ? "rounded-none" : ""
                         }`}
                         quality={85}
@@ -414,13 +414,13 @@ function AlbumHubEntryCard({
           )}
         </div>
       </Link>
-      <div className="border-t border-border px-3 py-3">
+      <div className="border-t border-white/[0.06] px-3 py-3">
         <div className="flex flex-col items-start gap-0">
-          <div className="flex mb-3 h-8 w-8 shrink-0 items-center justify-center border border-border bg-[#f3f5f7] text-[#44505f]">
+          <div className="mb-3 flex h-8 w-8 shrink-0 items-center justify-center text-white/55">
             {isYoutubeAlbum ? (
-              <PlayCircle className="h-4 w-4" aria-hidden="true" />
+              <PlayCircle className="h-5 w-5" aria-hidden="true" />
             ) : (
-              <Images className="h-4 w-4" aria-hidden="true" />
+              <Images className="h-5 w-5" aria-hidden="true" />
             )}
           </div>
 
@@ -428,12 +428,14 @@ function AlbumHubEntryCard({
             href={href}
             aria-label={`Abrir ${title}`}
             onClick={(event) => event.stopPropagation()}
-            className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="inline-flex w-fit items-center gap-1 font-serif text-[20px] font-normal leading-tight text-white transition-colors hover:text-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <span className="truncate">{title}</span>
           </Link>
 
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
+          <p className="mt-1 text-[12px] uppercase text-white/45">
+            {subtitle}
+          </p>
         </div>
       </div>
     </div>
@@ -446,7 +448,7 @@ function AlbumRecentItem({ album }: { album: Album }) {
 
   return (
     <div
-      className={`relative border-b border-border py-3 transition-colors ${
+      className={`relative border-b border-white/10 py-3 transition-colors ${
         isFlicking ? HUB_TAP_FEEDBACK_CLASS : ""
       }`}
     >
@@ -461,8 +463,8 @@ function AlbumRecentItem({ album }: { album: Album }) {
           href={getAlbumDetailPath(album)}
           aria-label={`Abrir ${album.title}`}
           onPointerDown={triggerFlick}
-          className={`relative h-12 w-12 shrink-0 overflow-hidden rounded border border-border focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
-            isYoutubeAlbum ? "bg-[#111827]" : "bg-muted"
+          className={`relative h-12 w-12 shrink-0 overflow-hidden border border-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+            isYoutubeAlbum ? "bg-black" : "bg-[#111]"
           }`}
         >
           {isYoutubeAlbum ? (
@@ -474,7 +476,7 @@ function AlbumRecentItem({ album }: { album: Album }) {
               src={album.coverImage}
               alt={album.title}
               fill
-              className="object-cover"
+              className="object-cover saturate-[0.82]"
               sizes="48px"
             />
           )}
@@ -485,11 +487,11 @@ function AlbumRecentItem({ album }: { album: Album }) {
             href={getAlbumDetailPath(album)}
             aria-label={`Abrir ${album.title}`}
             onPointerDown={triggerFlick}
-            className="block max-w-full text-sm font-normal leading-tight text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="block max-w-full font-serif text-[15px] font-normal leading-tight text-white transition-colors hover:text-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <span className="block truncate">{album.title}</span>
           </Link>
-          <p className="mt-1 truncate text-xs text-muted-foreground">
+          <p className="mt-1 truncate text-[11px] uppercase text-white/42">
             {formatAlbumPreviewDate(album.startDate)} ·{" "}
             {formatHubRecentContext(album)}
           </p>
@@ -499,7 +501,7 @@ function AlbumRecentItem({ album }: { album: Album }) {
           href={getAlbumDetailPath(album)}
           aria-label={`Abrir ${album.title}`}
           onPointerDown={triggerFlick}
-          className="inline-flex shrink-0 items-center text-primary transition-colors hover:text-primary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          className="inline-flex shrink-0 items-center text-white/50 transition-colors hover:text-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
@@ -668,19 +670,22 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
     latestVideoAlbum?.videos[0]?.thumbnailUrl || latestVideoAlbum?.coverImage;
 
   return (
-    <div className="w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
-      <div className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-paper px-0 pb-0 pt-[85px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:pb-16 md:pt-[92px]">
+    <div className="w-full overflow-x-clip bg-black" id="main-content">
+      <div className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-[#050505] px-0 pb-0 pt-[85px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:border-white/10 md:pb-16 md:pt-[92px]">
         <div className="mx-auto w-full md:w-[calc(100%-32px)]">
-          <section className="px-4 pb-5 pt-0 md:px-8 md:pb-6 ">
-            <h1 className="text-[1.825rem] font-semibold tracking-tight text-brand">
+          <section className="px-4 pb-6 pt-0 md:px-8 md:pb-8">
+            <p className="mb-3 text-[10px] font-semibold uppercase text-white/42">
+              Archivo visual
+            </p>
+            <h1 className="max-w-[11ch] font-serif text-[2.85rem] font-normal leading-[0.95] text-white md:text-[4rem]">
               Álbum de Actividades
             </h1>
-            <p className="mt-[4px] max-w-2xl text-[17px] leading-7 text-muted-foreground">
+            <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/52 md:text-[17px]">
               Revive momentos especiales de nuestros eventos ✨
             </p>
           </section>
 
-          <section className="px-4 pt-2 md:px-8 md:pt-4">
+          <section className="px-4 pb-5 pt-2 md:px-8 md:pt-1">
             <div className="grid grid-cols-2 gap-3 md:gap-4">
               <AlbumHubEntryCard
                 href="/album/galerias"
@@ -699,9 +704,9 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
             </div>
           </section>
 
-          <section className="mt-5 px-4 py-5 md:px-8 md:pt-6">
+          <section className="mt-3 px-4 py-5 md:px-8 md:pt-7">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <h2 className="text-[10px] font-semibold uppercase text-white/40">
                 Añadidos recientemente
               </h2>
             </div>
@@ -711,7 +716,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
                   <AlbumRecentItem key={album.id} album={album} />
                 ))
               ) : (
-                <div className="border-b border-border py-6 text-sm text-muted-foreground">
+                <div className="border-b border-white/10 py-6 text-sm text-white/45">
                   Aún no hay contenido reciente disponible.
                 </div>
               )}
