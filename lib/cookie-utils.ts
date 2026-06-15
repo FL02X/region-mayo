@@ -62,5 +62,12 @@ export async function readInitialCalendarLayoutMode(
     return cookieValue;
   }
 
-  return "list";
+  const headerStore = await headers();
+  const clientHintMobile = headerStore.get("sec-ch-ua-mobile");
+  if (clientHintMobile === "?1") return "month";
+  if (clientHintMobile === "?0") return "list";
+
+  return MOBILE_USER_AGENT_PATTERN.test(headerStore.get("user-agent") ?? "")
+    ? "month"
+    : "list";
 }
