@@ -74,8 +74,8 @@ const THUMBNAIL_PRELOAD_DELAY_MS = 1400;
 const INITIAL_PAST_MONTHS = 12;
 const INITIAL_FUTURE_MONTHS = 18;
 const MONTHS_TO_APPEND = 12;
-const LOAD_MORE_THRESHOLD = 3;
-const MONTH_RENDER_RADIUS = 2;
+const LOAD_MORE_THRESHOLD = 8;
+const MONTH_RENDER_RADIUS = 1;
 const weekDayLabels = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
 
 const eventTypePlannerColors: Record<
@@ -192,6 +192,22 @@ function getPlannerMonthCells(month: Date) {
         parts.year === monthParts.year && parts.month === monthParts.month,
     };
   });
+}
+
+const plannerCellsCache = new Map<
+  string,
+  ReturnType<typeof getPlannerMonthCells>
+>();
+
+function getCachedPlannerMonthCells(month: Date) {
+  const key = getRegionMonthKey(month);
+  const cached = plannerCellsCache.get(key);
+
+  if (cached) return cached;
+
+  const cells = getPlannerMonthCells(month);
+  plannerCellsCache.set(key, cells);
+  return cells;
 }
 
 function getEventPlannerDates(event: Event) {
@@ -317,7 +333,11 @@ const MonthCalendarGrid = memo(function MonthCalendarGrid({
   activePlannerDateKeys,
   onEventPreview,
 }: MonthCalendarGridProps) {
-  const monthCells = useMemo(() => getPlannerMonthCells(month), [month]);
+  const monthKey = getRegionMonthKey(month);
+  const monthCells = useMemo(
+    () => getCachedPlannerMonthCells(month),
+    [month, monthKey],
+  );
 
   return (
     <>
@@ -892,9 +912,8 @@ export function EventsFeed({
     isMobile && calendarChangeReason === "view";
   const compactMobileResultsFloorClass =
     renderedViewMode === "compact" ? "min-h-[560px] md:min-h-0" : "";
-  const legacyCalendarVisibilityClass = isMonthPlannerEnabled
-    ? "hidden md:block"
-    : "";
+  const shouldRenderLegacyCalendar = !isMobile || !isMonthPlannerEnabled;
+  const shouldRenderMobileMonthPlanner = isMobile && isMonthPlannerEnabled;
 
   useEffect(() => {
     if (!isMonthPlannerEnabled) {
@@ -1177,14 +1196,16 @@ export function EventsFeed({
               </button>
             </div>
             {/* Navigator aligned with left content edge on desktop */}
-            <div className={`max-w-md w-full ${legacyCalendarVisibilityClass}`}>
-              <MonthNavigator
-                selectedMonth={selectedMonth}
-                onMonthSelect={handleMonthSelect}
-                eventDates={eventDates}
-              />
-            </div>
-            {isMonthPlannerEnabled && (
+            {shouldRenderLegacyCalendar && (
+              <div className="max-w-md w-full">
+                <MonthNavigator
+                  selectedMonth={selectedMonth}
+                  onMonthSelect={handleMonthSelect}
+                  eventDates={eventDates}
+                />
+              </div>
+            )}
+            {shouldRenderMobileMonthPlanner && (
               <MobileMonthPlanner
                 events={events}
                 selectedMonth={selectedMonth}
@@ -1198,10 +1219,11 @@ export function EventsFeed({
         </section>
 
         {/* Events list */}
-        <section
-          id="eventos"
-          className={`bg-muted/20 px-4 md:px-[32px] md:py-[24px] pt-4 pb-14 ${legacyCalendarVisibilityClass}`}
-        >
+        {shouldRenderLegacyCalendar && (
+          <section
+            id="eventos"
+            className="bg-muted/20 px-4 md:px-[32px] md:py-[24px] pt-4 pb-14"
+          >
           <div className="mt-0 max-w-4xl mx-auto w-full">
             {/* Month label */}
             <div className="mb-6 flex items-start justify-between gap-4">
@@ -1356,7 +1378,8 @@ export function EventsFeed({
               </AnimatePresence>
             </div>
           </div>
-        </section>
+          </section>
+        )}
       </div>
 
       {/* Registration modal */}
