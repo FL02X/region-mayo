@@ -371,7 +371,7 @@ const MonthCalendarGrid = memo(function MonthCalendarGrid({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-border-line/80 border-x border-b border-border-line">
+      <div className="grid grid-cols-7 gap-px bg-border-line border-x border-b border-border-line">
         {monthCells.map((cell) => {
           const dayEvents = eventsByDay.get(cell.dateKey) ?? [];
           const isSelectedEventDay = activePlannerDateKeys.has(cell.dateKey);
@@ -390,7 +390,7 @@ const MonthCalendarGrid = memo(function MonthCalendarGrid({
               onClick={() => {
                 if (dayEvents[0]) onEventPreview(dayEvents[0]);
               }}
-              className={`min-h-[58px] bg-paper px-1.5 py-1.5 text-left transition-colors ${
+              className={`min-h-[58px] bg-[#fbf8f4] px-1.5 py-1.5 text-left ${
                 cell.isCurrentMonth
                   ? "text-ink"
                   : "text-ink-muted-light opacity-55"
@@ -673,17 +673,17 @@ function MobileMonthPlanner({
 
   return (
     <div className="md:hidden">
-      <div className="relative -mx-4 mt-4 overflow-hidden border-y border-border-line bg-paper-highlight">
+      <div className="relative -mx-4 mt-4 overflow-hidden border-y border-border-line bg-[#fbf8f4]">
         <div
           ref={emblaRef}
           className="overflow-hidden touch-pan-y"
           aria-label="Calendario mensual deslizable"
         >
-          <div className="flex">
+          <div className="flex transform-gpu will-change-transform [backface-visibility:hidden]">
             {plannerMonthData.map(({ month, monthParts, monthKey }, index) => (
               <div
                 key={monthKey}
-                className="min-w-0 flex-[0_0_100%] bg-paper-highlight px-4 pb-4 pt-3"
+                className="min-w-0 flex-[0_0_100%] bg-[#fbf8f4] px-4 pb-4 pt-3 [contain:layout_paint]"
               >
                 {Math.abs(index - activeMonthIndex) <= MONTH_RENDER_RADIUS ? (
                   <MonthCalendarGrid
