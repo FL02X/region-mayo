@@ -676,7 +676,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
               Álbum de Actividades
             </h1>
             <p className="mt-[4px] max-w-2xl text-[17px] leading-7 text-muted-foreground">
-              Revive los momentos especiales de nuestros eventos ✨
+              Revive momentos especiales de nuestros eventos ✨
             </p>
           </section>
 
@@ -783,7 +783,7 @@ export function AlbumSectionContent({
 
   return (
     <div className="w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
-      <div className="desktop-content-pane mx-auto min-h-[calc(100dvh-95px)] max-w-[950px] overflow-x-clip bg-paper px-0 pb-0 pt-6 focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:pb-16 md:pt-8">
+      <div className="desktop-content-pane mx-auto min-h-[calc(100dvh-51px)] max-w-[950px] overflow-x-clip bg-paper px-0 pb-14 pt-6 focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:pb-16 md:pt-8">
         <div className="mx-auto w-full md:w-[calc(100%-32px)]">
           <section className="px-4 pb-5 pt-0 md:px-8 md:pb-6">
             <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">

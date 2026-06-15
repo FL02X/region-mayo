@@ -710,6 +710,7 @@ function mapCoro(raw: any): Coro {
     id: raw._id,
     coroName: raw.coroName,
     photo: raw.photo ? sanityImageUrl(raw.photo) : "/placeholder.svg",
+    memberCount: typeof raw.memberCount === "number" ? raw.memberCount : undefined,
     temploName: raw.temploName ?? raw.templo?.temploName,
     temploId: raw.temploId ?? raw.templo?._id,
     address: raw.address ?? raw.templo?.address,
@@ -1125,9 +1126,10 @@ export async function getCoros(regionSlug: string = "mayo"): Promise<Coro[]> {
     const client = getSanityClient();
     const coros = await client.fetch(
       `*[_type == "coro" && (region->slug.current == $slug || region->name == $slug)]
-        | order(coroName asc){
+        | order(coalesce(memberCount, -1) desc, coroName asc){
           _id,
           coroName,
+          memberCount,
           photo{asset->{url}},
           googleMapsUrl,
           presidentName,

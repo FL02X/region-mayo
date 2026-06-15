@@ -63,6 +63,14 @@ export default defineType({
       }).error('Debe ser 10 dígitos o dejarse vacío'),
     }),
     defineField({
+      name: 'memberCount',
+      title: 'NUMERO DE INTEGRANTES',
+      type: 'number',
+      group: 'basic',
+      description: 'Se usara para el orden en el que apareceran en la pagina.',
+      validation: (Rule) => Rule.integer().min(0),
+    }),
+    defineField({
       name: 'templo',
       title: 'TEMPLO DEL CORO (OBLIGATORIO)',
       type: 'reference',
@@ -178,6 +186,11 @@ export default defineType({
       title: 'Nombre del Coro',
       name: 'nameAsc',
       by: [{ field: 'coroName', direction: 'asc' }],
+    },
+    {
+      title: 'Numero de Integrantes',
+      name: 'memberCountDesc',
+      by: [{ field: 'memberCount', direction: 'desc' }, { field: 'coroName', direction: 'asc' }],
     },
     {
       title: 'Por Templo',

@@ -204,6 +204,7 @@ export interface Coro {
   id: string;
   coroName: string;
   photo: string;
+  memberCount?: number;
   temploName?: string;
   temploId?: string;
   address?: string;

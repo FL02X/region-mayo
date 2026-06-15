@@ -71,6 +71,25 @@ const getCoroImageUrl = (photo?: string, kind: "thumb" | "card" | "print" = "car
   return sanityImageVariantUrl(photo, CORO_CARD_IMAGE_OPTIONS);
 };
 
+const sortCorosForDisplay = (coros: Coro[]) => {
+  return [...coros].sort((a, b) => {
+    const aCount = typeof a.memberCount === "number" ? a.memberCount : -1;
+    const bCount = typeof b.memberCount === "number" ? b.memberCount : -1;
+    const aHasImage = Boolean(a.photo && a.photo !== "/placeholder.svg");
+    const bHasImage = Boolean(b.photo && b.photo !== "/placeholder.svg");
+
+    if (aCount !== bCount) {
+      return bCount - aCount;
+    }
+
+    if (aHasImage !== bHasImage) {
+      return aHasImage ? -1 : 1;
+    }
+
+    return (a.coroName ?? "").localeCompare(b.coroName ?? "", "es", { sensitivity: "base" });
+  });
+};
+
 const buildCoroCopyText = (coro: Coro) => {
   const sections = [
     [coro.coroName],
@@ -530,6 +549,7 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
   const printCleanupTimerRef = useRef<number | null>(null);
   const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
+  const sortedCoros = useMemo(() => sortCorosForDisplay(coros), [coros]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -615,8 +635,8 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
   }, []);
 
   const filteredCoros = useMemo(
-    () => searchItems(coros, searchQuery, SEARCH_CONFIGS.coros),
-    [coros, searchQuery],
+    () => searchItems(sortedCoros, searchQuery, SEARCH_CONFIGS.coros),
+    [sortedCoros, searchQuery],
   );
 
   const handleViewModeChange = (next: ViewMode) => {
