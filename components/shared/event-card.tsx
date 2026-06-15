@@ -349,8 +349,15 @@ export function EventCard({
   });
   const eventDateTimeLabel = eventDateTimeLines.join("\n");
   const visibleScheduleSlots = !isMobile && variant === "compact" ? 4 : 2;
+  const shouldScrollSchedule = isMobile
+    ? eventSchedule.length > 3
+    : eventSchedule.length > visibleScheduleSlots;
   const scheduleItemBasis =
-    100 / Math.min(eventSchedule.length, visibleScheduleSlots);
+    100 /
+    Math.min(
+      eventSchedule.length,
+      shouldScrollSchedule ? visibleScheduleSlots : eventSchedule.length,
+    );
   const eventCoordinates = getEventCoordinates(event);
   const eventMapsUrl = buildEventMapsUrl(event);
   const eventHighlightUrl =
@@ -372,13 +379,23 @@ export function EventCard({
 
   const updateScheduleScrollIndicators = () => {
     const scroller = scheduleScrollerRef.current;
-    if (!scroller) {
+    if (!scroller || !shouldScrollSchedule) {
       setCanScrollScheduleLeft(false);
       setCanScrollScheduleRight(false);
+      scheduleTouchScrollStartedRef.current = false;
+      suppressScheduleRightHintRef.current = false;
       return;
     }
 
     const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    if (maxScrollLeft <= 2) {
+      setCanScrollScheduleLeft(false);
+      setCanScrollScheduleRight(false);
+      scheduleTouchScrollStartedRef.current = false;
+      suppressScheduleRightHintRef.current = false;
+      return;
+    }
+
     const canScrollLeft = scroller.scrollLeft > 2;
     const canScrollRight = scroller.scrollLeft < maxScrollLeft - 2;
 
@@ -401,7 +418,7 @@ export function EventCard({
 
   const scrollEventSchedule = (direction: "left" | "right") => {
     const scroller = scheduleScrollerRef.current;
-    if (!scroller) return;
+    if (!scroller || !shouldScrollSchedule) return;
     const itemWidth = scroller.scrollWidth / eventSchedule.length;
     const scrollStep =
       visibleScheduleSlots === 2 ? itemWidth : scroller.clientWidth;
@@ -419,7 +436,13 @@ export function EventCard({
 
   const handleScheduleWheel = (wheelEvent: WheelEvent<HTMLDivElement>) => {
     const scroller = scheduleScrollerRef.current;
-    if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+    if (
+      !scroller ||
+      !shouldScrollSchedule ||
+      scroller.scrollWidth <= scroller.clientWidth
+    ) {
+      return;
+    }
     if (Math.abs(wheelEvent.deltaY) <= Math.abs(wheelEvent.deltaX)) return;
 
     wheelEvent.preventDefault();
@@ -713,9 +736,18 @@ export function EventCard({
       <div
         ref={scheduleScrollerRef}
         onScroll={updateScheduleScrollIndicators}
-        onTouchStart={handleScheduleTouchStart}
-        onWheel={handleScheduleWheel}
-        className="flex w-full touch-pan-x overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onTouchStart={
+          shouldScrollSchedule ? handleScheduleTouchStart : undefined
+        }
+        onWheel={shouldScrollSchedule ? handleScheduleWheel : undefined}
+        className={[
+          "flex w-full",
+          shouldScrollSchedule
+            ? "touch-auto overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            : "overflow-hidden",
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
         {eventSchedule.map((occurrence, index) => (
           <div
@@ -748,7 +780,7 @@ export function EventCard({
           </div>
         ))}
       </div>
-      {canScrollScheduleLeft ? (
+      {shouldScrollSchedule && canScrollScheduleLeft ? (
         <div
           className="pointer-events-none absolute inset-y-0 left-0 flex w-14 items-center justify-start bg-gradient-to-r from-brand-soft via-brand-soft/80 to-transparent pl-1.5"
         >
@@ -763,7 +795,7 @@ export function EventCard({
           </button>
         </div>
       ) : null}
-      {canScrollScheduleRight ? (
+      {shouldScrollSchedule && canScrollScheduleRight ? (
         <div
           className="pointer-events-none absolute inset-y-0 right-0 flex w-14 items-center justify-end bg-gradient-to-l from-brand-soft via-brand-soft/80 to-transparent pr-1.5"
         >
@@ -1086,7 +1118,7 @@ export function EventCard({
     return () => {
       window.removeEventListener("resize", updateScheduleScrollIndicators);
     };
-  }, [eventSchedule.length, visibleScheduleSlots]);
+  }, [eventSchedule.length, shouldScrollSchedule, visibleScheduleSlots]);
 
   const vestimentaTooltipNode =
     typeof document !== "undefined" &&
