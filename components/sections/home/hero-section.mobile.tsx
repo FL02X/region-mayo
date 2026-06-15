@@ -249,7 +249,7 @@ export function MobileHero({
               left: HERO_WATERMARK_LEFT,
               top: HERO_WATERMARK_TOP,
               opacity: HERO_WATERMARK_OPACITY,
-              filter: "brightness(1.35)",
+              filter: "",
               transform: "translate(-50%, -50%)",
               WebkitMaskImage: "url('/images/logo_hero.png')",
               maskImage: "url('/images/logo_hero.png')",
