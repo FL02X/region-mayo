@@ -234,7 +234,7 @@ export function MobileHero({
       aria-label="Imagen principal móvil"
     > 
     {/* mobile-hero-print-image */}
-      <div className="relative w-full aspect-[1.7] bg-black overflow-hidden flex items-center justify-center">
+      <div className="relative w-full aspect-[1.35] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
