@@ -40,7 +40,9 @@ export function MobileHero({
   const safeInitialSrc = getMobileHeroImageSrc(src);
   const [displaySrc, setDisplaySrc] = useState(safeInitialSrc);
   const geolocation = useGeolocationState();
-  const [locationPhase, setLocationPhase] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [locationPhase, setLocationPhase] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [locationError, setLocationError] = useState("");
   const [locationErrorVisible, setLocationErrorVisible] = useState(false);
   const [locationErrorKind, setLocationErrorKind] = useState<
@@ -48,7 +50,9 @@ export function MobileHero({
   >("unknown");
   const [nearestChurchName, setNearestChurchName] = useState("");
   const [nearestChurchId, setNearestChurchId] = useState("");
-  const [nearestChurchDistanceKm, setNearestChurchDistanceKm] = useState<number | null>(null);
+  const [nearestChurchDistanceKm, setNearestChurchDistanceKm] = useState<
+    number | null
+  >(null);
   const searchStartRef = useRef<number>(0);
   const locationErrorHideTimerRef = useRef<number | null>(null);
   const locationErrorClearTimerRef = useRef<number | null>(null);
@@ -100,7 +104,12 @@ export function MobileHero({
   }, [locationError]);
 
   const setLocationFailure = (
-    kind: "permission_denied" | "gps_off" | "timeout" | "unsupported" | "unknown",
+    kind:
+      | "permission_denied"
+      | "gps_off"
+      | "timeout"
+      | "unsupported"
+      | "unknown",
     message: string,
   ) => {
     setLocationErrorKind(kind);
@@ -156,7 +165,11 @@ export function MobileHero({
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const nearest = await findNearestChurch(location.lat, location.lng, templos);
+      const nearest = await findNearestChurch(
+        location.lat,
+        location.lng,
+        templos,
+      );
 
       const elapsedMs = performance.now() - searchStartRef.current;
       const remainingMs = Math.max(0, 2000 - elapsedMs);
@@ -216,8 +229,11 @@ export function MobileHero({
   };
 
   return (
-    <section className="md:hidden w-full max-w-[950px] mx-auto bg-white" aria-label="Imagen principal móvil">
-      <div className="mobile-hero-print-image relative w-full aspect-[1.40] bg-black overflow-hidden flex items-center justify-center">
+    <section
+      className="md:hidden w-full max-w-[950px] mx-auto bg-white"
+      aria-label="Imagen principal móvil"
+    >
+      <div className="mobile-hero-print-image relative w-full aspect-[1.7] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
@@ -240,10 +256,22 @@ export function MobileHero({
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden"
+          className="pointer-events-none absolute inset-x-0 top-0 overflow-visible"
           style={{ height: HERO_WATERMARK_LAYER_HEIGHT }}
         >
-          <span
+          <img
+            src="/images/logo_hero2.png"
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute h-[105px] w-[105px] select-none object-contain"
+            style={{
+              left: "85%",
+              top: "74%",
+              opacity: 0.9,
+              transform: "translate(-50%, -50%)",
+            }}
+          />
+          {/* <span
             className="absolute h-[155px] w-[155px] select-none bg-brand"
             style={{
               left: HERO_WATERMARK_LEFT,
@@ -260,18 +288,22 @@ export function MobileHero({
               WebkitMaskSize: "contain",
               maskSize: "contain",
             }}
-          />
+          /> */}
         </div>
         <div className="relative z-10 flex items-center">
           <div className="ml-1 min-w-0">
-            <p className="text-[11px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
+            <p className="text-[13px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
               Iglesia Gentil de Cristo
             </p>
-            <p className={`${editorialFont.className} mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}>
-              Sitio oficial de la <span className="block font-normal">Región Mayo</span>
+            <p
+              className={`${editorialFont.className} mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}
+            >
+              Calendario de la{" "}
+              <span className="block font-normal">Región Mayo</span>
             </p>
             <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">
-              Eventos, avisos e información de nuestras iglesias de la Región Mayo.
+              Eventos, avisos e información de nuestras iglesias de la Región
+              Mayo.
             </p>
           </div>
         </div>
@@ -319,7 +351,11 @@ export function MobileHero({
                 )}
               </span>
               {locationPhase === "success" ? (
-                <ArrowRight className="ml-1 h-7 w-7 shrink-0 text-white/90" aria-hidden="true" strokeWidth={2} />
+                <ArrowRight
+                  className="ml-1 h-7 w-7 shrink-0 text-white/90"
+                  aria-hidden="true"
+                  strokeWidth={2}
+                />
               ) : null}
             </button>
           </div>

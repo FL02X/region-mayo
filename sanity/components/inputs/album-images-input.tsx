@@ -17,7 +17,7 @@ const API_VERSION = '2025-01-01'
 
 function createArrayItem(assetId: string, index: number) {
   return {
-    _type: 'image',
+    _type: 'albumImage',
     _key: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`,
     asset: {
       _type: 'reference',
