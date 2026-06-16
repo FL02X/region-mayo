@@ -686,7 +686,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
             </p>
           </section>
 
-          <section className="px-4 pb-5 pt-2 md:px-8 md:pt-1">
+          <section className="px-2 pb-5 pt-2 md:px-8 md:pt-1">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
               <AlbumHubEntryCard
                 href="/album/galerias"
