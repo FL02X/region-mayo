@@ -324,7 +324,7 @@ function AlbumHubEntryCard({
   previewImage?: string;
 }) {
   const router = useRouter();
-  const { isFlicking, triggerFlick, isMobile } = useMobileTapFeedback();
+  const { triggerFlick, isMobile } = useMobileTapFeedback();
   const photoPreviewImages = previewImages.slice(0, 4);
 
   return (
@@ -340,23 +340,21 @@ function AlbumHubEntryCard({
         router.push(href);
       }}
       onPointerDown={triggerFlick}
-      className={`relative flex min-h-[142px] overflow-hidden border border-white/10 bg-paper transition-colors md:min-h-[172px] md:hover:border-white/35 ${
-        isFlicking ? HUB_TAP_FEEDBACK_CLASS : ""
-      }`}
+      className="relative flex min-h-[142px] overflow-hidden border border-black bg-paper p-[7px] text-ink transition-[border-color,box-shadow] md:block md:min-h-0 md:p-2 md:hover:shadow-[0_16px_45px_rgba(0,0,0,0.28)]"
     >
       <Link
         href={href}
         aria-label={`Abrir ${title}`}
         onClick={(event) => event.stopPropagation()}
-        className="group/tiles block w-[48%] shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:w-[52%]"
+        className="group/tiles block w-[42%] shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:w-full"
       >
         <div
-          className={`relative h-full overflow-hidden border-r border-white/10 transition-[border-color,box-shadow] md:group-hover/tiles:border-white/35 md:group-hover/tiles:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)] ${
+          className={`relative h-full overflow-hidden border border-black transition-[border-color,box-shadow] md:group-hover/tiles:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.22)] ${
             isYoutubeAlbum ? "bg-black" : "bg-[#111]"
           }`}
         >
           {isYoutubeAlbum ? (
-            <div className="relative flex h-full min-h-[142px] items-center justify-center overflow-hidden bg-black md:min-h-[172px]">
+            <div className="relative flex h-full min-h-[142px] items-center justify-center overflow-hidden bg-black md:aspect-[4/2.35] md:min-h-0">
               {previewImage ? (
                 <Image
                   src={previewImage}
@@ -374,7 +372,7 @@ function AlbumHubEntryCard({
             </div>
           ) : (
             <div
-              className={`h-full min-h-[142px] gap-px bg-black md:min-h-[172px] ${getPhotoHubGridClasses(
+              className={`h-full min-h-[142px] gap-px bg-black md:aspect-[4/2.35] md:min-h-0 ${getPhotoHubGridClasses(
                 photoPreviewImages.length,
               )}`}
             >
@@ -404,7 +402,7 @@ function AlbumHubEntryCard({
                           photoPreviewImages.length === 1 ? "rounded-none" : ""
                         }`}
                         quality={85}
-                        sizes="(max-width: 767px) 50vw, 460px"
+                        sizes="(max-width: 767px) 42vw, 460px"
                       />
                     ) : null}
                   </div>
@@ -414,7 +412,7 @@ function AlbumHubEntryCard({
           )}
         </div>
       </Link>
-      <div className="flex min-w-0 flex-1 items-center px-4 py-4 md:px-6">
+      <div className="flex min-w-0 flex-1 items-center px-4 py-4 md:px-3 md:py-4">
         <div className="flex min-w-0 flex-col items-start gap-0">
           <div className="mb-4 flex h-8 w-8 shrink-0 items-center justify-center text-ink">
             {isYoutubeAlbum ? (
@@ -428,9 +426,9 @@ function AlbumHubEntryCard({
             href={href}
             aria-label={`Abrir ${title}`}
             onClick={(event) => event.stopPropagation()}
-            className="inline-flex max-w-full items-center gap-1 font-serif text-[24px] font-normal leading-tight text-ink transition-colors hover:text-ink/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:text-[30px]"
+            className="inline-flex max-w-full items-center gap-1 whitespace-normal break-words font-serif text-[24px] font-semibold leading-tight text-ink transition-colors hover:text-ink/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:text-[30px]"
           >
-            <span className="truncate">{title}</span>
+            <span>{title}</span>
           </Link>
 
           <p className="mt-2 text-[12px] uppercase text-ink/90">
@@ -671,7 +669,10 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
 
   return (
     <div className="w-full overflow-x-clip bg-black" id="main-content">
-      <div className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-[#050505] px-0 pb-0 pt-[85px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:border-white/10 md:pb-16 md:pt-[92px]">
+      <div
+        className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-[#050505] px-0 pb-0 pt-[85px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:border-white/10 md:pb-16 md:pt-[92px]"
+        style={{ backgroundColor: "#111111" }}
+      >
         <div className="mx-auto w-full md:w-[calc(100%-32px)]">
           <section className="px-4 pb-6 pt-0 md:px-8 md:pb-8">
             {/* <p className="mb-3 text-[10px] font-semibold uppercase text-white/42">
@@ -686,7 +687,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
           </section>
 
           <section className="px-4 pb-5 pt-2 md:px-8 md:pt-1">
-            <div className="grid grid-cols-1 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
               <AlbumHubEntryCard
                 href="/album/galerias"
                 title="Galería"
@@ -706,7 +707,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
 
           <section className="mt-0 px-4 py-5 md:px-8 md:pt-7">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[15px] font-semibold uppercase text-white/40">
+              <h2 className="text-[15px] font-semibold uppercase text-white/60">
                 Añadidos recientemente
               </h2>
             </div>
