@@ -24,7 +24,7 @@ const HERO_WATERMARK_LEFT = "84%";
 const HERO_WATERMARK_TOP = "73%";
 const HERO_WATERMARK_LAYER_HEIGHT = "170px";
 const HERO_WATERMARK_OPACITY = 1;
-const MOBILE_HERO_IMAGE_WIDTH = 828;
+const MOBILE_HERO_IMAGE_WIDTH = 1242;
 const editorialFont = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -232,8 +232,9 @@ export function MobileHero({
     <section
       className="md:hidden w-full max-w-[950px] mx-auto bg-white"
       aria-label="Imagen principal móvil"
-    >
-      <div className="mobile-hero-print-image relative w-full aspect-[1.7] bg-black overflow-hidden flex items-center justify-center">
+    > 
+    {/* mobile-hero-print-image */}
+      <div className="relative w-full aspect-[1.7] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
@@ -259,7 +260,7 @@ export function MobileHero({
           className="pointer-events-none absolute inset-x-0 top-0 overflow-visible"
           style={{ height: HERO_WATERMARK_LAYER_HEIGHT }}
         >
-          <img
+          {/* <img
             src="/images/logo_hero2.png"
             alt=""
             aria-hidden="true"
@@ -270,8 +271,8 @@ export function MobileHero({
               opacity: 0.9,
               transform: "translate(-50%, -50%)",
             }}
-          />
-          {/* <span
+          /> */}
+          <span
             className="absolute h-[155px] w-[155px] select-none bg-brand"
             style={{
               left: HERO_WATERMARK_LEFT,
@@ -288,7 +289,7 @@ export function MobileHero({
               WebkitMaskSize: "contain",
               maskSize: "contain",
             }}
-          /> */}
+          />
         </div>
         <div className="relative z-10 flex items-center">
           <div className="ml-1 min-w-0">
