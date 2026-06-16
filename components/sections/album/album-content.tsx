@@ -675,9 +675,9 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
       >
         <div className="mx-auto w-full md:w-[calc(100%-32px)]">
           <section className="px-4 pb-6 pt-0 md:px-8 md:pb-8">
-            {/* <p className="mb-3 text-[10px] font-semibold uppercase text-white/42">
-              Archivo visual
-            </p> */}
+            <p className="mb-5 text-[12px] font-semibold uppercase text-white/42">
+              Archivo
+            </p>
             <h1 className="max-w-[11ch] font-serif text-[2.85rem] font-normal leading-[0.95] text-white md:text-[4rem]">
               Álbum de Actividades
             </h1>

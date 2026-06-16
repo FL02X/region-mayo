@@ -455,7 +455,7 @@ export function FirstVisitInfoMobile() {
 
           <div className="min-w-0 flex-1 pt-0.5">
             <h2 className={`${editorialFont.className} text-[22px] font-bold leading-[1.18]`}>
-              ¿Viene por primera vez?
+              ¿Vienes por primera vez?
             </h2>
             <p className="mt-2.5 text-[15px] font-normal leading-[1.5] text-[#071329]">
               ¡Todos son bienvenidos! Sepa qué esperar en nuestros cultos
