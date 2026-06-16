@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Newsreader } from "next/font/google";
 import {
   ArrowRight,
   Calendar,
@@ -46,6 +47,12 @@ const PHOTOS_PER_PAGE = 40;
 const ALL_FILTER = "todos";
 const VIDEO_FILTER = "videos";
 const PHOTO_FILTER = "fotos";
+const editorialFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 const albumMobileSlideTransition = {
   duration: 0.28,
   ease: [0.22, 1, 0.36, 1] as const,
@@ -1361,14 +1368,16 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
           {...pageMotionProps}
         >
           <div className="mx-auto w-full md:w-[calc(100%-32px)]">
-            <section className="mb-0 border-b border-border px-4 pb-5 pt-0 md:px-8 md:pb-6">
+            <section className="mb-0 border-b border-border px-4 pb-2 pt-0 md:px-8 md:pb-6">
               <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">
                 {CATEGORY_LABELS[album.category] || album.category}
               </p>
-              <h1 className="text-[1.825rem] font-semibold tracking-tight text-foreground">
+              <h1
+                className={`${editorialFont.className} text-[32px] font-semibold tracking-tight text-foreground`}
+              >
                 {album.title}
               </h1>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-2">
                   <Calendar className="h-4 w-4" aria-hidden="true" />
                   {formatAlbumDate(album.startDate, album.endDate)}
@@ -1383,11 +1392,11 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 </span>
               </div>
               {album.description ? (
-                <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+                <p className="mt-4 max-w-2xl text-[15px] leading-7">
                   {album.description}
                 </p>
               ) : null}
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 mb-4 flex flex-wrap gap-2">
                 {album.relatedEvent ? (
                   <Link
                     href={`/buscar?q=${encodeURIComponent(album.relatedEvent.title)}`}
@@ -1457,7 +1466,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
             <section>
               {isYoutubeAlbum ? (
                 <>
-                  <div className="px-0 pt-4 sm:px-4 md:px-8 md:pt-5">
+                  <div className="px-0 pt-0 sm:px-4 md:px-8 md:pt-5">
                     {selectedVideo ? (
                       <div className="mb-5 overflow-hidden border border-border bg-black">
                         <div
@@ -1555,7 +1564,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   </div>
                 </>
               ) : (
-                <div className="px-0 pt-4 sm:px-4 md:px-8 md:pt-5">
+                <div className="px-0 pt-0 sm:px-4 md:px-8 md:pt-5">
                   <div className="columns-2 gap-[3px] md:hidden">
                     {albumMobileTileLayouts.map((layout, index) => (
                       <AlbumMediaTile
