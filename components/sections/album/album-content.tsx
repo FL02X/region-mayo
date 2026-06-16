@@ -340,7 +340,7 @@ function AlbumHubEntryCard({
         router.push(href);
       }}
       onPointerDown={triggerFlick}
-      className={`relative flex min-h-[142px] overflow-hidden border border-white/10 bg-[#0b0b0b] transition-colors md:min-h-[172px] md:hover:border-white/35 ${
+      className={`relative flex min-h-[142px] overflow-hidden border border-white/10 bg-paper transition-colors md:min-h-[172px] md:hover:border-white/35 ${
         isFlicking ? HUB_TAP_FEEDBACK_CLASS : ""
       }`}
     >
@@ -416,7 +416,7 @@ function AlbumHubEntryCard({
       </Link>
       <div className="flex min-w-0 flex-1 items-center px-4 py-4 md:px-6">
         <div className="flex min-w-0 flex-col items-start gap-0">
-          <div className="mb-4 flex h-8 w-8 shrink-0 items-center justify-center text-white/55">
+          <div className="mb-4 flex h-8 w-8 shrink-0 items-center justify-center text-ink">
             {isYoutubeAlbum ? (
               <PlayCircle className="h-7 w-7" aria-hidden="true" />
             ) : (
@@ -428,12 +428,12 @@ function AlbumHubEntryCard({
             href={href}
             aria-label={`Abrir ${title}`}
             onClick={(event) => event.stopPropagation()}
-            className="inline-flex max-w-full items-center gap-1 font-serif text-[24px] font-normal leading-tight text-white transition-colors hover:text-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:text-[30px]"
+            className="inline-flex max-w-full items-center gap-1 font-serif text-[24px] font-normal leading-tight text-ink transition-colors hover:text-ink/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:text-[30px]"
           >
             <span className="truncate">{title}</span>
           </Link>
 
-          <p className="mt-2 text-[12px] uppercase text-white/45">
+          <p className="mt-2 text-[12px] uppercase text-ink/90">
             {subtitle}
           </p>
         </div>
@@ -704,7 +704,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
             </div>
           </section>
 
-          <section className="mt-3 px-4 py-5 md:px-8 md:pt-7">
+          <section className="mt-0 px-4 py-5 md:px-8 md:pt-7">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-[15px] font-semibold uppercase text-white/40">
                 Añadidos recientemente
@@ -920,29 +920,26 @@ function getAlbumTileLayout(
   const hash = hashString(
     `${albumSlug}:${getGalleryItemPreviewUrl(item) || item.type}:${index}`,
   );
-  const remainingItems = totalCount - index - 1;
-  const allowSpecial =
-    totalCount > 12 &&
-    (index === 0 || (index < totalCount - 8 && remainingItems > 8));
-  const canBeSpecial = allowSpecial && hash % 100 < 24;
+  const allowSpecial = totalCount > 4;
+  const canBeSpecial = allowSpecial && hash % 100 < 58;
 
   let kind: AlbumTileKind = "normal";
 
   if (canBeSpecial) {
-    const roll = hash % 100;
+    const roll = (hash + index * 17) % 100;
     kind =
-      roll < 68
-        ? "squareLarge"
-        : roll < 92 || totalCount <= 24
-          ? "tall"
-          : "wide";
+      roll < 34
+        ? "tall"
+        : roll < 70
+          ? "wide"
+          : "squareLarge";
   }
 
   const classNameByKind: Record<AlbumTileKind, string> = {
-    normal: "aspect-square col-span-1",
-    squareLarge: "aspect-square col-span-2",
-    tall: "aspect-[2/3] col-span-2",
-    wide: "aspect-[3/2] col-span-3",
+    normal: "aspect-[4/5]",
+    squareLarge: "aspect-square",
+    tall: "aspect-[2/3]",
+    wide: "aspect-[4/3]",
   };
 
   const imageOptionsByKind: Record<
@@ -957,7 +954,7 @@ function getAlbumTileLayout(
   > = {
     normal: {
       width: 640,
-      height: 640,
+      height: 800,
       quality: 60,
       format: "webp",
       fit: "crop",
@@ -977,8 +974,8 @@ function getAlbumTileLayout(
       fit: "crop",
     },
     wide: {
-      width: 1240,
-      height: 820,
+      width: 960,
+      height: 720,
       quality: 64,
       format: "webp",
       fit: "crop",
@@ -986,10 +983,10 @@ function getAlbumTileLayout(
   };
 
   const sizesByKind: Record<AlbumTileKind, string> = {
-    normal: "(max-width: 767px) 33vw, (max-width: 1024px) 25vw, 220px",
-    squareLarge: "(max-width: 767px) 66vw, (max-width: 1024px) 50vw, 420px",
-    tall: "(max-width: 767px) 66vw, (max-width: 1024px) 50vw, 350px",
-    wide: "(max-width: 767px) 100vw, (max-width: 1024px) 75vw, 720px",
+    normal: "(max-width: 767px) 50vw, 220px",
+    squareLarge: "(max-width: 767px) 50vw, 220px",
+    tall: "(max-width: 767px) 50vw, 220px",
+    wide: "(max-width: 767px) 50vw, 220px",
   };
 
   return {
@@ -1178,7 +1175,7 @@ function AlbumMediaTile({
     <button
       type="button"
       onClick={() => onOpen(index)}
-      className={`group relative overflow-hidden border border-border bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${layout.className}`}
+      className={`group relative mb-[3px] block w-full break-inside-avoid overflow-hidden border border-border bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary md:mb-0 ${layout.className}`}
       aria-label={`Abrir ${isVideo ? "video" : "foto"} ${index + 1}`}
     >
       {previewUrl ? (
@@ -1558,7 +1555,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 </>
               ) : (
                 <div className="px-0 pt-4 sm:px-4 md:px-8 md:pt-5">
-                  <div className="grid grid-flow-dense grid-cols-3 gap-[2px] sm:gap-2 md:hidden">
+                  <div className="columns-2 gap-[3px] md:hidden">
                     {albumMobileTileLayouts.map((layout, index) => (
                       <AlbumMediaTile
                         key={`${getGalleryItemPreviewUrl(visibleMedia[index])}-${index}`}
