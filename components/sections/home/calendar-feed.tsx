@@ -77,6 +77,7 @@ const MONTHS_TO_APPEND = 12;
 const LOAD_MORE_THRESHOLD = 8;
 const MONTH_RENDER_RADIUS = 1;
 const MONTH_PLANNER_SNAP_DURATION = 0;
+const MONTH_PLANNER_MONTH_COMMIT_DELAY_MS = 560;
 const weekDayLabels = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
 
 const eventTypePlannerColors: Record<
@@ -159,12 +160,27 @@ function getRegionMonthKey(date: Date) {
   return `${parts.year}-${parts.month}`;
 }
 
-function getEventDateRangeLabel(event: Event) {
+function getEventEndDate(event: Event) {
   const scheduleEndDate =
     Array.isArray(event.schedule) && event.schedule.length > 0
       ? event.schedule[event.schedule.length - 1]?.date
       : undefined;
-  const endDate = event.endDate ?? scheduleEndDate ?? event.date;
+
+  return event.endDate ?? scheduleEndDate ?? event.date;
+}
+
+function getMostRelevantEvent(events: Event[]) {
+  const todayKey = getRegionDateKey(new Date());
+
+  return (
+    events.find((event) => getRegionDateKey(getEventEndDate(event)) >= todayKey) ??
+    events[0] ??
+    null
+  );
+}
+
+function getEventDateRangeLabel(event: Event) {
+  const endDate = getEventEndDate(event);
 
   if (getRegionDateKey(event.date) === getRegionDateKey(endDate)) {
     return formatRegionDayMonth(event.date);
@@ -482,6 +498,7 @@ function MobileMonthPlanner({
   const selectedMonthKey = getRegionMonthKey(selectedMonth);
   const lastSyncedSelectedMonthKeyRef = useRef(selectedMonthKey);
   const initialMonthIndexRef = useRef<number | null>(null);
+  const monthCommitTimerRef = useRef<number | null>(null);
 
   if (initialMonthIndexRef.current === null) {
     initialMonthIndexRef.current = Math.max(
@@ -539,7 +556,7 @@ function MobileMonthPlanner({
     selectedPlannerEvent &&
     displayedPlannerEvents.some((event) => event.id === selectedPlannerEvent.id)
       ? selectedPlannerEvent.id
-      : (displayedPlannerEvents[0]?.id ?? null);
+      : getMostRelevantEvent(displayedPlannerEvents)?.id;
   const activePlannerEvent =
     displayedPlannerEvents.find((event) => event.id === selectedPlannerEventId) ??
     null;
@@ -583,26 +600,27 @@ function MobileMonthPlanner({
   const handleEmblaSelect = useCallback(
     (api: NonNullable<typeof emblaApi>) => {
       const index = api.selectedScrollSnap();
+      const nextMonth = calendarMonths[index];
 
       setActiveMonthIndex(index);
       extendCalendarIfNeeded(index);
-    },
-    [extendCalendarIfNeeded],
-  );
-
-  const handleEmblaSettle = useCallback(
-    (api: NonNullable<typeof emblaApi>) => {
-      const selectedIndex = api.selectedScrollSnap();
-      const nextMonth = calendarMonths[selectedIndex];
 
       if (!nextMonth) return;
+      if (monthCommitTimerRef.current !== null) {
+        window.clearTimeout(monthCommitTimerRef.current);
+        monthCommitTimerRef.current = null;
+      }
+
       if (getRegionMonthKey(nextMonth) === getRegionMonthKey(selectedMonth)) {
         return;
       }
 
-      onMonthSelect(nextMonth);
+      monthCommitTimerRef.current = window.setTimeout(() => {
+        monthCommitTimerRef.current = null;
+        onMonthSelect(nextMonth);
+      }, MONTH_PLANNER_MONTH_COMMIT_DELAY_MS);
     },
-    [calendarMonths, onMonthSelect, selectedMonth],
+    [calendarMonths, extendCalendarIfNeeded, onMonthSelect, selectedMonth],
   );
 
   const activeCarouselMonth = calendarMonths[activeMonthIndex] ?? selectedMonth;
@@ -633,13 +651,11 @@ function MobileMonthPlanner({
 
     handleEmblaSelect(emblaApi);
     emblaApi.on("select", handleEmblaSelect);
-    emblaApi.on("settle", handleEmblaSettle);
 
     return () => {
       emblaApi.off("select", handleEmblaSelect);
-      emblaApi.off("settle", handleEmblaSettle);
     };
-  }, [emblaApi, handleEmblaSelect, handleEmblaSettle]);
+  }, [emblaApi, handleEmblaSelect]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -671,6 +687,14 @@ function MobileMonthPlanner({
     selectedMonth,
     selectedMonthKey,
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (monthCommitTimerRef.current !== null) {
+        window.clearTimeout(monthCommitTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="md:hidden">
@@ -1026,7 +1050,7 @@ export function EventsFeed({
         return currentEvent;
       }
 
-      return filteredEvents[0] ?? null;
+      return getMostRelevantEvent(filteredEvents);
     });
   }, [filteredEvents, isMonthPlannerEnabled]);
 

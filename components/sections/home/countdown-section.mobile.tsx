@@ -859,7 +859,7 @@ export function CountdownSection({
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className={`${editorialFont.className} type-human-title mb-5 text-[30px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
+                className={`${editorialFont.className} type-human-title mb-5 text-[32px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
               > 
                 {countdownEvent.title}
               </h3>
@@ -868,7 +868,7 @@ export function CountdownSection({
               <div className="space-y-1.5 text-sm text-muted-foreground">
                 <div className="flex items-start gap-2 text-foreground">
                   <Calendar
-                    className="mt-0.5 h-4 w-4 shrink-0"
+                    className="mt-0.5 h-4.5 w-4.5 shrink-0"
                     aria-hidden="true"
                   />
                   <div className="space-y-1">
@@ -887,8 +887,8 @@ export function CountdownSection({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 min-w-0 mt-2 mb-5 text-[18px] text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span className="truncate text-foreground/80">
+                  <MapPin className="mb-6 h-4.5 w-4.5 shrink-0" aria-hidden="true" />
+                  <span className="line-clamp-2 leading-tight text-foreground/80">
                     {countdownEvent.address || countdownEvent.location}
                   </span>
                 </div>
