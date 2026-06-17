@@ -2,22 +2,17 @@ import type { ActiveToolLayoutProps, LayoutProps } from 'sanity'
 
 const sharedStyle = `
   .studio-shell {
-    --studio-scale: 1.1;
-    transform: scale(var(--studio-scale));
-    transform-origin: top left;
-    width: calc(100% / var(--studio-scale));
-    min-height: calc(100dvh / var(--studio-scale));
+    display: block;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
   }
 
   @media (max-width: 768px) {
     .studio-shell {
-      --studio-scale: 1;
-      display: block;
       height: 100dvh;
       min-height: 100svh;
-      overflow: hidden;
-      transform: none;
-      width: 100%;
     }
 
     .studio-shell [data-ui='PaneLayout'],
