@@ -4,11 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/nav-bar";
 import Chatbot from "@/components/shared/chatbot";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { PermissionsPanel } from "@/components/pwa/permissions-panel";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useConnectivity } from "@/hooks/use-connectivity";
-import { readAnalyticsOptIn, writeAnalyticsOptIn } from "@/lib/preferences";
 import {
   estimateOfflineBundleBytes,
   formatBytes,
@@ -23,7 +21,6 @@ export default function ConfiguracionPage() {
   const { isOnline, connection } = useConnectivity();
   const headerBehavior = isInstalled ? "sticky" : "fixed";
 
-  const [analyticsOptIn, setAnalyticsOptIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(0);
   const [storageUsed, setStorageUsed] = useState<number | null>(null);
@@ -34,7 +31,6 @@ export default function ConfiguracionPage() {
   >(null);
 
   useEffect(() => {
-    setAnalyticsOptIn(readAnalyticsOptIn());
     setLastSync(readLastSync());
     refreshStorageEstimate();
     if (isInstalled) {
@@ -48,11 +44,6 @@ export default function ConfiguracionPage() {
     if (!navigator.storage?.estimate) return;
     const estimate = await navigator.storage.estimate();
     setStorageUsed(typeof estimate.usage === "number" ? estimate.usage : null);
-  };
-
-  const handleAnalytics = (checked: boolean) => {
-    setAnalyticsOptIn(checked);
-    writeAnalyticsOptIn(checked);
   };
 
   const handleSyncNow = async () => {
@@ -160,17 +151,6 @@ export default function ConfiguracionPage() {
           </div>
         </section>
 
-        <section className="bg-white border border-border/60 p-5 space-y-3">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Analítica</h2>
-              <p className="text-xs text-muted-foreground">
-                Ayúdanos a mejorar con datos anónimos de uso.
-              </p>
-            </div>
-            <Switch checked={analyticsOptIn} onCheckedChange={handleAnalytics} />
-          </div>
-        </section>
       </div>
       <Chatbot />
     </main>

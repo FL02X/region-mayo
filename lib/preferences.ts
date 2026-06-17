@@ -7,7 +7,6 @@ type PreferenceChangeDetail = {
 
 export const PREFERENCE_KEYS = {
   fontScale: "rm-font-scale",
-  analyticsOptIn: "rm-analytics-opt-in",
 } as const;
 
 export const FONT_SCALE_VALUES: Record<FontScale, number> = {
@@ -33,17 +32,6 @@ export function applyFontScale(value: FontScale) {
   if (typeof document === "undefined") return;
   const numericValue = FONT_SCALE_VALUES[value] ?? 1;
   document.documentElement.style.setProperty("--app-font-scale", String(numericValue));
-}
-
-export function readAnalyticsOptIn(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(PREFERENCE_KEYS.analyticsOptIn) === "true";
-}
-
-export function writeAnalyticsOptIn(value: boolean) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(PREFERENCE_KEYS.analyticsOptIn, value ? "true" : "false");
-  notifyPreferenceChange(PREFERENCE_KEYS.analyticsOptIn, value ? "true" : "false");
 }
 
 function notifyPreferenceChange(key: string, value: string) {

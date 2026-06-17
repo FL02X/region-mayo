@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { TimeProvider } from "@/lib/time-context";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME, SITE_NAME, getSiteUrl } from "@/lib/seo";
 import { HighlightClearer } from "@/components/layout/highlight-clearer";
@@ -8,7 +9,6 @@ import { RouteBodyFlags } from "@/components/layout/route-body-flags";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { InstallAppBanner } from "@/components/pwa/install-app-banner";
-import { AnalyticsGate } from "@/components/pwa/analytics-gate";
 import "./globals.css";
 
 const siteUrl = getSiteUrl();
@@ -87,7 +87,7 @@ export default async function RootLayout({
         <InstallAppBanner />
         <OfflineBanner />
         <PwaBootstrap />
-        <AnalyticsGate />
+        <Analytics />
       </body>
     </html>
   );
