@@ -1241,7 +1241,7 @@ export function EventCard({
             {eventScheduleGrid}
           </div>
 
-          <div className="flex gap-4 px-4 pb-1 pt-4 md:gap-5 md:pb-0 md:pt-5">
+          <div className="flex gap-4 px-4 pb-1 pt-4 md:gap-5 md:pb-5 md:pt-5">
             <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted md:h-[136px] md:w-[136px]">
               {event.image ? (
                 <>

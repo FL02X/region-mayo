@@ -890,7 +890,7 @@ export function CountdownSection({
           >
             <div className="h-[5px] bg-brand" aria-hidden="true" />
 
-            <div className="p-4 py-7 pb-6">
+            <div className="p-4 py-7 pb-4">
               <p className="text-[11px] text-brand-text font-bold uppercase tracking-[0.22em] mb-3.5 mt-[-10px]">
                 Nuestro Próximo Evento
               </p>
@@ -976,12 +976,12 @@ export function CountdownSection({
                   </button>
                 )}
 
-                <div className="mt-2.5 space-y-2.5">
+                <div className="mt-2 space-y-2.5">
                   {countdownPlacePhotoUrl && (
                     <button
                       type="button"
                       onClick={() => setIsPlacePhotoOpen(true)}
-                      className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 text-[16px] font-extrabold tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80"
+                      className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 text-[16px] font-extrabold tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80 mb-4 "
                       aria-haspopup="dialog"
                       aria-label="Ver foto del lugar"
                     >

@@ -53,7 +53,13 @@ const CARD_COLLAPSE_DELAY_MS = CARD_HIDE_DELAY_MS + CARD_FADE_DURATION_MS;
 const CARD_COLLAPSE_DURATION_MS = 250;
 const CARD_EXPANDED_MAX_HEIGHT_FALLBACK = 280;
 
-export function FirstVisitInfoMobile() {
+interface FirstVisitInfoMobileProps {
+  onDividerVisibilityChange?: (isVisible: boolean) => void;
+}
+
+export function FirstVisitInfoMobile({
+  onDividerVisibilityChange,
+}: FirstVisitInfoMobileProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [openQuestion, setOpenQuestion] = useState<string | null>(
     INITIAL_OPEN_QUESTION,
@@ -295,6 +301,15 @@ export function FirstVisitInfoMobile() {
     setIsDismissed(false);
     setOpenQuestion(INITIAL_OPEN_QUESTION);
   };
+
+  const hasVisibleDivider =
+    dismissalChecked &&
+    !(isStandalonePwa && !isLocalhost) &&
+    !(isDismissed && !undoAvailable);
+
+  useEffect(() => {
+    onDividerVisibilityChange?.(hasVisibleDivider);
+  }, [hasVisibleDivider, onDividerVisibilityChange]);
 
   if (!dismissalChecked || (isStandalonePwa && !isLocalhost)) {
     return null;

@@ -939,6 +939,7 @@ export function EventsFeed({
     renderedViewMode === "compact" ? "min-h-[560px] md:min-h-0" : "";
   const shouldRenderLegacyCalendar = !isMobile || !isMonthPlannerEnabled;
   const shouldRenderMobileMonthPlanner = isMobile && isMonthPlannerEnabled;
+  const [hasFirstVisitDivider, setHasFirstVisitDivider] = useState(false);
 
   useEffect(() => {
     if (!isMonthPlannerEnabled) {
@@ -1159,7 +1160,9 @@ export function EventsFeed({
           />
         </div>
 
-        <FirstVisitInfoMobile />
+        <FirstVisitInfoMobile
+          onDividerVisibilityChange={setHasFirstVisitDivider}
+        />
 
         {/* Info Cards (Services, Bible, Hymnal) - HIDDEN */}
         {/* <HomeInfoCards /> */}
@@ -1167,7 +1170,9 @@ export function EventsFeed({
         {/* Calendar section */}
         <section
           id="calendario"
-          className="mt-0 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-border/70 bg-muted/20"
+          className={`mt-0 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-border/70 bg-muted/20 ${
+            hasFirstVisitDivider ? "" : "border-t md:border-t-0"
+          }`}
         >
           <div className="mt-1 max-w-4xl mx-auto w-full">
 
