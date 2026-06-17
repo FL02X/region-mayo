@@ -37,10 +37,10 @@ export default defineType({
   title: "Templo",
   type: "document",
   groups: [
-    { name: "basic", title: "Información Básica" },
-    { name: "location", title: "Ubicación" },
-    { name: "contact", title: "Contacto" },
-    { name: "metadata", title: "Metadatos" },
+    { name: "basic", title: "Información Básica", hidden: true },
+    { name: "location", title: "Ubicación", hidden: true },
+    { name: "contact", title: "Contacto", hidden: true },
+    { name: "metadata", title: "Metadatos", hidden: true },
   ],
   indexes: [
     { name: "byRegion", keys: [["region"]] },

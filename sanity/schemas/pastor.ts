@@ -25,9 +25,9 @@ export default defineType({
   title: 'Pastor',
   type: 'document',
   groups: [
-    { name: 'basic', title: 'Información Básica' },
-    { name: 'contact', title: 'Contacto' },
-    { name: 'metadata', title: 'Metadatos' },
+    { name: 'basic', title: 'Información Básica', hidden: true },
+    { name: 'contact', title: 'Contacto', hidden: true },
+    { name: 'metadata', title: 'Metadatos', hidden: true },
   ],
   indexes: [
     { name: 'byTemplo', keys: [['templo']] },

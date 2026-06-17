@@ -38,7 +38,7 @@ const QUESTIONS = [
   },
   {
     question: "¿Cómo llego?",
-    answer: "Puedes usar el botón de Maps dentro de cada evento o templo.",
+    answer: "Puedes usar el botón de Maps dentro de cada evento o templo. ¡Te esperamos!",
   },
 ];
 
@@ -458,8 +458,7 @@ export function FirstVisitInfoMobile() {
               ¿Vienes por primera vez? 👋
             </h2>
             <p className="mt-2.5 text-[15px] font-normal leading-[1.5] text-[#071329]">
-              ¡Todos son bienvenidos! Sepa qué esperar en nuestros cultos
-              y resuelva sus dudas antes de asistir.
+              ¡Todos son bienvenidos! Resuelva sus dudas antes de asistir a cualquier de nuestros cultos. 
             </p>
           </div>
         </div>

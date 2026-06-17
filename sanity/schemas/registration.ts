@@ -24,10 +24,10 @@ export default defineType({
   title: 'Registro de Evento',
   type: 'document',
   groups: [
-    { name: 'basic', title: 'Información Básica' },
-    { name: 'preferences', title: 'Preferencias' },
-    { name: 'status', title: 'Estado' },
-    { name: 'metadata', title: 'Metadatos' },
+    { name: 'basic', title: 'Información Básica', hidden: true },
+    { name: 'preferences', title: 'Preferencias', hidden: true },
+    { name: 'status', title: 'Estado', hidden: true },
+    { name: 'metadata', title: 'Metadatos', hidden: true },
   ],
   indexes: [
     { name: 'byEvent', keys: [['event']] },

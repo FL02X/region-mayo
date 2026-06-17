@@ -23,12 +23,12 @@ export default defineType({
   title: 'Evento',
   type: 'document',
   groups: [
-    { name: 'basic', title: 'Datos principales' },
-    { name: 'location', title: 'Ubicación' },
-    { name: 'extras', title: 'Opciones extra' },
-    { name: 'media', title: 'Archivos' },
-    { name: 'settings', title: 'Configuración' },
-    { name: 'toggles', title: 'Controles (toggles)' },
+    { name: 'basic', title: 'Datos principales', hidden: true },
+    { name: 'location', title: 'Ubicación', hidden: true },
+    { name: 'extras', title: 'Opciones extra', hidden: true },
+    { name: 'media', title: 'Archivos', hidden: true },
+    { name: 'settings', title: 'Configuración', hidden: true },
+    { name: 'toggles', title: 'Controles (toggles)', hidden: true },
   ],
   indexes: [
     { name: 'byRegion', keys: [['region']] },
@@ -247,7 +247,7 @@ export default defineType({
     }),
     defineField({
       name: 'alimentosDescription',
-      title: 'Descripción de alimentos ',
+      title: 'Descripción de alimentos',
       type: 'text',
       group: 'extras',
       description: 'Horarios, menú, detalles de cómo se servira la comida...',
@@ -347,20 +347,20 @@ export default defineType({
     }),
     defineField({
       name: 'moreInfoEnabled',
-      title: 'ACTIVAR "MÁS INFORMACION" ',
+      title: 'ACTIVAR "VER FOTO DEL LUGAR"',
       type: 'boolean',
       group: 'toggles',
       initialValue: false,
-      description: 'Esto activara un boton al final del cuadro del evento donde al dar click mostrara una imagen que hayas añadido. Sera solo para mostrar cosas como dias de participacion de los coros, o avisos',
+      description: 'Activa un boton para mostrar una foto del lugar del evento. Usa esta opcion cuando quieras que las personas puedan ver una referencia visual del templo, salon o punto de reunion.',
     }),
     defineField({
       name: 'moreInfoImage',
-      title: 'Imagen de más información',
+      title: 'Foto del lugar',
       type: 'image',
       group: 'extras',
       options: { hotspot: true },
       hidden: ({ document }) => !document?.moreInfoEnabled,
-      description: 'Imagen que se mostrará en la sección de "Más Información"',
+      description: 'Imagen que se mostrara al tocar "VER FOTO DEL LUGAR".',
     }),
 
     // Media

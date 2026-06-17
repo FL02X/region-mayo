@@ -24,10 +24,10 @@ export default defineType({
   title: 'Coro',
   type: 'document',
   groups: [
-    { name: 'basic', title: 'Información Básica' },
-    { name: 'leader', title: 'Liderazgo' },
-    { name: 'location', title: 'Ubicación' },
-    { name: 'metadata', title: 'Metadatos' },
+    { name: 'basic', title: 'Información Básica', hidden: true },
+    { name: 'leader', title: 'Liderazgo', hidden: true },
+    { name: 'location', title: 'Ubicación', hidden: true },
+    { name: 'metadata', title: 'Metadatos', hidden: true },
   ],
   indexes: [
     { name: 'byTemplo', keys: [['templo']] },

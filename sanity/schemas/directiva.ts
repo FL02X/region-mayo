@@ -44,10 +44,10 @@ export default defineType({
   title: 'Directiva',
   type: 'document',
   groups: [
-    { name: 'basic', title: 'Información Básica' },
-    { name: 'contact', title: 'Contacto' },
-    { name: 'order', title: 'Ordenamiento' },
-    { name: 'metadata', title: 'Metadatos' },
+    { name: 'basic', title: 'Información Básica', hidden: true },
+    { name: 'contact', title: 'Contacto', hidden: true },
+    { name: 'order', title: 'Ordenamiento', hidden: true },
+    { name: 'metadata', title: 'Metadatos', hidden: true },
   ],
   indexes: [
     { name: 'byRegion', keys: [['region']] },

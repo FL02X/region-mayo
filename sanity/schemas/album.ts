@@ -12,10 +12,10 @@ export default defineType({
     input: AlbumRelatedEventInput,
   },
   groups: [
-    { name: 'basic', title: 'Datos principales' },
-    { name: 'media', title: 'Contenido' },
-    { name: 'submissions', title: 'Subida comunitaria' },
-    { name: 'settings', title: 'Configuracion' },
+    { name: 'basic', title: 'Datos principales', hidden: true },
+    { name: 'media', title: 'Contenido', hidden: true },
+    { name: 'submissions', title: 'Subida comunitaria', hidden: true },
+    { name: 'settings', title: 'Configuracion', hidden: true },
   ],
   fields: [
     defineField({

@@ -722,10 +722,10 @@ export function EventCard({
         <Button
           variant="outline"
           onClick={() => setShowMoreInfoImage(true)}
-          className="text-sm w-full"
+          className="mt-5 text-sm w-full"
         >
           <Info className="h-4 w-4 mr-1.5" aria-hidden="true" />
-          Más información del evento
+          VER FOTO DEL LUGAR
         </Button>
       )}
     </div>

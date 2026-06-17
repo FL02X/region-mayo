@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   HeartHandshake,
+  Image as ImageIcon,
   Images,
   MapPin,
   ExternalLink,
@@ -30,13 +31,16 @@ import {
 } from "@/lib/region-date";
 import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
-import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
+import type {
+  Event,
+  HeroCard,
+  PrayerWallConfig,
+  SocialPost,
+} from "@/lib/types";
 import type { HeroCandidate } from "@/lib/ranker";
 import { pickHeroAndDeck, getAccentColor } from "@/lib/ranker";
 import { useTime } from "@/lib/time-context";
-import {
-  getAlbumSharingEvents,
-} from "@/lib/countdown-utils";
+import { getAlbumSharingEvents } from "@/lib/countdown-utils";
 
 interface CountdownSectionProps {
   events: Event[];
@@ -61,10 +65,8 @@ const editorialFont = Newsreader({
   preload: false,
 });
 // Paper aesthetic: shadows were removed from the shared mobile card helpers.
-const MOBILE_FLOATING_CARD_CLASS =
-  "rounded-[2px]";
-const MOBILE_FLOATING_BORDER_CLASS =
-  "rounded-[2px]";
+const MOBILE_FLOATING_CARD_CLASS = "rounded-[2px]";
+const MOBILE_FLOATING_BORDER_CLASS = "rounded-[2px]";
 
 type CountdownOccurrence = {
   date: Date;
@@ -259,7 +261,8 @@ function FlipCountdownCell({
 
     updateMotionPreference();
     mediaQuery.addEventListener("change", updateMotionPreference);
-    return () => mediaQuery.removeEventListener("change", updateMotionPreference);
+    return () =>
+      mediaQuery.removeEventListener("change", updateMotionPreference);
   }, []);
 
   useEffect(() => {
@@ -336,12 +339,16 @@ function FlipCountdownCell({
       aria-live="off"
     >
       <div className="relative mx-auto h-6 w-full max-w-[70px]">
-        <span className={`${editorialFont.className} mt-1.5 absolute inset-0 flex items-center justify-center text-[30px] font-bold tabular-nums leading-none ${disabled ? "text-muted-foreground" : "text-foreground"}`}>
+        <span
+          className={`${editorialFont.className} mt-1.5 absolute inset-0 flex items-center justify-center text-[30px] font-bold tabular-nums leading-none ${disabled ? "text-muted-foreground" : "text-foreground"}`}
+        >
           {displayText}
         </span>
       </div>
 
-      <p className={`mt-1.5 text-[9px] uppercase tracking-widest font-medium ${disabled ? "text-muted-foreground/90" : "text-muted-foreground"} ${labelClassName}`}>
+      <p
+        className={`mt-1.5 text-[9px] uppercase tracking-widest font-medium ${disabled ? "text-muted-foreground/90" : "text-muted-foreground"} ${labelClassName}`}
+      >
         {label}
       </p>
     </div>
@@ -402,7 +409,8 @@ function MobilePrayerSpotlightCard({
 
         parent.appendChild(clone);
         const needsMoreSpace =
-          clone.getBoundingClientRect().height > textEl.getBoundingClientRect().height + 1;
+          clone.getBoundingClientRect().height >
+          textEl.getBoundingClientRect().height + 1;
         clone.remove();
         setIsOverflowing(needsMoreSpace);
       });
@@ -415,13 +423,16 @@ function MobilePrayerSpotlightCard({
 
   const goToPrayer = (direction: "previous" | "next") => {
     setIndex((current) => {
-      if (direction === "previous") return (current - 1 + prayers.length) % prayers.length;
+      if (direction === "previous")
+        return (current - 1 + prayers.length) % prayers.length;
       return (current + 1) % prayers.length;
     });
   };
 
   return (
-    <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}>
+    <div
+      className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}
+    >
       <div className="h-[3px] bg-[#2d6a4f]" aria-hidden="true" />
       <div className="flex min-h-[270px] flex-col p-5">
         <div className="mb-2 flex items-center justify-between gap-2">
@@ -433,7 +444,9 @@ function MobilePrayerSpotlightCard({
 
         {mode === "collect" ? (
           <>
-            <h3 className={`${editorialFont.className} type-human-title mb-2 text-[22px] font-bold leading-snug`}>
+            <h3
+              className={`${editorialFont.className} type-human-title mb-2 text-[22px] font-bold leading-snug`}
+            >
               Muro de oraciones · comparte tu petición
             </h3>
             <p className="type-system mb-5 text-[15px] leading-relaxed">
@@ -470,9 +483,13 @@ function MobilePrayerSpotlightCard({
                         textIndent: "-0.75em",
                       }}
                     >
-                      <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">“</span>
+                      <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">
+                        “
+                      </span>
                       <span>{currentPrayer.text}</span>
-                      <span className="ml-0.5 font-serif text-[1.35em] leading-none text-[#9aa3ad]">”</span>
+                      <span className="ml-0.5 font-serif text-[1.35em] leading-none text-[#9aa3ad]">
+                        ”
+                      </span>
                     </span>
                   </p>
                   {isOverflowing && (
@@ -488,7 +505,9 @@ function MobilePrayerSpotlightCard({
                   )}
                 </div>
               ) : (
-                <p className={`${editorialFont.className} type-human text-center text-[18px] leading-relaxed`}>
+                <p
+                  className={`${editorialFont.className} type-human text-center text-[18px] leading-relaxed`}
+                >
                   La comunidad está orando · únete
                 </p>
               )}
@@ -505,7 +524,10 @@ function MobilePrayerSpotlightCard({
                   <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 </button>
 
-                <div className="flex items-center justify-center gap-1.5" aria-label={`Oración ${index + 1} de ${prayers.length}`}>
+                <div
+                  className="flex items-center justify-center gap-1.5"
+                  aria-label={`Oración ${index + 1} de ${prayers.length}`}
+                >
                   {prayers.map((prayer, idx) => (
                     <span
                       key={prayer._id ?? `${prayer.submittedAt}-${idx}`}
@@ -550,7 +572,9 @@ function MobilePrayerSpotlightCard({
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className="flex h-16 items-center justify-between bg-[#757575] pl-5">
-                  <h3 className="text-[17px] font-bold text-white">Oración completa</h3>
+                  <h3 className="text-[17px] font-bold text-white">
+                    Oración completa
+                  </h3>
                   <button
                     type="button"
                     onClick={() => setShowFullPrayerModal(false)}
@@ -561,7 +585,9 @@ function MobilePrayerSpotlightCard({
                   </button>
                 </div>
                 <div className="max-h-[calc(80vh-64px)] overflow-y-auto p-6">
-                  <p className={`${editorialFont.className} type-human text-[16px] italic leading-relaxed`}>
+                  <p
+                    className={`${editorialFont.className} type-human text-[16px] italic leading-relaxed`}
+                  >
                     “{currentPrayer.text}”
                   </p>
                 </div>
@@ -587,6 +613,7 @@ export function CountdownSection({
   const [isMounted, setIsMounted] = useState(false);
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isPlacePhotoOpen, setIsPlacePhotoOpen] = useState(false);
   const [isShareFallbackOpen, setIsShareFallbackOpen] = useState(false);
 
   useEffect(() => {
@@ -614,7 +641,7 @@ export function CountdownSection({
       });
     }
 
-    if (prayerWall && prayerWall.enabled && prayerWall.phase !== 'paused') {
+    if (prayerWall && prayerWall.enabled && prayerWall.phase !== "paused") {
       candidates.push({
         type: "prayer",
         id: prayerWall._id,
@@ -663,9 +690,9 @@ export function CountdownSection({
     if ((socialPosts?.length ?? 0) === 0) {
       const hasMetaKeys = Boolean(
         process.env.META_PAGE_ACCESS_TOKEN ||
-          process.env.META_INSTAGRAM_ACCOUNT_ID ||
-          process.env.META_FACEBOOK_PAGE_ID,
-      )
+        process.env.META_INSTAGRAM_ACCOUNT_ID ||
+        process.env.META_FACEBOOK_PAGE_ID,
+      );
 
       if (hasMetaKeys) {
         if (instagramUrl) {
@@ -706,14 +733,17 @@ export function CountdownSection({
   );
 
   const spotlightHero = spotlight.hero;
-  const spotlightAccent = spotlightHero ? getAccentColor(spotlightHero) : "#2f5e93";
+  const spotlightAccent = spotlightHero
+    ? getAccentColor(spotlightHero)
+    : "#2f5e93";
 
   const countdownEvent = useMemo(() => {
     if (!spotlightHero || spotlightHero.type !== "event") return null;
     return events.find((event) => event.id === spotlightHero.id) ?? null;
   }, [spotlightHero, events]);
   const eventHighlightUrl = useMemo(() => {
-    if (!isMounted || !countdownEvent || typeof window === "undefined") return "";
+    if (!isMounted || !countdownEvent || typeof window === "undefined")
+      return "";
     return `${window.location.origin}/#${encodeURIComponent(countdownEvent.id)}`;
   }, [countdownEvent, isMounted]);
   const countdownShareText = useMemo(() => {
@@ -723,7 +753,8 @@ export function CountdownSection({
   const countdownSchedule = useMemo<CountdownOccurrence[]>(() => {
     if (!countdownEvent) return [];
     const schedule =
-      Array.isArray(countdownEvent.schedule) && countdownEvent.schedule.length > 0
+      Array.isArray(countdownEvent.schedule) &&
+      countdownEvent.schedule.length > 0
         ? countdownEvent.schedule
         : [{ date: countdownEvent.date, time: countdownEvent.time }];
 
@@ -760,7 +791,9 @@ export function CountdownSection({
   }, [countdownEvent, countdownSchedule, currentTime]);
   const spotlightSocialPost = useMemo(() => {
     if (!spotlightHero || spotlightHero.type !== "social") return null;
-    return (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null;
+    return (
+      (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null
+    );
   }, [spotlightHero, socialPosts]);
   const albumEvents = useMemo(
     () => getAlbumSharingEvents(events, currentTime),
@@ -823,8 +856,13 @@ export function CountdownSection({
   const countdownGridClassName = countdownIsDisabled
     ? "opacity-60 saturate-0"
     : "";
-  const countdownMapsUrl =
-    countdownEvent ? getEventMapsUrl(countdownEvent) : "";
+  const countdownMapsUrl = countdownEvent
+    ? getEventMapsUrl(countdownEvent)
+    : "";
+  const countdownPlacePhotoUrl =
+    countdownEvent?.moreInfo?.enabled && countdownEvent.moreInfo.imageUrl
+      ? countdownEvent.moreInfo.imageUrl
+      : "";
 
   const canRegisterCountdownEvent =
     !!countdownEvent && countdownEvent.registrationEnabled !== false;
@@ -847,20 +885,20 @@ export function CountdownSection({
       <div className="max-w-md mx-auto w-full space-y-4">
         {/* Spotlight: event */}
         {countdownEvent && countdownDisplay && (
-          <div className={`desktop-card-lift border bg-paper-highlight border-x border-b border-t-0 overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}>
+          <div
+            className={`desktop-card-lift border bg-paper-highlight border-x border-b border-t-0 overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}
+          >
             <div className="h-[5px] bg-brand" aria-hidden="true" />
 
-            <div className="p-4 py-7 pb-9">
-              <p
-                className="text-[11px] text-brand-text font-bold uppercase tracking-[0.22em] mb-3.5 mt-[-10px]"
-              >
+            <div className="p-4 py-7 pb-6">
+              <p className="text-[11px] text-brand-text font-bold uppercase tracking-[0.22em] mb-3.5 mt-[-10px]">
                 Nuestro Próximo Evento
               </p>
 
               {/* Event title — serif for editorial weight */}
               <h3
                 className={`${editorialFont.className} type-human-title mb-5 text-[32px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
-              > 
+              >
                 {countdownEvent.title}
               </h3>
 
@@ -868,7 +906,7 @@ export function CountdownSection({
               <div className="space-y-1.5 text-sm text-muted-foreground">
                 <div className="flex items-start gap-2 text-foreground">
                   <Calendar
-                    className="mt-0.5 h-4.5 w-4.5 shrink-0"
+                    className="mt-[3px] h-4.5 w-4.5 shrink-0"
                     aria-hidden="true"
                   />
                   <div className="space-y-1">
@@ -877,7 +915,9 @@ export function CountdownSection({
                         key={`${occurrence.date.toISOString()}-${index}`}
                         className="flex items-baseline gap-2 text-[18px] font-bold leading-tight tabular-nums"
                       >
-                        <span>{formatRegionWeekdayDayMonth(occurrence.date)}</span>
+                        <span>
+                          {formatRegionWeekdayDayMonth(occurrence.date)}
+                        </span>
                         <span className="text-[#2f5e93]" aria-hidden="true">
                           ·
                         </span>
@@ -886,8 +926,11 @@ export function CountdownSection({
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 min-w-0 mt-2 mb-5 text-[18px] text-muted-foreground">
-                  <MapPin className="mb-6 h-4.5 w-4.5 shrink-0" aria-hidden="true" />
+                <div className="flex items-start gap-2 min-w-0 mt-2 mb-5 text-[18px] text-muted-foreground">
+                  <MapPin
+                    className="mt-[3px] h-4.5 w-4.5 shrink-0"
+                    aria-hidden="true"
+                  />
                   <span className="line-clamp-2 leading-tight text-foreground/80">
                     {countdownEvent.address || countdownEvent.location}
                   </span>
@@ -911,12 +954,12 @@ export function CountdownSection({
                 ))}
               </div>
 
-              <div className="mt-5 space-y-3">
+              <div className="mt-5">
                 {countdownMapsUrl ? (
                   <button
                     type="button"
                     onClick={() => openGoogleMaps(countdownMapsUrl)}
-                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[16px] font-extrabold tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
+                    className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[18px] font-extrabold tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
                     aria-label="Abrir ubicación del evento"
                   >
                     <MapIcon className="h-5 w-5" aria-hidden="true" />
@@ -933,15 +976,30 @@ export function CountdownSection({
                   </button>
                 )}
 
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  disabled={!countdownEvent || !countdownShareText}
-                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-sm border border-border bg-paper-dark px-4 text-[16px] font-bold tracking-[0.02em] text-ink transition-colors hover:bg-muted/40 disabled:opacity-60"
-                >
-                  <Share2 className="h-4.5 w-4.5" aria-hidden="true" />
-                  COMPARTIR
-                </button>
+                <div className="mt-2.5 space-y-2.5">
+                  {countdownPlacePhotoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setIsPlacePhotoOpen(true)}
+                      className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 text-[16px] font-extrabold tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80"
+                      aria-haspopup="dialog"
+                      aria-label="Ver foto del lugar"
+                    >
+                      <ImageIcon className="h-5 w-5" aria-hidden="true" />
+                      VER FOTO DEL LUGAR
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    disabled={!countdownEvent || !countdownShareText}
+                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-sm border border-border bg-paper-dark px-4 text-[16px] font-semibold tracking-[0.02em] transition-colors hover:bg-muted/30 disabled:opacity-60"
+                  >
+                    <Share2 className="h-4.5 w-4.5" aria-hidden="true" />
+                    COMPARTIR
+                  </button>
+                </div>
               </div>
 
               {canRegisterCountdownEvent && onRegister && (
@@ -959,63 +1017,82 @@ export function CountdownSection({
 
         {/* Spotlight: custom media */}
         {showCustomCard && customHeroCard && (
-          <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}>
-            <div className="h-[3px] bg-brand" 
-            aria-hidden="true" />
+          <div
+            className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}
+          >
+            <div className="h-[3px] bg-brand" aria-hidden="true" />
             <div className="p-3">
               <p className="type-system mb-2.5 inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.12em]">
                 <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Aviso a la congregacion</span>
               </p>
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setIsLightboxOpen(true)}
-                        aria-haspopup="dialog"
-                        aria-label="Ver imagen en pantalla completa"
-                        className="mx-auto block w-full"
-                      >
-                        <div
-                          className={`group relative w-full overflow-hidden flex items-center justify-center bg-transparent ${
-                            customHeroCard.media.isVertical ? "h-[min(86vh,680px)] md:h-[520px]" : "h-[210px] md:h-[250px]"
-                          }`}
-                        >
-                          <img
-                            src={customHeroCard.media.url}
-                            alt={customHeroCard.media.alt || "Contenido destacado"}
-                            className="block mx-auto max-h-full max-w-full w-auto h-auto object-contain"
-                            decoding="async"
-                          />
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsLightboxOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-label="Ver imagen en pantalla completa"
+                  className="mx-auto block w-full"
+                >
+                  <div
+                    className={`group relative w-full overflow-hidden flex items-center justify-center bg-transparent ${
+                      customHeroCard.media.isVertical
+                        ? "h-[min(86vh,680px)] md:h-[520px]"
+                        : "h-[210px] md:h-[250px]"
+                    }`}
+                  >
+                    <img
+                      src={customHeroCard.media.url}
+                      alt={customHeroCard.media.alt || "Contenido destacado"}
+                      className="block mx-auto max-h-full max-w-full w-auto h-auto object-contain"
+                      decoding="async"
+                    />
 
-                          {/* Desktop hover centered magnifier */}
-                          <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-3">
-                              <Maximize2 className="h-6 w-6 text-white" aria-hidden="true" />
-                            </div>
-                          </div>
-
-                          {/* Mobile: icon bottom-right */}
-                          <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
-                            <div className="rounded-[2px] border-2 border-[#111827]/20 bg-white p-1.5">
-                              <Maximize2 className="h-4 w-4 text-[#111827]" aria-hidden="true" />
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                      {isLightboxOpen && (
-                        <Lightbox
-                          src={customHeroCard.media.url}
-                          alt={customHeroCard.media.alt || "Contenido destacado"}
-                          onClose={() => setIsLightboxOpen(false)}
+                    {/* Desktop hover centered magnifier */}
+                    <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-3">
+                        <Maximize2
+                          className="h-6 w-6 text-white"
+                          aria-hidden="true"
                         />
-                      )}
+                      </div>
                     </div>
+
+                    {/* Mobile: icon bottom-right */}
+                    <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
+                      <div className="rounded-[2px] border-2 border-[#111827]/20 bg-white p-1.5">
+                        <Maximize2
+                          className="h-4 w-4 text-[#111827]"
+                          aria-hidden="true"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </button>
+                {isLightboxOpen && (
+                  <Lightbox
+                    src={customHeroCard.media.url}
+                    alt={customHeroCard.media.alt || "Contenido destacado"}
+                    onClose={() => setIsLightboxOpen(false)}
+                  />
+                )}
+              </div>
               {customHeroCard.url && (
-                <Button asChild className="mt-3 w-full h-11 bg-[#e98432] hover:bg-[#cf7425] text-white text-sm font-bold px-4">
-                  <a href={customHeroCard.url} target="_blank" rel="noopener noreferrer">
+                <Button
+                  asChild
+                  className="mt-3 w-full h-11 bg-[#e98432] hover:bg-[#cf7425] text-white text-sm font-bold px-4"
+                >
+                  <a
+                    href={customHeroCard.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <span className="inline-flex items-center justify-center gap-1.5 w-full">
                       {customHeroCard.ctaText || "Ver más información"}
-                      <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                      <ExternalLink
+                        className="h-3.5 w-3.5"
+                        aria-hidden="true"
+                      />
                     </span>
                   </a>
                 </Button>
@@ -1026,14 +1103,22 @@ export function CountdownSection({
 
         {/* Spotlight: social */}
         {showSocialCard && spotlightHero && spotlightHero.type === "social" && (
-          <div className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}>
-            <div className="h-[3px]" style={{ backgroundColor: spotlightAccent }} aria-hidden="true" />
+          <div
+            className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}
+          >
+            <div
+              className="h-[3px]"
+              style={{ backgroundColor: spotlightAccent }}
+              aria-hidden="true"
+            />
             <div className="p-5">
               <p
                 className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3"
                 style={{ color: spotlightAccent }}
               >
-                {spotlightHero.network === "instagram" ? "Instagram" : "Facebook"}
+                {spotlightHero.network === "instagram"
+                  ? "Instagram"
+                  : "Facebook"}
               </p>
 
               {spotlightSocialPost?.media?.url && (
@@ -1049,7 +1134,11 @@ export function CountdownSection({
                     alt={spotlightSocialPost.caption || "Publicación destacada"}
                     fill
                     sizes="(max-width: 768px) 92vw, 560px"
-                    className={spotlightSocialPost.media.isVertical ? "object-contain" : "object-cover"}
+                    className={
+                      spotlightSocialPost.media.isVertical
+                        ? "object-contain"
+                        : "object-cover"
+                    }
                   />
                 </div>
               )}
@@ -1086,14 +1175,19 @@ export function CountdownSection({
 
         {/* ── Album sharing cards (post-event) ── */}
         {albumEvents.map((event) => (
-          <div key={event.id} className={`desktop-card-lift bg-card border border-border p-4 ${MOBILE_FLOATING_CARD_CLASS}`}>
+          <div
+            key={event.id}
+            className={`desktop-card-lift bg-card border border-border p-4 ${MOBILE_FLOATING_CARD_CLASS}`}
+          >
             <div className="flex items-start gap-3">
               <Images
                 className="h-4 w-4 text-primary shrink-0 mt-0.5"
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
-                <h4 className={`${editorialFont.className} type-human-title text-sm font-semibold mb-0.5 truncate`}>
+                <h4
+                  className={`${editorialFont.className} type-human-title text-sm font-semibold mb-0.5 truncate`}
+                >
                   {event.title}
                 </h4>
                 <p className="text-xs text-muted-foreground mb-3">
@@ -1126,6 +1220,14 @@ export function CountdownSection({
         shareText={countdownShareText}
         onClose={() => setIsShareFallbackOpen(false)}
       />
+
+      {isPlacePhotoOpen && countdownPlacePhotoUrl && (
+        <Lightbox
+          src={countdownPlacePhotoUrl}
+          alt={`Foto del lugar de ${countdownEvent?.title ?? "evento"}`}
+          onClose={() => setIsPlacePhotoOpen(false)}
+        />
+      )}
 
       <PrayerWallForm
         isOpen={isPrayerModalOpen}
