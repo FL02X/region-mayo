@@ -76,6 +76,7 @@ const INITIAL_FUTURE_MONTHS = 18;
 const MONTHS_TO_APPEND = 12;
 const LOAD_MORE_THRESHOLD = 8;
 const MONTH_RENDER_RADIUS = 1;
+const MONTH_PLANNER_SNAP_DURATION = 0;
 const weekDayLabels = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
 
 const eventTypePlannerColors: Record<
@@ -500,7 +501,7 @@ function MobileMonthPlanner({
       slidesToScroll: 1,
       containScroll: "trimSnaps" as const,
       startIndex: initialMonthIndex,
-      duration: 25,
+      duration: MONTH_PLANNER_SNAP_DURATION,
       watchSlides: true,
     }),
     [initialMonthIndex],
