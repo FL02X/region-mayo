@@ -7,6 +7,7 @@ import { HighlightClearer } from "@/components/layout/highlight-clearer";
 import { RouteBodyFlags } from "@/components/layout/route-body-flags";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
+import { InstallAppBanner } from "@/components/pwa/install-app-banner";
 import { AnalyticsGate } from "@/components/pwa/analytics-gate";
 import "./globals.css";
 
@@ -83,6 +84,7 @@ export default async function RootLayout({
           <HighlightClearer />
         </Suspense>
         <TimeProvider initialTimeISO={new Date().toISOString()}>{children}</TimeProvider>
+        <InstallAppBanner />
         <OfflineBanner />
         <PwaBootstrap />
         <AnalyticsGate />

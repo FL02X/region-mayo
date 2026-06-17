@@ -875,7 +875,7 @@ export function CountdownSection({
                     {countdownSchedule.map((occurrence, index) => (
                       <span
                         key={`${occurrence.date.toISOString()}-${index}`}
-                        className="flex items-baseline gap-2 text-[16px] font-bold leading-tight tabular-nums"
+                        className="flex items-baseline gap-2 text-[18px] font-bold leading-tight tabular-nums"
                       >
                         <span>{formatRegionWeekdayDayMonth(occurrence.date)}</span>
                         <span className="text-[#2f5e93]" aria-hidden="true">
@@ -886,7 +886,7 @@ export function CountdownSection({
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 min-w-0 mt-2 mb-5 text-[16px] text-muted-foreground">
+                <div className="flex items-center gap-2 min-w-0 mt-2 mb-5 text-[18px] text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate text-foreground/80">
                     {countdownEvent.address || countdownEvent.location}
