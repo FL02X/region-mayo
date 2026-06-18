@@ -331,7 +331,7 @@ function FlipCountdownCell({
   return (
     <div
       ref={cellRef}
-      className={`py-4 text-center ${className}`}
+      className={`py-3 text-center ${className}`}
       style={{
         willChange: "transform, opacity, background-color, box-shadow",
         transformOrigin: "50% 50%",
@@ -340,7 +340,7 @@ function FlipCountdownCell({
     >
       <div className="relative mx-auto h-6 w-full max-w-[70px]">
         <span
-          className={`${editorialFont.className} mt-1.5 absolute inset-0 flex items-center justify-center text-[30px] font-bold tabular-nums leading-none ${disabled ? "text-muted-foreground" : "text-foreground"}`}
+          className={`${editorialFont.className} mt-1.5 absolute inset-0 flex items-center justify-center text-[30px] font-normal tabular-nums leading-none ${disabled ? "text-muted-foreground" : "text-foreground"}`}
         >
           {displayText}
         </span>
@@ -878,7 +878,7 @@ export function CountdownSection({
 
   return (
     <section
-      className="pt-[38px] bg-paper px-4 pb-0 mb-0"
+      className="pt-[38px] bg-paper px-2 pb-0 mb-0"
       data-countdown-section
       aria-label="Sección destacada"
     >

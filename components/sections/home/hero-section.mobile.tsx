@@ -234,7 +234,7 @@ export function MobileHero({
       aria-label="Imagen principal móvil"
     > 
     {/* mobile-hero-print-image */}
-      <div className="relative w-full aspect-[1.35] bg-black overflow-hidden flex items-center justify-center">
+      <div className="relative w-full aspect-[1.65] bg-black overflow-hidden flex items-center justify-center">
         <img
           src={displaySrc}
           alt={alt}
@@ -253,7 +253,7 @@ export function MobileHero({
 
       <div
         data-mobile-hero-title-band
-        className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] border-[#000000] px-5 pb-4 pt-4 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-10px_18px_rgba(20,35,50,0.10)]"
+        className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] border-[#000000] px-5 pb-3 pt-3 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-10px_18px_rgba(20,35,50,0.10)]"
       >
         <div
           aria-hidden="true"
