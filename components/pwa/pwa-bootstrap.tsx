@@ -68,6 +68,13 @@ export function PwaBootstrap() {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
 
+    if (window.location.pathname === "/studio" || window.location.pathname.startsWith("/studio/")) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+      });
+      return;
+    }
+
     if (process.env.NODE_ENV !== "production") {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         registrations.forEach((registration) => registration.unregister());

@@ -1,4 +1,4 @@
-const VERSION = "v11";
+const VERSION = "v12";
 const STATIC_CACHE = `rm-static-${VERSION}`;
 const DATA_CACHE = `rm-data-${VERSION}`;
 const REQUIRED_CACHE = `rm-required-${VERSION}`;
@@ -63,12 +63,21 @@ const isImageRequest = (url, request) =>
   /\.(?:avif|gif|jpe?g|png|svg|webp)$/i.test(url.pathname) ||
   (url.hostname === "cdn.sanity.io" && url.pathname.includes("/images/"));
 
+const isStudioRoute = (url) => url.pathname === "/studio" || url.pathname.startsWith("/studio/");
+
+const isSanityRequest = (url) =>
+  url.hostname === "sanity.io" || url.hostname.endsWith(".sanity.io");
+
+const isVercelInsightsRequest = (url) => url.pathname.startsWith("/_vercel/insights");
+
 const isBypassRequest = (url) =>
   url.searchParams.has("pwa-estimate") ||
   url.pathname.startsWith("/api/prayers") ||
   url.pathname.startsWith("/api/register") ||
   url.pathname.startsWith("/api/download-himnario") ||
-  url.pathname.startsWith("/studio");
+  isStudioRoute(url) ||
+  isSanityRequest(url) ||
+  isVercelInsightsRequest(url);
 
 const isAlbumRoute = (url) => url.pathname === "/album" || url.pathname.startsWith("/album/");
 
@@ -83,6 +92,11 @@ const getReferrerUrl = (request) => {
 const isFromAlbum = (request) => {
   const referrerUrl = getReferrerUrl(request);
   return !!referrerUrl && referrerUrl.origin === self.location.origin && isAlbumRoute(referrerUrl);
+};
+
+const isFromStudio = (request) => {
+  const referrerUrl = getReferrerUrl(request);
+  return !!referrerUrl && referrerUrl.origin === self.location.origin && isStudioRoute(referrerUrl);
 };
 
 async function imageFallbackResponse() {
@@ -190,7 +204,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  if (isBypassRequest(url)) {
+  if (isBypassRequest(url) || isFromStudio(request)) {
     return;
   }
 
