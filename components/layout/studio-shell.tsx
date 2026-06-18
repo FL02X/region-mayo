@@ -27,6 +27,16 @@ const sharedStyle = `
     .studio-shell [data-testid='pane-content'] {
       padding-bottom: max(4rem, env(safe-area-inset-bottom));
     }
+
+    .studio-shell [data-testid='field-description'] {
+      display: block !important;
+      height: auto !important;
+      margin-top: 0.25rem !important;
+      opacity: 1 !important;
+      overflow: visible !important;
+      position: static !important;
+      visibility: visible !important;
+    }
   }
 
   .studio-shell :focus-visible {

@@ -110,6 +110,7 @@ export function AlbumUploadLinkInput(props: StringInputProps) {
           border: '1px solid #d6dbe1',
           padding: '14px',
           background: '#f8fafc',
+          color: '#111827',
         }}
       >
         <p style={{ margin: '0 0 8px', fontSize: 13, lineHeight: 1.5 }}>
@@ -171,6 +172,8 @@ export function AlbumUploadLinkInput(props: StringInputProps) {
               style={{
                 border: '1px solid #d6dbe1',
                 boxSizing: 'border-box',
+                background: 'white',
+                color: '#111827',
                 fontSize: 13,
                 padding: '8px',
                 width: '100%',

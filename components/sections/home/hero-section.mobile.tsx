@@ -25,6 +25,10 @@ const HERO_WATERMARK_TOP = "73%";
 const HERO_WATERMARK_LAYER_HEIGHT = "170px";
 const HERO_WATERMARK_OPACITY = 1;
 const MOBILE_HERO_IMAGE_WIDTH = 1242;
+// Ajustes puntuales para encuadrar la imagen del hero en casos especiales.
+const MOBILE_HERO_IMAGE_OFFSET_X = "0px";
+const MOBILE_HERO_IMAGE_OFFSET_Y = "0px";
+const MOBILE_HERO_IMAGE_ZOOM = 1;
 const editorialFont = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -240,6 +244,9 @@ export function MobileHero({
           alt={alt}
           data-offline-required="true"
           className="h-full w-full object-cover object-center"
+          style={{
+            transform: `translate(${MOBILE_HERO_IMAGE_OFFSET_X}, ${MOBILE_HERO_IMAGE_OFFSET_Y}) scale(${MOBILE_HERO_IMAGE_ZOOM})`,
+          }}
           loading="eager"
           decoding="async"
           fetchPriority="high"
@@ -299,7 +306,7 @@ export function MobileHero({
             <p
               className={`${editorialFont.className} mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}
             >
-              Calendario de la{" "}
+              Sitio oficial de la{" "}
               <span className="block font-normal">Región Mayo</span>
             </p>
             <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">

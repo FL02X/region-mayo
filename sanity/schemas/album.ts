@@ -60,23 +60,6 @@ export default defineType({
       group: 'basic',
       description:
         'Opcional. Al seleccionar un evento, se copian automaticamente la fecha de inicio, fecha final si aplica y categoria.',
-      validation: (Rule) =>
-        Rule.custom(async (value, context) => {
-          if (!value?._ref) return true
-
-          const client = context.getClient({ apiVersion: '2025-01-01' })
-          const currentId = context.document?._id?.replace(/^drafts\./, '')
-          const existing = await client.fetch(
-            `*[
-              _type == "album" &&
-              relatedEvent._ref == $eventId &&
-              !(_id in [$currentId, "drafts." + $currentId])
-            ][0]._id`,
-            { eventId: value._ref, currentId },
-          )
-
-          return existing ? 'Este evento ya tiene un album relacionado' : true
-        }),
     }),
     defineField({
       name: 'startDate',
