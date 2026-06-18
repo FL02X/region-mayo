@@ -1,7 +1,9 @@
 ﻿import type { Metadata } from "next";
 
-export const SITE_FULL_NAME = "Iglesia Gentil de Cristo Region Mayo";
+export const SITE_FULL_NAME = "Iglesia Gentil de Cristo A.R. Región Mayo";
 export const SITE_NAME = "IGC Region Mayo";
+export const SITE_OFFICIAL_TITLE =
+  "Iglesia Gentil de Cristo A.R. Región Mayo: igcmayo.com | Sitio oficial";
 export const SITE_DESCRIPTION =
   "Calendario regional, templos, pastores, coros, directiva y álbumes de la Iglesia Gentil de Cristo en la Región Mayo.";
 export const DEFAULT_OG_IMAGE_PATH = "/opengraph-image";
@@ -25,6 +27,7 @@ type PageMetadataInput = {
   canonicalPath?: string;
   noIndex?: boolean;
   ogImagePath?: string;
+  absoluteTitle?: boolean;
 };
 
 export function buildPageMetadata({
@@ -33,6 +36,7 @@ export function buildPageMetadata({
   canonicalPath = "/",
   noIndex = false,
   ogImagePath = DEFAULT_OG_IMAGE_PATH,
+  absoluteTitle = false,
 }: PageMetadataInput): Metadata {
   const ogImage = ogImagePath.startsWith("http") ? ogImagePath : absoluteUrl(ogImagePath);
   const canonical = canonicalPath.startsWith("http")
@@ -40,7 +44,7 @@ export function buildPageMetadata({
     : canonicalPath;
 
   return {
-    title,
+    title: absoluteTitle ? { absolute: title } : title,
     description,
     alternates: {
       canonical,

@@ -22,6 +22,53 @@ const inter = Inter({
   fallback: ["Arial", "Arial Unicode MS", "sans-serif"],
 });
 
+const siteNavigationItems = [
+  { name: "Calendario", url: siteUrl },
+  { name: "Templos", url: `${siteUrl}/templos` },
+  { name: "Pastores", url: `${siteUrl}/pastores` },
+  { name: "Coros Locales", url: `${siteUrl}/coros` },
+  { name: "Directiva", url: `${siteUrl}/directiva` },
+  { name: "Álbum", url: `${siteUrl}/album` },
+];
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ReligiousOrganization",
+      "@id": `${siteUrl}/#organization`,
+      name: SITE_FULL_NAME,
+      alternateName: SITE_NAME,
+      url: siteUrl,
+      logo: absoluteUrl("/images/region-mayo-logo-512.jpg"),
+      image: absoluteUrl("/opengraph-image"),
+      description: SITE_DESCRIPTION,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      name: SITE_FULL_NAME,
+      alternateName: SITE_NAME,
+      url: siteUrl,
+      inLanguage: "es-MX",
+      publisher: {
+        "@id": `${siteUrl}/#organization`,
+      },
+    },
+    {
+      "@type": "ItemList",
+      "@id": `${siteUrl}/#site-navigation`,
+      name: "Secciones principales",
+      itemListElement: siteNavigationItems.map((item, index) => ({
+        "@type": "SiteNavigationElement",
+        position: index + 1,
+        name: item.name,
+        url: item.url,
+      })),
+    },
+  ],
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -37,7 +84,11 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
   },
   icons: {
-    icon: "/images/region-mayo-logo-192.jpg",
+    icon: [
+      { url: "/images/LOGO.ico", type: "image/x-icon" },
+      { url: "/images/region-mayo-logo-192.jpg", type: "image/jpeg", sizes: "192x192" },
+    ],
+    shortcut: "/images/LOGO.ico",
     apple: "/images/region-mayo-logo-180.jpg",
   },
   alternates: {
@@ -74,6 +125,10 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://cdn.sanity.io" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <a href="#main-content" className="skip-link">

@@ -294,7 +294,7 @@ export function MobileHero({
         <div className="relative z-10 flex items-center">
           <div className="ml-1 min-w-0">
             <p className="text-[13px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
-              Iglesia Gentil de Cristo
+              Iglesia Gentil de Cristo A.R.
             </p>
             <p
               className={`${editorialFont.className} mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}

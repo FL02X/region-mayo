@@ -22,13 +22,14 @@ import {
   getLatestSocialPosts,
   getTemplos,
 } from "@/lib/api";
-import { buildPageMetadata } from "@/lib/seo";
+import { buildPageMetadata, SITE_OFFICIAL_TITLE } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "IGC Region Mayo",
+  title: SITE_OFFICIAL_TITLE,
   description:
-    "Consulta el calendario regional, templos, pastores, coros, directorio y álbumes de la Iglesia Gentil de Cristo en la Región Mayo.",
+    "Consulta el calendario regional, templos, pastores, coros, directiva y álbumes de la Iglesia Gentil de Cristo A.R. en la Región Mayo.",
   canonicalPath: "/",
+  absoluteTitle: true,
 });
 
 // On-demand revalidation: only rebuild when webhook is triggered from Sanity
