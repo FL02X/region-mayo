@@ -61,10 +61,10 @@ export function WhatsAppIconButton({
       href={whatsappLink}
       target="_blank"
       rel="noopener noreferrer"
-      className={`flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#20BA5D] transition-colors ${className}`}
+      className={`flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#20BA5D] transition-colors ${className}`}
       aria-label="Contactar por WhatsApp"
     >
-      <MessageCircle className="h-5 w-5" />
+      <MessageCircle className="h-6.5 w-6.5" />
     </a>
   )
 }

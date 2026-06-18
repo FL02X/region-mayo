@@ -8,8 +8,6 @@ import {
   AlertTriangle,
   ChevronDown,
   Check,
-  Copy,
-  Printer,
   MapPin,
   ExternalLink,
   Church,
@@ -27,6 +25,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNearbyChurchDistances } from "@/hooks/use-nearby-church-distances";
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
+import { CopyPrintActions } from "@/components/shared/copy-print-actions";
 import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { TemploImageGallery } from "./templo-image-gallery";
 import { DistanceBadge } from "./distance-badge";
@@ -396,10 +395,6 @@ function TemploCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = useIsMobile();
   const [isMounted, setIsMounted] = useState(false);
-  const [isCopyActive, setIsCopyActive] = useState(false);
-  const [isCopyHovered, setIsCopyHovered] = useState(false);
-  const [isPrintHovered, setIsPrintHovered] = useState(false);
-  const copyButtonRef = useRef<HTMLButtonElement | null>(null);
   const { currentTime } = useTime();
   const scheduleServices = useMemo(
     () => getSortedTempleServices(templo.schedule),
@@ -441,43 +436,6 @@ function TemploCard({
     if (url) window.open(url, "_blank");
   };
 
-  const handleCopyTempleInfo = async () => {
-    try {
-      await navigator.clipboard.writeText(copyText);
-    } catch {
-      const textarea = document.createElement("textarea");
-      textarea.value = copyText;
-      textarea.setAttribute("readonly", "true");
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-    }
-
-    setIsCopyActive(true);
-    onCopied();
-  };
-
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-
-      if (
-        copyButtonRef.current &&
-        target instanceof Node &&
-        !copyButtonRef.current.contains(target)
-      ) {
-        setIsCopyActive(false);
-        setIsCopyHovered(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, []);
-
   const handleToggle = () => {
     setIsExpanded((prev) => {
       if (!prev) {
@@ -502,47 +460,18 @@ function TemploCard({
     typeof templo.latitude === "number" ||
     typeof templo.longitude === "number";
   const compactUtilityButtonClass =
-    "mt-3 inline-flex max-w-full items-center gap-2 text-[17px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
+    "mt-2 inline-flex h-8 w-fit items-center gap-1.5 rounded-sm bg-surface-pane text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const compactMapsButtonClass =
-    "inline-flex h-8 w-fit items-center gap-1.5 border bg-brand px-2.5 text-sm font-medium  text-white transition-[background-color,border-color] duration-0 hover:bg-brand-hover hover:text-white";
+    "inline-flex min-h-8 w-fit max-w-full items-center justify-center gap-1.5 border bg-brand px-2.5 py-1.5 text-center text-sm font-medium leading-tight text-white transition-[background-color,border-color] duration-0 hover:bg-brand-hover hover:text-white";
 
   const actionButtons = (
-    <div className="mt-2 flex flex-wrap items-center gap-0">
-      <button
-        ref={copyButtonRef}
-        onClick={handleCopyTempleInfo}
-        onMouseEnter={() => setIsCopyHovered(true)}
-        onMouseLeave={() => setIsCopyHovered(false)}
-        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-sm rounded-r-none border border-r-0 px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150"
-        style={{
-          backgroundColor: isCopyActive || isCopyHovered
-            ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"
-            : "var(--surface-pane)",
-          borderColor: isCopyActive ? "var(--brand-ink)" : "var(--border)",
-        }}
-        aria-label={`Copiar información de ${templo.temploName}`}
-      >
-        <Copy className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>Copiar</span>
-      </button>
-
-      <button
-        onClick={() => onPrint(templo)}
-        onMouseEnter={() => setIsPrintHovered(true)}
-        onMouseLeave={() => setIsPrintHovered(false)}
-        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150"
-        style={{
-          backgroundColor: isPrintHovered
-            ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"
-            : "var(--surface-pane)",
-          borderColor: "var(--border)",
-        }}
-        aria-label={`Imprimir información de ${templo.temploName}`}
-      >
-        <Printer className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>Imprimir</span>
-      </button>
-    </div>
+    <CopyPrintActions
+      copyText={copyText}
+      copyLabel={`Copiar información de ${templo.temploName}`}
+      printLabel={`Imprimir información de ${templo.temploName}`}
+      onCopied={onCopied}
+      onPrint={() => onPrint(templo)}
+    />
   );
 
   const detailsContent = (
@@ -659,11 +588,11 @@ function TemploCard({
     return (
       <article
         id={templo.id}
-        className="border-x border-t border-border/70 md:bg-card md:border-border/80 scroll-mt-[100px] transition-none target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
+        className="md:bg-card md:border-border/80 scroll-mt-[100px] transition-none target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
       >
-        <div className="flex gap-3 px-2 py-4 md:gap-5 md:px-4 md:py-5 bg-paper-highlight">
-          <div className="flex shrink-0 flex-col">
-            <div className="offline-hide-when-offline offline-aware-image offline-aware-image--fixed relative h-[72px] w-[72px] bg-muted md:h-[108px] md:w-[112px]">
+        <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-4 md:py-5">
+          <div className="flex shrink-0 flex-col mt-0.5">
+            <div className="offline-hide-when-offline offline-aware-image offline-aware-image--fixed relative h-[82px] w-[82px] bg-muted md:h-[108px] md:w-[112px]">
               {templo.photos && templo.photos.length > 0 ? (
                 <>
                   <TemploImageGallery images={templo.photos} alt={templo.temploName} hideCountBadge />
@@ -684,28 +613,27 @@ function TemploCard({
                 <DistanceBadge distance={distance} show={showDistance ?? false} />
               </div>
             </div>
-            <div className="relative mt-2 h-[36px] md:hidden">
+            <div className="relative mt-0 h-[36px] md:hidden">
               <DistanceBadge distance={distance} show={showDistance ?? false} />
             </div>
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="min-w-0 text-left">
-              <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px]">
+              <h3 className="text-[17px] pr-10 font-bold leading-snug text-foreground md:text-[21px]">
                 <HighlightedText text={templo.temploName} query={searchQuery} />
               </h3>
 
               {availability && (
-                <div className="mt-2">
-                  <span className={`availability-pill inline-flex max-w-full items-center gap-2 text-[clamp(10px,2.8vw,12px)] px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
-                    <Clock className="h-3.5 w-3.5 opacity-80 max-[385px]:hidden" aria-hidden="true" />
+                <div className="mt-1 mb-4">
+                  <span className={`availability-pill inline-flex max-w-full items-start gap-1.5 rounded-none px-1.5 py-1 text-[clamp(10px,2.8vw,12px)] leading-tight ${availabilityBadgeClasses}`}>
+                    <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-80 max-[385px]:hidden" aria-hidden="true" />
                     {(availability.tone === "open" || availability.tone === "opening-soon") ? (
-                      <span className="font-semibold text-xs">{availability.title}</span>
+                      <span className="min-w-0 break-words text-xs font-semibold">{availability.title}</span>
                     ) : (
-                      <>
-                        <span className="font-semibold text-xs">Próximo culto</span>
-                        <span className="opacity-80">·</span>
-                        <span className="text-xs opacity-90">{(() => {
+                      <span className="flex min-w-0 flex-wrap gap-x-1.5 gap-y-0.5">
+                        <span className="text-xs font-semibold">Próximo culto:</span>
+                        <span className="min-w-0 break-words text-xs opacity-90">{(() => {
                           const sub = availability.subtitle || availability.title || "";
                           let cleaned = String(sub)
                             .replace(/^\s*Abre\s+/i, "")
@@ -716,19 +644,19 @@ function TemploCard({
                           cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
                           return cleaned;
                         })()}</span>
-                      </>
+                      </span>
                     )}
                   </span>
                 </div>
               )}
 
               {templo.address && (
-                <p className="mt-3 flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground/80">
+                <p className="mt-3 pr-6 flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground/80">
                   <MapPin
-                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
                     aria-hidden="true"
                   />
-                  <span className="min-w-0 line-clamp-2">
+                  <span className="min-w-0 line-clamp-3">
                     <HighlightedText text={templo.address} query={searchQuery} />
                   </span>
                 </p>
@@ -741,10 +669,12 @@ function TemploCard({
                   onClick={openGoogleMaps}
                   className={compactMapsButtonClass}
                   aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
-                  style={{ minHeight: "unset", minWidth: "unset" }}
+                  style={{ minWidth: "unset" }}
                 >
-                  <MapPin className="h-4 w-4" aria-hidden="true" />
-                  Ver en Google Maps
+                  <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 whitespace-normal break-words">
+                    Ver en Google Maps
+                  </span>
                 </button>
               )}
 
@@ -756,7 +686,7 @@ function TemploCard({
                   aria-controls={`templo-details-${templo.id}`}
                   style={{ minHeight: "unset", minWidth: "unset" }}
                 >
-                  <span>{isExpanded ? "Ocultar información" : "Ver información"}</span>
+                  <span>{isExpanded ? "Ocultar información" : "Ver más información"}</span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
                       isExpanded ? "rotate-180" : ""
@@ -780,14 +710,12 @@ function TemploCard({
               transition={isMobile ? expandTransition : { duration: 0 }}
               className="overflow-hidden"
             >
-              <div className="w-full space-y-5 bg-paper-highlight px-3 py-4 md:px-5 md:py-5">
+              <div className="border-t border-border/80 bg-muted/20 w-full space-y-5 px-3 py-4 md:px-5 md:py-5">
                 {detailsContent}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        <div className="border-t border-border/70" aria-hidden="true" />
       </article>
     );
   }
@@ -894,7 +822,7 @@ function TemploCard({
                 style={{ background: "none" }}
               >
                 <span>
-                  {isExpanded ? "Ocultar información" : "Ver información"}
+                  {isExpanded ? "Ocultar información" : "Ver más información"}
                 </span>
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
@@ -931,7 +859,7 @@ function TemploCard({
                       </p>
                       <Link
                         href={`/pastores#${pastor.id}`}
-                        className="inline-flex items-center gap-1 w-fit text-sm font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
+                        className="inline-flex items-center gap-1 w-fit text-md font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
                         aria-label={`Ver información de ${pastor.fullName}`}
                       >
                         <span className="inline-block">
@@ -1561,7 +1489,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
 
   return (
     <div
-      className="w-full relative bg-[#f1f1f1]"
+      className="relative w-full max-w-full overflow-x-hidden overscroll-x-none bg-[#f1f1f1]"
       id="main-content"
       data-view-mode={viewMode}
     >
@@ -1598,12 +1526,12 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
           </div>
         </div>
       )}
-      <div className={`desktop-content-pane ${shouldShowLoader ? "invisible" : "visible"} bg-paper max-w-[950px] mx-auto px-4 md:px-8 py-8 pt-[82px] md:pt-[88px] md:border-x focus:outline-none`}>
+      <div className={`desktop-content-pane ${shouldShowLoader ? "invisible" : "visible"} mx-auto w-full max-w-[950px] overflow-x-hidden bg-paper px-4 py-8 pt-[82px] focus:outline-none md:border-x md:px-8 md:pt-[88px]`}>
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
           <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">Asista a nuestras iglesias</h1>
-          <p className="text-[15px] text-muted-foreground mt-2">
+          <p className="text-[16px] text-muted-foreground mt-2">
             Todos son invitamos a nuestros servicios. Busque el templo mas cercano a usted.
           </p>
         </div>

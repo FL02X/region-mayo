@@ -331,7 +331,7 @@ function FlipCountdownCell({
   return (
     <div
       ref={cellRef}
-      className={`py-3 text-center ${className}`}
+      className={`py-4 text-center ${className}`}
       style={{
         willChange: "transform, opacity, background-color, box-shadow",
         transformOrigin: "50% 50%",
@@ -347,7 +347,7 @@ function FlipCountdownCell({
       </div>
 
       <p
-        className={`mt-1.5 text-[9px] uppercase tracking-widest font-medium ${disabled ? "text-muted-foreground/90" : "text-muted-foreground"} ${labelClassName}`}
+        className={`mt-1.5 text-[11px] uppercase tracking-widest font-medium ${disabled ? "text-muted-foreground/90" : "text-muted-foreground"} ${labelClassName}`}
       >
         {label}
       </p>

@@ -682,14 +682,14 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
       >
         <div className="mx-auto w-full md:w-[calc(100%-32px)]">
           <section className="px-4 pb-6 pt-0 md:px-8 md:pb-8">
-            <p className="mb-5 text-[12px] font-semibold uppercase text-white/42">
+            {/* <p className="mb-5 text-[12px] font-semibold uppercase text-white/42">
               Archivo
-            </p>
+            </p> */}
             <h1 className="max-w-[11ch] font-serif text-[2.85rem] font-normal leading-[0.95] text-white md:text-[4rem]">
               Álbum de Actividades
             </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/80 md:text-[17px]">
-              Revive momentos especiales de nuestros eventos ✨
+            <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/85 md:text-[17px]">
+              Revive momentos especiales de nuestros actividades ✨
             </p>
           </section>
 
