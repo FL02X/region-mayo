@@ -4,6 +4,7 @@ import { structureTool } from 'sanity/structure'
 import { schemaTypes } from './sanity/schemas'
 import { auditBeforeCreate, auditBeforeCommit } from './sanity/auditHooks'
 import { coroBeforeCommit, eventBeforeCommit } from './sanity/denormalizationHooks'
+import { AlbumPhotoSubmissionReviewList } from './sanity/components/inputs/album-photo-submission-review-list'
 import { StudioActiveToolLayout, StudioLayout } from './components/layout/studio-shell'
 
 const projectId =
@@ -52,6 +53,12 @@ const photoSubmissionList = (S: any, title: string, status: string) =>
     .filter('_type == $type && status == $status')
     .params({ type: PHOTO_SUBMISSION_TYPE, status })
     .defaultOrdering([{ field: 'uploadedAt', direction: 'desc' }])
+
+const photoSubmissionReviewList = (S: any, title: string, albumId?: string) =>
+  S.component()
+    .title(title)
+    .component(AlbumPhotoSubmissionReviewList)
+    .options({ status: 'pending', albumId })
 
 const MANUAL_DOCUMENT_TYPES = new Set([
   PHOTO_SUBMISSION_TYPE,
@@ -109,7 +116,7 @@ const studioStructure = (S: any) =>
               S.listItem()
                 .title('Fotos pendientes')
                 .schemaType(PHOTO_SUBMISSION_TYPE)
-                .child(photoSubmissionList(S, 'Fotos pendientes', 'pending')),
+                .child(photoSubmissionReviewList(S, 'Fotos pendientes')),
 
               S.listItem()
                 .title('Fotos pendientes por álbum')
@@ -120,14 +127,7 @@ const studioStructure = (S: any) =>
                     .filter('_type == "album" && !defined(deletedAt)')
                     .defaultOrdering([{ field: 'startDate', direction: 'desc' }])
                     .child((albumId: string) =>
-                      S.documentList()
-                        .title('Pendientes del álbum')
-                        .schemaType(PHOTO_SUBMISSION_TYPE)
-                        .filter(
-                          '_type == $type && status == "pending" && album._ref == $albumId',
-                        )
-                        .params({ type: PHOTO_SUBMISSION_TYPE, albumId })
-                        .defaultOrdering([{ field: 'uploadedAt', direction: 'desc' }]),
+                      photoSubmissionReviewList(S, 'Pendientes del album', albumId),
                     ),
                 ),
 

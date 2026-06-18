@@ -3,6 +3,7 @@ import { EVENT_TYPES, enumToSanityOptions } from './enums'
 import { AlbumUploadLinkInput } from '../components/inputs/album-upload-link-input'
 import { AlbumRelatedEventInput } from '../components/inputs/album-related-event-input'
 import { AlbumImagesInput } from '../components/inputs/album-images-input'
+import { AlbumApprovedCommunityPhotosInput } from '../components/inputs/album-approved-community-photos-input'
 
 export default defineType({
   name: 'album',
@@ -112,7 +113,7 @@ export default defineType({
       type: 'boolean',
       group: 'submissions',
       initialValue: false,
-      description: 'Permite que personas con el enlace QR suban fotos para revision.',
+      description: 'Permite que personas con el enlace QR suban fotos para revision. El nombre de quien envia es obligatorio.',
       validation: (Rule) =>
         Rule.custom((value, context) => {
           if (value && context.document?.albumType === 'youtube') {
@@ -164,6 +165,20 @@ export default defineType({
         !document?.allowSubmissions || (document?.albumType ?? 'photos') !== 'photos',
       description: 'Texto opcional que se mostrara en la pantalla de subida.',
       validation: (Rule) => Rule.max(280),
+    }),
+    defineField({
+      name: 'approvedCommunityPhotos',
+      title: 'Fotos comunitarias aprobadas',
+      type: 'string',
+      group: 'submissions',
+      hidden: ({ document }) =>
+        !document?.allowSubmissions || (document?.albumType ?? 'photos') !== 'photos',
+      readOnly: true,
+      components: {
+        input: AlbumApprovedCommunityPhotosInput,
+      },
+      description:
+        'Estas fotos vienen de la subida comunitaria aprobada. Siempre se muestran despues de las imagenes del sistema.',
     }),
     defineField({
       name: 'coverImage',

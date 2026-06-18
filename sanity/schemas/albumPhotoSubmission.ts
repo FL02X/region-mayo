@@ -46,6 +46,7 @@ export default defineType({
       title: 'Nombre de quien envio',
       type: 'string',
       readOnly: true,
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'uploadedAt',
@@ -119,11 +120,11 @@ export default defineType({
     },
     prepare({ media, status, albumTitle, uploadedAt, submittedByName }) {
       const statusLabel = STATUS_LABELS[status] || 'Pendiente'
-      const sender = submittedByName ? ` - ${submittedByName}` : ''
+      const sender = submittedByName ? submittedByName.toUpperCase() : 'SIN NOMBRE'
 
       return {
-        title: `${statusLabel}${sender}`,
-        subtitle: `${albumTitle || 'Sin album'} - ${uploadedAt || 'Sin fecha'}`,
+        title: statusLabel,
+        subtitle: `${sender} - ${albumTitle || 'Sin album'} - ${uploadedAt || 'Sin fecha'}`,
         media,
       }
     },

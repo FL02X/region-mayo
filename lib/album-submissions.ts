@@ -9,6 +9,8 @@ import { sanityQueryNoStore } from '@/lib/sanity/write-client'
 
 export type AlbumUploadStatus = 'valid' | 'invalid' | 'closed' | 'disabled'
 
+export const ALBUM_SUBMISSION_MAX_NAME_LENGTH = 80
+
 export type AlbumUploadPageAccess = {
   status: AlbumUploadStatus
   message?: string
@@ -60,6 +62,11 @@ export function getClientIp(headers: Headers): string {
 
 export function hashIp(ip: string): string {
   return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 24)
+}
+
+export function validateAlbumSubmitterName(name: string): string | null {
+  if (!name.trim()) return 'Ingresa tu nombre para enviar las fotos.'
+  return null
 }
 
 function normalizeSlug(value: AlbumUploadRecord['slug'], fallback: string): string {

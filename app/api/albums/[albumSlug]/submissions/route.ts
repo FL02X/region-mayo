@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
+  ALBUM_SUBMISSION_MAX_NAME_LENGTH,
   checkAlbumSubmissionRateLimit,
   getClientIp,
   hashIp,
   hasExistingUploadSession,
+  validateAlbumSubmitterName,
   validateAlbumUploadAccess,
 } from '@/lib/album-submissions'
 import {
@@ -27,7 +29,6 @@ type TurnstileResponse = {
   'error-codes'?: string[]
 }
 
-const MAX_NAME_LENGTH = 80
 const MAX_SESSION_ID_LENGTH = 120
 
 function jsonError(message: string, status: number, retryAfter?: number) {
@@ -144,7 +145,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const uploadToken = sanitizeText(formData.get('uploadToken'), 200)
-    const submittedByName = sanitizeText(formData.get('submittedByName'), MAX_NAME_LENGTH)
+    const submittedByName = sanitizeText(
+      formData.get('submittedByName'),
+      ALBUM_SUBMISSION_MAX_NAME_LENGTH,
+    )
     const turnstileToken = sanitizeText(formData.get('turnstileToken'), 2048)
     const submissionSessionId = sanitizeText(
       formData.get('submissionSessionId'),
@@ -152,8 +156,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     )
     const files = getImageFiles(formData)
     const fileError = validateFiles(files)
+    const nameError = validateAlbumSubmitterName(submittedByName)
 
     if (fileError) return jsonError(fileError, 400)
+    if (nameError) return jsonError(nameError, 400)
+
     if (!uploadToken || !submissionSessionId) {
       return jsonError('Este enlace de subida ya no esta disponible.', 400)
     }
@@ -214,7 +221,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           },
         },
         status: 'pending',
-        submittedByName: submittedByName || undefined,
+        submittedByName,
         uploadedAt,
         originalFilename: filename,
         fileSize: file.size,
