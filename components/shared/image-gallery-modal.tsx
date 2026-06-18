@@ -100,6 +100,10 @@ export function ImageGalleryModal({
   const mobileHistoryPushedRef = useRef(false)
   const isClosingFromHistoryRef = useRef(false)
   const onCloseRef = useRef(onClose)
+  const modalScrollYRef = useRef(
+    typeof window !== "undefined" ? window.scrollY || document.documentElement.scrollTop || 0 : 0,
+  )
+  const previousScrollRestorationRef = useRef<History["scrollRestoration"] | null>(null)
   const initialMobileIndexRef = useRef(currentIndex)
   const instantMobileNavigationIndexRef = useRef<number | null>(null)
   const lastImageTapRef = useRef({ index: -1, time: 0 })
@@ -144,6 +148,24 @@ export function ImageGalleryModal({
   useEffect(() => {
     onCloseRef.current = onClose
   }, [onClose])
+
+  const restoreModalScrollPosition = useCallback(() => {
+    if (typeof window === "undefined") return
+
+    const scrollY = modalScrollYRef.current
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY)
+      window.setTimeout(() => window.scrollTo(0, scrollY), 0)
+    })
+  }, [])
+
+  const resetImageZoom = useCallback(() => {
+    setZoomState(null)
+    setIsZoomPanning(false)
+    imagePanRef.current = null
+    imagePointersRef.current.clear()
+    imagePinchRef.current = null
+  }, [])
 
   useEffect(() => {
     zoomedImageIndexRef.current = zoomedImageIndex
@@ -191,17 +213,17 @@ export function ImageGalleryModal({
   }, [mobileDisplayIndex])
 
   const handleClose = useCallback(() => {
+    onCloseRef.current()
+    restoreModalScrollPosition()
+
     if (
       typeof window !== "undefined" &&
       mobileHistoryPushedRef.current &&
       !isClosingFromHistoryRef.current
     ) {
-      window.history.back()
-      return
+      window.history.replaceState({ imageGalleryModalClosed: true }, "", window.location.href)
     }
-
-    onCloseRef.current()
-  }, [])
+  }, [restoreModalScrollPosition])
 
   const handleVideoPlay = async (video: HTMLVideoElement | null) => {
     if (!video) return
@@ -304,10 +326,7 @@ export function ImageGalleryModal({
 
   const toggleImageZoom = (image: HTMLImageElement, index: number, clientX: number, clientY: number) => {
     if (zoomedImageIndex === index) {
-      setZoomState(null)
-      setIsZoomPanning(false)
-      imagePointersRef.current.clear()
-      imagePinchRef.current = null
+      resetImageZoom()
       return
     }
 
@@ -328,6 +347,9 @@ export function ImageGalleryModal({
     if (zoomedImageIndex !== index || e.pointerType !== "touch") return
 
     if (!image) return
+    if (!imagePanRef.current && !imagePinchRef.current && imagePointersRef.current.size > 0) {
+      imagePointersRef.current.clear()
+    }
     e.stopPropagation()
     e.preventDefault()
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -455,8 +477,10 @@ export function ImageGalleryModal({
       if (imagePointersRef.current.size >= 2) {
         if (image) beginImagePinch(image, index)
       } else {
+        imagePointersRef.current.clear()
+        imagePanRef.current = null
         imagePinchRef.current = null
-        if (imagePointersRef.current.size === 0) setIsZoomPanning(false)
+        setIsZoomPanning(false)
       }
       return
     }
@@ -523,22 +547,28 @@ export function ImageGalleryModal({
     const isMobile = window.matchMedia("(max-width: 639px)").matches
     if (!isMobile) return
 
+    previousScrollRestorationRef.current = window.history.scrollRestoration
+    window.history.scrollRestoration = "manual"
     window.history.pushState({ imageGalleryModal: true }, "", window.location.href)
     mobileHistoryPushedRef.current = true
 
     const handlePopState = () => {
       isClosingFromHistoryRef.current = true
       onCloseRef.current()
+      restoreModalScrollPosition()
     }
 
     window.addEventListener("popstate", handlePopState)
 
     return () => {
       window.removeEventListener("popstate", handlePopState)
+      if (previousScrollRestorationRef.current) {
+        window.history.scrollRestoration = previousScrollRestorationRef.current
+      }
       mobileHistoryPushedRef.current = false
       isClosingFromHistoryRef.current = false
     }
-  }, [])
+  }, [restoreModalScrollPosition])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -637,6 +667,11 @@ export function ImageGalleryModal({
           if (zoomedImageIndex !== index) return
           e.stopPropagation()
           handleImagePointerUp(e, e.currentTarget.querySelector("img"), index)
+        }}
+        onPointerCancelCapture={(e) => {
+          if (zoomedImageIndex !== index) return
+          e.stopPropagation()
+          resetImageZoom()
         }}
       >
         <img
@@ -840,7 +875,7 @@ export function ImageGalleryModal({
                 data-thumbnail-index={index}
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (zoomedImageIndex !== null) return
+                  resetImageZoom()
                   instantMobileNavigationIndexRef.current = index
                   setMobileDisplayIndex(index)
                   onNavigate(index)

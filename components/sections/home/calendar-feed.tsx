@@ -355,6 +355,7 @@ const MonthCalendarGrid = memo(function MonthCalendarGrid({
     () => getCachedPlannerMonthCells(month),
     [month, monthKey],
   );
+  const todayKey = getRegionDateKey(new Date());
 
   return (
     <>
@@ -392,6 +393,7 @@ const MonthCalendarGrid = memo(function MonthCalendarGrid({
         {monthCells.map((cell) => {
           const dayEvents = eventsByDay.get(cell.dateKey) ?? [];
           const isSelectedEventDay = activePlannerDateKeys.has(cell.dateKey);
+          const isToday = cell.dateKey === todayKey;
           const dayLabel =
             dayEvents.length > 0
               ? `${cell.day}, ${dayEvents.length} evento${
@@ -420,7 +422,13 @@ const MonthCalendarGrid = memo(function MonthCalendarGrid({
               }`}
               aria-label={dayLabel}
             >
-              <span className="type-system block text-[13px] font-semibold leading-none">
+              <span
+                className={`type-system flex h-7 w-7 items-center justify-center rounded-full text-[13px] font-semibold leading-none ${
+                  isToday
+                    ? "border-2 border-brand bg-[#fbf8f4] text-brand-text"
+                    : ""
+                }`}
+              >
                 {cell.day}
               </span>
               {dayEvents.length > 0 && (

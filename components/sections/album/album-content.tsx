@@ -397,9 +397,9 @@ function AlbumHubEntryCard({
                     {tile ? (
                       <Image
                         src={sanityImageVariantUrl(tile, {
-                          width: 920,
-                          height: 540,
-                          quality: 80,
+                          width: 640,
+                          height: 380,
+                          quality: 70,
                           format: "webp",
                           fit: "crop",
                         })}
@@ -566,9 +566,9 @@ function GalleryAlbumTile({
     >
       <Image
         src={sanityImageVariantUrl(album.coverImage, {
-          width: 760,
-          height: 760,
-          quality: 76,
+          width: 560,
+          height: 560,
+          quality: 70,
           format: "webp",
           fit: "crop",
         })}
@@ -961,30 +961,30 @@ function getAlbumTileLayout(
     }
   > = {
     normal: {
-      width: 640,
-      height: 800,
-      quality: 60,
+      width: 520,
+      height: 650,
+      quality: 58,
       format: "webp",
       fit: "crop",
     },
     squareLarge: {
-      width: 1120,
-      height: 1120,
-      quality: 64,
+      width: 720,
+      height: 720,
+      quality: 58,
       format: "webp",
       fit: "crop",
     },
     tall: {
-      width: 840,
-      height: 1260,
-      quality: 64,
+      width: 600,
+      height: 900,
+      quality: 58,
       format: "webp",
       fit: "crop",
     },
     wide: {
-      width: 960,
-      height: 720,
-      quality: 64,
+      width: 720,
+      height: 540,
+      quality: 58,
       format: "webp",
       fit: "crop",
     },
@@ -1031,9 +1031,9 @@ function AlbumCard({ album }: { album: Album }) {
       <div className="offline-aware-image offline-aware-image--fixed relative h-48 w-full bg-muted">
         <Image
           src={sanityImageVariantUrl(album.coverImage, {
-            width: 840,
-            height: 540,
-            quality: 74,
+            width: 640,
+            height: 410,
+            quality: 70,
             format: "webp",
             fit: "crop",
           })}
@@ -1321,9 +1321,9 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     kind: "normal",
     className: "aspect-square col-span-1",
     imageOptions: {
-      width: 560,
-      height: 560,
-      quality: 60,
+      width: 420,
+      height: 420,
+      quality: 58,
       format: "webp",
       fit: "crop",
     },
@@ -1410,31 +1410,30 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   </Link>
                 ) : null}
                 {isYoutubeAlbum && album.youtubeUrl ? (
-                  <Button asChild variant="outline" className="rounded-none">
-                    <a href={album.youtubeUrl} target="_blank" rel="noreferrer">
-                      <Youtube className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Ver en YouTube
-                    </a>
-                  </Button>
+                  <a
+                    href={album.youtubeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-none border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-accent md:hover:text-accent-foreground"
+                  >
+                    <Youtube className="h-4 w-4" aria-hidden="true" />
+                    Ver en YouTube
+                  </a>
                 ) : null}
                 {!isYoutubeAlbum && album.facebookUrl ? (
-                  <Button asChild variant="outline" className="rounded-none">
-                    <a
-                      href={album.facebookUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <ExternalLink
-                        className="mr-2 h-4 w-4"
-                        aria-hidden="true"
-                      />
-                      Facebook
-                    </a>
-                  </Button>
+                  <a
+                    href={album.facebookUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-none border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-accent md:hover:text-accent-foreground"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    Ver en Facebook
+                  </a>
                 ) : null}
               </div>
-              {!isYoutubeAlbum && album.canSubmitPhotos ? (
-                <div className="mt-4 border border bg-paper-highlight p-4">
+              {false && !isYoutubeAlbum && album.canSubmitPhotos ? (
+                <div className="mt-4 mb-6 border border bg-paper-highlight p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">
@@ -1455,8 +1454,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   </div>
                   {isSubmissionNoticeOpen ? (
                     <p className="mt-3 border-t border-[#dbe7f1] pt-3 text-sm leading-6 text-muted-foreground">
-                      Usa el código QR compartido por los encargados para abrir
-                      el formulario seguro de este álbum.
+                      ¡Usa el código QR compartido por los encargados para subir fotos a este album!
                     </p>
                   ) : null}
                 </div>
@@ -1620,14 +1618,26 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                       ? {
                           type: "video",
                           url: item.url,
-                          posterUrl: item.posterUrl,
+                          posterUrl: item.posterUrl
+                            ? sanityImageVariantUrl(item.posterUrl, {
+                                width: 1200,
+                                quality: 70,
+                                format: "webp",
+                                fit: "max",
+                              })
+                            : undefined,
                           title: item.title,
                           alt: item.alt,
                           mimeType: item.mimeType,
                         }
                       : {
                           type: "image",
-                          url: item.url,
+                          url: sanityImageVariantUrl(item.url, {
+                            width: 1600,
+                            quality: 72,
+                            format: "webp",
+                            fit: "max",
+                          }),
                           alt: item.alt,
                         },
                   )}

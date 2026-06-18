@@ -187,10 +187,10 @@ export function AlbumUploadForm({
   const allowDevBypass = process.env.NODE_ENV !== "production" && !turnstileSiteKey
   const turnstileConfigured = Boolean(turnstileSiteKey) || allowDevBypass
 
-  const selectedSummary = useMemo(() => {
-    if (selectedFiles.length === 0) return "Ninguna foto seleccionada"
-    return `${selectedFiles.length} ${selectedFiles.length === 1 ? "foto seleccionada" : "fotos seleccionadas"}`
-  }, [selectedFiles])
+  const selectedSummary = useMemo(
+    () => `IMAGENES SUBIDAS (${selectedFiles.length}/${ALBUM_SUBMISSION_MAX_FILES})`,
+    [selectedFiles.length],
+  )
 
   const coverImageUrl = useMemo(
     () =>
@@ -384,9 +384,9 @@ export function AlbumUploadForm({
 
   if (successCount > 0 && !error) {
     return (
-      <div className="space-y-5 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center bg-emerald-50 text-emerald-700">
-          <CheckCircle2 className="h-7 w-7" aria-hidden="true" />
+      <div className="space-y-5 px-4 py-4 text-center md:px-8 md:py-6">
+        <div className="mx-auto flex items-center justify-center text-emerald-700">
+          <CheckCircle2 className="h-16 w-16" aria-hidden="true" />
         </div>
         <div>
           <h2 className="text-xl font-semibold text-foreground">Gracias por compartir tus fotos.</h2>
@@ -413,6 +413,7 @@ export function AlbumUploadForm({
 
       <form className="bg-white" onSubmit={handleSubmit}>
         <section className="border-b border-border px-4 py-4 md:px-8 md:py-6">
+          <p className="mb-3 text-[13px] font-bold uppercase text-primary sm:text-sm">Compartir fotos</p>
           <div className="grid grid-cols-[96px_minmax(0,1fr)] items-start gap-x-3 gap-y-3 sm:grid-cols-[128px_minmax(0,1fr)] md:gap-x-5">
             <div className="relative h-24 w-24 overflow-hidden border border-border bg-muted sm:h-32 sm:w-32">
               <NextImage
@@ -425,19 +426,10 @@ export function AlbumUploadForm({
               />
             </div>
             <div className="min-w-0 pt-0.5">
-              <p className="text-[13px] font-bold uppercase text-primary sm:text-sm">Compartir fotos</p>
-              <h1 className="mt-1 text-[clamp(1.55rem,7vw,2rem)] font-semibold leading-[1.05] text-foreground md:mt-2 md:text-[2rem]">
+              <h1 className="text-[clamp(1.55rem,7vw,2rem)] font-semibold leading-[1.05] text-foreground md:text-[2rem]">
                 {albumTitle}
               </h1>
-              <p className="mt-3 hidden max-w-2xl text-[15px] leading-7 text-muted-foreground md:block">
-                Sube tus fotos de esta actividad. Un encargado las revisara antes de publicarlas en
-                el album.
-              </p>
             </div>
-            <p className="col-span-2 max-w-2xl text-[15px] leading-7 text-muted-foreground md:hidden">
-              Sube tus fotos de esta actividad. Un encargado las revisara antes de publicarlas en
-              el album.
-            </p>
           </div>
         </section>
 
@@ -468,31 +460,33 @@ export function AlbumUploadForm({
                 Selecciona hasta 10 imagenes desde este dispositivo.
               </span>
             </button>
-            <div className="mt-3 border border-border bg-white p-3">
-              <p className="text-sm font-semibold text-foreground">{selectedSummary}</p>
+            <div className="mt-4">
+              <p className="text-[15px] font-semibold uppercase text-white/60">{selectedSummary}</p>
               {filePreviews.length > 0 ? (
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                <div className="mt-3 flex flex-col gap-3">
                   {filePreviews.map((preview) => (
-                    <div key={preview.key} className="min-w-0 border border-border bg-paper-highlight p-2">
-                      <div className="relative aspect-square overflow-hidden bg-muted">
+                    <div key={preview.key} className="flex min-w-0 items-center gap-3">
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden bg-muted">
                         <img
                           src={preview.url}
                           alt={preview.name}
                           className="h-full w-full object-cover"
                           loading="lazy"
                         />
-                        <button
-                          type="button"
-                          className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center bg-white/95 text-foreground shadow-sm"
-                          onClick={() => removeSelectedFile(preview.key)}
-                          disabled={isSubmitting}
-                          aria-label={`Quitar ${preview.name}`}
-                        >
-                          <X className="h-4 w-4" aria-hidden="true" />
-                        </button>
                       </div>
-                      <p className="mt-2 truncate text-xs font-medium text-foreground">{preview.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatBytes(preview.size)}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{preview.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatBytes(preview.size)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center bg-transparent text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        onClick={() => removeSelectedFile(preview.key)}
+                        disabled={isSubmitting}
+                        aria-label={`Quitar ${preview.name}`}
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -522,7 +516,7 @@ export function AlbumUploadForm({
             ) : null}
 
             <div className="space-y-2">
-              <Label htmlFor="submittedByName">Nombre, opcional</Label>
+              <Label htmlFor="submittedByName">Nombre (Opcional)</Label>
               <Input
                 id="submittedByName"
                 value={submittedByName}
