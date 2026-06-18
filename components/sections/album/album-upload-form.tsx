@@ -448,7 +448,7 @@ export function AlbumUploadForm({
 
   if (successCount > 0 && !error) {
     return (
-      <div className="space-y-5 px-4 py-4 text-center md:px-8 md:py-6">
+      <div className="min-h-screen space-y-5 px-8 pb-8 pt-12 text-center md:px-16 md:pb-12">
         <div className="mx-auto flex items-center justify-center text-emerald-700">
           <CheckCircle2 className="h-16 w-16" aria-hidden="true" />
         </div>

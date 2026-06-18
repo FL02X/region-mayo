@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import { ArrowRight, X } from "lucide-react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Check, X } from "lucide-react"
 import { useClient } from "sanity"
 
 type SubmissionStatus = "pending" | "approved" | "rejected"
@@ -18,8 +18,6 @@ type ReviewListProps = {
 type SubmissionItem = {
   _id: string
   submittedByName?: string
-  uploadedAt?: string
-  originalFilename?: string
   albumTitle?: string
   photoUrl?: string
 }
@@ -27,22 +25,14 @@ type SubmissionItem = {
 const PHOTO_SUBMISSION_FIELDS = `{
   _id,
   submittedByName,
-  uploadedAt,
-  originalFilename,
   "albumTitle": album->title,
   "photoUrl": photo.asset->url
 }`
 
-function formatDate(value?: string) {
-  if (!value) return "Sin fecha"
-
-  return new Intl.DateTimeFormat("es-MX", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value))
+type ReviewToast = {
+  text: string
+  tone: "success" | "error"
+  isExiting: boolean
 }
 
 export function AlbumPhotoSubmissionReviewList({ options }: ReviewListProps) {
@@ -52,7 +42,30 @@ export function AlbumPhotoSubmissionReviewList({ options }: ReviewListProps) {
   const [items, setItems] = useState<SubmissionItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [workingId, setWorkingId] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const [toast, setToast] = useState<ReviewToast | null>(null)
+  const toastTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  const clearToastTimers = useCallback(() => {
+    toastTimersRef.current.forEach((timer) => clearTimeout(timer))
+    toastTimersRef.current = []
+  }, [])
+
+  const showToast = useCallback(
+    (text: string, tone: ReviewToast["tone"]) => {
+      clearToastTimers()
+      setToast({ text, tone, isExiting: false })
+
+      toastTimersRef.current = [
+        setTimeout(() => {
+          setToast((current) => (current ? { ...current, isExiting: true } : current))
+        }, 2200),
+        setTimeout(() => {
+          setToast(null)
+        }, 2600),
+      ]
+    },
+    [clearToastTimers],
+  )
 
   const loadItems = useCallback(async () => {
     setIsLoading(true)
@@ -70,16 +83,22 @@ export function AlbumPhotoSubmissionReviewList({ options }: ReviewListProps) {
     void loadItems()
   }, [loadItems])
 
+  useEffect(() => clearToastTimers, [clearToastTimers])
+
   const updateStatus = async (id: string, nextStatus: SubmissionStatus) => {
     setWorkingId(id)
-    setMessage(null)
+    clearToastTimers()
+    setToast(null)
 
     try {
       await client.patch(id).set({ status: nextStatus }).commit()
       setItems((current) => current.filter((item) => item._id !== id))
-      setMessage(nextStatus === "approved" ? "Foto aprobada." : "Foto rechazada.")
+      showToast(
+        nextStatus === "approved" ? "Foto aprobada." : "Foto rechazada.",
+        nextStatus === "approved" ? "success" : "error",
+      )
     } catch {
-      setMessage("No se pudo actualizar la foto.")
+      showToast("No se pudo actualizar la foto.", "error")
     } finally {
       setWorkingId(null)
     }
@@ -91,18 +110,57 @@ export function AlbumPhotoSubmissionReviewList({ options }: ReviewListProps) {
 
   return (
     <div style={{ padding: 16 }}>
-      {message ? (
+      <style>
+        {`
+          @keyframes albumReviewToastIn {
+            from {
+              opacity: 0;
+              transform: translate(-50%, 16px) scale(0.96);
+            }
+            to {
+              opacity: 1;
+              transform: translate(-50%, 0) scale(1);
+            }
+          }
+
+          @keyframes albumReviewToastOut {
+            from {
+              opacity: 1;
+              transform: translate(-50%, 0) scale(1);
+            }
+            to {
+              opacity: 0;
+              transform: translate(-50%, 16px) scale(0.96);
+            }
+          }
+        `}
+      </style>
+
+      {toast ? (
         <div
           style={{
-            marginBottom: 12,
-            border: "1px solid #d7dce4",
-            background: "#fbf8f4",
-            padding: "10px 12px",
+            position: "fixed",
+            left: "50%",
+            bottom: 20,
+            zIndex: 1000,
+            width: "calc(100% - 32px)",
+            maxWidth: 320,
+            border: toast.tone === "success" ? "1px solid #16a34a" : "1px solid #dc2626",
+            background: toast.tone === "success" ? "#86efac" : "#fca5a5",
+            color: "#111827",
+            padding: "12px 16px",
+            textAlign: "center",
             fontSize: 14,
-            fontWeight: 600,
+            fontWeight: 800,
+            boxShadow: "0 14px 34px rgba(0, 0, 0, 0.3)",
+            animation: toast.isExiting
+              ? "albumReviewToastOut 220ms ease-in forwards"
+              : "albumReviewToastIn 220ms ease-out forwards",
           }}
+          role="status"
+          aria-live="polite"
         >
-          {message}
+          {toast.text}
         </div>
       ) : null}
 
@@ -142,19 +200,15 @@ export function AlbumPhotoSubmissionReviewList({ options }: ReviewListProps) {
                 {item.photoUrl ? (
                   <img
                     src={item.photoUrl}
-                    alt={item.originalFilename || "Foto pendiente"}
+                    alt="Foto pendiente"
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : null}
               </div>
 
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#1c1917" }}>
-                  {item.originalFilename || "Foto comunitaria"}
-                </div>
                 <div
                   style={{
-                    marginTop: 4,
                     fontSize: 12,
                     fontWeight: 700,
                     letterSpacing: "0.04em",
@@ -165,7 +219,7 @@ export function AlbumPhotoSubmissionReviewList({ options }: ReviewListProps) {
                   {item.submittedByName || "Sin nombre"}
                 </div>
                 <div style={{ marginTop: 4, fontSize: 13, color: "#57534e" }}>
-                  {item.albumTitle || "Sin album"} · {formatDate(item.uploadedAt)}
+                  {item.albumTitle || "Sin album"}
                 </div>
               </div>
 
@@ -187,7 +241,7 @@ export function AlbumPhotoSubmissionReviewList({ options }: ReviewListProps) {
                     cursor: "pointer",
                   }}
                 >
-                  <ArrowRight size={22} />
+                  <Check size={22} />
                 </button>
                 <button
                   type="button"

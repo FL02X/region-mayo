@@ -965,7 +965,11 @@ const ALBUM_PROJECTION = `{
   },
   "communityImages": *[
     _type == "albumPhotoSubmission" &&
-    album._ref == ^._id &&
+    (
+      album._ref == ^._id ||
+      album._ref == "drafts." + ^._id ||
+      ^._id == "drafts." + album._ref
+    ) &&
     status == "approved"
   ] | order(uploadedAt asc){
     photo{asset->{url}},
