@@ -169,8 +169,10 @@ export function AlbumPhotoSubmissionReviewList({ options }: ReviewListProps) {
           style={{
             border: "1px dashed #c8d0da",
             background: "#fbf8f4",
+            color: "#111827",
             padding: 16,
             fontSize: 14,
+            fontWeight: 600,
           }}
         >
           No hay fotos pendientes.

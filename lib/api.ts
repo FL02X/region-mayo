@@ -972,8 +972,7 @@ const ALBUM_PROJECTION = `{
     ) &&
     status == "approved"
   ] | order(uploadedAt asc){
-    photo{asset->{url}},
-    "image": photo,
+    "image": photo{asset->{url}},
     "alt": submittedByName,
     "caption": ""
   }
