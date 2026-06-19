@@ -47,6 +47,7 @@ export function TemploImageGallery({ images, alt, hideCountBadge = false }: Temp
           })}
           alt={alt}
           fill
+          unoptimized
           className="object-cover object-center"
           quality={72}
           sizes="(max-width: 768px) 100vw, 33vw"

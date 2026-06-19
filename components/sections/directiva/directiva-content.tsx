@@ -5,6 +5,7 @@ import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { Newsreader } from "next/font/google";
 import {
   BadgeCheck,
   BarChart3,
@@ -43,6 +44,13 @@ import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { DirectivaGeneration, DirectivaMember } from "@/lib/types";
+
+const editorialFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 const DIRECTIVA_ROLE_META: Record<string, { label: string; order: number }> = {
   "01_presidente_regional": { label: "Presidente Regional", order: 1 },
@@ -367,6 +375,7 @@ function DirectivaCard({
                 src={getDirectivaImageUrl(member.photo, "thumb")}
                 alt={member.fullName}
                 fill
+                unoptimized
                 className="offline-image-online object-cover object-center"
                 sizes="(min-width: 768px) 112px, 72px"
                 quality={72}
@@ -465,6 +474,7 @@ function DirectivaCard({
             src={getDirectivaImageUrl(member.photo)}
             alt={member.fullName}
             fill
+            unoptimized
             className="offline-image-online object-cover object-center"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             quality={72}
@@ -940,11 +950,11 @@ export function DirectivaContent({
                       aria-controls={`directiva-generation-${generation.id}`}
                     >
                       <span>
-                        <span className="block text-sm font-semibold text-foreground">
+                        <span className={`${editorialFont.className} block text-lg font-semibold leading-tight text-foreground`}>
                           {generation.title}
                         </span>
                         <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {generation.isCurrent ? "Actual" : "Historial"} -{" "}
+                          {generation.isCurrent ? "Actual - " : ""}
                           {generation.members.length} miembros
                         </span>
                       </span>

@@ -405,6 +405,7 @@ function AlbumHubEntryCard({
                         })}
                         alt={title}
                         fill
+                        unoptimized
                         className={`object-cover contrast-[1.03] saturate-[0.82] ${
                           photoPreviewImages.length === 1 ? "rounded-none" : ""
                         }`}
@@ -574,6 +575,7 @@ function GalleryAlbumTile({
         })}
         alt={album.title}
         fill
+        unoptimized
         className="offline-image-online object-cover transition-transform duration-300 md:group-hover:scale-[1.03]"
         sizes="(max-width: 767px) 100vw, 180px"
       />
@@ -1039,6 +1041,7 @@ function AlbumCard({ album }: { album: Album }) {
           })}
           alt={album.title}
           fill
+          unoptimized
           className="offline-image-online object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 310px"
         />
@@ -1191,6 +1194,7 @@ function AlbumMediaTile({
           src={sanityImageVariantUrl(previewUrl, layout.imageOptions)}
           alt={alt}
           fill
+          unoptimized
           className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           sizes={layout.sizes}
         />

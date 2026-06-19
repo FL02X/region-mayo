@@ -485,6 +485,14 @@ export function EventCard({
     : eventPrimaryMapsButtonSmallClass;
   const compactThumbnailUrl = getEventCardThumbnailUrl(event.image, "compact");
   const gridThumbnailUrl = getEventCardThumbnailUrl(event.image, "grid");
+  const moreInfoImageUrl = event.moreInfo?.imageUrl
+    ? sanityImageVariantUrl(event.moreInfo.imageUrl, {
+        width: 1200,
+        quality: 72,
+        format: "webp",
+        fit: "max",
+      })
+    : "";
   const registerActionButton = !isPastEvent && canRegister ? (
     <button
       type="button"
@@ -1218,9 +1226,10 @@ export function EventCard({
           </Button>
           <div className="relative aspect-[3/4] w-full overflow-hidden">
             <Image
-              src={event.moreInfo.imageUrl}
+              src={moreInfoImageUrl}
               alt={`Más información de ${event.title}`}
               fill
+              unoptimized
               className="object-contain"
             />
           </div>

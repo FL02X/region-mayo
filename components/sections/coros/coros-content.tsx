@@ -283,6 +283,7 @@ function CoroCard({
                 src={getCoroImageUrl(coro.photo, "thumb")}
                 alt={coro.coroName}
                 fill
+                unoptimized
                 className="offline-image-online object-cover object-center"
                 sizes="(min-width: 768px) 112px, 72px"
                 quality={72}
@@ -373,6 +374,7 @@ function CoroCard({
             src={getCoroImageUrl(coro.photo)}
             alt={coro.coroName}
             fill
+            unoptimized
             className="offline-image-online object-cover object-center"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             quality={72}

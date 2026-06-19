@@ -117,17 +117,16 @@ const studioStructure = (S: any) =>
                             .defaultOrdering([{ field: 'startYear', direction: 'desc' }]),
                         ),
                       S.listItem()
-                        .title('Historial')
+                        .title('Pasada')
                         .schemaType('directivaGeneration')
                         .child(
                           S.documentTypeList('directivaGeneration')
-                            .title('Directivas anteriores')
+                            .title('Directivas pasadas')
                             .filter('_type == "directivaGeneration" && isCurrent != true && !defined(deletedAt)')
                             .defaultOrdering([{ field: 'startYear', direction: 'desc' }]),
                         ),
                       S.divider(),
                       documentTypeItem(S, 'directivaGeneration', 'Todas las generaciones'),
-                      documentTypeItem(S, 'directiva', 'Miembros legacy'),
                     ]),
                 ),
             ]),

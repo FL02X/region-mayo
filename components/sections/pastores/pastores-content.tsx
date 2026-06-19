@@ -240,6 +240,7 @@ function PastorCard({
                 src={getPastorImageUrl(pastor.photo, "thumb")}
                 alt={pastor.fullName}
                 fill
+                unoptimized
                 className="offline-image-online object-cover object-center"
                 sizes="(min-width: 768px) 112px, 72px"
                 quality={72}
@@ -321,6 +322,7 @@ function PastorCard({
             src={getPastorImageUrl(pastor.photo)}
             alt={pastor.fullName}
             fill
+            unoptimized
             className="offline-image-online object-cover object-center"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             quality={72}
