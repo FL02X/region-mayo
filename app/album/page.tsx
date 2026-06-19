@@ -27,15 +27,7 @@ export default async function AlbumPage() {
         facebookUrl={region?.socialLinks.facebook}
       />
       <div>
-        {region ? (
-          <AlbumHubContent albums={albums} />
-        ) : (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <p className="text-lg text-gray-500">
-              No hay información disponible. Por favor, configúrala en Sanity Studio.
-            </p>
-          </div>
-        )}
+        <AlbumHubContent albums={albums} />
       </div>
       <Chatbot />
     </main>

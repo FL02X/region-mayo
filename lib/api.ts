@@ -53,6 +53,27 @@ function isMayoRegion(input: string): boolean {
   return input === "mayo" || input === "Región Mayo" || input === "region-mayo";
 }
 
+function getRegionLookupParams(regionSlug: string): {
+  regionSlugs: string[];
+  regionNames: string[];
+} {
+  const regionSlugs = new Set([regionSlug]);
+  const regionNames = new Set([regionSlug]);
+
+  if (isMayoRegion(regionSlug)) {
+    regionSlugs.add("region-mayo");
+    regionSlugs.add("Región-mayo");
+    regionSlugs.add("región-mayo");
+    regionNames.add("Región Mayo");
+    regionNames.add("Region Mayo");
+  }
+
+  return {
+    regionSlugs: Array.from(regionSlugs),
+    regionNames: Array.from(regionNames),
+  };
+}
+
 function getMockRegionConfig(regionSlug: string): Region | null {
   if (isMayoRegion(regionSlug)) return regionMayo;
   return null;
@@ -803,7 +824,7 @@ export async function getRegionConfig(
   return readWithDevSanityFallback("getRegionConfig", () => getMockRegionConfig(regionSlug), async () => {
     const client = getSanityClient();
     const region = await client.fetch(
-      `*[_type == "region" && (slug.current == $slug || name == $slug)][0]{
+      `*[_type == "region" && (slug.current in $regionSlugs || name in $regionNames)][0]{
         _id,
         name,
         slug,
@@ -811,7 +832,7 @@ export async function getRegionConfig(
         primaryColor,
         secondaryColor
       }`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     if (!region) {
@@ -845,7 +866,7 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
   return readWithDevSanityFallback("getEvents", () => getMockEvents(regionSlug), async () => {
     const client = getSanityClient();
     const events = await client.fetch(
-      `*[_type == "event" && (region->slug.current == $slug || region->name == $slug)]{
+      `*[_type == "event" && (region->slug.current in $regionSlugs || region->name in $regionNames)]{
           _id,
           title,
           eventType,
@@ -887,7 +908,7 @@ export async function getEvents(regionSlug: string = "mayo"): Promise<Event[]> {
           moreInfoEnabled,
           moreInfoImage{asset->{url}}
         }`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     const now = new Date();
@@ -1019,11 +1040,11 @@ export async function getAlbums(regionSlug: string = "mayo"): Promise<Album[]> {
         !defined(deletedAt) &&
         (
           !defined(relatedEvent) ||
-          relatedEvent->region->slug.current == $slug ||
-          relatedEvent->region->name == $slug
+          relatedEvent->region->slug.current in $regionSlugs ||
+          relatedEvent->region->name in $regionNames
         )
       ] | order(startDate desc) ${ALBUM_PROJECTION}`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     return Promise.all((albums ?? []).map(mapAlbum));
@@ -1051,11 +1072,11 @@ export async function getAlbumBySlug(
           !defined(deletedAt) &&
           (
             !defined(relatedEvent) ||
-            relatedEvent->region->slug.current == $regionSlug ||
-            relatedEvent->region->name == $regionSlug
+            relatedEvent->region->slug.current in $regionSlugs ||
+            relatedEvent->region->name in $regionNames
           )
         ][0] ${ALBUM_PROJECTION}`,
-        { slug, regionSlug },
+        { slug, ...getRegionLookupParams(regionSlug) },
       );
 
       return album ? mapAlbum(album) : null;
@@ -1079,11 +1100,11 @@ export async function getAlbumSlugs(regionSlug: string = "mayo"): Promise<string
           !defined(deletedAt) &&
           (
             !defined(relatedEvent) ||
-            relatedEvent->region->slug.current == $slug ||
-            relatedEvent->region->name == $slug
+            relatedEvent->region->slug.current in $regionSlugs ||
+            relatedEvent->region->name in $regionNames
           )
         ].slug.current`,
-        { slug: regionSlug },
+        getRegionLookupParams(regionSlug),
       );
 
       return (slugs ?? []).filter(Boolean);
@@ -1124,7 +1145,7 @@ export async function getPastors(
   return readWithDevSanityFallback("getPastors", () => getMockPastors(regionSlug), async () => {
     const client = getSanityClient();
     const pastors = await client.fetch(
-      `*[_type == "pastor" && (region->slug.current == $slug || region->name == $slug)]
+      `*[_type == "pastor" && (region->slug.current in $regionSlugs || region->name in $regionNames)]
         | order(fullName asc){
           _id,
           fullName,
@@ -1135,7 +1156,7 @@ export async function getPastors(
           phone,
           templo->{_id, temploName, address, googleMapsUrl}
         }`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     return (pastors ?? []).map(mapPastor);
@@ -1157,7 +1178,7 @@ export async function getCoros(regionSlug: string = "mayo"): Promise<Coro[]> {
   return readWithDevSanityFallback("getCoros", () => getMockCoros(regionSlug), async () => {
     const client = getSanityClient();
     const coros = await client.fetch(
-      `*[_type == "coro" && (region->slug.current == $slug || region->name == $slug)]
+      `*[_type == "coro" && (region->slug.current in $regionSlugs || region->name in $regionNames)]
         | order(coalesce(memberCount, -1) desc, coroName asc){
           _id,
           coroName,
@@ -1168,7 +1189,7 @@ export async function getCoros(regionSlug: string = "mayo"): Promise<Coro[]> {
           presidentPhone,
           templo->{_id, temploName, address, googleMapsUrl}
         }`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     return (coros ?? []).map(mapCoro);
@@ -1192,7 +1213,7 @@ export async function getDirectiva(
   return readWithDevSanityFallback("getDirectiva", () => getMockDirectiva(regionSlug), async () => {
     const client = getSanityClient();
     const directiva = await client.fetch(
-      `*[_type == "directiva" && (region->slug.current == $slug || region->name == $slug)]
+      `*[_type == "directiva" && (region->slug.current in $regionSlugs || region->name in $regionNames)]
         | order(order asc){
           _id,
           fullName,
@@ -1204,7 +1225,7 @@ export async function getDirectiva(
           order,
           templo->{_id, temploName, address, googleMapsUrl}
         }`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     return (directiva ?? []).map(mapDirectivaMember);
@@ -1225,7 +1246,7 @@ export async function getDirectivaGenerations(
         `*[
           _type == "directivaGeneration" &&
           !defined(deletedAt) &&
-          (region->slug.current == $slug || region->name == $slug)
+          (region->slug.current in $regionSlugs || region->name in $regionNames)
         ] | order(isCurrent desc, startYear desc, _createdAt desc){
           _id,
           title,
@@ -1242,7 +1263,7 @@ export async function getDirectivaGenerations(
             templo->{_id, temploName, address, googleMapsUrl}
           }
         }`,
-        { slug: regionSlug },
+        getRegionLookupParams(regionSlug),
       );
 
       const mapped = (generations ?? []).map(mapDirectivaGeneration);
@@ -1283,13 +1304,13 @@ export async function getRegionPresident(
       const president = await client.fetch(
         `*[
           _type == "directiva" &&
-          (region->slug.current == $slug || region->name == $slug) &&
+          (region->slug.current in $regionSlugs || region->name in $regionNames) &&
           role == "Presidente Regional"
         ][0]{
           fullName,
           phone
         }`,
-        { slug: regionSlug },
+        getRegionLookupParams(regionSlug),
       );
 
       if (president?.fullName && president?.phone)
@@ -1299,12 +1320,12 @@ export async function getRegionPresident(
       const fallback = await client.fetch(
         `*[
           _type == "directiva" &&
-          (region->slug.current == $slug || region->name == $slug)
+          (region->slug.current in $regionSlugs || region->name in $regionNames)
         ] | order(order asc)[0]{
           fullName,
           phone
         }`,
-        { slug: regionSlug },
+        getRegionLookupParams(regionSlug),
       );
 
       if (!fallback?.fullName || !fallback?.phone) {
@@ -1407,7 +1428,7 @@ export async function getSiteSettings(
     async () => {
       const client = getSanityClient();
       const settings = await client.fetch(
-        `*[_type == "siteSettings" && (region->slug.current == $slug || region->name == $slug)][0]{
+        `*[_type == "siteSettings" && (region->slug.current in $regionSlugs || region->name in $regionNames)][0]{
           _id,
           siteName,
           heroImages[]{
@@ -1421,7 +1442,7 @@ export async function getSiteSettings(
           heroTitle,
           heroSubtitle
         }`,
-        { slug: regionSlug },
+        getRegionLookupParams(regionSlug),
       );
 
       if (!settings) {
@@ -1444,7 +1465,7 @@ export async function getLatestHeroCard(regionSlug: string = "mayo"): Promise<He
   return readWithDevSanityFallback("getLatestHeroCard", () => null, async () => {
     const client = getSanityClient();
     const card = await client.fetch(
-      `*[_type == "heroCard" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
+      `*[_type == "heroCard" && (!defined(region) || region->slug.current in $regionSlugs || region->name in $regionNames)]
         | order(coalesce(pinned, false) desc, coalesce(publishedAt, _updatedAt, _createdAt) desc)[0]{
           _id,
           url,
@@ -1458,7 +1479,7 @@ export async function getLatestHeroCard(regionSlug: string = "mayo"): Promise<He
             file{asset->{url}}
           }
         }`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     if (!card) return null;
@@ -1472,7 +1493,7 @@ export async function getPrayerWallConfig(regionSlug: string = "mayo"): Promise<
   return readWithDevSanityFallback("getPrayerWallConfig", () => null, async () => {
     const client = getSanityClient();
     const wall = await client.fetch(
-      `*[_type == "prayerWall" && (!defined(region) || region->slug.current == $slug || region->name == $slug)]
+      `*[_type == "prayerWall" && (!defined(region) || region->slug.current in $regionSlugs || region->name in $regionNames)]
         | order(publishedAt desc)[0]{
           _id,
           phase,
@@ -1486,7 +1507,7 @@ export async function getPrayerWallConfig(regionSlug: string = "mayo"): Promise<
             spam
           }
         }`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     if (!wall) return null;
@@ -1616,7 +1637,7 @@ export async function getTemplos(
     const templos = await client.fetch(
       `*[
         _type == "templo" &&
-        (region->slug.current == $slug || region->name == $slug) &&
+        (region->slug.current in $regionSlugs || region->name in $regionNames) &&
         !defined(deletedAt)
       ] | order(churchNumber asc){
         _id,
@@ -1650,7 +1671,7 @@ export async function getTemplos(
           !defined(deletedAt)
         ]{_id, coroName, presidentName, presidentPhone}
       }`,
-      { slug: regionSlug },
+      getRegionLookupParams(regionSlug),
     );
 
     return (templos ?? []).map(mapTemplo);

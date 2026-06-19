@@ -29,15 +29,7 @@ export default async function CorosPage() {
         facebookUrl={region?.socialLinks.facebook}
       />
       <div>
-        {region ? (
-          <CorosContent coros={coros} initialViewMode={initialViewMode} />
-        ) : (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <p className="text-lg text-gray-500">
-              No hay información disponible. Por favor, configúrala en Sanity Studio.
-            </p>
-          </div>
-        )}
+        <CorosContent coros={coros} initialViewMode={initialViewMode} />
       </div>
       <Chatbot />
     </main>

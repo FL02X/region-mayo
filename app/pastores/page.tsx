@@ -29,15 +29,7 @@ export default async function DirectorioPage() {
         facebookUrl={region?.socialLinks.facebook}
       />
       <div>
-        {region ? (
-          <DirectorioContent pastors={pastors} initialViewMode={initialViewMode} />
-        ) : (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <p className="text-lg text-gray-500">
-              No hay información disponible. Por favor, configúrala en Sanity Studio.
-            </p>
-          </div>
-        )}
+        <DirectorioContent pastors={pastors} initialViewMode={initialViewMode} />
       </div>
       <Chatbot />
     </main>

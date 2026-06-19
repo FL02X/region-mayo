@@ -35,6 +35,20 @@ type AuditContext = {
   }
 }
 
+const slugifyRegionName = (name?: string): string | undefined => {
+  if (!name) return undefined
+
+  const slug = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return slug || undefined
+}
+
 /**
  * Hook ejecutado ANTES de crear un documento
  * Llena: createdBy, createdAt
@@ -49,8 +63,14 @@ export const auditBeforeCreate = (
   const userId = currentUser?.id || 'system'
 
   // Crear documento con campos audit iniciales
+  const generatedSlug =
+    documentBeforeCreate._type === 'region' && !documentBeforeCreate.slug?.current
+      ? slugifyRegionName(documentBeforeCreate.name)
+      : undefined
+
   return {
     ...documentBeforeCreate,
+    ...(generatedSlug ? { slug: { _type: 'slug', current: generatedSlug } } : {}),
     audit: {
       createdBy: userId,
       createdAt: new Date().toISOString(),

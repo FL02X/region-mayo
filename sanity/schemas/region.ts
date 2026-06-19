@@ -36,6 +36,7 @@ export default defineType({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
+      readOnly: ({ document }) => Boolean(document?._createdAt && document?.slug?.current),
       options: {
         source: 'name',
         maxLength: 96,

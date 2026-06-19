@@ -29,16 +29,7 @@ export default async function TemploPage() {
         facebookUrl={region?.socialLinks.facebook}
       />
       <div>
-        {region ? (
-          <TemplosContent templos={templos} initialViewMode={initialViewMode} />
-        ) : (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <p className="text-lg text-gray-500">
-              No hay información disponible. Por favor, configúrala en Sanity
-              Studio.
-            </p>
-          </div>
-        )}
+        <TemplosContent templos={templos} initialViewMode={initialViewMode} />
       </div>
       <Chatbot />
     </main>

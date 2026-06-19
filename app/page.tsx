@@ -108,27 +108,18 @@ export default async function Home() {
         </div>
 
         <div className="pt-0 md:pt-0">
-          {region ? (
-            <EventsFeed
-              events={events}
-              regionPresident={regionPresident}
-              instagramUrl={region?.socialLinks.instagram}
-              facebookUrl={region?.socialLinks.facebook}
-              customHeroCard={heroCard}
-              prayerWall={prayerWall}
-              socialPosts={socialPosts}
-              now={now}
-              initialViewMode={initialViewMode}
-              initialCalendarLayoutMode={initialCalendarLayoutMode}
-            />
-          ) : (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <p className="text-lg text-gray-500">
-                No hay información de región disponible. Por favor, configúrala en
-                Sanity Studio.
-              </p>
-            </div>
-          )}
+          <EventsFeed
+            events={events}
+            regionPresident={regionPresident}
+            instagramUrl={region?.socialLinks.instagram}
+            facebookUrl={region?.socialLinks.facebook}
+            customHeroCard={heroCard}
+            prayerWall={prayerWall}
+            socialPosts={socialPosts}
+            now={now}
+            initialViewMode={initialViewMode}
+            initialCalendarLayoutMode={initialCalendarLayoutMode}
+          />
         </div>
 
         <GoToCalendar />
