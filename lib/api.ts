@@ -7,6 +7,7 @@ import type {
   Event,
   Pastor,
   Coro,
+  DirectivaGeneration,
   DirectivaMember,
   RegionPresident,
   SiteSettings,
@@ -79,6 +80,18 @@ function getMockCoros(regionSlug: string): Coro[] {
 function getMockDirectiva(regionSlug: string): DirectivaMember[] {
   if (isMayoRegion(regionSlug)) return directivaData;
   return [];
+}
+
+function getMockDirectivaGenerations(regionSlug: string): DirectivaGeneration[] {
+  const members = getMockDirectiva(regionSlug);
+  if (members.length === 0) return [];
+
+  return [{
+    id: "legacy-directiva-actual",
+    title: "Directiva actual",
+    isCurrent: true,
+    members,
+  }];
 }
 
 function getMockRegionPresident(regionSlug: string): RegionPresident | null {
@@ -739,7 +752,7 @@ function mapDirectivaMember(raw: any): DirectivaMember {
   const roleValue = raw.roleCustom || (raw.role ? (ROLE_TRANSLATIONS[raw.role] || raw.role) : undefined);
 
   return {
-    id: raw._id,
+    id: raw._id ?? raw._key,
     fullName: raw.fullName,
     role: roleValue,
     temploName: raw.temploName ?? raw.templo?.temploName,
@@ -747,7 +760,23 @@ function mapDirectivaMember(raw: any): DirectivaMember {
     address: raw.address ?? raw.templo?.address,
     photo: raw.photo ? sanityImageUrl(raw.photo) : undefined,
     googleMapsUrl: raw.googleMapsUrl ?? raw.templo?.googleMapsUrl,
-    phone: raw.phone,
+    phone: raw.phone ?? "",
+  };
+}
+
+function mapDirectivaGeneration(raw: any): DirectivaGeneration {
+  return {
+    id: raw._id,
+    title: raw.title,
+    startYear: raw.startYear ?? undefined,
+    endYear: raw.endYear ?? undefined,
+    isCurrent: Boolean(raw.isCurrent),
+    members: (raw.members ?? []).map((member: any) => (
+      mapDirectivaMember({
+        ...member,
+        _id: `${raw._id}-${member._key}`,
+      })
+    )),
   };
 }
 
@@ -1180,6 +1209,56 @@ export async function getDirectiva(
 
     return (directiva ?? []).map(mapDirectivaMember);
   });
+}
+
+export async function getDirectivaGenerations(
+  regionSlug: string = "mayo",
+): Promise<DirectivaGeneration[]> {
+  if (!SANITY_ENABLED) return getMockDirectivaGenerations(regionSlug);
+
+  return readWithDevSanityFallback(
+    "getDirectivaGenerations",
+    () => getMockDirectivaGenerations(regionSlug),
+    async () => {
+      const client = getSanityClient();
+      const generations = await client.fetch(
+        `*[
+          _type == "directivaGeneration" &&
+          !defined(deletedAt) &&
+          (region->slug.current == $slug || region->name == $slug)
+        ] | order(isCurrent desc, startYear desc, _createdAt desc){
+          _id,
+          title,
+          startYear,
+          endYear,
+          isCurrent,
+          members[]{
+            _key,
+            fullName,
+            role,
+            roleCustom,
+            photo{asset->{url}},
+            phone,
+            templo->{_id, temploName, address, googleMapsUrl}
+          }
+        }`,
+        { slug: regionSlug },
+      );
+
+      const mapped = (generations ?? []).map(mapDirectivaGeneration);
+      if (mapped.some((generation) => generation.isCurrent)) return mapped;
+
+      const legacyMembers = await getDirectiva(regionSlug);
+      if (legacyMembers.length === 0) return mapped;
+
+      return [{
+        id: "legacy-directiva-actual",
+        title: "Directiva actual",
+        isCurrent: true,
+        members: legacyMembers,
+      }, ...mapped];
+    },
+  );
 }
 
 export async function getDirectivaMemberById(

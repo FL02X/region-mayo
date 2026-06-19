@@ -15,6 +15,7 @@ import event from './event'
 import pastor from './pastor'
 import coro from './coro'
 import directiva from './directiva'
+import directivaGeneration from './directivaGeneration'
 import siteSettings from './siteSettings'
 import registration from './registration'
 import heroCard from './heroCard'
@@ -31,6 +32,7 @@ export const schemaTypes = [
   pastor,
   coro,
   directiva,
+  directivaGeneration,
   siteSettings,
   registration,
   heroCard,

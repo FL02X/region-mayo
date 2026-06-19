@@ -6,11 +6,20 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  UserCircle,
-  MapPin,
+  BadgeCheck,
+  BarChart3,
   ChevronDown,
   Church,
+  FileText,
+  MapPin,
+  Mic,
+  Music,
+  PenLine,
   Phone,
+  UserCheck,
+  UserCircle,
+  Wallet,
+  type LucideIcon,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -26,15 +35,21 @@ import { OfflineImagePlaceholder } from "@/components/shared/offline-image-place
 import { WhatsAppButton } from "@/components/shared/whatsapp-button";
 import { SearchBar } from "@/components/shared/search-bar-sections";
 import { HighlightedText } from "@/components/shared/highlighted-text";
-import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
+import {
+  ViewModeToggle,
+  type ViewMode,
+} from "@/components/shared/view-mode-toggle";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
-import type { DirectivaMember } from "@/lib/types";
+import type { DirectivaGeneration, DirectivaMember } from "@/lib/types";
 
 const DIRECTIVA_ROLE_META: Record<string, { label: string; order: number }> = {
   "01_presidente_regional": { label: "Presidente Regional", order: 1 },
-  "02_suplente_presidente_regional": { label: "Suplente Presidente Regional", order: 2 },
+  "02_suplente_presidente_regional": {
+    label: "Suplente Presidente Regional",
+    order: 2,
+  },
   "03_secretario": { label: "Secretario", order: 3 },
   "04_suplente_secretario": { label: "Suplente Secretario", order: 4 },
   "05_cronista": { label: "Cronista", order: 5 },
@@ -44,15 +59,27 @@ const DIRECTIVA_ROLE_META: Record<string, { label: string; order: number }> = {
   "09_tesorera": { label: "Tesoreria", order: 9 },
   "10_suplente_tesorera": { label: "Suplente de Tesoreria", order: 10 },
   "11_director_canto": { label: "Director de Canto", order: 11 },
-  "12_suplente_director_canto": { label: "Suplente de Director de Canto", order: 12 },
+  "12_suplente_director_canto": {
+    label: "Suplente de Director de Canto",
+    order: 12,
+  },
   "13_director_musica": { label: "Director de Musica", order: 13 },
-  "14_suplente_director_musica": { label: "Suplente de Director de Musica", order: 14 },
+  "14_suplente_director_musica": {
+    label: "Suplente de Director de Musica",
+    order: 14,
+  },
 
   // Compatibilidad con valores legacy guardados antes de reordenar tesoreria.
   "09_director_canto": { label: "Director de Canto", order: 11 },
-  "10_suplente_director_canto": { label: "Suplente de Director de Canto", order: 12 },
+  "10_suplente_director_canto": {
+    label: "Suplente de Director de Canto",
+    order: 12,
+  },
   "11_director_musica": { label: "Director de Musica", order: 13 },
-  "12_suplente_director_musica": { label: "Suplente de Director de Musica", order: 14 },
+  "12_suplente_director_musica": {
+    label: "Suplente de Director de Musica",
+    order: 14,
+  },
 };
 
 const getDirectivaRoleLabel = (role?: string) => {
@@ -75,6 +102,31 @@ const getDirectivaRoleOrder = (role?: string) => {
 
   return Number.MAX_SAFE_INTEGER;
 };
+
+const DIRECTIVA_ROLE_ICON: Record<string, LucideIcon> = {
+  "01_presidente_regional": BadgeCheck,
+  "02_suplente_presidente_regional": UserCheck,
+  "03_secretario": FileText,
+  "04_suplente_secretario": FileText,
+  "05_cronista": PenLine,
+  "06_suplente_cronista": PenLine,
+  "07_estadistica": BarChart3,
+  "08_suplente_estadistica": BarChart3,
+  "09_tesorera": Wallet,
+  "10_suplente_tesorera": Wallet,
+  "11_director_canto": Mic,
+  "12_suplente_director_canto": Mic,
+  "13_director_musica": Music,
+  "14_suplente_director_musica": Music,
+
+  "09_director_canto": Mic,
+  "10_suplente_director_canto": Mic,
+  "11_director_musica": Music,
+  "12_suplente_director_musica": Music,
+};
+
+const getDirectivaRoleIcon = (role?: string): LucideIcon =>
+  role ? DIRECTIVA_ROLE_ICON[role] ?? UserCircle : UserCircle;
 
 const expandTransition = {
   duration: 0.24,
@@ -145,25 +197,31 @@ function PrintableDirectivaSheet({ member }: { member: DirectivaMember }) {
       fallbackIcon={<UserCircle className="h-10 w-10" aria-hidden="true" />}
       sections={[
         ...(roleLabel
-          ? [{
-              id: "role",
-              label: "Cargo",
-              icon: <UserCircle className="rm-print-icon" aria-hidden="true" />,
-              content: <p>{roleLabel}</p>,
-            }]
+          ? [
+              {
+                id: "role",
+                label: "Cargo",
+                icon: (
+                  <UserCircle className="rm-print-icon" aria-hidden="true" />
+                ),
+                content: <p>{roleLabel}</p>,
+              },
+            ]
           : []),
         ...(member.temploName
-          ? [{
-              id: "templo",
-              label: "Iglesia Sede",
-              icon: <Church className="rm-print-icon" aria-hidden="true" />,
-              content: (
-                <p>
-                  {member.temploName}
-                  {member.address ? `\n${member.address}` : ""}
-                </p>
-              ),
-            }]
+          ? [
+              {
+                id: "templo",
+                label: "Iglesia Sede",
+                icon: <Church className="rm-print-icon" aria-hidden="true" />,
+                content: (
+                  <p>
+                    {member.temploName}
+                    {member.address ? `\n${member.address}` : ""}
+                  </p>
+                ),
+              },
+            ]
           : []),
         {
           id: "phone",
@@ -192,6 +250,7 @@ function DirectivaCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = useIsMobile();
   const roleLabel = getDirectivaRoleLabel(member.role);
+  const RoleIcon = getDirectivaRoleIcon(member.role);
 
   const openGoogleMaps = () => {
     if (member.googleMapsUrl) {
@@ -216,7 +275,10 @@ function DirectivaCard({
       {member.temploName && (
         <div className="flex items-start gap-3">
           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-            <Church className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <Church
+              className="h-4 w-4 text-muted-foreground"
+              aria-hidden="true"
+            />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-[5px]">
@@ -229,7 +291,10 @@ function DirectivaCard({
                 aria-label={`Ver información de ${member.temploName}`}
               >
                 <span className="inline-block">
-                  <HighlightedText text={member.temploName} query={searchQuery} />
+                  <HighlightedText
+                    text={member.temploName}
+                    query={searchQuery}
+                  />
                 </span>
               </Link>
             ) : (
@@ -239,7 +304,10 @@ function DirectivaCard({
             )}
             {member.address && (
               <div className="flex items-start gap-1.5 mb-1.5">
-                <MapPin className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                <MapPin
+                  className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5"
+                  aria-hidden="true"
+                />
                 <p className="text-sm text-foreground/70 leading-tight">
                   <HighlightedText text={member.address} query={searchQuery} />
                 </p>
@@ -268,7 +336,10 @@ function DirectivaCard({
             Contacto
           </p>
           <p className="text-sm font-medium text-foreground leading-tight">
-            <HighlightedText text={formatPhoneForDisplay(member.phone)} query={searchQuery} />
+            <HighlightedText
+              text={formatPhoneForDisplay(member.phone)}
+              query={searchQuery}
+            />
           </p>
         </div>
       </div>
@@ -302,7 +373,10 @@ function DirectivaCard({
               />
             ) : (
               <div className="offline-image-online absolute inset-0 flex items-center justify-center">
-                <UserCircle className="h-6 w-6 text-muted-foreground/30" aria-hidden="true" />
+                <UserCircle
+                  className="h-6 w-6 text-muted-foreground/30"
+                  aria-hidden="true"
+                />
               </div>
             )}
             <OfflineImagePlaceholder />
@@ -311,8 +385,10 @@ function DirectivaCard({
           <div className="min-w-0 flex-1">
             {roleLabel && (
               <p className="mb-1.5 flex w-fit items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs">
-                <UserCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                <span><HighlightedText text={roleLabel} query={searchQuery} /></span>
+                <RoleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>
+                  <HighlightedText text={roleLabel} query={searchQuery} />
+                </span>
               </p>
             )}
             <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px]">
@@ -320,9 +396,15 @@ function DirectivaCard({
             </h3>
             {member.temploName && (
               <p className="mt-3 flex min-w-0 items-start gap-2 text-[15px] leading-snug text-foreground/80">
-                <Church className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <Church
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <span className="min-w-0 line-clamp-2">
-                  <HighlightedText text={member.temploName} query={searchQuery} />
+                  <HighlightedText
+                    text={member.temploName}
+                    query={searchQuery}
+                  />
                 </span>
               </p>
             )}
@@ -335,7 +417,9 @@ function DirectivaCard({
                 aria-controls={`directiva-details-${member.id}`}
                 style={{ minHeight: "unset", minWidth: "unset" }}
               >
-                <span>{isExpanded ? "Ocultar información" : "Ver información"}</span>
+                <span>
+                  {isExpanded ? "Ocultar información" : "Ver información"}
+                </span>
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
                     isExpanded ? "rotate-180" : ""
@@ -370,7 +454,7 @@ function DirectivaCard({
 
   return (
     <div
-      id={member.id} 
+      id={member.id}
       data-eq-card
       className="desktop-card-lift bg-card border border-border overflow-hidden flex flex-col h-full scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
     >
@@ -396,7 +480,8 @@ function DirectivaCard({
         <OfflineImagePlaceholder />
         {roleLabel && (
           <div className="absolute top-3 left-3">
-            <Badge className="bg-foreground/85 text-background text-xs font-medium">
+            <Badge className="gap-1.5 bg-foreground/85 text-background text-xs font-medium">
+              <RoleIcon className="h-3.5 w-3.5" aria-hidden="true" />
               <HighlightedText text={roleLabel} query={searchQuery} />
             </Badge>
           </div>
@@ -419,7 +504,9 @@ function DirectivaCard({
               aria-controls={`directiva-details-${member.id}`}
               style={{ background: "none" }}
             >
-              <span>{isExpanded ? "Ocultar información" : "Ver información"}</span>
+              <span>
+                {isExpanded ? "Ocultar información" : "Ver información"}
+              </span>
               <ChevronDown
                 className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
                   isExpanded ? "rotate-180" : ""
@@ -453,15 +540,25 @@ function DirectivaCard({
 }
 
 interface DirectivaContentProps {
-  members: DirectivaMember[];
+  generations?: DirectivaGeneration[];
+  members?: DirectivaMember[];
   initialViewMode?: ViewMode;
 }
 
-export function DirectivaContent({ members, initialViewMode }: DirectivaContentProps) {
+export function DirectivaContent({
+  generations,
+  members = [],
+  initialViewMode,
+}: DirectivaContentProps) {
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const resolvedInitialViewMode = initialViewMode ?? "grid";
-  const [viewMode, setViewMode] = useState<ViewMode>(() => resolvedInitialViewMode);
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () => resolvedInitialViewMode,
+  );
+  const [openGenerations, setOpenGenerations] = useState<
+    Record<string, boolean>
+  >({});
   const [isOfflinePwa, setIsOfflinePwa] = useState(false);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
@@ -474,6 +571,27 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
   const printCleanupTimerRef = useRef<number | null>(null);
   const printInFlightRef = useRef(false);
   useEqualizeCardRowHeads(gridRef);
+
+  const directivaGenerations = useMemo<DirectivaGeneration[]>(() => {
+    if (generations && generations.length > 0) return generations;
+
+    return [
+      {
+        id: "legacy-directiva-actual",
+        title: "Directiva actual",
+        isCurrent: true,
+        members,
+      },
+    ];
+  }, [generations, members]);
+
+  const allMembers = useMemo(
+    () => directivaGenerations.flatMap((generation) => generation.members),
+    [directivaGenerations],
+  );
+  const initialOpenGenerationId =
+    directivaGenerations.find((generation) => generation.isCurrent)?.id ??
+    directivaGenerations[0]?.id;
 
   useEffect(() => {
     if (window.location.hash) {
@@ -515,25 +633,38 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
     };
   }, []);
 
-  const filteredMembers = useMemo(
-    () => {
-      const membersWithRoleLabels = members.map((member) => ({
+  const filteredGenerations = useMemo(() => {
+    return directivaGenerations.map((generation) => {
+      const membersWithRoleLabels = generation.members.map((member) => ({
         ...member,
         role: getDirectivaRoleLabel(member.role),
       }));
 
-      const filtered = searchItems(membersWithRoleLabels, searchQuery, SEARCH_CONFIGS.directiva);
+      const filtered = searchItems(
+        membersWithRoleLabels,
+        searchQuery,
+        SEARCH_CONFIGS.directiva,
+      );
       const filteredIds = new Set(filtered.map((member) => member.id));
 
-      return members
-        .filter((member) => filteredIds.has(member.id))
-        .sort((a, b) => {
-        const roleOrderDiff = getDirectivaRoleOrder(a.role) - getDirectivaRoleOrder(b.role);
-        if (roleOrderDiff !== 0) return roleOrderDiff;
-        return a.fullName.localeCompare(b.fullName, "es", { sensitivity: "base" });
-      });
-    },
-    [members, searchQuery],
+      return {
+        ...generation,
+        members: generation.members
+          .filter((member) => filteredIds.has(member.id))
+          .sort((a, b) => {
+            const roleOrderDiff =
+              getDirectivaRoleOrder(a.role) - getDirectivaRoleOrder(b.role);
+            if (roleOrderDiff !== 0) return roleOrderDiff;
+            return a.fullName.localeCompare(b.fullName, "es", {
+              sensitivity: "base",
+            });
+          }),
+      };
+    });
+  }, [directivaGenerations, searchQuery]);
+
+  const hasFilteredMembers = filteredGenerations.some(
+    (generation) => generation.members.length > 0,
   );
 
   const handleViewModeChange = (next: ViewMode) => {
@@ -607,6 +738,66 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
     }
   };
 
+  const renderMembers = (
+    generationMembers: DirectivaMember[],
+    attachGridRef: boolean,
+  ) => (
+    <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
+      {viewMode === "compact" ? (
+        <motion.div
+          key="directiva-compact"
+          initial={isMobile ? { opacity: 0, y: 6 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+          transition={
+            isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }
+          }
+          className="mx-0 flex flex-col gap-3 md:gap-3"
+        >
+          {generationMembers.map((member) => (
+            <DirectivaCard
+              key={member.id}
+              member={member}
+              searchQuery={searchQuery}
+              onCopied={showCopiedToast}
+              onPrint={handlePrintMember}
+              variant="compact"
+            />
+          ))}
+        </motion.div>
+      ) : (
+        <motion.div
+          key="directiva-grid"
+          ref={attachGridRef ? gridRef : undefined}
+          initial={isMobile ? { opacity: 0, y: 6 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+          transition={
+            isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }
+          }
+          className={`grid gap-4 ${
+            generationMembers.length === 1
+              ? "grid-cols-1 max-w-sm mx-auto"
+              : generationMembers.length === 2
+                ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
+                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          }`}
+        >
+          {generationMembers.map((member) => (
+            <div key={member.id} className="h-full">
+              <DirectivaCard
+                member={member}
+                searchQuery={searchQuery}
+                onCopied={showCopiedToast}
+                onPrint={handlePrintMember}
+              />
+            </div>
+          ))}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   useEffect(
     () => () => {
       if (copyToastTimerRef.current) {
@@ -616,7 +807,7 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
         window.clearTimeout(copyToastExitTimerRef.current);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -662,119 +853,148 @@ export function DirectivaContent({ members, initialViewMode }: DirectivaContentP
       id="main-content"
       data-view-mode={viewMode}
     >
-      {showCopyToast && createPortal(
-        <CopyToast visible={isCopyToastVisible} />,
-        document.body
-      )}
-      {printMember && createPortal(
-        <div className="rm-print-root">
-          <PrintableDirectivaSheet member={printMember} />
-        </div>,
-        document.body
-      )}
-      <div className="desktop-content-pane max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[88px] bg-paper md:border-x focus:outline-none">
+      {showCopyToast &&
+        createPortal(<CopyToast visible={isCopyToastVisible} />, document.body)}
+      {printMember &&
+        createPortal(
+          <div className="rm-print-root">
+            <PrintableDirectivaSheet member={printMember} />
+          </div>,
+          document.body,
+        )}
+      <div className="desktop-content-pane min-h-screen max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[88px] bg-paper md:border-x focus:outline-none">
         <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
           {/* Header */}
-        <div className="mb-6 pb-5 border-b border-border/70">
-          <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">Directiva de jovenes</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Miembros de la directiva regional
-          </p>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6">
-          <SearchBar
-            onSearchChange={setSearchQuery}
-            placeholder="Buscar por nombre, cargo, templo o teléfono..."
-          />
-        </div>
-
-        <div className="mb-4 flex justify-end">
-          <ViewModeToggle
-            value={viewMode}
-            onChange={handleViewModeChange}
-            ariaLabel="Cambiar vista de directiva"
-            disableGrid={isOfflinePwa}
-          />
-        </div>
-
-        {/* Info notice — plain, no icon circle */}
-        <div className="border border-border bg-muted/30 p-4 mb-6 text-sm text-muted-foreground">
-          Contacta a cualquier miembro de la directiva directamente por
-          WhatsApp. Estamos aquí para servirte.
-        </div>
-
-        {filteredMembers.length === 0 ? (
-          <div className="bg-card border border-border p-8 text-center">
-            <UserCircle
-              className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3"
-              aria-hidden="true"
-            />
-            <p className="text-sm font-medium text-foreground mb-1">
-              {members.length === 0
-                ? "Sin miembros de directiva registrados"
-                : "No se encontraron resultados"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {members.length === 0
-                ? "La información se actualizará pronto."
-                : "Intenta con otros términos de búsqueda."}
+          <div className="mb-6 pb-5 border-b border-border/70">
+            <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">
+              Directiva de jovenes
+            </h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              Miembros de la directiva regional
             </p>
           </div>
-        ) : (
-          <AnimatePresence mode={isMobile ? "wait" : "sync"} initial={false}>
-            {viewMode === "compact" ? (
-              <motion.div
-                key="directiva-compact"
-                initial={isMobile ? { opacity: 0, y: 6 } : false}
-                animate={{ opacity: 1, y: 0 }}
-                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
-                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
-                className="mx-0 flex flex-col gap-3 md:gap-3 pb-14"
-              >
-                {filteredMembers.map((member) => (
-                  <DirectivaCard
-                    key={member.id}
-                    member={member}
-                    searchQuery={searchQuery}
-                    onCopied={showCopiedToast}
-                    onPrint={handlePrintMember}
-                    variant="compact"
-                  />
-                ))}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="directiva-grid"
-                ref={gridRef}
-                initial={isMobile ? { opacity: 0, y: 6 } : false}
-                animate={{ opacity: 1, y: 0 }}
-                exit={isMobile ? { opacity: 0, y: -4 } : undefined}
-                transition={isMobile ? { duration: 0.18, ease: "easeOut" } : { duration: 0 }}
-                className={`grid gap-4 ${
-                  filteredMembers.length === 1
-                    ? "grid-cols-1 max-w-sm mx-auto"
-                    : filteredMembers.length === 2
-                      ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto"
-                      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                }`}
-              >
-                {filteredMembers.map((member) => (
-                  <div key={member.id} className="h-full">
-                    <DirectivaCard
-                      member={member}
-                      searchQuery={searchQuery}
-                      onCopied={showCopiedToast}
-                      onPrint={handlePrintMember}
-                    />
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
-      </div>
+
+          {/* Search Bar */}
+          <div className="mb-6">
+            <SearchBar
+              onSearchChange={setSearchQuery}
+              placeholder="Buscar por nombre, cargo, templo o teléfono..."
+            />
+          </div>
+
+          <div className="mb-4 flex justify-end">
+            <ViewModeToggle
+              value={viewMode}
+              onChange={handleViewModeChange}
+              ariaLabel="Cambiar vista de directiva"
+              disableGrid={isOfflinePwa}
+            />
+          </div>
+
+          {/*
+          <div className="border border-border bg-muted/30 p-4 mb-6 text-sm text-muted-foreground">
+            Contacta a cualquier miembro de la directiva directamente por
+            WhatsApp. Estamos aquí para servirte.
+          </div> */}
+
+          {allMembers.length === 0 || !hasFilteredMembers ? (
+            <div className="bg-card border border-border p-8 text-center">
+              <UserCircle
+                className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3"
+                aria-hidden="true"
+              />
+              <p className="text-sm font-medium text-foreground mb-1">
+                {allMembers.length === 0
+                  ? "Sin miembros de directiva registrados"
+                  : "No se encontraron resultados"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {allMembers.length === 0
+                  ? "La información se actualizará pronto."
+                  : "Intenta con otros términos de búsqueda."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 pb-14">
+              {filteredGenerations.map((generation, index) => {
+                const hasSearch = searchQuery.trim().length > 0;
+                if (hasSearch && generation.members.length === 0) return null;
+
+                const isOpen = hasSearch
+                  ? true
+                  : (openGenerations[generation.id] ??
+                    generation.id === initialOpenGenerationId);
+
+                return (
+                  <section key={generation.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenGenerations((current) => ({
+                          ...current,
+                          [generation.id]: !isOpen,
+                        }));
+                      }}
+                      className="flex w-full items-center justify-between gap-4 border-b border-border/70 py-3 text-left"
+                      aria-expanded={isOpen}
+                      aria-controls={`directiva-generation-${generation.id}`}
+                    >
+                      <span>
+                        <span className="block text-sm font-semibold text-foreground">
+                          {generation.title}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          {generation.isCurrent ? "Actual" : "Historial"} -{" "}
+                          {generation.members.length} miembros
+                        </span>
+                      </span>
+                      <span
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#757575]"
+                        aria-hidden="true"
+                      >
+                        <ChevronDown
+                          className={`h-4 w-4 text-white transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </span>
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          id={`directiva-generation-${generation.id}`}
+                          initial={isMobile ? { height: 0, opacity: 0 } : false}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={
+                            isMobile ? { height: 0, opacity: 0 } : undefined
+                          }
+                          transition={
+                            isMobile ? expandTransition : { duration: 0 }
+                          }
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-4">
+                            {generation.members.length > 0 ? (
+                              renderMembers(
+                                generation.members,
+                                generation.id === initialOpenGenerationId,
+                              )
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                Sin miembros registrados en esta generacion.
+                              </p>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@
 
 import { defineType, defineField } from 'sanity'
 
-const ROLE_OPTIONS = [
+export const ROLE_OPTIONS = [
   { title: 'Presidente Regional', value: '01_presidente_regional' },
   { title: 'Suplente Presidente Regional', value: '02_suplente_presidente_regional' },
   { title: 'Secretario', value: '03_secretario' },
@@ -37,7 +37,7 @@ const ROLE_OPTIONS = [
   { title: 'Suplente de Director de Música', value: '14_suplente_director_musica' },
 ]
 
-const ROLE_LABEL_BY_VALUE = Object.fromEntries(ROLE_OPTIONS.map(({ title, value }) => [value, title]))
+export const ROLE_LABEL_BY_VALUE = Object.fromEntries(ROLE_OPTIONS.map(({ title, value }) => [value, title]))
 
 export default defineType({
   name: 'directiva',

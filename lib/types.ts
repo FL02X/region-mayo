@@ -226,6 +226,15 @@ export interface DirectivaMember {
   phone: string;
 }
 
+export interface DirectivaGeneration {
+  id: string;
+  title: string;
+  startYear?: number;
+  endYear?: number;
+  isCurrent: boolean;
+  members: DirectivaMember[];
+}
+
 // Registration form data
 export interface RegistrationFormData {
   name: string;

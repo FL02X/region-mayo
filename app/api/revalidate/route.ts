@@ -174,6 +174,7 @@ export async function POST(request: NextRequest) {
         tagsToRevalidate.push("pastors");
         break;
       case "directiva":
+      case "directivaGeneration":
         pathsToRevalidate.push("/");
         pathsToRevalidate.push("/directiva");
         pathsToRevalidate.push("/buscar");

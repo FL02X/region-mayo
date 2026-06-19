@@ -35,6 +35,7 @@ const AUDITABLE_DOCUMENT_TYPES = [
   'pastor',
   'coro',
   'directiva',
+  'directivaGeneration',
   'event',
   'album',
   'registration',
@@ -67,6 +68,7 @@ const MANUAL_DOCUMENT_TYPES = new Set([
   'pastor',
   'coro',
   'directiva',
+  'directivaGeneration',
   'album',
 ])
 
@@ -98,7 +100,36 @@ const studioStructure = (S: any) =>
               documentTypeItem(S, 'templo', 'Templos'),
               documentTypeItem(S, 'pastor', 'Pastores'),
               documentTypeItem(S, 'coro', 'Coros'),
-              documentTypeItem(S, 'directiva', 'Directiva'),
+              S.listItem()
+                .id('directiva-section')
+                .title('Directiva')
+                .child(
+                  S.list()
+                    .title('Directiva')
+                    .items([
+                      S.listItem()
+                        .title('Actual')
+                        .schemaType('directivaGeneration')
+                        .child(
+                          S.documentTypeList('directivaGeneration')
+                            .title('Directiva actual')
+                            .filter('_type == "directivaGeneration" && isCurrent == true && !defined(deletedAt)')
+                            .defaultOrdering([{ field: 'startYear', direction: 'desc' }]),
+                        ),
+                      S.listItem()
+                        .title('Historial')
+                        .schemaType('directivaGeneration')
+                        .child(
+                          S.documentTypeList('directivaGeneration')
+                            .title('Directivas anteriores')
+                            .filter('_type == "directivaGeneration" && isCurrent != true && !defined(deletedAt)')
+                            .defaultOrdering([{ field: 'startYear', direction: 'desc' }]),
+                        ),
+                      S.divider(),
+                      documentTypeItem(S, 'directivaGeneration', 'Todas las generaciones'),
+                      documentTypeItem(S, 'directiva', 'Miembros legacy'),
+                    ]),
+                ),
             ]),
         ),
 
