@@ -67,7 +67,7 @@ export function CopyPrintActions({
         onClick={handleCopy}
         onMouseEnter={() => setIsCopyHovered(true)}
         onMouseLeave={() => setIsCopyHovered(false)}
-        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-sm rounded-r-none border px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150"
+        className="inline-flex min-h-10 w-fit max-w-full items-center gap-1.5 rounded-l-sm rounded-r-none border px-3 py-2 text-sm font-medium leading-tight text-brand-ink transition-[background-color,border-color] duration-150"
         style={{
           backgroundColor: isCopyActive || isCopyHovered
             ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"
@@ -84,7 +84,7 @@ export function CopyPrintActions({
         onClick={onPrint}
         onMouseEnter={() => setIsPrintHovered(true)}
         onMouseLeave={() => setIsPrintHovered(false)}
-        className="inline-flex h-10 w-fit items-center gap-1.5 rounded-l-none rounded-r-sm border px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150"
+        className="inline-flex min-h-10 w-fit max-w-full items-center gap-1.5 rounded-l-none rounded-r-sm border px-3 py-2 text-sm font-medium leading-tight text-brand-ink transition-[background-color,border-color] duration-150"
         style={{
           backgroundColor: isPrintHovered
             ? "color-mix(in oklch, var(--primary) 10%, var(--surface-pane) 90%)"

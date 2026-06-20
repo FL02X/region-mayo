@@ -468,7 +468,7 @@ function TemploCard({
     typeof templo.latitude === "number" ||
     typeof templo.longitude === "number";
   const compactUtilityButtonClass =
-    "mt-2 inline-flex h-8 w-fit items-center gap-1.5 rounded-sm bg-surface-pane text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
+    "mt-2 inline-flex min-h-8 w-fit max-w-full items-center gap-1.5 rounded-sm bg-surface-pane py-1.5 text-sm font-medium leading-tight text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10 [&>span]:min-w-0";
   const compactMapsButtonClass =
     "inline-flex min-h-10 w-fit max-w-full items-center justify-center gap-1.5 border bg-brand px-2.5 py-1.5 text-center text-sm font-medium leading-tight text-white transition-[background-color,border-color] duration-0 hover:bg-brand-hover hover:text-white";
 
@@ -692,9 +692,9 @@ function TemploCard({
                   className={compactUtilityButtonClass}
                   aria-expanded={isExpanded}
                   aria-controls={`templo-details-${templo.id}`}
-                  style={{ minHeight: "unset", minWidth: "unset" }}
+                  style={{ minWidth: "unset" }}
                 >
-                  <span>{isExpanded ? "Ocultar información" : "Ver más información"}</span>
+                  <span>{isExpanded ? "Ocultar información" : "Ver información"}</span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
                       isExpanded ? "rotate-180" : ""
@@ -805,12 +805,12 @@ function TemploCard({
           {templo.googleMapsUrl && (
             <button
               onClick={openGoogleMaps}
-              className="w-full flex items-center justify-between text-sm text-primary font-normal hover:text-primary/80 hover:underline underline-offset-2 transition-colors pt-1 pb-3 px-4 -mx-4"
+              className="w-full flex min-h-10 items-center justify-between gap-2 text-sm text-primary font-normal leading-tight hover:text-primary/80 hover:underline underline-offset-2 transition-colors pt-1 pb-3 px-4 -mx-4"
               aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span>Ver ubicación en Maps</span>
+                <span className="min-w-0">Ver ubicación en Maps</span>
               </div>
               <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             </button>
@@ -824,13 +824,13 @@ function TemploCard({
             <div className="-mx-4 mb-2 border-t border-border">
               <button
                 onClick={handleToggle}
-                className="w-full flex items-center justify-between py-3 px-4 text-sm text-foreground font-medium hover:text-foreground/70 transition-colors "
+                className="w-full flex min-h-10 items-center justify-between gap-2 py-3 px-4 text-sm text-foreground font-medium leading-tight hover:text-foreground/70 transition-colors "
                 aria-expanded={isExpanded}
                 aria-controls={`templo-details-${templo.id}`}
                 style={{ background: "none" }}
               >
-                <span>
-                  {isExpanded ? "Ocultar información" : "Ver más información"}
+                <span className="min-w-0">
+                  {isExpanded ? "Ocultar información" : "Ver información"}
                 </span>
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
@@ -1626,14 +1626,14 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
                 <button
                   type="button"
                   onClick={() => setLocationModalOpen(false)}
-                  className="h-9 px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="min-h-9 px-3 py-2 text-sm font-medium leading-tight text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={runNearestTempleSearch}
-                  className="h-9 bg-[#2f5e93] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#284f7c]"
+                  className="min-h-9 bg-[#2f5e93] px-4 py-2 text-sm font-semibold leading-tight text-white transition-colors hover:bg-[#284f7c]"
                 >
                   {locationSearchState === "idle" ? "Permitir" : "Reintentar"}
                 </button>

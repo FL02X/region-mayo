@@ -20,7 +20,7 @@ import {
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
-import { ImageGalleryModal } from "@/components/shared/image-gallery-modal";
+import { ImageGalleryModal } from "@/components/shared/image-album-modal";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Album, AlbumGalleryItem, AlbumVideo, EventType } from "@/lib/types";

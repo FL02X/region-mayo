@@ -6,6 +6,7 @@ import Image from "next/image";
 import { createPortal } from "react-dom";
 import { ChevronDown, ChevronRight, Undo2 } from "lucide-react";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
+import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
 
 const editorialFont = Newsreader({
   subsets: ["latin"],
@@ -52,6 +53,7 @@ const CARD_FADE_DURATION_MS = 200;
 const CARD_COLLAPSE_DELAY_MS = CARD_HIDE_DELAY_MS + CARD_FADE_DURATION_MS;
 const CARD_COLLAPSE_DURATION_MS = 250;
 const CARD_EXPANDED_MAX_HEIGHT_FALLBACK = 280;
+const CARD_EXPANDED_HEIGHT_BUFFER = 16;
 
 interface FirstVisitInfoMobileProps {
   onDividerVisibilityChange?: (isVisible: boolean) => void;
@@ -193,7 +195,9 @@ export function FirstVisitInfoMobile({
     if (!content) return;
 
     const syncExpandedCardHeight = () => {
-      setExpandedCardHeight(Math.ceil(content.scrollHeight));
+      setExpandedCardHeight(
+        Math.ceil(content.scrollHeight + CARD_EXPANDED_HEIGHT_BUFFER),
+      );
     };
 
     syncExpandedCardHeight();
@@ -279,6 +283,8 @@ export function FirstVisitInfoMobile({
       hideCardAfterModalClose();
     }, MODAL_CLOSE_DURATION_MS);
   };
+
+  useModalHistoryClose(isOpen, closeModal);
 
   const restoreCard = () => {
     if (hideDelayTimeoutRef.current) {
@@ -473,7 +479,7 @@ export function FirstVisitInfoMobile({
               ¿Vienes por primera vez? 👋
             </h2>
             <p className="mt-2.5 text-[15px] font-normal leading-[1.5] text-[#071329]">
-              ¡Todos son bienvenidos! Resuelva sus dudas antes de asistir a cualquier de nuestros cultos. 
+              Todos son bienvenidos. Resuelva sus dudas antes de asistir a cualquier de nuestros cultos. 
             </p>
           </div>
         </div>
@@ -485,10 +491,13 @@ export function FirstVisitInfoMobile({
               setOpenQuestion(INITIAL_OPEN_QUESTION);
               setIsOpen(true);
             }}
-            className={`ml-14.5 flex h-8.5 items-center justify-between bg-brand px-3 text-left text-[17px] font-normal leading-none text-white`}
+            className="ml-[58px] inline-flex min-h-[34px] w-fit max-w-[calc(100%-58px)] items-center justify-start gap-2 bg-brand px-3 py-1 text-left text-[17px] font-normal leading-tight text-white [&>span]:min-w-0"
           >
             <span>Qué esperar al asistir</span>
-            <ChevronRight className="h-6 w-6 stroke-[1.4]" aria-hidden="true" />
+            <ChevronRight
+              className="h-6 w-6 shrink-0 stroke-[1.4]"
+              aria-hidden="true"
+            />
           </button>
         </div>
       </div>

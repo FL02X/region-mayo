@@ -58,6 +58,7 @@ import {
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
 import {
   formatRegionDayMonth,
 } from "@/lib/region-date";
@@ -258,6 +259,7 @@ export function EventCard({
   const suppressScheduleRightHintRef = useRef(false);
   const [canScrollScheduleLeft, setCanScrollScheduleLeft] = useState(false);
   const [canScrollScheduleRight, setCanScrollScheduleRight] = useState(false);
+  useModalHistoryClose(showMoreInfoImage, () => setShowMoreInfoImage(false));
   const { isStandalone } = useInstallPrompt();
   const { isOnline } = useConnectivity();
   const shouldShowOfflineNotice = isStandalone && !isOnline;
@@ -470,15 +472,15 @@ export function EventCard({
     ? "Ocultar detalles"
     : "Ocultar opciones";
   const eventUtilityButtonClass =
-    "mt-[-25px] inline-flex h-10 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-3 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
+    "mt-[-25px] inline-flex min-h-10 w-fit max-w-full items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-3 py-2 text-sm font-medium leading-tight whitespace-normal text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventUtilityButtonSmallClass =
-    "inline-flex ml-4.5 h-8 w-fit items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
+    "inline-flex ml-4.5 min-h-8 w-fit max-w-full items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 py-1.5 text-sm font-medium leading-tight whitespace-normal text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventPrimaryMapsButtonClass =
-    "inline-flex ml-4.5 h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-normal text-white transition-colors duration-150 hover:bg-brand-hover";
+    "inline-flex ml-4.5 min-h-10 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-3 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-brand-hover";
   const eventPrimaryMapsButtonSmallClass =
-    "inline-flex ml-4.5 h-11 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
+    "inline-flex ml-4.5 min-h-11 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-2.5 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const compactDesktopMapsButtonClass =
-    "hidden h-8 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
+    "hidden min-h-8 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-2.5 py-1.5 text-sm font-medium leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
   const compactMobileMapsButtonClass = eventPrimaryMapsButtonClass;
   const gridMapsButtonClass = canRegister
     ? eventUtilityButtonSmallClass
@@ -498,10 +500,10 @@ export function EventCard({
       type="button"
       onClick={() => onRegister(event)}
       className={eventPrimaryMapsButtonClass}
-      style={{ minHeight: "unset", minWidth: "unset" }}
+      style={{ minWidth: "unset" }}
     >
       REGISTRARSE
-      <ChevronRight className="h-5 w-5 ml-2" aria-hidden="true" />
+      <ChevronRight className="h-5 w-5 ml-2 shrink-0" aria-hidden="true" />
     </button>
   ) : null;
   const dropdownCtaButtons = hasDropdownCtas ? (
@@ -511,22 +513,22 @@ export function EventCard({
           <Button
             onClick={openFacebookPost}
             variant="outline"
-            className="h-10 w-fit justify-start rounded-none border-border bg-surface-pane px-3 text-sm font-medium text-brand-ink hover:border-brand-ink hover:bg-primary/10"
+            className="h-auto min-h-10 w-fit max-w-full justify-start whitespace-normal rounded-none border-border bg-surface-pane px-3 py-2 text-sm font-medium leading-tight text-brand-ink hover:border-brand-ink hover:bg-primary/10"
           >
             <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="ml-1.5">Ver en Facebook</span>
-            <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
+            <span className="ml-1.5 min-w-0">Ver en Facebook</span>
+            <ChevronRight className="ml-1 h-4 w-4 shrink-0" aria-hidden="true" />
           </Button>
         )}
         {hasAlbum && (
           <Button
             onClick={openAlbum}
             variant="outline"
-            className="h-10 w-fit justify-start rounded-none border-border bg-surface-pane px-3 text-sm font-medium text-brand-ink hover:border-brand-ink hover:bg-primary/10"
+            className="h-auto min-h-10 w-fit max-w-full justify-start whitespace-normal rounded-none border-border bg-surface-pane px-3 py-2 text-sm font-medium leading-tight text-brand-ink hover:border-brand-ink hover:bg-primary/10"
           >
             <Images className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="ml-1.5">Ver Álbum</span>
-            <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
+            <span className="ml-1.5 min-w-0">Ver Álbum</span>
+            <ChevronRight className="ml-1 h-4 w-4 shrink-0" aria-hidden="true" />
           </Button>
         )}
       </div>
@@ -730,9 +732,9 @@ export function EventCard({
         <Button
           variant="outline"
           onClick={() => setShowMoreInfoImage(true)}
-          className="mt-8 mb-3 text-sm w-full"
+          className="mt-8 mb-3 h-auto min-h-9 w-full whitespace-normal py-2.5 text-center text-sm leading-tight"
         >
-          <Info className="h-4 w-4 mr-1.5" aria-hidden="true" />
+          <Info className="h-4 w-4 mr-1.5 shrink-0" aria-hidden="true" />
           VER FOTO DEL LUGAR
         </Button>
       )}
@@ -1356,9 +1358,9 @@ export function EventCard({
                       onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
                       className={compactDesktopMapsButtonClass}
                       aria-label={`Abrir ${event.location} en Google Maps`}
-                      style={{ minHeight: "unset", minWidth: "unset" }}
+                      style={{ minWidth: "unset" }}
                     >
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
                       Maps
                     </button>
                   )}
@@ -1435,9 +1437,9 @@ export function EventCard({
                               onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
                               className={compactMobileMapsButtonClass}
                               aria-label={`Abrir ${event.location} en Google Maps`}
-                              style={{ minHeight: "unset", minWidth: "unset" }}
+                              style={{ minWidth: "unset" }}
                             >
-                              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                              <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
                               Abrir en Google Maps
                             </button>
                           )}
@@ -1579,9 +1581,9 @@ export function EventCard({
                   }
                   className={gridMapsButtonClass}
                   aria-label={`Abrir ${event.location} en Google Maps`}
-                  style={{ minHeight: "unset", minWidth: "unset" }}
+                  style={{ minWidth: "unset" }}
                 >
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Abrir en Google Maps
                 </button>
               </div>
@@ -1593,10 +1595,10 @@ export function EventCard({
             <div className="pt-1 mt-1">
               <Button
                 onClick={() => onRegister(event)}
-                className="mt-3.5 text-sm py-5 font-bold tracking-[0.01em] bg-brand hover:bg-brand-hover text-white"
+                className="mt-3.5 h-auto min-h-10 whitespace-normal py-3 text-center text-sm font-bold leading-tight tracking-[0.01em] bg-brand hover:bg-brand-hover text-white"
               >
                 REGISTRARSE
-                <ChevronRight className="h-4 w-4 ml-2" aria-hidden="true" />
+                <ChevronRight className="h-4 w-4 ml-2 shrink-0" aria-hidden="true" />
               </Button>
             </div>
           )}

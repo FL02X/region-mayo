@@ -40,6 +40,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
+import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
 
 type Mensaje = {
   rol: "bot" | "usuario";
@@ -112,6 +113,10 @@ export default function Chatbot() {
     if (!isOpen) setMostrarAyuda(false);
   };
 
+  const closeChat = () => {
+    setIsOpen(false);
+  };
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -155,6 +160,7 @@ export default function Chatbot() {
   }, [historial, isOpen, isClearing]);
 
   useLockBodyScroll(isOpen);
+  useModalHistoryClose(isOpen, closeChat);
 
   useEffect(() => {
     if (!isOpen) {
@@ -465,7 +471,7 @@ export default function Chatbot() {
       ) : (
         createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 overflow-hidden">
-            <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={toggleChat} />
+            <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={closeChat} />
 
             <div style={{ ...modalContainerStyle, ...modalAnimationStyle }} role="dialog" aria-modal="true" aria-labelledby="chatbot-title">
               <div style={{ backgroundColor: '#21252b', zIndex: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -487,7 +493,7 @@ export default function Chatbot() {
                       </svg>
                     </button>
                   )}
-                  <button onClick={toggleChat} aria-label="Cerrar Asistente" style={{ height: 40, width: 40, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <button onClick={closeChat} aria-label="Cerrar Asistente" style={{ height: 40, width: 40, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
                     <span style={{ fontSize: 22, lineHeight: 1 }}>×</span>
                   </button>
                 </div>

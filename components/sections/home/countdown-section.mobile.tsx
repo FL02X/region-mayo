@@ -31,6 +31,7 @@ import {
 } from "@/lib/region-date";
 import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
+import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
 import type {
   Event,
   HeroCard,
@@ -141,6 +142,7 @@ function ShareFallbackModal({
 }) {
   const [copied, setCopied] = useState(false);
   useLockBodyScroll(isOpen);
+  useModalHistoryClose(isOpen, onClose);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -958,20 +960,20 @@ export function CountdownSection({
                   <button
                     type="button"
                     onClick={() => openGoogleMaps(countdownMapsUrl)}
-                    className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[18px] font-extrabold tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
+                    className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[18px] font-extrabold leading-tight tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
                     aria-label="Abrir ubicación del evento"
                   >
-                    <MapIcon className="h-5 w-5" aria-hidden="true" />
-                    VER UBICACION
+                    <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span className="min-w-0">VER UBICACION</span>
                   </button>
                 ) : (
                   <button
                     type="button"
                     disabled
-                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 text-[17px] font-extrabold tracking-[0.02em] text-white opacity-60"
+                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[17px] font-extrabold leading-tight tracking-[0.02em] text-white opacity-60"
                   >
-                    <MapIcon className="h-5 w-5" aria-hidden="true" />
-                    VER UBICACION
+                    <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span className="min-w-0">VER UBICACION</span>
                   </button>
                 )}
 
@@ -982,12 +984,12 @@ export function CountdownSection({
                       <button
                         type="button"
                         onClick={() => setIsPlacePhotoOpen(true)}
-                        className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 text-[16px] font-extrabold tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80 mb-2.5 "
+                        className="mb-2.5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 py-3 text-center text-[16px] font-extrabold leading-tight tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80"
                         aria-haspopup="dialog"
                         aria-label="Ver foto del lugar"
                       >
-                        <ImageIcon className="h-5 w-5" aria-hidden="true" />
-                        VER FOTO DEL LUGAR
+                        <ImageIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <span className="min-w-0">VER FOTO DEL LUGAR</span>
                       </button>
                     </>
                   )}
@@ -996,10 +998,10 @@ export function CountdownSection({
                     type="button"
                     onClick={handleShare}
                     disabled={!countdownEvent || !countdownShareText}
-                    className="text-foreground/80 inline-flex h-10 w-full items-center justify-center gap-3 rounded-sm border border-border bg-paper-dark px-4 text-[16px] font-semibold tracking-[0.02em] transition-colors hover:bg-muted/30 disabled:opacity-60"
+                    className="text-foreground/80 inline-flex min-h-10 w-full items-center justify-center gap-3 rounded-sm border border-border bg-paper-dark px-4 py-2.5 text-center text-[16px] font-semibold leading-tight tracking-[0.02em] transition-colors hover:bg-muted/30 disabled:opacity-60 [&>span]:min-w-0"
                   >
-                    <Share2 className="h-4.5 w-4.5" aria-hidden="true" />
-                    COMPARTIR UBICACIÓN
+                    <Share2 className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
+                    <span className="min-w-0">COMPARTIR UBICACIÓN</span>
                   </button>
                 </div>
               </div>
@@ -1007,7 +1009,7 @@ export function CountdownSection({
               {canRegisterCountdownEvent && onRegister && (
                 <Button
                   onClick={() => onRegister(countdownEvent)}
-                  className="w-full mt-5 h-14 text-base font-extrabold tracking-[0.02em] text-white"
+                  className="w-full mt-5 h-auto min-h-14 whitespace-normal py-3 text-center text-base font-extrabold leading-tight tracking-[0.02em] text-white"
                   style={{ backgroundColor: spotlightAccent }}
                 >
                   REGISTRARSE
@@ -1082,17 +1084,17 @@ export function CountdownSection({
               {customHeroCard.url && (
                 <Button
                   asChild
-                  className="mt-3 w-full h-11 bg-[#e98432] hover:bg-[#cf7425] text-white text-sm font-bold px-4"
+                  className="mt-3 h-auto min-h-11 w-full whitespace-normal bg-[#e98432] px-4 py-2.5 text-center text-sm font-bold leading-tight text-white hover:bg-[#cf7425]"
                 >
                   <a
                     href={customHeroCard.url}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span className="inline-flex items-center justify-center gap-1.5 w-full">
+                    <span className="inline-flex w-full items-center justify-center gap-1.5">
                       {customHeroCard.ctaText || "Ver más información"}
                       <ExternalLink
-                        className="h-3.5 w-3.5"
+                        className="h-3.5 w-3.5 shrink-0"
                         aria-hidden="true"
                       />
                     </span>
@@ -1203,9 +1205,9 @@ export function CountdownSection({
                   }}
                   disabled={!event.googleDriveAlbumUrl}
                   size="sm"
-                  className="bg-primary hover:bg-primary/90 text-white text-xs"
+                  className="h-auto min-h-8 whitespace-normal bg-primary py-2 text-center text-xs leading-tight text-white hover:bg-primary/90"
                 >
-                  <Images className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+                  <Images className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   {event.googleDriveAlbumUrl
                     ? "Subir Fotos"
                     : "Álbum no disponible"}

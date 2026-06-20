@@ -6,6 +6,7 @@ import { Wifi, X } from "lucide-react";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
+import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
 
 interface LightboxProps {
   src: string;
@@ -18,6 +19,7 @@ export function Lightbox({ src, alt = "Imagen", onClose }: LightboxProps) {
   const { isOnline } = useConnectivity();
   const shouldShowOfflineNotice = isStandalone && !isOnline;
   useLockBodyScroll(true);
+  useModalHistoryClose(true, onClose);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
