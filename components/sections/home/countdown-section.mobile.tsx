@@ -742,9 +742,8 @@ export function CountdownSection({
     return events.find((event) => event.id === spotlightHero.id) ?? null;
   }, [spotlightHero, events]);
   const eventHighlightUrl = useMemo(() => {
-    if (!isMounted || !countdownEvent || typeof window === "undefined")
-      return "";
-    return `${window.location.origin}/#${encodeURIComponent(countdownEvent.id)}`;
+    if (!isMounted || !countdownEvent) return "";
+    return "igcmayo.com";
   }, [countdownEvent, isMounted]);
   const countdownShareText = useMemo(() => {
     if (!countdownEvent || !eventHighlightUrl) return "";
@@ -978,26 +977,29 @@ export function CountdownSection({
 
                 <div className="mt-2 space-y-2.5">
                   {countdownPlacePhotoUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setIsPlacePhotoOpen(true)}
-                      className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 text-[16px] font-extrabold tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80 mb-4 "
-                      aria-haspopup="dialog"
-                      aria-label="Ver foto del lugar"
-                    >
-                      <ImageIcon className="h-5 w-5" aria-hidden="true" />
-                      VER FOTO DEL LUGAR
-                    </button>
+                    <>
+                      <div className="mx-4 my-3 border-t border-border/50" />
+                      <button
+                        type="button"
+                        onClick={() => setIsPlacePhotoOpen(true)}
+                        className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 text-[16px] font-extrabold tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80 mb-2.5 "
+                        aria-haspopup="dialog"
+                        aria-label="Ver foto del lugar"
+                      >
+                        <ImageIcon className="h-5 w-5" aria-hidden="true" />
+                        VER FOTO DEL LUGAR
+                      </button>
+                    </>
                   )}
 
                   <button
                     type="button"
                     onClick={handleShare}
                     disabled={!countdownEvent || !countdownShareText}
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-sm border border-border bg-paper-dark px-4 text-[16px] font-semibold tracking-[0.02em] transition-colors hover:bg-muted/30 disabled:opacity-60"
+                    className="text-foreground/80 inline-flex h-10 w-full items-center justify-center gap-3 rounded-sm border border-border bg-paper-dark px-4 text-[16px] font-semibold tracking-[0.02em] transition-colors hover:bg-muted/30 disabled:opacity-60"
                   >
                     <Share2 className="h-4.5 w-4.5" aria-hidden="true" />
-                    COMPARTIR
+                    COMPARTIR UBICACIÓN
                   </button>
                 </div>
               </div>
