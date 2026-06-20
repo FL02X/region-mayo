@@ -5,6 +5,7 @@ import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { Bricolage_Grotesque } from "next/font/google";
 import { Users, MapPin, Church, Phone, ChevronDown } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,6 +25,13 @@ import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import type { Pastor } from "@/lib/types";
+
+const cardTitleFont = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 const expandTransition = {
   duration: 0.24,
@@ -254,7 +262,7 @@ function PastorCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px]">
+            <h3 className={`${cardTitleFont.className} text-[16px] font-bold leading-snug text-foreground md:text-[21px]`}>
               <HighlightedText text={pastor.fullName} query={searchQuery} />
             </h3>
             {pastor.temploName && (
@@ -341,7 +349,7 @@ function PastorCard({
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
         <div data-eq-head>
-          <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
+          <h3 className={`${cardTitleFont.className} font-semibold text-lg text-foreground leading-snug mb-4`}>
             <HighlightedText text={pastor.fullName} query={searchQuery} />
           </h3>
         </div>

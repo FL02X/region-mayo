@@ -5,6 +5,7 @@ import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { Bricolage_Grotesque } from "next/font/google";
 import {
   Music,
   MapPin,
@@ -30,6 +31,13 @@ import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { Coro } from "@/lib/types";
+
+const cardTitleFont = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 const expandTransition = {
   duration: 0.24,
@@ -297,11 +305,11 @@ function CoroCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="mb-1.5 flex w-fit items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs">
+            <p className="mb-1.5 flex w-fit items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs">
               <Music className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Coro local</span>
             </p>
-            <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px]">
+            <h3 className={`${cardTitleFont.className} text-[16px] font-bold leading-snug text-foreground md:text-[21px]`}>
               <HighlightedText text={coro.coroName} query={searchQuery} />
             </h3>
             {coro.presidentName && (
@@ -393,7 +401,7 @@ function CoroCard({
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
         <div data-eq-head>
-          <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
+          <h3 className={`${cardTitleFont.className} font-semibold text-lg text-foreground leading-snug mb-4`}>
             <HighlightedText text={coro.coroName} query={searchQuery} />
           </h3>
         </div>

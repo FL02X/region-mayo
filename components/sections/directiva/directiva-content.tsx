@@ -5,9 +5,8 @@ import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Newsreader } from "next/font/google";
+import { Bricolage_Grotesque, Newsreader } from "next/font/google";
 import {
-  BadgeCheck,
   BarChart3,
   ChevronDown,
   Church,
@@ -17,7 +16,6 @@ import {
   Music,
   PenLine,
   Phone,
-  UserCheck,
   UserCircle,
   Wallet,
   type LucideIcon,
@@ -48,6 +46,13 @@ import type { DirectivaGeneration, DirectivaMember } from "@/lib/types";
 const editorialFont = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
+
+const memberNameFont = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
   display: "swap",
   preload: false,
 });
@@ -112,8 +117,8 @@ const getDirectivaRoleOrder = (role?: string) => {
 };
 
 const DIRECTIVA_ROLE_ICON: Record<string, LucideIcon> = {
-  "01_presidente_regional": BadgeCheck,
-  "02_suplente_presidente_regional": UserCheck,
+  "01_presidente_regional": UserCircle,
+  "02_suplente_presidente_regional": UserCircle,
   "03_secretario": FileText,
   "04_suplente_secretario": FileText,
   "05_cronista": PenLine,
@@ -393,14 +398,14 @@ function DirectivaCard({
 
           <div className="min-w-0 flex-1">
             {roleLabel && (
-              <p className="mb-1.5 flex w-fit items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs">
-                <RoleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              <p className="mb-1.5 flex w-fit items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-[#2f5e93] md:text-xs">
+                <RoleIcon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                 <span>
                   <HighlightedText text={roleLabel} query={searchQuery} />
                 </span>
               </p>
             )}
-            <h3 className="text-[16px] font-bold leading-snug text-foreground md:text-[21px]">
+            <h3 className={`${memberNameFont.className} text-[18px] font-bold leading-snug text-foreground md:text-[21px]`}>
               <HighlightedText text={member.fullName} query={searchQuery} />
             </h3>
             {member.temploName && (
@@ -491,7 +496,7 @@ function DirectivaCard({
         {roleLabel && (
           <div className="absolute top-3 left-3">
             <Badge className="gap-1.5 bg-foreground/85 text-background text-xs font-medium">
-              <RoleIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              <RoleIcon className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
               <HighlightedText text={roleLabel} query={searchQuery} />
             </Badge>
           </div>
@@ -500,7 +505,7 @@ function DirectivaCard({
 
       <div className="p-4 flex flex-col flex-1">
         <div data-eq-head>
-          <h3 className="font-semibold text-lg text-foreground leading-snug mb-4">
+          <h3 className={`${memberNameFont.className} font-semibold text-lg text-foreground leading-snug mb-4`}>
             <HighlightedText text={member.fullName} query={searchQuery} />
           </h3>
         </div>
@@ -950,12 +955,8 @@ export function DirectivaContent({
                       aria-controls={`directiva-generation-${generation.id}`}
                     >
                       <span>
-                        <span className={`${editorialFont.className} block text-lg font-semibold leading-tight text-foreground`}>
+                        <span className={`${editorialFont.className} block text-lg font-bold leading-tight text-ink`}>
                           {generation.title}
-                        </span>
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {generation.isCurrent ? "Actual - " : ""}
-                          {generation.members.length} miembros
                         </span>
                       </span>
                       <span

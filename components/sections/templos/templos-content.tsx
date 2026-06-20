@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
+import { Bricolage_Grotesque } from "next/font/google";
 import {
   AlertTriangle,
   ChevronDown,
@@ -43,6 +44,13 @@ import {
 import { useTime } from "@/lib/time-context";
 import type { Templo } from "@/lib/types";
 import type { DistanceResult } from "@/lib/location-service";
+
+const cardTitleFont = Bricolage_Grotesque({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 const DISTANCE_ORDER_STORAGE_KEY = "region-mayo-templos-distance-order";
 const DISTANCE_ORDER_ENABLED_KEY = "region-mayo-templos-distance-order-enabled";
@@ -462,7 +470,7 @@ function TemploCard({
   const compactUtilityButtonClass =
     "mt-2 inline-flex h-8 w-fit items-center gap-1.5 rounded-sm bg-surface-pane text-sm font-medium text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const compactMapsButtonClass =
-    "inline-flex min-h-8 w-fit max-w-full items-center justify-center gap-1.5 border bg-brand px-2.5 py-1.5 text-center text-sm font-medium leading-tight text-white transition-[background-color,border-color] duration-0 hover:bg-brand-hover hover:text-white";
+    "inline-flex min-h-10 w-fit max-w-full items-center justify-center gap-1.5 border bg-brand px-2.5 py-1.5 text-center text-sm font-medium leading-tight text-white transition-[background-color,border-color] duration-0 hover:bg-brand-hover hover:text-white";
 
   const actionButtons = (
     <CopyPrintActions
@@ -620,7 +628,7 @@ function TemploCard({
 
           <div className="min-w-0 flex-1">
             <div className="min-w-0 text-left">
-              <h3 className="text-[17px] pr-10 font-bold leading-snug text-foreground md:text-[21px]">
+              <h3 className={`${cardTitleFont.className} text-[17px] pr-10 font-bold leading-snug text-foreground md:text-[21px]`}>
                 <HighlightedText text={templo.temploName} query={searchQuery} />
               </h3>
 
@@ -748,7 +756,7 @@ function TemploCard({
       {/* Content */}
       <div className="p-4 pb-0 flex flex-col flex-1">
         <div data-eq-head>
-          <h3 className="font-semibold text-lg text-foreground leading-snug mb-3">
+          <h3 className={`${cardTitleFont.className} font-semibold text-lg text-foreground leading-snug mb-3`}>
             <HighlightedText text={templo.temploName} query={searchQuery} />
           </h3>
 

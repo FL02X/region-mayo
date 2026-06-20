@@ -146,10 +146,10 @@ const formatVestimentaValue = (event: Event) => {
 };
 
 const pastorLinkClassName =
-  "inline-flex items-center gap-1 w-fit text-[17px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
+  "inline-flex items-center gap-1 w-fit text-[20px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
 
 const locationLinkClassName =
-  "inline-flex items-center gap-1 w-fit text-[15px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
+  "inline-flex items-center gap-1 w-fit text-[16px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight transition-colors";
 
 const PASTOR_PENDING_LABEL = "Por confirmar";
 const EVENT_COMPACT_THUMBNAIL_WIDTH = 272;
@@ -272,7 +272,7 @@ export function EventCard({
     : "text-foreground";
   const editorialTextClass = isEditorialTone
     ? `${editorialFont.className} type-human`
-    : "text-foreground";
+    : "text-foreground ";
 
   const openAlbum = () => {
     if (event.googleDriveAlbumUrl)
@@ -476,7 +476,7 @@ export function EventCard({
   const eventPrimaryMapsButtonClass =
     "inline-flex ml-4.5 h-10 w-fit items-center gap-1.5 rounded-sm bg-brand px-3 text-sm font-normal text-white transition-colors duration-150 hover:bg-brand-hover";
   const eventPrimaryMapsButtonSmallClass =
-    "inline-flex ml-4.5 h-8 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
+    "inline-flex ml-4.5 h-11 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const compactDesktopMapsButtonClass =
     "hidden h-8 w-fit items-center gap-1.5 rounded-sm bg-brand px-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
   const compactMobileMapsButtonClass = eventPrimaryMapsButtonClass;
@@ -568,9 +568,9 @@ export function EventCard({
       {options.showDescription && hasDescription && (
         <section className="space-y-3">
           <p className={`text-[17px] font-bold`}>
-            Descripción
+            Más información
           </p>
-          <p className={`text-[17px] leading-relaxed mb-7 ${editorialTextClass}`}>{event.description}</p>
+          <p className={`text-[18px] leading-relaxed text-ink mb-7 ${editorialTextClass}`}>{event.description}</p>
         </section>
       )}
 
@@ -592,7 +592,7 @@ export function EventCard({
                   <p className="text-[15px] font-semibold">
                     Vestimenta
                   </p>
-                  <div className={`mt-1 mb-2 flex items-start gap-1.5 text-[17px] leading-snug ${editorialTextClass}`}>
+                  <div className={`mt-1 mb-2 flex items-start gap-1.5 text-[18px] leading-snug ${editorialTextClass}`}>
                     <span className="min-w-0">{formatVestimentaValue(event)}</span>
                     <button
                       ref={vestimentaHelpRef}
@@ -628,7 +628,7 @@ export function EventCard({
                   <p className="text-[15px] font-semibold">
                     Pastor a cargo
                   </p>
-                  <div className={`mt-1 text-[17px] leading-snug ${editorialTextClass}`}>
+                  <div className={`mt-1 text-[15px] leading-snug ${editorialTextClass}`}>
                     {pastorNameNode}
                   </div>
                 </div>
@@ -644,7 +644,7 @@ export function EventCard({
                   <p className="text-[15px] font-semibold">
                     Preside
                   </p>
-                  <p className={`mt-1 text-[17px] leading-snug ${editorialTextClass}`}>
+                  <p className={`mt-1 text-[18px] leading-snug ${editorialTextClass}`}>
                     {event.speakers.jovenPreside}
                   </p>
                 </div>
@@ -730,7 +730,7 @@ export function EventCard({
         <Button
           variant="outline"
           onClick={() => setShowMoreInfoImage(true)}
-          className="mt-5 text-sm w-full"
+          className="mt-8 mb-3 text-sm w-full"
         >
           <Info className="h-4 w-4 mr-1.5" aria-hidden="true" />
           VER FOTO DEL LUGAR
@@ -1449,7 +1449,7 @@ export function EventCard({
                           <p className={`text-[17px] font-bold`}>
                             Descripción
                           </p>
-                          <p className={`text-[17px] leading-relaxed ${editorialTextClass}`}>
+                          <p className={`text-[18px] leading-relaxed ${editorialTextClass}`}>
                             {event.description}
                           </p>
                         </section>
@@ -1544,7 +1544,7 @@ export function EventCard({
             </span>
 
             {/* Title — editorial type only when this card is opted into Home's bulletin tone. */}
-            <h3 className={`${event.location ? "mb-4" : "mb-0"} text-[25px] font-extrabold leading-[1.25] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
+            <h3 className={`${event.location ? "mb-4" : "mb-0"} text-[28px] font-extrabold leading-[1.25] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
               {event.title}
             </h3>
 
@@ -1557,7 +1557,7 @@ export function EventCard({
                       className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                       aria-hidden="true"
                     />
-                    <p className={`text-[15px] font-medium leading-snug`}>
+                    <p className={`text-[16px] font-medium leading-snug`}>
                       {temploNameNode}
                     </p>
                   </div>
@@ -1567,7 +1567,7 @@ export function EventCard({
                         className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                         aria-hidden="true"
                       />
-                      <p className={`text-[15px] leading-snug ${isEditorialTone ? "type-system" : "text-foreground/85"}`}>
+                      <p className={`text-[16px] leading-snug ${isEditorialTone ? "type-system" : "text-foreground/85"}`}>
                         {event.address}
                       </p>
                     </div>
