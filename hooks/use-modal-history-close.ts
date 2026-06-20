@@ -6,6 +6,7 @@ export function useModalHistoryClose(isOpen: boolean, onClose: () => void) {
   const onCloseRef = useRef(onClose);
   const didPushStateRef = useRef(false);
   const didCloseFromPopRef = useRef(false);
+  const cleanupBackTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -13,6 +14,11 @@ export function useModalHistoryClose(isOpen: boolean, onClose: () => void) {
 
   useEffect(() => {
     if (!isOpen || typeof window === "undefined") return;
+
+    if (cleanupBackTimerRef.current) {
+      window.clearTimeout(cleanupBackTimerRef.current);
+      cleanupBackTimerRef.current = null;
+    }
 
     const currentState = window.history.state;
     const nextState =
@@ -44,7 +50,10 @@ export function useModalHistoryClose(isOpen: boolean, onClose: () => void) {
 
       if (didPushStateRef.current && !didCloseFromPopRef.current) {
         didPushStateRef.current = false;
-        window.history.back();
+        cleanupBackTimerRef.current = window.setTimeout(() => {
+          cleanupBackTimerRef.current = null;
+          window.history.back();
+        }, 0);
       }
     };
   }, [isOpen]);

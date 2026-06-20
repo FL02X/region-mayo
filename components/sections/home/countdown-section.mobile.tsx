@@ -892,13 +892,17 @@ export function CountdownSection({
             <div className="h-[5px] bg-brand" aria-hidden="true" />
 
             <div className="p-4 py-7 pb-4">
-              <p className="text-[11px] text-brand-text font-bold uppercase tracking-[0.22em] mb-3.5 mt-[-10px]">
+              <p
+                className="text-[12px] text-brand-text font-semibold uppercase tracking-[0.16em] mb-3.5 mt-[-10px]"
+                style={{ fontFamily: '"Inter", Arial, sans-serif' }}
+              >
                 Nuestro Próximo Evento
               </p>
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className={`${editorialFont.className} type-human-title mb-5 text-[32px] text-4xl font-extrabold leading-[1.125] tracking-tight`}
+                className="type-human-title mb-5 text-[32px] text-4xl font-extrabold leading-[1.125] tracking-tight"
+                style={{ fontFamily: '"Canela", Georgia, serif' }}
               >
                 {countdownEvent.title}
               </h3>

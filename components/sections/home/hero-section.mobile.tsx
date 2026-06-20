@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Newsreader } from "next/font/google";
 import { ArrowRight, MapPin } from "lucide-react";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { findNearestChurch } from "@/lib/location-service";
@@ -29,12 +28,6 @@ const MOBILE_HERO_IMAGE_WIDTH = 1242;
 const MOBILE_HERO_IMAGE_OFFSET_X = "0px";
 const MOBILE_HERO_IMAGE_OFFSET_Y = "0px";
 const MOBILE_HERO_IMAGE_ZOOM = 1;
-const editorialFont = Newsreader({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: false,
-});
 
 export function MobileHero({
   src = MOBILE_HERO_FALLBACK_SRC,
@@ -300,11 +293,15 @@ export function MobileHero({
         </div>
         <div className="relative z-10 flex items-center">
           <div className="ml-1 min-w-0">
-            <p className="text-[13px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95">
+            <p
+              className="text-[13px] mt-1 leading-tight uppercase tracking-[0.02em] text-white/95"
+              style={{ fontFamily: '"Neue Montreal", Arial, sans-serif' }}
+            >
               Iglesia Gentil de Cristo A.R.
             </p>
             <p
-              className={`${editorialFont.className} mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white`}
+              className="mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white"
+              style={{ fontFamily: '"Canela", Georgia, serif' }}
             >
               Sitio oficial de la{" "}
               <span className="block font-normal">Región Mayo</span>
@@ -329,6 +326,7 @@ export function MobileHero({
                     ? "border-transparent bg-transparent text-white shadow-none"
                     : "border-gray-200/20 bg-transparent hover:border-[#0b6ea6] hover:bg-[#0b6ea6]"
               }`}
+              style={{ fontFamily: '"Switzer", Arial, sans-serif' }}
               aria-label={
                 locationPhase === "success"
                   ? `Ir a ${nearestChurchName}`
