@@ -52,8 +52,6 @@ const CARD_HIDE_DELAY_MS = 120;
 const CARD_FADE_DURATION_MS = 200;
 const CARD_COLLAPSE_DELAY_MS = CARD_HIDE_DELAY_MS + CARD_FADE_DURATION_MS;
 const CARD_COLLAPSE_DURATION_MS = 250;
-const CARD_EXPANDED_MAX_HEIGHT_FALLBACK = 280;
-const CARD_EXPANDED_HEIGHT_BUFFER = 16;
 
 interface FirstVisitInfoMobileProps {
   onDividerVisibilityChange?: (isVisible: boolean) => void;
@@ -76,9 +74,6 @@ export function FirstVisitInfoMobile({
   const [isHiding, setIsHiding] = useState(false);
   const [undoAvailable, setUndoAvailable] = useState(false);
   const [undoNoticeVisible, setUndoNoticeVisible] = useState(false);
-  const [expandedCardHeight, setExpandedCardHeight] = useState(
-    CARD_EXPANDED_MAX_HEIGHT_FALLBACK,
-  );
   const cardContentRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -189,28 +184,6 @@ export function FirstVisitInfoMobile({
     const raf = requestAnimationFrame(() => setUndoNoticeVisible(true));
     return () => cancelAnimationFrame(raf);
   }, [isDismissed, undoAvailable]);
-
-  useEffect(() => {
-    const content = cardContentRef.current;
-    if (!content) return;
-
-    const syncExpandedCardHeight = () => {
-      setExpandedCardHeight(
-        Math.ceil(content.scrollHeight + CARD_EXPANDED_HEIGHT_BUFFER),
-      );
-    };
-
-    syncExpandedCardHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(syncExpandedCardHeight);
-    resizeObserver.observe(content);
-
-    return () => resizeObserver.disconnect();
-  }, []);
 
   const scrollToQuestion = (question: string) => {
     requestAnimationFrame(() => {
@@ -455,10 +428,10 @@ export function FirstVisitInfoMobile({
       className="md:hidden border-y bg-white px-[20px]"
       style={{
         opacity: isHiding ? 0 : 1,
-        maxHeight: isHiding ? 0 : expandedCardHeight,
+        maxHeight: isHiding ? 0 : undefined,
         marginTop: isHiding ? 0 : undefined,
         marginBottom: isHiding ? 0 : undefined,
-        overflow: "hidden",
+        overflow: isHiding ? "hidden" : "visible",
         transition: `opacity ${CARD_FADE_DURATION_MS}ms ease, max-height ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms, margin ${CARD_COLLAPSE_DURATION_MS}ms ease ${CARD_FADE_DURATION_MS}ms`,
       }}
     >
