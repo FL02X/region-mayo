@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ExternalLink,
   HeartHandshake,
+  Map as MapIcon,
   MapPin,
   Maximize2,
   Megaphone,
@@ -19,7 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
-import { HighlightedText } from "@/components/shared/highlighted-text";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
 import {
@@ -677,7 +677,7 @@ export function HeroSection({
     <div className="w-full relative bg-[#f1f1f1]">
       <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x">
         <section
-          className="relative overflow-hidden h-[min(60vh,480px)] md:h-[420px] min-h-[280px]"
+          className="relative overflow-hidden h-[min(60vh,480px)] md:h-auto md:min-h-[420px]"
           aria-label="Bienvenida a Región Mayo"
         >
           <div className="absolute inset-0">
@@ -724,7 +724,7 @@ export function HeroSection({
             aria-hidden="true"
           />
 
-          <div className="relative z-10 h-full flex items-center px-5 md:px-6 pt-[52px] md:pt-[46px] pb-3">
+          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[70px] md:min-h-[420px] md:px-6 md:pb-8 md:pt-[78px]">
             <div className="w-full grid md:grid-cols-[minmax(290px,390px)_1fr] gap-4 md:gap-5 items-center">
               <div className="hidden md:block">
                 {spotlightEvent && (
@@ -735,43 +735,31 @@ export function HeroSection({
                     >
                       Nuestro Próximo Evento
                     </p>
-                    <h3 className={`type-human-title text-[34px] font-bold leading-[1.04] mb-2.5`}>
+                    <h3
+                      className="type-human-title mb-5 text-[34px] font-bold leading-[1.04]"
+                      style={{ fontFamily: '"Canela", Georgia, serif' }}
+                    >
                       {spotlightEvent.title}
                     </h3>
                     <div className="type-system space-y-1.5 text-[13px] mb-3.5">
                       <div className="flex items-start gap-2">
-                        <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <Calendar className="mt-[2px] h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                         <div className="space-y-1">
                           {spotlightEventSchedule.map((occurrence, index) => (
                             <span
                               key={`${occurrence.date.toISOString()}-${index}`}
-                              className="block"
+                              className="block font-bold text-ink"
                             >
                               {formatRegionWeekdayDayMonth(occurrence.date)} · {occurrence.time}
                             </span>
                           ))}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        {spotlightEventMapsUrl ? (
-                          <button
-                            type="button"
-                            onClick={() => window.open(spotlightEventMapsUrl, "_blank")}
-                            className="inline-flex items-center gap-1 min-w-0 text-left hover:underline underline-offset-2 transition-colors"
-                            style={{ color: spotlightAccent }}
-                            aria-label="Abrir ubicación del próximo evento en Google Maps"
-                          >
-                            <span className="truncate">
-                              <HighlightedText text={spotlightEvent.address || spotlightEvent.location} query="" />
-                            </span>
-                            <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                          </button>
-                        ) : (
-                          <span className="truncate">
-                            <HighlightedText text={spotlightEvent.address || spotlightEvent.location} query="" />
-                          </span>
-                        )}
+                      <div className="flex items-start gap-2 min-w-0">
+                        <MapPin className="mt-[2px] h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span className="truncate text-ink">
+                          {spotlightEvent.address || spotlightEvent.location}
+                        </span>
                       </div>
                     </div>
 
@@ -786,6 +774,27 @@ export function HeroSection({
                           />
                         ))}
                       </div>
+                    )}
+
+                    {spotlightEventMapsUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => window.open(spotlightEventMapsUrl, "_blank")}
+                        className="mb-1 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[18px] font-extrabold leading-tight tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
+                        aria-label="Abrir ubicación del evento"
+                      >
+                        <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <span className="min-w-0">VER UBICACION</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="mb-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[17px] font-extrabold leading-tight tracking-[0.02em] text-white opacity-60"
+                      >
+                        <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <span className="min-w-0">VER UBICACION</span>
+                      </button>
                     )}
 
                     {spotlightEvent.registrationEnabled !== false && (

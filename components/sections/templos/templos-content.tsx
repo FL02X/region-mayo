@@ -598,7 +598,7 @@ function TemploCard({
         id={templo.id}
         className="md:bg-card md:border-border/80 scroll-mt-[100px] transition-none target:ring-[3px] target:ring-[#d8b400] dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
       >
-        <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-4 md:py-5">
+        <div className="flex gap-3 px-0 py-4 md:gap-5 md:border md:border-brand md:px-4 md:py-5">
           <div className="flex shrink-0 flex-col mt-0.5">
             <div className="offline-hide-when-offline offline-aware-image offline-aware-image--fixed relative h-[82px] w-[82px] bg-muted md:h-[108px] md:w-[112px]">
               {templo.photos && templo.photos.length > 0 ? (
@@ -805,14 +805,14 @@ function TemploCard({
           {templo.googleMapsUrl && (
             <button
               onClick={openGoogleMaps}
-              className="w-full flex min-h-10 items-center justify-between gap-2 text-sm text-primary font-normal leading-tight hover:text-primary/80 hover:underline underline-offset-2 transition-colors pt-1 pb-3 px-4 -mx-4"
+              className="w-full flex min-h-10 items-start justify-start gap-2 text-left text-sm text-primary font-normal leading-tight hover:text-primary/80 hover:underline underline-offset-2 transition-colors pt-1 pb-3 px-4 -mx-4"
               aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
             >
-              <div className="flex min-w-0 items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <div className="flex min-w-0 items-start gap-2">
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span className="min-w-0">Ver ubicación en Maps</span>
               </div>
-              <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             </button>
           )}
         </div>
