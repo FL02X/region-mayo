@@ -300,7 +300,7 @@ export function MobileHero({
               Iglesia Gentil de Cristo A.R.
             </p>
             <p
-              className="mt-1.5 mb-1.5 text-[36px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white"
+              className="mt-1.5 mb-1.5 text-[34px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white"
               style={{ fontFamily: '"Canela", Georgia, serif' }}
             >
               Sitio oficial de la{" "}

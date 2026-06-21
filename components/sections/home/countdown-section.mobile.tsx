@@ -26,8 +26,10 @@ import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
 import {
+  formatRegionDateInput,
   formatRegionWeekdayDayMonth,
   getRegionCalendarParts,
+  getRegionDateTime,
 } from "@/lib/region-date";
 import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
@@ -86,6 +88,11 @@ type CountdownDisplay = {
 const getRegionDateKey = (date: Date) => {
   const parts = getRegionCalendarParts(date);
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+};
+
+const getRegionDayEndMs = (date: Date) => {
+  const endOfDay = getRegionDateTime(formatRegionDateInput(date), "23:59");
+  return endOfDay ? endOfDay.getTime() + 59_999 : date.getTime();
 };
 
 const getCountdownDisplay = (target: Date, now: Date): CountdownDisplay => {
@@ -624,6 +631,7 @@ export function CountdownSection({
 
   const spotlightCandidates = useMemo<HeroCandidate[]>(() => {
     const nowMs = currentTime.getTime();
+    const currentDayKey = getRegionDateKey(currentTime);
     const candidates: HeroCandidate[] = [];
 
     if (customHeroCard?.media?.url) {
@@ -660,11 +668,18 @@ export function CountdownSection({
           : [{ date: event.date, time: event.time }];
 
       eventSchedule.forEach((occurrence) => {
+        const occurrenceMs = occurrence.date.getTime();
+        const candidateDateMs =
+          occurrenceMs <= nowMs &&
+          getRegionDateKey(occurrence.date) === currentDayKey
+            ? getRegionDayEndMs(occurrence.date)
+            : occurrenceMs;
+
         candidates.push({
           type: "event",
           id: event.id,
           title: event.title,
-          date: occurrence.date.getTime(),
+          date: candidateDateMs,
           time: occurrence.time,
           location: event.location,
           address: event.address,

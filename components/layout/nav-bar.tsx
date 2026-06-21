@@ -410,7 +410,7 @@ export function AppHeader({
                 <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
                   IGC
                 </span>
-                <span className="text-[#c9c9c9] text-[11px] opacity-90">mayo.com</span>
+                <span className="text-[#c9c9c9] text-[11px] opacity-90">Región Mayo</span>
               </div>
             </div>
 
@@ -521,7 +521,7 @@ export function AppHeader({
                 <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
                   IGC
                 </span>
-                <span className="text-[#c9c9c9] text-[11px] opacity-90">mayo.com</span>
+                <span className="text-[#c9c9c9] text-[11px] opacity-90">Región Mayo</span>
               </div>
 
               {/*
