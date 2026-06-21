@@ -916,7 +916,7 @@ export function CountdownSection({
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className="type-human-title mb-5 text-[32px] text-4xl font-extrabold leading-[1.125] tracking-tight"
+                className="type-human-title mb-6 text-[32px] text-4xl font-extrabold leading-[1.125] tracking-tight"
                 style={{ fontFamily: '"Canela", Georgia, serif' }}
               >
                 {countdownEvent.title}
@@ -997,20 +997,19 @@ export function CountdownSection({
                 )}
 
                 <div className="mt-2 space-y-2.5">
+                  <div className="mx-4 my-3 border-t border-border/50" />
+
                   {countdownPlacePhotoUrl && (
-                    <>
-                      <div className="mx-4 my-3 border-t border-border/50" />
-                      <button
-                        type="button"
-                        onClick={() => setIsPlacePhotoOpen(true)}
-                        className="mb-2.5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 py-3 text-center text-[16px] font-extrabold leading-tight tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80"
-                        aria-haspopup="dialog"
-                        aria-label="Ver foto del lugar"
-                      >
-                        <ImageIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                        <span className="min-w-0">VER FOTO DEL LUGAR</span>
-                      </button>
-                    </>
+                    <button
+                      type="button"
+                      onClick={() => setIsPlacePhotoOpen(true)}
+                      className="mb-2.5 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-sm border border-border bg-brand-soft px-4 py-3 text-center text-[16px] font-extrabold leading-tight tracking-[0.02em] text-[#2F5E93] transition-colors hover:bg-brand-soft/80"
+                      aria-haspopup="dialog"
+                      aria-label="Ver foto del lugar"
+                    >
+                      <ImageIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                      <span className="min-w-0">VER FOTO DEL LUGAR</span>
+                    </button>
                   )}
 
                   <button

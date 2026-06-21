@@ -25,9 +25,11 @@ import {
 } from "@/components/shared/view-mode-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
+  formatRegionDateInput,
   formatRegionDateRange,
   formatRegionDayMonth,
   getRegionCalendarParts,
+  getRegionDateTime,
   getRegionMonthStart,
 } from "@/lib/region-date";
 import { CountdownSection } from "./countdown-section.mobile";
@@ -110,8 +112,11 @@ const eventTypePlannerColors: Record<
 
 function getInitialCalendarMonth(events: Event[], nowMs?: number) {
   const referenceTime = nowMs ?? Date.now();
+  const referenceDate = new Date(referenceTime);
   const nextEvent = [...events]
-    .filter((event) => event.date.getTime() >= referenceTime)
+    .filter(
+      (event) => getRelevantEventEndTime(event, referenceDate) >= referenceTime,
+    )
     .sort((a, b) => a.date.getTime() - b.date.getTime())[0];
 
   return getRegionMonthStart(nextEvent?.date ?? new Date(referenceTime));
@@ -169,11 +174,27 @@ function getEventEndDate(event: Event) {
   return event.endDate ?? scheduleEndDate ?? event.date;
 }
 
+function getRegionDayEndMs(date: Date) {
+  const endOfDay = getRegionDateTime(formatRegionDateInput(date), "23:59");
+  return endOfDay ? endOfDay.getTime() + 59_999 : date.getTime();
+}
+
+function getRelevantEventEndTime(event: Event, referenceDate = new Date()) {
+  const endDate = getEventEndDate(event);
+
+  if (getRegionDateKey(endDate) === getRegionDateKey(referenceDate)) {
+    return getRegionDayEndMs(endDate);
+  }
+
+  return endDate.getTime();
+}
+
 function getMostRelevantEvent(events: Event[]) {
-  const todayKey = getRegionDateKey(new Date());
+  const now = new Date();
+  const nowMs = now.getTime();
 
   return (
-    events.find((event) => getRegionDateKey(getEventEndDate(event)) >= todayKey) ??
+    events.find((event) => getRelevantEventEndTime(event, now) >= nowMs) ??
     events[0] ??
     null
   );
