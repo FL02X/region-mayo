@@ -1,5 +1,6 @@
 "use client"
 
+// Donde: cards de templos. Viewports: desktop y mobile. Funcion: muestra portada del templo y abre galeria.
 import { useState } from "react"
 import Image from "next/image"
 import { Images } from "lucide-react"
@@ -12,13 +13,6 @@ interface TemploImageGalleryProps {
   hideCountBadge?: boolean
 }
 
-/**
- * Galería de imágenes de templo para cards.
- * - Muestra la primera imagen
- * - Desktop: hover muestra lupa centrada
- * - Mobile: muestra lupa en esquina inferior derecha
- * - Click abre aviso de conexion para no descargar galeria completa
- */
 export function TemploImageGallery({ images, alt, hideCountBadge = false }: TemploImageGalleryProps) {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -29,7 +23,6 @@ export function TemploImageGallery({ images, alt, hideCountBadge = false }: Temp
 
   return (
     <>
-      {/* Image Container with Hover/Mobile Indicators */}
       <button
         onClick={() => {
           setCurrentIndex(0)
@@ -53,10 +46,9 @@ export function TemploImageGallery({ images, alt, hideCountBadge = false }: Temp
           sizes="(max-width: 768px) 100vw, 33vw"
         />
 
-        {/* Desktop: subtle hover overlay to indicate clickability */}
+        {/* En desktop el overlay comunica que la foto abre la galeria sin agregar otro texto. */}
         <div className="hidden md:block pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-200" />
 
-        {/* Count badge (responsive position) */}
         {images.length > 1 && !hideCountBadge && (
           <div
             className="pointer-events-none absolute bottom-2 right-2 inline-flex items-center gap-2.5 rounded-[6px] border border-white/10 bg-black/45 px-3 py-2 text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] backdrop-blur-[8px] md:bottom-auto md:top-2 md:right-2"
@@ -69,7 +61,6 @@ export function TemploImageGallery({ images, alt, hideCountBadge = false }: Temp
         )}
       </button>
 
-      {/* Gallery Modal */}
       {isGalleryOpen && (
         <ImageGalleryModal
           images={images}

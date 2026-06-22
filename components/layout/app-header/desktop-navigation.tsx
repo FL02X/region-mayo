@@ -1,3 +1,6 @@
+// Donde: barra superior dentro de AppHeader. 
+// Viewports: desktop/tablet md+. 
+// Funcion: muestra enlaces principales editables.
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { desktopNavItems } from "@/components/layout/navigation-items";

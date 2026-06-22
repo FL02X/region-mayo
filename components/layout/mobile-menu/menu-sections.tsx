@@ -1,3 +1,6 @@
+// Donde: panel lateral del menu movil. 
+// Viewports: mobile. 
+// Funcion: muestra filas, submenus, PWA, ayuda y redes.
 import Link from "next/link";
 import type { MouseEvent } from "react";
 import {

@@ -1,5 +1,8 @@
 "use client";
 
+// Donde: menu hamburguesa del header. 
+// Viewports: mobile. 
+// Funcion: muestra enlaces, ayuda, instalacion PWA y redes.
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {

@@ -1,3 +1,6 @@
+// Donde: barra superior dentro de AppHeader. 
+// Viewports: desktop/tablet md+. 
+// Funcion: envia busquedas a /buscar.
 import type { FormEvent } from "react";
 import { Search } from "lucide-react";
 

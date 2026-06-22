@@ -1,5 +1,8 @@
 'use client'
 
+// Donde: no muestra UI; vive en el layout global. 
+// Viewports: todos. 
+// Funcion: marca html/body para estilos de Studio y conexion.
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 

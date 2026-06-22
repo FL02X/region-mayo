@@ -1,7 +1,10 @@
 "use client";
 
+// Donde: root layout sin UI fija. 
+// Viewports: todos. 
+// Funcion: registra SW, sincroniza cache/preferencias y protege rutas offline.
+
 import { useEffect, useState } from "react";
-import { WifiOff, X } from "lucide-react";
 import { applyFontScale, onPreferenceChange, readFontScale } from "@/lib/preferences";
 import { readLastSync, warmCacheRoutes, writeLastSync } from "@/lib/pwa-sync";
 import { useConnectivity } from "@/hooks/use-connectivity";
@@ -11,9 +14,30 @@ import {
   setDeferredInstallPrompt,
   type BeforeInstallPromptEvent,
 } from "@/hooks/use-install-prompt";
+import { AlbumOfflineModal } from "@/components/pwa/album-offline-modal";
+import {
+  FONT_SCALE_STORAGE_KEY,
+  SYNC_INTERVAL_FAST_MS,
+  SYNC_INTERVAL_SLOW_MS,
+} from "@/components/pwa/pwa-config";
 
-const SYNC_INTERVAL_FAST_MS = 6 * 60 * 60 * 1000;
-const SYNC_INTERVAL_SLOW_MS = 12 * 60 * 60 * 1000;
+function isStudioPath(pathname: string) {
+  return pathname === "/studio" || pathname.startsWith("/studio/");
+}
+
+function getSyncInterval(connection: ReturnType<typeof useConnectivity>["connection"]) {
+  const effectiveType = connection?.effectiveType ?? "";
+  const isSlowConnection = ["slow-2g", "2g", "3g"].includes(effectiveType);
+  const isSavingData = Boolean(connection?.saveData);
+
+  return isSlowConnection || isSavingData ? SYNC_INTERVAL_SLOW_MS : SYNC_INTERVAL_FAST_MS;
+}
+
+function unregisterServiceWorkers() {
+  return navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister());
+  });
+}
 
 export function PwaBootstrap() {
   const { isOnline, connection } = useConnectivity();
@@ -25,13 +49,13 @@ export function PwaBootstrap() {
     applyFontScale(readFontScale());
 
     const stopListening = onPreferenceChange((detail) => {
-      if (detail.key === "rm-font-scale") {
+      if (detail.key === FONT_SCALE_STORAGE_KEY) {
         applyFontScale(readFontScale());
       }
     });
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === "rm-font-scale") {
+      if (event.key === FONT_SCALE_STORAGE_KEY) {
         applyFontScale(readFontScale());
       }
     };
@@ -52,10 +76,7 @@ export function PwaBootstrap() {
     const lastSync = readLastSync();
     const now = Date.now();
 
-    const effectiveType = connection?.effectiveType ?? "";
-    const isSlowConnection = ["slow-2g", "2g", "3g"].includes(effectiveType);
-    const isSavingData = Boolean(connection?.saveData);
-    const minInterval = isSlowConnection || isSavingData ? SYNC_INTERVAL_SLOW_MS : SYNC_INTERVAL_FAST_MS;
+    const minInterval = getSyncInterval(connection);
 
     if (now - lastSync < minInterval) return;
 
@@ -68,17 +89,14 @@ export function PwaBootstrap() {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
 
-    if (window.location.pathname === "/studio" || window.location.pathname.startsWith("/studio/")) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => registration.unregister());
-      });
+    if (isStudioPath(window.location.pathname)) {
+      // Studio no debe quedar bajo el service worker publico porque sus requests de Sanity son muy sensibles al cache.
+      unregisterServiceWorkers();
       return;
     }
 
     if (process.env.NODE_ENV !== "production") {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => registration.unregister());
-      });
+      unregisterServiceWorkers();
       return;
     }
 
@@ -162,32 +180,7 @@ export function PwaBootstrap() {
   return (
     <>
       {isAlbumOfflineModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 px-4" role="presentation">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pwa-album-offline-title"
-            className="relative w-full max-w-[360px] border border-border bg-background p-5 text-center shadow-xl"
-          >
-            <button
-              type="button"
-              onClick={() => setIsAlbumOfflineModalOpen(false)}
-              className="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center text-muted-foreground hover:text-foreground"
-              aria-label="Cerrar aviso"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center bg-primary/10 text-primary">
-              <WifiOff className="h-6 w-6" aria-hidden="true" />
-            </div>
-            <h2 id="pwa-album-offline-title" className="text-sm font-bold uppercase tracking-wide text-foreground">
-              Requiere conexion
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              El album de actividades usa contenido pesado y necesita internet para abrirse.
-            </p>
-          </div>
-        </div>
+        <AlbumOfflineModal onClose={() => setIsAlbumOfflineModalOpen(false)} />
       )}
     </>
   );

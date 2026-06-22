@@ -1,5 +1,9 @@
 "use client";
 
+// Donde: root layout, pensado para la home mobile. 
+// Viewports: mobile. 
+// Funcion: banner de instalacion; hoy esta apagado por bandera.
+
 import { useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -8,6 +12,7 @@ import { InstallModal } from "@/components/pwa/install-modal";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 function shouldShowInstallAppBanner() {
+  // El banner inferior queda apagado; la instalacion se ofrece desde el menu movil.
   return false;
 }
 

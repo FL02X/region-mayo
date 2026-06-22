@@ -1,5 +1,8 @@
 "use client";
 
+// Donde: no muestra UI; vive en el layout global. 
+// Viewports: todos. 
+// Funcion: limpia resaltados por hash cuando el usuario interactua.
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 

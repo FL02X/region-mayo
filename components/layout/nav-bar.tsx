@@ -1,5 +1,8 @@
 "use client";
 
+// Donde: header principal de las paginas publicas. 
+// Viewports: desktop y mobile. 
+// Funcion: concentra logo, navegacion, busqueda y menu.
 import {
   useEffect,
   useRef,

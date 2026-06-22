@@ -1,5 +1,8 @@
 "use client";
 
+// Donde: paginas internas de secciones como album/subida. 
+// Viewports: desktop y mobile.
+// Funcion: muestra volver y compartir.
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {

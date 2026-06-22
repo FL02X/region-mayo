@@ -1,10 +1,18 @@
 "use client";
 
+// Donde: root layout. 
+// Viewports: desktop y mobile. 
+// Funcion: avisa perdida/restauracion de conexion para la app instalada.
+
 import { useEffect, useState } from "react";
 import { WifiOff, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import {
+  ONLINE_TOAST_DURATION_MS,
+  SKIP_ONLINE_TOAST_KEY,
+} from "@/components/pwa/pwa-config";
 
 export function OfflineBanner() {
   const { isOnline } = useConnectivity();
@@ -23,18 +31,18 @@ export function OfflineBanner() {
     }
 
     try {
-      const skipToast = sessionStorage.getItem("rm-skip-online-toast") === "true";
+      const skipToast = sessionStorage.getItem(SKIP_ONLINE_TOAST_KEY) === "true";
       if (skipToast) {
-        sessionStorage.removeItem("rm-skip-online-toast");
+        sessionStorage.removeItem(SKIP_ONLINE_TOAST_KEY);
         setShowOnlineToast(false);
         return;
       }
     } catch {
-      // Ignore storage failures (private mode, quota)
+      // Si storage falla en modo privado, solo se muestra el toast normal.
     }
 
     setShowOnlineToast(true);
-    const timer = window.setTimeout(() => setShowOnlineToast(false), 3000);
+    const timer = window.setTimeout(() => setShowOnlineToast(false), ONLINE_TOAST_DURATION_MS);
     return () => window.clearTimeout(timer);
   }, [isOnline, isInstalled]);
 

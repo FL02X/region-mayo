@@ -1,3 +1,6 @@
+// Donde: no renderiza UI directo. 
+// Viewports: afecta desktop y mobile. 
+// Funcion: centraliza textos, rutas e iconos editables de navegacion.
 import {
   Church,
   Home,

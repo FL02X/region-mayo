@@ -1,5 +1,8 @@
 "use client";
 
+// Donde: home, debajo del header si se reactiva. 
+// Viewports: mobile y desktop. 
+// Funcion: pide GPS y puede llevar al templo cercano.
 import { useEffect, useRef, useState } from "react";
 import { MapPin, ExternalLink } from "lucide-react";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";

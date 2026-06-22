@@ -1,3 +1,6 @@
+// Donde: extremo derecho del header desktop. 
+// Viewports: desktop/tablet md+. 
+// Funcion: muestra enlaces sociales configurables.
 import { Facebook, Instagram } from "lucide-react";
 
 interface HeaderSocialLinksProps {

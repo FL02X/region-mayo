@@ -1,3 +1,6 @@
+// Donde: Sanity Studio en /studio. 
+// Viewports: desktop y mobile. 
+// Funcion: aísla estilos del Studio y mejora scroll/descripciones.
 import type { ActiveToolLayoutProps, LayoutProps } from 'sanity'
 
 const sharedStyle = `

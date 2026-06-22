@@ -1,5 +1,6 @@
 "use client";
 
+// Donde: home, boton flotante hacia #calendario. Viewports: mobile. Funcion: aparece antes del calendario y hace scroll suave.
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 

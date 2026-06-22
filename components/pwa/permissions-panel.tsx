@@ -1,27 +1,17 @@
 "use client";
 
+// Donde: pagina /configuracion. 
+// Viewports: desktop y mobile. 
+// Funcion: muestra permisos editables y solicita notificaciones/GPS.
+
 import { useEffect, useState } from "react";
-import { Bell, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-type PermissionState = "granted" | "denied" | "prompt" | "unsupported";
-
-type PermissionCard = {
-  id: "notifications" | "location";
-  title: string;
-  description: string;
-  icon: typeof Bell;
-  status: PermissionState;
-  onRequest: () => void;
-};
-
-const statusLabels: Record<PermissionState, string> = {
-  granted: "Permitido",
-  denied: "Bloqueado",
-  prompt: "No solicitado",
-  unsupported: "No disponible",
-};
+import {
+  permissionCards,
+  permissionStatusLabels,
+  type PermissionState,
+} from "@/components/pwa/pwa-config";
 
 export function PermissionsPanel() {
   const [notificationStatus, setNotificationStatus] = useState<PermissionState>("prompt");
@@ -88,31 +78,14 @@ export function PermissionsPanel() {
     );
   };
 
-  const cards: PermissionCard[] = [
-    {
-      id: "notifications",
-      title: "Notificaciones",
-      description: "Avisos importantes y recordatorios.",
-      icon: Bell,
-      status: notificationStatus,
-      onRequest: requestNotifications,
-    },
-    {
-      id: "location",
-      title: "Ubicacion",
-      description: "Encontrar templos cercanos cuando lo necesites.",
-      icon: MapPin,
-      status: locationStatus,
-      onRequest: requestLocation,
-    },
-  ];
-
   return (
     <div className="space-y-3">
-      {cards.map((card) => {
+      {permissionCards.map((card) => {
         const Icon = card.icon;
-        const statusLabel = statusLabels[card.status];
-        const isGranted = card.status === "granted";
+        const status = card.id === "notifications" ? notificationStatus : locationStatus;
+        const onRequest = card.id === "notifications" ? requestNotifications : requestLocation;
+        const statusLabel = permissionStatusLabels[status];
+        const isGranted = status === "granted";
 
         return (
           <div key={card.id} className="border border-border/60 bg-white p-4">
@@ -139,9 +112,9 @@ export function PermissionsPanel() {
               <Button
                 variant={isGranted ? "outline" : "default"}
                 size="sm"
-                onClick={card.onRequest}
+                onClick={onRequest}
                 className="rounded-none w-full"
-                disabled={card.status === "unsupported"}
+                disabled={status === "unsupported"}
               >
                 {isGranted ? "Listo" : "Permitir"}
               </Button>

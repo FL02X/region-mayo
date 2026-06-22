@@ -1,3 +1,6 @@
+// Donde: marca del header en AppHeader. 
+// Viewports: desktop y mobile. 
+// Funcion: muestra logo y titulo visible del sitio.
 import { Inter } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";

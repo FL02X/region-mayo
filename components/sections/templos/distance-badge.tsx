@@ -1,5 +1,8 @@
 "use client";
 
+// Donde: cards de templos. 
+// Viewports: desktop y mobile. 
+// Funcion: muestra distancia/tiempo cuando el usuario activo GPS.
 import { formatDistanceAndTime } from "@/lib/geo-utils";
 import { DistanceResult } from "@/lib/location-service";
 import { CarFront, Route } from "lucide-react";
@@ -9,11 +12,6 @@ interface DistanceBadgeProps {
   show: boolean;
 }
 
-/**
- * Small badge showing distance and travel time
- * Positioned top-left by default
- * Only shows if user has granted GPS permission
- */
 export function DistanceBadge({ distance, show }: DistanceBadgeProps) {
   if (!show || !distance) return null;
 

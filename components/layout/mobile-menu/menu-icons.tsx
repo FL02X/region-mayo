@@ -1,3 +1,6 @@
+// Donde: botones del menu movil. 
+// Viewports: mobile. 
+// Funcion: define iconos SVG de abrir/cerrar sin mezclar layout.
 export function HamburgerMenuIcon() {
   return (
     <svg

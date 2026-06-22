@@ -1,3 +1,4 @@
+// Donde: modal de compartir de SectionNavBar. Viewports: desktop y mobile. Funcion: copia URL y muestra QR de la seccion.
 import { createPortal } from "react-dom";
 import { Copy, X, type LucideIcon } from "lucide-react";
 

@@ -1,3 +1,6 @@
+// Donde: header principal en pantallas pequenas. 
+// Viewports: mobile. 
+// Funcion: muestra marca, busqueda y acceso al menu.
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { MobileMenu } from "@/components/layout/side-menu.mobile";
