@@ -1,21 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   Church,
-  Copy,
   Image as ImageIcon,
   Music,
   Share2,
   UserCircle,
   Users,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
+import { ShareModal } from "@/components/layout/section-nav/share-modal";
 
 type SectionIconName = "templos" | "pastores" | "coros" | "directiva" | "album";
 
@@ -71,13 +69,13 @@ export function SectionNavBar({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isShareOpen]);
 
-  const qrUrl = useMemo(() => {
-    if (!currentUrl) return "";
-    return `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=10&data=${encodeURIComponent(currentUrl)}`;
-  }, [currentUrl]);
+  const qrUrl = currentUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=10&data=${encodeURIComponent(currentUrl)}`
+    : "";
 
   const copyLink = async () => {
     if (!currentUrl) return;
+
     try {
       await navigator.clipboard.writeText(currentUrl);
       setCopied(true);
@@ -91,79 +89,12 @@ export function SectionNavBar({
     if (!parentHref?.startsWith("/album")) return;
 
     try {
+      // Guardamos solo una marca temporal para que el album anime el regreso sin cambiar la URL.
       sessionStorage.setItem(ALBUM_TRANSITION_STORAGE_KEY, "true");
     } catch {
-      // The transition is decorative; ignore storage failures.
+      // La transicion es decorativa; si storage falla, el regreso normal sigue funcionando.
     }
   };
-
-  const modal =
-    isMounted && isShareOpen
-      ? createPortal(
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Compartir sección"
-          >
-            <button
-              type="button"
-              className="absolute inset-0"
-              aria-label="Cerrar compartir"
-              onClick={() => setIsShareOpen(false)}
-            />
-            <div
-              className="relative w-full max-w-md overflow-hidden border border-black bg-white shadow-[0_18px_48px_rgba(0,0,0,0.45)]"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="flex h-14 items-center justify-between bg-[#757575] pl-5">
-                <h3 className="text-[17px] font-bold text-white">Compartir</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsShareOpen(false)}
-                  className="flex h-full w-14 items-center justify-center bg-[#434343] text-white transition-colors hover:bg-[#2f2f2f]"
-                  aria-label="Cerrar"
-                >
-                  <X className="h-6 w-6" aria-hidden="true" />
-                </button>
-              </div>
-
-              <div className="p-5">
-                <div className="mb-4 flex items-center gap-3 border border-border bg-[#f7f7f7] p-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-white text-primary shadow-sm">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{currentLabel}</p>
-                    <p className="truncate text-xs text-muted-foreground">{currentUrl}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <button
-                    type="button"
-                    onClick={copyLink}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-2 hover:underline"
-                  >
-                    <Copy className="h-4 w-4" aria-hidden="true" />
-                    {copied ? "Enlace copiado" : "Copiar enlace"}
-                  </button>
-
-                  {qrUrl ? (
-                    <img
-                      src={qrUrl}
-                      alt={`Código QR para ${currentLabel}`}
-                      className="h-28 w-28 border border-border bg-white"
-                      loading="lazy"
-                    />
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
 
   return (
     <>
@@ -193,7 +124,18 @@ export function SectionNavBar({
           </button>
         </div>
       </div>
-      {modal}
+
+      <ShareModal
+        isMounted={isMounted}
+        isOpen={isShareOpen}
+        currentLabel={currentLabel}
+        currentUrl={currentUrl}
+        qrUrl={qrUrl}
+        copied={copied}
+        icon={Icon}
+        onClose={() => setIsShareOpen(false)}
+        onCopyLink={copyLink}
+      />
     </>
   );
 }

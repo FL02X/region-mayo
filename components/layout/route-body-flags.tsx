@@ -9,6 +9,7 @@ export function RouteBodyFlags() {
   useEffect(() => {
     const isStudioRoute = pathname?.startsWith('/studio') ?? false
 
+    // CSS global necesita saber si estamos dentro de Studio para aislar sus reglas de layout.
     document.documentElement.dataset.studioRoute = isStudioRoute ? 'true' : 'false'
     document.body.dataset.studioRoute = isStudioRoute ? 'true' : 'false'
 
@@ -21,6 +22,7 @@ export function RouteBodyFlags() {
   useEffect(() => {
     const syncConnectionState = () => {
       const isOnline = navigator.onLine
+      // El estado online/offline se expone en html/body para que banners y estilos globales reaccionen sin prop drilling.
       document.documentElement.dataset.connection = isOnline ? 'online' : 'offline'
       document.body.dataset.connection = isOnline ? 'online' : 'offline'
     }

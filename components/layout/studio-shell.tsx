@@ -28,6 +28,7 @@ const sharedStyle = `
       padding-bottom: max(4rem, env(safe-area-inset-bottom));
     }
 
+    /* Sanity oculta algunas descripciones en mobile; aqui las dejamos visibles para que el editor entienda cada campo. */
     .studio-shell [data-testid='field-description'] {
       display: block !important;
       height: auto !important;

@@ -33,11 +33,11 @@ export function HighlightClearer() {
       if (typeof document !== "undefined") {
         document.body.setAttribute("data-user-interacted", "true");
       }
-      // 1. Remove manually added JS highlight class
+      // Los highlights por hash deben desaparecer cuando el usuario ya interactuo con la pagina.
       const highlightedElements = document.querySelectorAll('.global-highlight');
       highlightedElements.forEach(el => el.classList.remove('global-highlight'));
       
-      // 2. Clear hash from URL quietly to remove CSS :target natively without scrolling
+      // Limpiamos el hash sin navegar para que :target deje de aplicar estilos sin mover el scroll.
       if (window.location.hash) {
         history.replaceState(
           null, 
@@ -46,7 +46,6 @@ export function HighlightClearer() {
         );
       }
 
-      // 3. Remove listeners: only needed once per highlighted target
       detachInteractionListeners();
     };
 
@@ -58,8 +57,7 @@ export function HighlightClearer() {
       detachInteractionListeners();
       document.body.removeAttribute("data-user-interacted");
 
-      // Delay binding so the click/scroll that opened the target doesn't
-      // immediately remove the highlight it just requested.
+      // Esperamos para que el click o scroll que abrio el target no borre el highlight inmediatamente.
       timerRef.current = window.setTimeout(() => {
         attachedRef.current = true;
         events.forEach(event => {

@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Inter } from "next/font/google";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
 import {
-  Home,
-  Users,
-  Music,
-  Images,
-  UserCircle,
-  Instagram,
-  Facebook,
-  Church,
-  Search,
-} from "lucide-react";
-import { MobileMenu } from "@/components/layout/side-menu.mobile";
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  DEFAULT_FACEBOOK_URL,
+  DEFAULT_INSTAGRAM_URL,
+} from "@/components/layout/navigation-items";
+import { DesktopHeaderBrand } from "@/components/layout/app-header/header-brand";
+import { DesktopNavigation } from "@/components/layout/app-header/desktop-navigation";
+import { DesktopSearch } from "@/components/layout/app-header/desktop-search";
+import { HeaderSocialLinks } from "@/components/layout/app-header/header-social-links";
+import { MobileHeaderContent } from "@/components/layout/app-header/mobile-header-content";
 import { DebugTimePicker } from "@/components/shared/debug-time-picker";
 
 interface AppHeaderProps {
@@ -26,194 +26,21 @@ interface AppHeaderProps {
   behavior?: "fixed" | "sticky";
 }
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["800"],
-  display: "swap",
-});
+function getOffsetWithinTrack(element: HTMLElement, track: HTMLElement) {
+  let offset = 0;
+  let node: HTMLElement | null = element;
 
-const navItems = [
-  { href: "/", label: "Inicio", icon: Home },
-  { href: "/templos", label: "Templos", icon: Church },
-  { href: "/pastores", label: "Pastores", icon: Users },
-  { href: "/coros", label: "Coros", icon: Music },
-  { href: "/album", label: "Álbum", icon: Images },
-  { href: "/directiva", label: "Directiva", icon: UserCircle },
-];
+  while (node && node !== track) {
+    offset += node.offsetLeft;
+    node = node.offsetParent instanceof HTMLElement ? node.offsetParent : null;
+  }
 
-/*
- * Desktop currently shows Templos and Pastores as first-level nav items.
- * The previous desktop "Iglesias" dropdown is preserved below as commented
- * code so it can be restored later without rebuilding the design.
- *
- * To restore:
- * 1. Add ChevronDown and X back to the lucide-react imports.
- * 2. Remove /templos and /pastores from navItems.
- * 3. Uncomment iglesiasDesktopItems.
- * 4. Uncomment the desktopIglesiasOpen/Rendered state and desktopIglesiasRef.
- * 5. Uncomment the two effects inside AppHeader after the mount effect.
- * 6. Render the JSX block after the Inicio link inside navItems.map.
- */
-
-// const iglesiasDesktopItems = [
-//   {
-//     href: "/templos",
-//     label: "Templos",
-//     description: "Ubica tu congregacion",
-//     icon: Church,
-//   },
-//   {
-//     href: "/pastores",
-//     label: "Pastores",
-//     description: "Directorio regional",
-//     icon: Users,
-//   },
-// ];
-
-/*
- * Previous desktop dropdown state:
- *
- * const [desktopIglesiasOpen, setDesktopIglesiasOpen] = useState(false);
- * const [desktopIglesiasRendered, setDesktopIglesiasRendered] = useState(false);
- * const desktopIglesiasRef = useRef<HTMLDivElement | null>(null);
- */
-
-/*
- * Previous desktop dropdown effects:
- *
- * useEffect(() => {
- *   if (desktopIglesiasOpen) {
- *     setDesktopIglesiasRendered(true);
- *     return;
- *   }
- *
- *   const timeout = window.setTimeout(() => {
- *     setDesktopIglesiasRendered(false);
- *   }, 160);
- *
- *   return () => window.clearTimeout(timeout);
- * }, [desktopIglesiasOpen]);
- *
- * useEffect(() => {
- *   if (!desktopIglesiasOpen) return;
- *
- *   const handlePointerDown = (event: PointerEvent) => {
- *     if (
- *       desktopIglesiasRef.current &&
- *       !desktopIglesiasRef.current.contains(event.target as Node)
- *     ) {
- *       setDesktopIglesiasOpen(false);
- *     }
- *   };
- *
- *   const handleKeyDown = (event: KeyboardEvent) => {
- *     if (event.key === "Escape") {
- *       setDesktopIglesiasOpen(false);
- *     }
- *   };
- *
- *   document.addEventListener("pointerdown", handlePointerDown);
- *   document.addEventListener("keydown", handleKeyDown);
- *
- *   return () => {
- *     document.removeEventListener("pointerdown", handlePointerDown);
- *     document.removeEventListener("keydown", handleKeyDown);
- *   };
- * }, [desktopIglesiasOpen]);
- */
-
-/*
- * Previous desktop dropdown JSX:
- *
- * {href === "/" && (
- *   <div
- *     ref={desktopIglesiasRef}
- *     className="relative h-full"
- *     onMouseEnter={() => setDesktopIglesiasOpen(true)}
- *     onMouseLeave={() => setDesktopIglesiasOpen(false)}
- *     onFocus={() => setDesktopIglesiasOpen(true)}
- *     onBlur={(event) => {
- *       if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
- *         setDesktopIglesiasOpen(false);
- *       }
- *     }}
- *   >
- *     <button
- *       type="button"
- *       onClick={() => setDesktopIglesiasOpen((value) => !value)}
- *       onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
- *       className={cn(
- *         "desktop-header-item flex h-full cursor-pointer items-center gap-1.5 border-b-2 border-transparent px-2.5 text-[11px] font-medium uppercase tracking-[0.04em] text-white transition-colors lg:px-3 max-[914px]:w-12 max-[914px]:justify-center max-[914px]:gap-0 max-[914px]:px-0 max-[914px]:text-[0px] min-[915px]:justify-center min-[915px]:gap-0 min-[915px]:px-3 min-[915px]:text-[11px] min-[1101px]:justify-start min-[1101px]:gap-1.5",
- *         isMounted && (activePath === "/templos" || activePath === "/pastores")
- *           ? "border-[#2f5e93] bg-[#2f5e93]"
- *           : "hover:border-white/30"
- *       )}
- *       aria-label="Iglesias"
- *       aria-expanded={desktopIglesiasOpen}
- *       aria-current={
- *         isMounted && (activePath === "/templos" || activePath === "/pastores")
- *           ? "page"
- *           : undefined
- *       }
- *     >
- *       <Church
- *         className="desktop-header-icon hidden h-[15px] w-[15px] shrink-0 opacity-80 max-[914px]:block min-[1101px]:block"
- *         aria-hidden="true"
- *         strokeWidth={1.75}
- *       />
- *       <span className="max-[914px]:hidden max-[914px]:sr-only min-[915px]:inline">Iglesias</span>
- *       <ChevronDown
- *         className={cn(
- *           "desktop-header-icon hidden h-[12px] w-[12px] shrink-0 opacity-80 transition-transform min-[1101px]:block",
- *           desktopIglesiasOpen && "rotate-180"
- *         )}
- *         aria-hidden="true"
- *         strokeWidth={1.8}
- *       />
- *     </button>
- *
- *     {desktopIglesiasRendered && (
- *       <div
- *         className={cn(
- *           "absolute left-0 top-full z-[80] w-max max-w-[min(320px,calc(100vw-3rem))] rounded-none border border-[#cbd1d8] bg-[#f5f5f5] p-1.5 text-[#3869b1] shadow-[0_24px_56px_-18px_rgba(15,23,42,0.42),0_12px_28px_-14px_rgba(15,23,42,0.32),0_2px_8px_rgba(15,23,42,0.12)]",
- *           desktopIglesiasOpen
- *             ? "animate-in fade-in-0 slide-in-from-top-2 duration-150"
- *             : "pointer-events-none animate-out fade-out-0 slide-out-to-top-1 duration-150"
- *         )}
- *       >
- *         <span
- *           className="absolute -top-[8px] left-[34px] h-0 w-0 border-x-[10px] border-b-[9px] border-x-transparent border-b-[#f5f5f5]"
- *           aria-hidden="true"
- *         />
- *         <div className="grid max-h-[min(62vh,460px)] gap-0.5 overflow-y-auto">
- *           {iglesiasDesktopItems.map(({ href: iglesiaHref, label: iglesiaLabel, description, icon: IglesiaIcon }) => (
- *             <Link
- *               key={iglesiaHref}
- *               href={iglesiaHref}
- *               onClick={() => setDesktopIglesiasOpen(false)}
- *               className="group flex w-full cursor-pointer items-start gap-2.5 px-3 py-2.5 text-primary outline-none transition-colors hover:bg-[#e9edf2] hover:text-primary/80 focus-visible:bg-[#e9edf2]"
- *             >
- *               <IglesiaIcon className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#7f8791]" aria-hidden="true" strokeWidth={1.5} />
- *               <span className="grid gap-0.5 whitespace-nowrap">
- *                 <span className="text-[14px] font-medium leading-tight underline-offset-2 group-hover:underline">
- *                   {iglesiaLabel}
- *                 </span>
- *                 <span className="text-[11px] font-normal leading-tight text-[#6f7883]">
- *                   {description}
- *                 </span>
- *               </span>
- *             </Link>
- *           ))}
- *         </div>
- *       </div>
- *     )}
- *   </div>
- * )}
- */
+  return offset;
+}
 
 export function AppHeader({
-  instagramUrl = "https://instagram.com/regionmayo",
-  facebookUrl = "https://facebook.com/regionmayo",
+  instagramUrl = DEFAULT_INSTAGRAM_URL,
+  facebookUrl = DEFAULT_FACEBOOK_URL,
   behavior = "fixed",
 }: AppHeaderProps) {
   const router = useRouter();
@@ -228,31 +55,21 @@ export function AppHeader({
     opacity: 0,
   });
 
-  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     const query = formData.get("q")?.toString() || "";
+
     if (query.trim()) {
       router.push(`/buscar?q=${encodeURIComponent(query.trim())}`);
     }
-  };
-
-  const getOffsetWithinTrack = (element: HTMLElement, track: HTMLElement) => {
-    let offset = 0;
-    let node: HTMLElement | null = element;
-
-    while (node && node !== track) {
-      offset += node.offsetLeft;
-      node = node.offsetParent instanceof HTMLElement ? node.offsetParent : null;
-    }
-
-    return offset;
   };
 
   const moveDesktopHighlight = (element: HTMLElement) => {
     const track = desktopTrackRef.current;
     if (!track) return;
 
+    // La barra animada depende de medidas reales del DOM, por eso queda en el coordinador del header.
     const horizontalInset = 1;
     const x = Math.max(0, getOffsetWithinTrack(element, track) + horizontalInset);
     const width = Math.max(0, element.offsetWidth - horizontalInset * 2);
@@ -277,66 +94,7 @@ export function AppHeader({
     setActivePath(pathname || window.location.pathname);
   }, [pathname]);
 
-  /*
-   * Previous mobile title reveal behavior:
-   *
-   * const isHomePath = pathname === "/";
-   * const [mobileTitleVisible, setMobileTitleVisible] = useState(false);
-   *
-   * useEffect(() => {
-   *   if (!isHomePath) {
-   *     setMobileTitleVisible(true);
-   *     return;
-   *   }
-   *
-   *   const mobileQuery = window.matchMedia("(max-width: 767px)");
-   *   let frameId = 0;
-   *
-   *   const updateMobileTitleVisibility = () => {
-   *     if (!mobileQuery.matches) {
-   *       setMobileTitleVisible(true);
-   *       return;
-   *     }
-   *
-   *     const heroTitleBand = document.querySelector<HTMLElement>("[data-mobile-hero-title-band]");
-   *     if (!heroTitleBand) {
-   *       setMobileTitleVisible(true);
-   *       return;
-   *     }
-   *
-   *     const header = document.querySelector<HTMLElement>("[data-app-header]");
-   *     const headerHeight = header?.offsetHeight ?? 51;
-   *     const shouldShowMobileTitle = heroTitleBand.getBoundingClientRect().bottom <= headerHeight + 1;
-   *     setMobileTitleVisible((current) =>
-   *       current === shouldShowMobileTitle ? current : shouldShowMobileTitle
-   *     );
-   *   };
-   *
-   *   const scheduleUpdate = () => {
-   *     if (frameId) return;
-   *     frameId = window.requestAnimationFrame(() => {
-   *       frameId = 0;
-   *       updateMobileTitleVisibility();
-   *     });
-   *   };
-   *
-   *   updateMobileTitleVisibility();
-   *   window.addEventListener("scroll", scheduleUpdate, { passive: true });
-   *   window.addEventListener("resize", scheduleUpdate);
-   *   mobileQuery.addEventListener("change", scheduleUpdate);
-   *
-   *   return () => {
-   *     if (frameId) {
-   *       window.cancelAnimationFrame(frameId);
-   *     }
-   *     window.removeEventListener("scroll", scheduleUpdate);
-   *     window.removeEventListener("resize", scheduleUpdate);
-   *     mobileQuery.removeEventListener("change", scheduleUpdate);
-   *   };
-   * }, [isHomePath]);
-   */
-
-  const handleDesktopTrackMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleDesktopTrackMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     const track = desktopTrackRef.current;
     if (!track) return;
 
@@ -379,7 +137,6 @@ export function AppHeader({
         className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-brand border-b border-black/15 text-white h-[51px] md:h-[45px] shadow-[inset_0_-1px_0_rgba(28,25,23,0.28)]`}
       >
         <div className="h-full max-w-[950px] mx-auto relative z-[61]">
-          {/* Desktop layout: 1) logo 2) nav 3) search 4) socials */}
           <div
             ref={desktopTrackRef}
             className="desktop-header-track hidden md:flex cursor-default items-center h-full px-4 lg:px-0 gap-2"
@@ -391,196 +148,29 @@ export function AppHeader({
               style={desktopHighlightStyle}
               aria-hidden="true"
             />
-            <div className="flex items-center gap-2.5 shrink-0 select-none">
-              <Link href="/" className="shrink-0 select-none" aria-label="Inicio">
-              <Image
-                src="/images/logo_hero_2.png"
-                alt="Región Mayo"
-                data-offline-required="true"
-                width={34}
-                height={34}
-                className="mb-1.5 rounded-full shrink-0 select-none brightness-[1.08] contrast-[1.18]]"
-                draggable={false}
-                loading="eager"
-                priority
-                unoptimized
-              />
-              </Link>
-              <div className="hidden min-[1101px]:flex flex-col justify-center leading-tight pr-2">
-                <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
-                  IGC
-                </span>
-                <span className="text-[#c9c9c9] text-[11px] opacity-90">Región Mayo</span>
-              </div>
-            </div>
-
-            <nav
-              className="flex cursor-default items-center h-full flex-1 min-w-0 max-[914px]:justify-between max-[914px]:px-2"
-              aria-label="Navegación principal"
-            >
-              {navItems.map(({ href, label, icon: Icon }) => {
-                const isInicio = href === "/";
-                const isActive = isMounted && activePath === href && !isInicio;
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
-                    className={cn(
-                      "desktop-header-item flex cursor-pointer items-center gap-1.5 h-full px-2.5 lg:px-3 max-[914px]:w-12 max-[914px]:justify-center max-[914px]:gap-0 max-[914px]:px-0 max-[914px]:text-[0px] min-[915px]:px-3 min-[915px]:gap-0 min-[915px]:justify-center min-[915px]:text-[11px] min-[1101px]:justify-start min-[1101px]:gap-1.5 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
-                      isActive
-                        ? "text-white border-[#2f5e93] bg-[#2f5e93]"
-                        : "text-white hover:text-white hover:border-white/30"
-                    )}
-                    aria-label={label}
-                    aria-current={isActive ? "page" : undefined}
-                  >
-                    <Icon
-                      className="desktop-header-icon h-[15px] w-[15px] shrink-0 opacity-80 hidden max-[914px]:block min-[1101px]:block"
-                      aria-hidden="true"
-                      strokeWidth={1.75}
-                    />
-                    <span className="max-[914px]:sr-only min-[915px]:inline max-[914px]:hidden">{label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="w-[180px] shrink-0 h-full items-center flex">
-              <form
-                className="relative w-full h-[32px] max-[914px]:h-[40px] bg-[#f7f7f7] rounded-[2px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
-                onSubmit={handleSearchSubmit}
-              >
-                <input
-                  type="search"
-                  name="q"
-                  placeholder="Buscar"
-                  className="flex-1 min-w-0 h-full bg-transparent border-none text-[12px] leading-none text-[#222] placeholder-[#6f7480] pl-2.5 pr-2 focus:outline-none focus:ring-0"
-                  aria-label="Búsqueda"
-                />
-                <div className="h-[20px] w-px bg-[#b2b8c1] shrink-0" aria-hidden="true" />
-                <button
-                  type="submit"
-                  className="desktop-search-button w-[36px] max-[914px]:w-[44px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
-                  aria-label="Ejecutar búsqueda"
-                >
-                  <Search className="desktop-search-icon h-[16px] w-[16px] text-[#4a4a4a]" strokeWidth={1.6} />
-                </button>
-              </form>
-            </div>
-
-            <div className="flex items-center gap-0.5 shrink-0 max-[914px]:gap-1.5">
-                <a
-                  href={instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="desktop-header-item flex items-center justify-center h-8 w-8 max-[914px]:h-11 max-[914px]:w-11 text-white hover:text-white transition-colors"
-                  aria-label="Síguenos en Instagram"
-                  onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
-                >
-                <Instagram className="desktop-header-icon h-[16px] w-[16px]" aria-hidden="true" strokeWidth={1.75} />
-              </a>
-                <a
-                  href={facebookUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="desktop-header-item flex items-center justify-center h-8 w-8 max-[914px]:h-11 max-[914px]:w-11 text-white hover:text-white transition-colors"
-                  aria-label="Síguenos en Facebook"
-                  onMouseEnter={(event) => moveDesktopHighlight(event.currentTarget)}
-                >
-                <Facebook className="desktop-header-icon h-[16px] w-[16px]" aria-hidden="true" strokeWidth={1.75} />
-              </a>
-            </div>
+            <DesktopHeaderBrand />
+            <DesktopNavigation
+              activePath={activePath}
+              isMounted={isMounted}
+              onItemHover={moveDesktopHighlight}
+            />
+            <DesktopSearch onSubmit={handleSearchSubmit} />
+            <HeaderSocialLinks
+              instagramUrl={instagramUrl}
+              facebookUrl={facebookUrl}
+              onItemHover={moveDesktopHighlight}
+            />
           </div>
 
-          {/* Mobile layout: logo, spacer, search icon, hamburger */}
-          <div className="md:hidden flex items-center h-full px-3 gap-2 relative z-[62]">
-            {/* Logo */}
-            <div className="flex items-center justify-start h-full relative z-[62] shrink-0">
-              <Link
-                href="/"
-                className="flex items-center justify-center h-10 w-10 shrink-0 select-none"
-                aria-label="Inicio — Region Mayo"
-                draggable={false}
-              >
-                <Image
-                  src="/images/logo_hero_2.png"
-                  alt="Región Mayo"
-                  data-offline-required="true"
-                  width={32}
-                  height={32}
-                  className="mb-0.5 shrink-0 select-none brightness-[1.08] contrast-[1.18]]"
-                  draggable={false}
-                  loading="eager"
-                  priority
-                  unoptimized
-                />
-              </Link>
-
-              <div className="ml-2.5 flex flex-col justify-center leading-tight">
-                <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
-                  IGC
-                </span>
-                <span className="text-[#c9c9c9] text-[11px] opacity-90">Región Mayo</span>
-              </div>
-
-              {/*
-              Previous mobile title reveal JSX:
-
-              <div className="ml-2 h-[29px] overflow-hidden">
-                <div
-                  className={cn(
-                    "flex flex-col justify-center leading-tight transition-transform duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none will-change-transform",
-                    !isHomePath || mobileTitleVisible
-                      ? "translate-y-0"
-                      : "pointer-events-none -translate-y-full"
-                  )}
-                >
-                  <span className={`${inter.className} text-white text-[12px] tracking-wide`}>
-                    IGC
-                  </span>
-                  <span className="text-[#c9c9c9] text-[11px] opacity-90">Region Mayo</span>
-                </div>
-              </div>
-              */}
-            </div>
-
-            {/* Spacer */}
-            <div className="flex-1" />
-
-            {process.env.NODE_ENV === "development" && (
-              <div className="mb-1 shrink-0">
-                <DebugTimePicker panelPlacement="below" compact />
-              </div>
-            )}
-
-            {/* Search icon link */}
-            <Link
-              href="/buscar"
-              className="mr-2 mb-1 flex items-center justify-center h-9 w-9 shrink-0 text-white hover:text-white transition-colors"
-              aria-label="Ir a búsqueda"
-            >
-              <Search className="h-[23px] w-[23px]" strokeWidth={1} />
-            </Link>
-
-            {/* Mobile/Tablet only: hamburger menu */}
-            <div className="mb-1 md:hidden flex items-center justify-end text-white relative z-[62] h-full shrink-0">
-              <MobileMenu
-                instagramUrl={instagramUrl}
-                facebookUrl={facebookUrl}
-              />
-            </div>
-          </div>
+          <MobileHeaderContent instagramUrl={instagramUrl} facebookUrl={facebookUrl} />
         </div>
       </header>
 
-      {/* DebugTimePicker — fixed bottom-right on desktop, dev use only */}
       {process.env.NODE_ENV === "development" && (
         <div className="fixed bottom-16 left-4 z-[70] hidden md:block">
           <DebugTimePicker />
         </div>
       )}
-
     </>
   );
 }

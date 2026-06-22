@@ -38,6 +38,7 @@ interface LocationNotificationBarProps {
 export function LocationNotificationBar({
   templos,
 }: LocationNotificationBarProps) {
+  // La feature queda apagada desde aqui para conservar la integracion sin mostrar la barra al usuario.
   const shouldRenderLocationBar = false;
   const geolocation = useGeolocationState();
   const [barState, setBarState] = useState<BarState>("initial");
@@ -101,7 +102,7 @@ export function LocationNotificationBar({
       try {
         sessionStorage.setItem(SKIP_ONLINE_TOAST_KEY, "true");
       } catch {
-        // Ignore storage failures (private mode, quota)
+        // Si storage falla en modo privado, la busqueda GPS igual puede continuar.
       }
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -135,7 +136,7 @@ export function LocationNotificationBar({
         sessionStorage.setItem(GPS_HIGHLIGHT_KEY, nearestChurch.id);
         sessionStorage.removeItem(GPS_HIGHLIGHT_USED_KEY);
       } catch {
-        // Ignore storage failures (private mode, quota)
+        // Si storage falla, solo se pierde el orden visual por distancia.
       }
       setTimeout(() => {
         window.location.href = `/templos#${nearestChurch.id}`;
