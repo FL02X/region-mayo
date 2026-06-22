@@ -6,7 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useTime } from "@/lib/time-context"
 
-export function DebugTimePicker() {
+type DebugTimePickerProps = {
+  panelPlacement?: "above" | "below"
+  compact?: boolean
+}
+
+export function DebugTimePicker({ panelPlacement = "above", compact = false }: DebugTimePickerProps) {
   const { currentTime, setDebugTime, isDebugMode, debugTime } = useTime()
   const [isOpen, setIsOpen] = useState(false)
   const [dateValue, setDateValue] = useState("")
@@ -63,15 +68,17 @@ export function DebugTimePicker() {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors ${
+        className={`flex items-center justify-center gap-1.5 rounded-full text-xs font-medium transition-colors ${
+          compact ? "h-9 w-9 px-0" : "h-8 px-2.5"
+        } ${
           isDebugMode 
             ? "bg-amber-500 text-white hover:bg-amber-600" 
-            : "bg-muted text-muted-foreground hover:bg-muted/80"
+            : "bg-white text-muted-foreground hover:bg-slate-50"
         }`}
         title="Cambiar tiempo (debug)"
       >
         <Clock className="h-3.5 w-3.5" />
-        {isDebugMode && (
+        {isDebugMode && !compact && (
           <span className="max-w-[100px] truncate">
             {formatDisplayTime(currentTime)}
           </span>
@@ -85,7 +92,13 @@ export function DebugTimePicker() {
             className="fixed inset-0 z-40" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute left-0 bottom-full mb-2 z-50 w-72 bg-popover border rounded-xl shadow-lg p-4">
+          <div
+            className={`z-50 rounded-xl border bg-white p-4 text-foreground shadow-lg ${
+              panelPlacement === "below"
+                ? "fixed left-4 right-4 top-[59px] w-auto"
+                : "absolute left-0 bottom-full mb-2 w-72"
+            }`}
+          >
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium text-sm text-foreground">
                 Cambiar Tiempo (Debug)
@@ -101,7 +114,7 @@ export function DebugTimePicker() {
             </div>
 
             {/* Current Time Display */}
-            <div className="bg-muted/50 rounded-lg p-2 mb-3 text-center">
+            <div className="bg-slate-50 rounded-lg p-2 mb-3 text-center">
               <p className="text-xs text-muted-foreground">
                 {isDebugMode ? "Tiempo simulado:" : "Tiempo actual:"}
               </p>

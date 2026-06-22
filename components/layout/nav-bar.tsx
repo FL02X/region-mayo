@@ -548,7 +548,13 @@ export function AppHeader({
             {/* Spacer */}
             <div className="flex-1" />
 
-          {/* Search icon link */}
+            {process.env.NODE_ENV === "development" && (
+              <div className="mb-1 shrink-0">
+                <DebugTimePicker panelPlacement="below" compact />
+              </div>
+            )}
+
+            {/* Search icon link */}
             <Link
               href="/buscar"
               className="mr-2 mb-1 flex items-center justify-center h-9 w-9 shrink-0 text-white hover:text-white transition-colors"
@@ -568,9 +574,9 @@ export function AppHeader({
         </div>
       </header>
 
-      {/* DebugTimePicker — fixed bottom-right, dev use only, never occupies header space */}
+      {/* DebugTimePicker — fixed bottom-right on desktop, dev use only */}
       {process.env.NODE_ENV === "development" && (
-        <div className="fixed bottom-16 left-4 z-[70] opacity-60 hover:opacity-100 transition-opacity">
+        <div className="fixed bottom-16 left-4 z-[70] hidden md:block">
           <DebugTimePicker />
         </div>
       )}

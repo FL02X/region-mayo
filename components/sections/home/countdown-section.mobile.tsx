@@ -26,8 +26,8 @@ import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
 import {
+  REGION_TIME_ZONE,
   formatRegionDateInput,
-  formatRegionWeekdayDayMonth,
   getRegionCalendarParts,
   getRegionDateTime,
 } from "@/lib/region-date";
@@ -83,6 +83,26 @@ type CountdownDisplay = {
   minutes: number;
   seconds: number;
   isDisabled: boolean;
+};
+
+const longDateFormatter = new Intl.DateTimeFormat("es-MX", {
+  timeZone: REGION_TIME_ZONE,
+  weekday: "short",
+  day: "numeric",
+  month: "long",
+});
+
+const capitalizeDateLabel = (value: string) => {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
+
+const formatMobileCountdownDate = (date: Date) => {
+  const parts = Object.fromEntries(
+    longDateFormatter.formatToParts(date).map((part) => [part.type, part.value]),
+  ) as Record<string, string>;
+
+  return `${capitalizeDateLabel(parts.weekday ?? "")}, ${parts.day} ${capitalizeDateLabel(parts.month ?? "")}`;
 };
 
 const getRegionDateKey = (date: Date) => {
@@ -916,7 +936,7 @@ export function CountdownSection({
 
               {/* Event title — serif for editorial weight */}
               <h3
-                className="type-human-title mb-6 text-[32px] text-4xl font-extrabold leading-[1.125] tracking-tight"
+                className="type-human-title mb-6 text-[28px] text-4xl font-extrabold leading-[1.125] tracking-tight"
                 style={{ fontFamily: '"Canela", Georgia, serif' }}
               >
                 {countdownEvent.title}
@@ -924,7 +944,7 @@ export function CountdownSection({
 
               {/* Meta: date + location */}
               <div className="space-y-1.5 text-sm text-muted-foreground">
-                <div className="flex items-start gap-2 text-foreground">
+                <div className="flex items-start gap-2 text-foreground mb-3">
                   <Calendar
                     className="mt-[3px] h-4.5 w-4.5 shrink-0"
                     aria-hidden="true"
@@ -933,10 +953,10 @@ export function CountdownSection({
                     {countdownSchedule.map((occurrence, index) => (
                       <span
                         key={`${occurrence.date.toISOString()}-${index}`}
-                        className="flex items-baseline gap-2 text-[18px] font-bold leading-tight tabular-nums"
+                        className="flex items-baseline gap-2 text-[17px] mb-0.5 font-bold leading-[1.5] tabular-nums"
                       >
                         <span>
-                          {formatRegionWeekdayDayMonth(occurrence.date)}
+                          {formatMobileCountdownDate(occurrence.date)}
                         </span>
                         <span className="text-[#2f5e93]" aria-hidden="true">
                           ·
@@ -946,12 +966,12 @@ export function CountdownSection({
                     ))}
                   </div>
                 </div>
-                <div className="flex items-start gap-2 min-w-0 mt-2 mb-5 text-[18px] text-muted-foreground">
+                <div className="flex items-start gap-2 min-w-0 mt-2 mb-5 text-[17px] text-muted-foreground">
                   <MapPin
                     className="mt-[3px] h-4.5 w-4.5 shrink-0"
                     aria-hidden="true"
                   />
-                  <span className="line-clamp-2 leading-tight text-foreground/80">
+                  <span className="leading-[1.5] text-foreground/80">
                     {countdownEvent.address || countdownEvent.location}
                   </span>
                 </div>
