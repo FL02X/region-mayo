@@ -197,6 +197,16 @@ export default defineType({
         }),
     }),
     defineField({
+      name: 'excludeCoverFromGallery',
+      title: 'No usar portada como primera imagen en la galeria',
+      type: 'boolean',
+      group: 'media',
+      initialValue: false,
+      hidden: ({ document }) => (document?.albumType ?? 'photos') !== 'photos',
+      description:
+        'Activalo si quieres que la portada solo se use para tarjetas y encabezados, sin aparecer como primera imagen dentro del album.',
+    }),
+    defineField({
       name: 'facebookUrl',
       title: 'Link original de Facebook',
       type: 'url',
@@ -346,7 +356,7 @@ export default defineType({
         }),
       ],
       description:
-        'La portada ya cuenta como el primer elemento del album. Las imagenes y videos se muestran despues, en el orden en que los arrastres dentro del Studio.',
+        'La portada cuenta como el primer elemento del album salvo que actives "No usar portada como primera imagen en la galeria". Las imagenes y videos se muestran despues, en el orden en que los arrastres dentro del Studio.',
     }),
     defineField({
       name: 'audit',

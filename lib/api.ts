@@ -632,17 +632,21 @@ async function mapAlbum(raw: any): Promise<Album> {
     manualCoverImage ||
     (albumType === "youtube" ? videos[0]?.thumbnailUrl : sanityImageUrl(raw.coverImage)) ||
     "/placeholder.svg";
+  const shouldUseCoverAsFirstGalleryImage = !raw.excludeCoverFromGallery;
   const additionalMedia: AlbumGalleryItem[] = Array.isArray(raw?.images)
     ? (raw.images as any[])
         .map((item: any, index: number) => mapAlbumGalleryItem(item, title, index + 1))
-        .filter((item: AlbumGalleryItem | null) => item?.type !== "image" || item.url !== coverImage)
+        .filter(
+          (item: AlbumGalleryItem | null) =>
+            !shouldUseCoverAsFirstGalleryImage || item?.type !== "image" || item.url !== coverImage,
+        )
         .filter((item): item is AlbumGalleryItem => Boolean(item))
     : [];
   const additionalImages = additionalMedia.filter(
     (item): item is AlbumImage => item.type === "image",
   );
   const coverImageItem =
-    coverImage && coverImage !== "/placeholder.svg"
+    shouldUseCoverAsFirstGalleryImage && coverImage && coverImage !== "/placeholder.svg"
       ? {
           type: "image" as const,
           url: coverImage,
@@ -982,6 +986,7 @@ const ALBUM_PROJECTION = `{
   category,
   description,
   coverImage{asset->{url}},
+  excludeCoverFromGallery,
   facebookUrl,
   youtubePlaylistId,
   youtubeUrl,
