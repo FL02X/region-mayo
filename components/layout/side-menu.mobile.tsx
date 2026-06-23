@@ -21,22 +21,22 @@ import {
   installMenuItem,
   mobileMainMenuItems,
   settingsMenuItem,
-} from "@/components/layout/navigation-items";
+} from "@/components/layout/nav-bar-items";
 import {
   addFlickFeedback,
   vibrateForMenuTap,
-} from "@/components/layout/mobile-menu/menu-feedback";
+} from "@/components/layout/side-menu-mobile/menu-vibration-feedback";
 import {
   CloseMenuIcon,
   HamburgerMenuIcon,
-} from "@/components/layout/mobile-menu/menu-icons";
+} from "@/components/layout/side-menu-mobile/menu-icons";
 import {
   HelpMenuButton,
   IglesiasMenuSection,
   MainMenuLink,
   MobileMenuSocialFooter,
   PwaMenuLink,
-} from "@/components/layout/mobile-menu/menu-sections";
+} from "@/components/layout/side-menu-mobile/menu-sections";
 
 interface MobileMenuProps {
   instagramUrl?: string;

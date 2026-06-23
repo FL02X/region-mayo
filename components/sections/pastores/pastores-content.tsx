@@ -1,5 +1,7 @@
 "use client";
-
+// Donde: ruta /pastores. 
+// Viewports: desktop y mobile. 
+// Funcion: coordina busqueda, vista compacta/grid, copiado e impresion del directorio de pastores.
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -12,7 +14,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CopyPrintActions,
   CopyToast,
-  PrintableInfoSheet,
   waitForImageReady,
   waitForNextPaint,
 } from "@/components/shared/copy-print-actions";
@@ -23,8 +24,12 @@ import { HighlightedText } from "@/components/shared/highlighted-text";
 import { ViewModeToggle, type ViewMode } from "@/components/shared/view-mode-toggle";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import type { Pastor } from "@/lib/types";
+import {
+  buildPastorCopyText,
+  getPastorImageUrl,
+} from "@/components/sections/pastores/pastores-helpers";
+import { PrintablePastorSheet } from "@/components/sections/pastores/printable-pastor-sheet";
 
 const cardTitleFont = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -37,91 +42,6 @@ const expandTransition = {
   duration: 0.24,
   ease: [0.22, 1, 0.36, 1] as const,
 };
-
-const PASTOR_THUMB_IMAGE_OPTIONS = {
-  width: 320,
-  quality: 72,
-  format: "webp",
-  fit: "max",
-} as const;
-
-const PASTOR_CARD_IMAGE_OPTIONS = {
-  width: 960,
-  quality: 72,
-  format: "webp",
-  fit: "max",
-} as const;
-
-const PASTOR_PRINT_IMAGE_OPTIONS = {
-  width: 1200,
-  quality: 78,
-  format: "webp",
-  fit: "max",
-} as const;
-
-const getPastorImageUrl = (photo?: string, kind: "thumb" | "card" | "print" = "card") => {
-  if (!photo) return "";
-
-  if (kind === "thumb") {
-    return sanityImageVariantUrl(photo, PASTOR_THUMB_IMAGE_OPTIONS);
-  }
-
-  if (kind === "print") {
-    return sanityImageVariantUrl(photo, PASTOR_PRINT_IMAGE_OPTIONS);
-  }
-
-  return sanityImageVariantUrl(photo, PASTOR_CARD_IMAGE_OPTIONS);
-};
-
-const buildPastorCopyText = (pastor: Pastor) => {
-  const sections = [
-    [pastor.fullName],
-    pastor.temploName ? [pastor.temploName] : [],
-    pastor.churchNumber ? [`Iglesia #${pastor.churchNumber}`] : [],
-    pastor.address ? [pastor.address] : [],
-    pastor.phone ? [formatPhoneForDisplay(pastor.phone)] : [],
-    pastor.googleMapsUrl ? [pastor.googleMapsUrl] : [],
-  ].filter((section) => section.length > 0);
-
-  return sections.map((section) => section.join("\n")).join("\n\n");
-};
-
-function PrintablePastorSheet({ pastor }: { pastor: Pastor }) {
-  const imageUrl = getPastorImageUrl(pastor.photo, "print");
-
-  return (
-    <PrintableInfoSheet
-      title={pastor.fullName}
-      imageUrl={imageUrl}
-      imageAlt={pastor.fullName}
-      fallbackIcon={<Users className="h-10 w-10" aria-hidden="true" />}
-      sections={[
-        ...(pastor.temploName
-          ? [{
-              id: "templo",
-              label: "Iglesia Sede",
-              icon: <Church className="rm-print-icon" aria-hidden="true" />,
-              content: (
-                <p>
-                  {pastor.temploName}
-                  {pastor.churchNumber ? `\nPastor Local de Iglesia #${pastor.churchNumber}` : ""}
-                  {pastor.address ? `\n${pastor.address}` : ""}
-                </p>
-              ),
-            }]
-          : []),
-        ...(pastor.phone
-          ? [{
-              id: "phone",
-              label: "Número de Teléfono",
-              icon: <Phone className="rm-print-icon" aria-hidden="true" />,
-              content: <p>{formatPhoneForDisplay(pastor.phone)}</p>,
-            }]
-          : []),
-      ]}
-    />
-  );
-}
 
 function PastorCard({
   pastor,

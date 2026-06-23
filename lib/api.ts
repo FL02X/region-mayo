@@ -45,9 +45,11 @@ const SANITY_ENABLED = Boolean(
 );
 
 const PASTOR_PENDING_LABEL = "Por confirmar";
-const YOUTUBE_FETCH_OPTIONS = {
-  next: { revalidate: 60 * 60, tags: [SANITY_CACHE_TAG] },
-} as RequestInit;
+const YOUTUBE_FETCH_OPTIONS = (
+  process.env.NODE_ENV === "development"
+    ? { cache: "no-store" }
+    : { next: { revalidate: 60 * 60, tags: [SANITY_CACHE_TAG] } }
+) as RequestInit;
 
 function isMayoRegion(input: string): boolean {
   return input === "mayo" || input === "Región Mayo" || input === "region-mayo";

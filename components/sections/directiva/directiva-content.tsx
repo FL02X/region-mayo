@@ -1,5 +1,5 @@
 "use client";
-
+// Donde: ruta /directiva. Viewports: desktop y mobile. Funcion: coordina busqueda, generaciones, vista compacta/grid, copiado e impresion de directiva.
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,18 +7,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Bricolage_Grotesque, Newsreader } from "next/font/google";
 import {
-  BarChart3,
   ChevronDown,
   Church,
-  FileText,
   MapPin,
-  Mic,
-  Music,
-  PenLine,
   Phone,
   UserCircle,
-  Wallet,
-  type LucideIcon,
 } from "lucide-react";
 import { useEqualizeCardRowHeads } from "@/hooks/use-equalize-card-row-heads";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -26,7 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   CopyPrintActions,
   CopyToast,
-  PrintableInfoSheet,
   waitForImageReady,
   waitForNextPaint,
 } from "@/components/shared/copy-print-actions";
@@ -39,9 +31,16 @@ import {
   type ViewMode,
 } from "@/components/shared/view-mode-toggle";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import type { DirectivaGeneration, DirectivaMember } from "@/lib/types";
+import {
+  buildDirectivaCopyText,
+  getDirectivaImageUrl,
+  getDirectivaRoleIcon,
+  getDirectivaRoleLabel,
+  getDirectivaRoleOrder,
+} from "@/components/sections/directiva/directiva-helpers";
+import { PrintableDirectivaSheet } from "@/components/sections/directiva/printable-directiva-sheet";
 
 const editorialFont = Newsreader({
   subsets: ["latin"],
@@ -57,195 +56,10 @@ const memberNameFont = Bricolage_Grotesque({
   preload: false,
 });
 
-const DIRECTIVA_ROLE_META: Record<string, { label: string; order: number }> = {
-  "01_presidente_regional": { label: "Presidente Regional", order: 1 },
-  "02_suplente_presidente_regional": {
-    label: "Suplente Presidente Regional",
-    order: 2,
-  },
-  "03_secretario": { label: "Secretario", order: 3 },
-  "04_suplente_secretario": { label: "Suplente Secretario", order: 4 },
-  "05_cronista": { label: "Cronista", order: 5 },
-  "06_suplente_cronista": { label: "Suplente de Cronista", order: 6 },
-  "07_estadistica": { label: "Estadistica", order: 7 },
-  "08_suplente_estadistica": { label: "Suplente de Estadistica", order: 8 },
-  "09_tesorera": { label: "Tesoreria", order: 9 },
-  "10_suplente_tesorera": { label: "Suplente de Tesoreria", order: 10 },
-  "11_director_canto": { label: "Director de Canto", order: 11 },
-  "12_suplente_director_canto": {
-    label: "Suplente de Director de Canto",
-    order: 12,
-  },
-  "13_director_musica": { label: "Director de Musica", order: 13 },
-  "14_suplente_director_musica": {
-    label: "Suplente de Director de Musica",
-    order: 14,
-  },
-
-  // Compatibilidad con valores legacy guardados antes de reordenar tesoreria.
-  "09_director_canto": { label: "Director de Canto", order: 11 },
-  "10_suplente_director_canto": {
-    label: "Suplente de Director de Canto",
-    order: 12,
-  },
-  "11_director_musica": { label: "Director de Musica", order: 13 },
-  "12_suplente_director_musica": {
-    label: "Suplente de Director de Musica",
-    order: 14,
-  },
-};
-
-const getDirectivaRoleLabel = (role?: string) => {
-  if (!role) return "";
-  return DIRECTIVA_ROLE_META[role]?.label ?? role;
-};
-
-const getDirectivaRoleOrder = (role?: string) => {
-  if (!role) return Number.MAX_SAFE_INTEGER;
-
-  const roleOrder = DIRECTIVA_ROLE_META[role]?.order;
-  if (typeof roleOrder === "number") {
-    return roleOrder;
-  }
-
-  const prefixed = Number.parseInt(role.split("_")[0], 10);
-  if (Number.isFinite(prefixed)) {
-    return prefixed;
-  }
-
-  return Number.MAX_SAFE_INTEGER;
-};
-
-const DIRECTIVA_ROLE_ICON: Record<string, LucideIcon> = {
-  "01_presidente_regional": UserCircle,
-  "02_suplente_presidente_regional": UserCircle,
-  "03_secretario": FileText,
-  "04_suplente_secretario": FileText,
-  "05_cronista": PenLine,
-  "06_suplente_cronista": PenLine,
-  "07_estadistica": BarChart3,
-  "08_suplente_estadistica": BarChart3,
-  "09_tesorera": Wallet,
-  "10_suplente_tesorera": Wallet,
-  "11_director_canto": Mic,
-  "12_suplente_director_canto": Mic,
-  "13_director_musica": Music,
-  "14_suplente_director_musica": Music,
-
-  "09_director_canto": Mic,
-  "10_suplente_director_canto": Mic,
-  "11_director_musica": Music,
-  "12_suplente_director_musica": Music,
-};
-
-const getDirectivaRoleIcon = (role?: string): LucideIcon =>
-  role ? DIRECTIVA_ROLE_ICON[role] ?? UserCircle : UserCircle;
-
 const expandTransition = {
   duration: 0.24,
   ease: [0.22, 1, 0.36, 1] as const,
 };
-
-const DIRECTIVA_THUMB_IMAGE_OPTIONS = {
-  width: 320,
-  quality: 72,
-  format: "webp",
-  fit: "max",
-} as const;
-
-const DIRECTIVA_CARD_IMAGE_OPTIONS = {
-  width: 960,
-  quality: 72,
-  format: "webp",
-  fit: "max",
-} as const;
-
-const DIRECTIVA_PRINT_IMAGE_OPTIONS = {
-  width: 1200,
-  quality: 78,
-  format: "webp",
-  fit: "max",
-} as const;
-
-const getDirectivaImageUrl = (
-  photo?: string,
-  kind: "thumb" | "card" | "print" = "card",
-) => {
-  if (!photo) return "";
-
-  if (kind === "thumb") {
-    return sanityImageVariantUrl(photo, DIRECTIVA_THUMB_IMAGE_OPTIONS);
-  }
-
-  if (kind === "print") {
-    return sanityImageVariantUrl(photo, DIRECTIVA_PRINT_IMAGE_OPTIONS);
-  }
-
-  return sanityImageVariantUrl(photo, DIRECTIVA_CARD_IMAGE_OPTIONS);
-};
-
-const buildDirectivaCopyText = (member: DirectivaMember) => {
-  const roleLabel = getDirectivaRoleLabel(member.role);
-  const sections = [
-    [member.fullName],
-    roleLabel ? [roleLabel] : [],
-    member.temploName ? [member.temploName] : [],
-    member.address ? [member.address] : [],
-    [formatPhoneForDisplay(member.phone)],
-    member.googleMapsUrl ? [member.googleMapsUrl] : [],
-  ].filter((section) => section.length > 0);
-
-  return sections.map((section) => section.join("\n")).join("\n\n");
-};
-
-function PrintableDirectivaSheet({ member }: { member: DirectivaMember }) {
-  const imageUrl = getDirectivaImageUrl(member.photo, "print");
-  const roleLabel = getDirectivaRoleLabel(member.role);
-
-  return (
-    <PrintableInfoSheet
-      title={member.fullName}
-      imageUrl={imageUrl}
-      imageAlt={member.fullName}
-      fallbackIcon={<UserCircle className="h-10 w-10" aria-hidden="true" />}
-      sections={[
-        ...(roleLabel
-          ? [
-              {
-                id: "role",
-                label: "Cargo",
-                icon: (
-                  <UserCircle className="rm-print-icon" aria-hidden="true" />
-                ),
-                content: <p>{roleLabel}</p>,
-              },
-            ]
-          : []),
-        ...(member.temploName
-          ? [
-              {
-                id: "templo",
-                label: "Iglesia Sede",
-                icon: <Church className="rm-print-icon" aria-hidden="true" />,
-                content: (
-                  <p>
-                    {member.temploName}
-                    {member.address ? `\n${member.address}` : ""}
-                  </p>
-                ),
-              },
-            ]
-          : []),
-        {
-          id: "phone",
-          label: "Contacto",
-          icon: <Phone className="rm-print-icon" aria-hidden="true" />,
-          content: <p>{formatPhoneForDisplay(member.phone)}</p>,
-        },
-      ]}
-    />
-  );
-}
 
 function DirectivaCard({
   member,

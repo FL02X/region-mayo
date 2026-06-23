@@ -4,11 +4,11 @@ import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { TimeProvider } from "@/lib/time-context";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME, SITE_NAME, getSiteUrl } from "@/lib/seo";
-import { HighlightClearer } from "@/components/layout/highlight-clearer";
-import { RouteBodyFlags } from "@/components/layout/route-body-flags";
+import { HighlightClearer } from "@/components/layout/highlight-removal";
+import { RouteBodyFlags } from "@/components/layout/connection-route-body-flags";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
-import { InstallAppBanner } from "@/components/pwa/install-app-banner";
+import { InstallAppBanner } from "@/components/pwa/install-app-sticky-banner.mobile";
 import "./globals.css";
 
 const siteUrl = getSiteUrl();

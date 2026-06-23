@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/nav-bar";
 import Chatbot from "@/components/shared/chatbot";
 import { Button } from "@/components/ui/button";
-import { PermissionsPanel } from "@/components/pwa/permissions-panel";
+import { PermissionsPanel } from "@/components/pwa/configuration-panel";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import {

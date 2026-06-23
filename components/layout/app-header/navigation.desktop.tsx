@@ -3,7 +3,7 @@
 // Funcion: muestra enlaces principales editables.
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { desktopNavItems } from "@/components/layout/navigation-items";
+import { desktopNavItems } from "@/components/layout/nav-bar-items";
 
 interface DesktopNavigationProps {
   activePath: string;

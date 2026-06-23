@@ -15,12 +15,12 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   DEFAULT_FACEBOOK_URL,
   DEFAULT_INSTAGRAM_URL,
-} from "@/components/layout/navigation-items";
-import { DesktopHeaderBrand } from "@/components/layout/app-header/header-brand";
-import { DesktopNavigation } from "@/components/layout/app-header/desktop-navigation";
-import { DesktopSearch } from "@/components/layout/app-header/desktop-search";
-import { HeaderSocialLinks } from "@/components/layout/app-header/header-social-links";
-import { MobileHeaderContent } from "@/components/layout/app-header/mobile-header-content";
+} from "@/components/layout/nav-bar-items";
+import { DesktopHeaderBrand } from "@/components/layout/app-header/header-logo";
+import { DesktopNavigation } from "@/components/layout/app-header/navigation.desktop";
+import { DesktopSearch } from "@/components/layout/app-header/search.desktop";
+import { HeaderSocialLinks } from "@/components/layout/app-header/header-social-links.desktop";
+import { MobileHeaderContent } from "@/components/layout/app-header/header-content.mobile";
 import { DebugTimePicker } from "@/components/shared/debug-time-picker";
 
 interface AppHeaderProps {

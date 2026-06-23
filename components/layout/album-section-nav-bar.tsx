@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
-import { ShareModal } from "@/components/layout/section-nav/share-modal";
+import { ShareModal } from "@/components/layout/album-section-nav-bar/share-popup-modal";
 
 type SectionIconName = "templos" | "pastores" | "coros" | "directiva" | "album";
 

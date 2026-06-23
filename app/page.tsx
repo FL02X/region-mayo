@@ -4,12 +4,12 @@ import {
   readInitialCalendarLayoutMode,
   readInitialViewMode,
 } from "@/lib/cookie-utils";
-import { LocationNotificationBar } from "@/components/layout/location-notification-bar";
+import { LocationNotificationBar } from "@/components/layout/location-popup-bar";
 import { HeroSection } from "@/components/sections/home/hero-section.desktop";
 import { MobileHero } from "@/components/sections/home/hero-section.mobile";
 import { EventsFeed } from "@/components/sections/home/calendar-feed";
 import { ActionDeck } from "@/components/sections/home/action-deck";
-import { Providers } from "@/components/layout/providers";
+import { Providers } from "@/components/layout/time-providers";
 import { GoToCalendar } from "@/components/sections/home/go-to-calendar.mobile";
 import Chatbot from "@/components/shared/chatbot";
 import {

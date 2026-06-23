@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import {
   iglesiasMenuItems,
   type LayoutNavigationItem,
-} from "@/components/layout/navigation-items";
+} from "@/components/layout/nav-bar-items";
 
 interface MainMenuLinkProps {
   item: LayoutNavigationItem;

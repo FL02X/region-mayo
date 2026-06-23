@@ -1,16 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useEffect, useState, useCallback, useLayoutEffect, type ReactNode } from "react";
+// Donde: home, debajo del hero en desktop y dentro del calendario en mobile. Viewports: desktop y mobile. Funcion: muestra tarjetas destacadas de eventos, avisos, redes y oraciones.
+import { useMemo, useRef, useEffect, useState, useCallback, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Newsreader } from "next/font/google";
 import {
   Calendar,
   MapPin,
-  Headphones,
-  HeartHandshake,
-  Instagram as InstagramIcon,
-  X,
   Play,
   Maximize2,
   Megaphone,
@@ -18,85 +15,23 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
-import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
-import type { HeroCandidate } from "@/lib/ranker";
-import { pickHeroAndDeck } from "@/lib/ranker";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { Lightbox } from "@/components/shared/lightbox";
-import { REGION_TIME_ZONE, formatRegionWeekdayDayMonth } from "@/lib/region-date";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
+import { BADGE_META, CTA_LABEL } from "@/components/sections/home/action-deck/action-deck-copy";
+import { PrayerMiniCarousel } from "@/components/sections/home/action-deck/prayer-mini-carousel";
+import { SocialVideoModal } from "@/components/sections/home/action-deck/social-video-modal";
+import type {
+  ActionDeckProps,
+  DeckItem,
+} from "@/components/sections/home/action-deck/action-deck-types";
+import {
+  MS_HOUR,
+  buildActionDeck,
+  formatEventDate,
+  formatPrayerDate,
+} from "@/components/sections/home/action-deck/action-deck-utils";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES — each candidate slot the deck can show
-// ─────────────────────────────────────────────────────────────────────────────
-
-type DeckItem =
-  | {
-      id: string;
-      type: "event";
-      title: string;
-      date: Date;
-      time?: string;
-      location?: string;
-      image?: string;
-      pinned?: boolean;
-      href?: string;
-    }
-  | {
-      id: string;
-      type: "instagram";
-      title: string;
-      postedAt: Date;
-      image?: string;
-      href: string;
-      isVideo?: boolean;
-      postType?: "reel" | "post";
-      pinned?: boolean;
-    }
-  | {
-      id: string;
-      type: "facebook";
-      title: string;
-      postedAt: Date;
-      image?: string;
-      href: string;
-      isVideo?: boolean;
-      pinned?: boolean;
-    }
-  | {
-      id: string;
-      type: "prayer";
-      title: string;
-      updatedAt: Date;
-      phase: "collect" | "show" | "paused";
-      prayers?: string[];
-      prayerObjects?: Array<{ text: string; submittedAt: string }>;
-      pinned?: boolean;
-    }
-  | {
-      id: string;
-      type: "promo";
-      title: string;
-      image?: string;
-      href?: string;
-      pinned?: boolean;
-      accentColor?: string;
-      ctaText?: string;
-    }
-  | {
-      id: string;
-      type: "audio";
-      title: string;
-      audioUrl?: string;
-      href?: string;
-      pinned?: boolean;
-    };
-
-type DeckItemType = DeckItem["type"];
-
-const MS_HOUR = 60 * 60 * 1000;
-const MS_DAY = 24 * MS_HOUR;
-const CUSTOM_BANNER_ACCENT = "#e36600";
 const editorialFont = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -104,155 +39,8 @@ const editorialFont = Newsreader({
   preload: false,
 });
 
-function isSocialVideoUrl(url?: string): boolean {
-  if (!url) return false;
-  return /\/(reel|reels|videos|watch)\b|watch\?v=|fb\.watch/i.test(url);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SCORING — see plan: event <24h +1000, promo +600, prayer <24h +400, IG decays
-// ─────────────────────────────────────────────────────────────────────────────
-
-function scoreItem(item: DeckItem, now = Date.now()): number {
-  let score = 0;
-
-  switch (item.type) {
-    case "event": {
-      const diff = item.date.getTime() - now;
-      if (diff <= MS_DAY && diff > -2 * MS_HOUR) score += 1000;
-      else if (diff <= 7 * MS_DAY && diff > 0) score += 300;
-      else if (diff > 0) score += 50;
-      break;
-    }
-    case "promo":
-      score += 600;
-      break;
-    case "prayer": {
-      const hoursSince = (now - item.updatedAt.getTime()) / MS_HOUR;
-      if (hoursSince <= 24) score += 400;
-      else score += 80;
-      break;
-    }
-    case "instagram": {
-      const hoursSince = (now - item.postedAt.getTime()) / MS_HOUR;
-      score += Math.max(0, 200 - hoursSince);
-      break;
-    }
-    case "facebook": {
-      const hoursSince = (now - item.postedAt.getTime()) / MS_HOUR;
-      score += Math.max(0, 180 - hoursSince);
-      break;
-    }
-    case "audio":
-      score += 60;
-      break;
-  }
-
-  if (item.pinned) score += 2000;
-  return score;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface ActionDeckProps {
-  events: Event[];
-  instagramUrl?: string;
-  facebookUrl?: string;
-  customHeroCard?: HeroCard | null;
-  prayerWall?: PrayerWallConfig | null;
-  socialPosts?: SocialPost[];
-  now?: number;
-}
-
-function mapCandidateToDeckItem(
-  candidate: HeroCandidate,
-  prayerWall?: PrayerWallConfig | null,
-  socialPosts?: SocialPost[],
-): DeckItem | null {
-  if (candidate.type === "custom") {
-    return {
-      id: `custom-${candidate.id}`,
-      type: "promo",
-      title: candidate.ctaText || "Novedad destacada",
-      href: candidate.url,
-      pinned: candidate.pinned,
-      image: (candidate as any).media?.url,
-      accentColor: candidate.accentColor,
-      ctaText: candidate.url ? candidate.ctaText : undefined,
-    };
-  }
-
-  if (candidate.type === "prayer") {
-    const selectedPrayers = prayerWall?.selectedPrayers ?? [];
-    const prayerObjects = selectedPrayers
-      .filter((prayer) => typeof prayer.text === "string" && prayer.text.length > 0)
-      .slice(0, 6)
-      .map((prayer) => ({
-        text: prayer.text,
-        submittedAt: prayer.submittedAt,
-      }));
-
-    return {
-      id: `prayer-${candidate.id}`,
-      type: "prayer",
-      // When in 'show' phase we intentionally remove the active label (UI uses only the mini-carousel text),
-      // and the ActionDeck will hide the CTA. When collecting, show the invite copy.
-      title: candidate.phase === "show" ? "" : "Muro de oraciones · comparte tu petición",
-      updatedAt: new Date(candidate.publishedAt),
-      phase: candidate.phase,
-      prayers: prayerObjects.map((prayer) => prayer.text),
-      prayerObjects,
-    };
-  }
-
-  if (candidate.type === "event") {
-    return {
-      id: `event-${candidate.id}`,
-      type: "event",
-      title: candidate.title,
-      date: new Date(candidate.date),
-      time: candidate.time,
-      location: candidate.location,
-      pinned: candidate.pinned,
-      href: `/#${candidate.id}`,
-    };
-  }
-
-  if (candidate.type === "social") {
-    const post = socialPosts?.find((item) => item._id === candidate.id);
-    const image = post?.media?.url;
-    if (candidate.network === "instagram") {
-      return {
-        id: `ig-${candidate.id}`,
-        type: "instagram",
-        title: "Última publicación en Instagram",
-        postedAt: new Date(candidate.postedAt),
-        href: candidate.url,
-        image,
-        isVideo: isSocialVideoUrl(candidate.url),
-        postType: isSocialVideoUrl(candidate.url) ? "reel" : "post",
-      };
-    }
-    return {
-      id: `fb-${candidate.id}`,
-      type: "facebook",
-      title: "Última publicación en Facebook",
-      postedAt: new Date(candidate.postedAt),
-      href: candidate.url,
-      image,
-      isVideo: isSocialVideoUrl(candidate.url),
-    };
-  }
-
-  return null;
-}
-
 export function ActionDeck({
   events,
-  instagramUrl,
-  facebookUrl,
   customHeroCard,
   prayerWall,
   socialPosts,
@@ -281,105 +69,14 @@ export function ActionDeck({
   const deck = useMemo<DeckItem[]>(() => {
     const now = typeof nowProp === "number" ? nowProp : Date.now();
 
-    const rankingCandidates: HeroCandidate[] = [];
-
-    if (customHeroCard?.media?.url) {
-      rankingCandidates.push({
-        type: "custom",
-        id: customHeroCard._id,
-        publishedAt: new Date(customHeroCard.publishedAt).getTime(),
-        accentColor: CUSTOM_BANNER_ACCENT,
-        media: {
-          isVertical: Boolean(customHeroCard.media.isVertical),
-          alt: customHeroCard.media.alt || "Contenido destacado",
-          url: customHeroCard.media.url,
-        },
-        url: customHeroCard.url,
-        ctaText: customHeroCard.ctaText,
-        pinned: customHeroCard.pinned,
-        priorityWeight: customHeroCard.priorityWeight,
-      });
-    }
-
-    if (prayerWall && prayerWall.enabled && prayerWall.phase !== 'paused') {
-      rankingCandidates.push({
-        type: "prayer",
-        id: prayerWall._id,
-        phase: prayerWall.phase,
-        publishedAt: new Date(prayerWall.publishedAt).getTime(),
-        selectedPrayersCount: prayerWall.selectedPrayers?.length ?? 0,
-      });
-    }
-
-    events.forEach((event) => {
-      const diff = event.date.getTime() - now;
-      // Only consider upcoming events within the next 5 days in the deck.
-      // The broader event ranking priority still favors the 3-day window.
-      if (diff < 0 || diff > 5 * MS_DAY) return;
-
-      rankingCandidates.push({
-        type: "event",
-        id: event.id,
-        date: event.date.getTime(),
-        title: event.title,
-        time: event.time,
-        location: event.address || event.location,
-        registrationEnabled: event.registrationEnabled,
-        // include image so later mapping can render event thumbnails
-        image: event.image,
-      });
+    return buildActionDeck({
+      events,
+      customHeroCard,
+      prayerWall,
+      socialPosts,
+      now,
     });
-
-    (socialPosts ?? []).forEach((post) => {
-      rankingCandidates.push({
-        type: "social",
-        id: post._id,
-        network: post.network,
-        postedAt: new Date(post.postedAt).getTime(),
-        url: post.url,
-        caption: post.caption,
-        media: post.media
-          ? { isVertical: post.media.isVertical }
-          : undefined,
-      });
-    });
-
-    const { deck: rankedDeck } = pickHeroAndDeck(rankingCandidates, now);
-    const rankedDeckItems = rankedDeck
-      .map((candidate) => {
-        const mapped = mapCandidateToDeckItem(candidate, prayerWall, socialPosts);
-        // If this is an event, ensure we include the event image from the source events array
-        if (mapped && mapped.type === "event") {
-          const srcEvent = events.find((e) => e.id === candidate.id);
-          if (srcEvent && srcEvent.image) {
-            mapped.image = srcEvent.image;
-          }
-        }
-        return mapped;
-      })
-      .filter((item): item is DeckItem => item !== null)
-      .map((item) => {
-        if (item.type !== "prayer") return item;
-        return {
-          ...item,
-          prayers: item.prayers ?? [],
-          prayerObjects: item.prayerObjects ?? [],
-        };
-      });
-
-    const candidates = [...rankedDeckItems];
-
-    const deduped = candidates.filter(
-      (item, index, array) => array.findIndex((other) => other.id === item.id) === index,
-    );
-
-    return deduped
-      .map((item) => ({ item, score: scoreItem(item, now) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
-      .map((s) => s.item);
   }, [customHeroCard, prayerWall, socialPosts, events, nowProp]);
-
   // Update desktop scroll state and scrollbar thumb
   const updateScrollState = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -571,7 +268,6 @@ export function ActionDeck({
                 item={item}
                 featured={idx === 0}
                 deckLength={deck.length}
-                prayerWall={prayerWall}
                 onOpenPrayerModal={
                   item.type === "prayer" && item.phase === "collect"
                     ? () => setIsPrayerModalOpen(true)
@@ -655,7 +351,6 @@ export function ActionDeck({
               featured={idx === 0}
               isDesktop
               deckLength={deck.length}
-              prayerWall={prayerWall}
               onOpenPrayerModal={
                 item.type === "prayer" && item.phase === "collect"
                   ? () => setIsPrayerModalOpen(true)
@@ -719,231 +414,17 @@ export function ActionDeck({
 // CARD
 // ─────────────────────────────────────────────────────────────────────────────
 
-const BADGE_META: Record<
-  DeckItemType,
-  { label: string; classes: string; icon: ReactNode }
-> = {
-  event: {
-    label: "Próximo evento",
-    classes: "text-[#2f5e93]",
-    icon: <Calendar className="h-3 w-3" aria-hidden="true" />,
-  },
-  instagram: {
-    label: "Instagram",
-    classes: "text-[#e4405f]",
-    icon: <InstagramIcon className="h-3 w-3" aria-hidden="true" />,
-  },
-  facebook: {
-    label: "Facebook",
-    classes: "text-[#1877f2]",
-    icon: <span className="text-[14px] font-black leading-none" aria-hidden="true">f</span>,
-  },
-  prayer: {
-    label: "Peticiones de oracion",
-    classes: "text-[#2d6a4f]",
-    icon: <HeartHandshake className="h-3 w-3" aria-hidden="true" />,
-  },
-  promo: {
-    label: "Aviso",
-    classes: "text-[#e36600]",
-    icon: <Megaphone className="h-3 w-3" aria-hidden="true" />,
-  },
-  audio: {
-    label: "Audio",
-    classes: "text-[#3730a3]",
-    icon: <Headphones className="h-3 w-3" aria-hidden="true" />,
-  },
-};
-
-const CTA_LABEL: Record<DeckItemType, string> = {
-  event: "Ver evento",
-  instagram: "Ver publicación",
-  facebook: "Ver publicación",
-  prayer: "Pedir oración",
-  promo: "Ver más",
-  audio: "Escuchar",
-};
-
-// Accent colors for the top line on each card to visually link sections
-const ACCENT_COLORS: Record<DeckItemType, string> = {
-  event: "#2f5e93",
-  instagram: "#6d49a8",
-  facebook: "#1b74e4",
-  prayer: "#2d6a4f",
-  promo: CUSTOM_BANNER_ACCENT,
-  audio: "#3730a3",
-};
-
-function PrayerMiniCarousel({
-  prayers,
-  deckLength = 1,
-  isDesktop = false,
-  onOpenModal,
-}: {
-  prayers: string[];
-  prayerObjects?: Array<{ text: string; submittedAt: string }>;
-  deckLength?: number;
-  isDesktop?: boolean;
-  onOpenModal?: (text: string) => void;
-}) {
-  const [index, setIndex] = useState(0);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-  const prayerTextRef = useRef<HTMLParagraphElement>(null);
-
-  if (prayers.length === 0) {
-    return (
-      <p className={`${editorialFont.className} type-human text-[15px] leading-relaxed`}>La comunidad está orando · únete</p>
-    );
-  }
-
-  const currentPrayer = prayers[index];
-  const textSize =
-    currentPrayer.length <= 70
-      ? isDesktop
-        ? "text-[19px]"
-        : "text-[18px]"
-      : currentPrayer.length <= 135
-        ? "text-[17px]"
-        : "text-[16px]";
-  const textAlign = "text-left";
-  const minHeight = isDesktop && deckLength === 1 ? "min-h-[184px]" : "min-h-[158px]";
-  const canNavigate = prayers.length > 1;
-  const maxVisibleLines = isOverflowing ? 6 : 7;
-
-  useLayoutEffect(() => {
-    const textEl = prayerTextRef.current;
-    if (!textEl) return;
-
-    const updateOverflow = () => {
-      window.requestAnimationFrame(() => {
-        const clone = textEl.cloneNode(true) as HTMLParagraphElement;
-        const parent = textEl.parentElement;
-
-        if (!parent) return;
-
-        clone.style.position = "absolute";
-        clone.style.visibility = "hidden";
-        clone.style.pointerEvents = "none";
-        clone.style.display = "block";
-        clone.style.WebkitLineClamp = "unset";
-        clone.style.webkitLineClamp = "unset";
-        clone.style.overflow = "visible";
-        clone.style.maxHeight = "none";
-        clone.style.height = "auto";
-        clone.style.width = `${textEl.clientWidth}px`;
-        clone.style.left = "0";
-        clone.style.top = "0";
-
-        parent.appendChild(clone);
-        const needsMoreSpace =
-          clone.getBoundingClientRect().height > textEl.getBoundingClientRect().height + 1;
-        clone.remove();
-        setIsOverflowing(needsMoreSpace);
-      });
-    };
-
-    updateOverflow();
-    window.addEventListener("resize", updateOverflow);
-    return () => window.removeEventListener("resize", updateOverflow);
-  }, [currentPrayer, textSize, isDesktop, deckLength]);
-
-  const goToPrayer = (direction: "previous" | "next") => {
-    setIndex((current) => {
-      if (direction === "previous") return (current - 1 + prayers.length) % prayers.length;
-      return (current + 1) % prayers.length;
-    });
-  };
-
-  return (
-    <div className="mb-1 flex min-h-0 flex-1 flex-col">
-      <div className={`${minHeight} flex min-h-0 flex-1 items-center justify-center`}>
-        <div className="w-full">
-          <p
-            ref={prayerTextRef}
-            className={`${editorialFont.className} type-human ${textSize} italic leading-[1.62] ${textAlign}`}
-            style={{
-              display: "-webkit-box",
-              WebkitBoxOrient: "vertical",
-              WebkitLineClamp: maxVisibleLines,
-              overflow: "hidden",
-            }}
-          >
-            <span className="relative block pl-[0.75em]">
-              <span className="absolute left-0 top-0 font-serif text-[1.35em] leading-none text-[#9aa3ad]">
-                “
-              </span>
-              <span>{currentPrayer}</span>
-              <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">”</span>
-            </span>
-          </p>
-          {isOverflowing && onOpenModal ? (
-            <div className="pl-[0.75em]">
-              <button
-                type="button"
-                onClick={() => onOpenModal(currentPrayer)}
-                className="mt-4 inline-flex w-fit items-center gap-1 text-[15px] font-normal leading-tight text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2"
-              >
-                Leer más
-              </button>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {prayers.length > 1 && (
-        <div className="mt-3 flex items-center justify-center gap-2.5">
-          {canNavigate && (
-            <button
-              type="button"
-              onClick={() => goToPrayer("previous")}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#eef2f5] hover:text-[#2d6a4f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93]"
-              aria-label="Ver oración anterior"
-            >
-              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-            </button>
-          )}
-
-          <div className="flex items-center justify-center gap-1.5" aria-label={`Oración ${index + 1} de ${prayers.length}`}>
-          {prayers.map((_, idx) => (
-            <span
-              key={idx}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                idx === index ? "w-7 bg-[#2d6a4f]" : "w-2 bg-[#c9d2d8]"
-              }`}
-              aria-hidden="true"
-            />
-          ))}
-          </div>
-
-          {canNavigate && (
-            <button
-              type="button"
-              onClick={() => goToPrayer("next")}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#eef2f5] hover:text-[#2d6a4f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93]"
-              aria-label="Ver siguiente oración"
-            >
-              <ChevronRight className="h-5 w-5" aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function DeckCard({
   item,
   featured,
   isDesktop = false,
   deckLength = 1,
-  prayerWall,
   onOpenPrayerModal,
 }: {
   item: DeckItem;
   featured: boolean;
   isDesktop?: boolean;
   deckLength?: number;
-  prayerWall?: PrayerWallConfig | null;
   onOpenPrayerModal?: () => void;
 }) {
   const [showFullPrayerModal, setShowFullPrayerModal] = useState(false);
@@ -1129,9 +610,9 @@ function DeckCard({
         {item.type === "prayer" && item.phase === "show" && (
           <PrayerMiniCarousel
             prayers={item.prayers ?? []}
-            prayerObjects={item.prayerObjects ?? []}
             deckLength={deckLength}
             isDesktop={isDesktop}
+            editorialFontClassName={editorialFont.className}
             onOpenModal={(text) => {
               setFullPrayerText(text);
               setShowFullPrayerModal(true);
@@ -1306,92 +787,3 @@ function DeckCard({
   );
 }
 
-function getSocialEmbedUrl(item: Extract<DeckItem, { type: "instagram" | "facebook" }>) {
-  if (item.type === "facebook") {
-    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(item.href)}&show_text=false&autoplay=false`;
-  }
-
-  try {
-    const source = new URL(item.href);
-    source.search = "";
-    const cleanPath = source.pathname.endsWith("/") ? source.pathname : `${source.pathname}/`;
-    return `https://www.instagram.com${cleanPath}embed`;
-  } catch {
-    const normalized = item.href.split("?")[0].replace(/\/?$/, "/");
-    return `${normalized}embed`;
-  }
-}
-
-function SocialVideoModal({
-  item,
-  onClose,
-}: {
-  item: Extract<DeckItem, { type: "instagram" | "facebook" }>;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
-  const embedUrl = getSocialEmbedUrl(item);
-
-  return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/92 p-3 md:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Video de ${BADGE_META[item.type].label}`}
-      onClick={onClose}
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute right-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#111827] shadow-lg transition-colors hover:bg-[#f3f4f6] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-        aria-label="Cerrar video"
-      >
-        <X className="h-7 w-7" aria-hidden="true" />
-      </button>
-
-      <div
-        className="h-full max-h-[92vh] w-full max-w-[520px] overflow-hidden rounded-[6px] bg-black shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <iframe
-          title={`Video de ${BADGE_META[item.type].label}`}
-          src={embedUrl}
-          className="h-full w-full border-0"
-          allow="clipboard-write; encrypted-media; picture-in-picture; web-share"
-          allowFullScreen
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-function formatEventDate(date: Date) {
-  return formatRegionWeekdayDayMonth(date);
-}
-
-function formatPrayerDate(submittedAt: string) {
-  const date = new Date(submittedAt);
-  if (Number.isNaN(date.getTime())) return null;
-
-  return new Intl.DateTimeFormat("es-MX", {
-    timeZone: REGION_TIME_ZONE,
-    day: "numeric",
-    month: "long",
-  }).format(date);
-}

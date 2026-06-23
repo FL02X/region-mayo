@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { MobileMenu } from "@/components/layout/side-menu.mobile";
 import { DebugTimePicker } from "@/components/shared/debug-time-picker";
-import { MobileHeaderBrand } from "@/components/layout/app-header/header-brand";
+import { MobileHeaderBrand } from "@/components/layout/app-header/header-logo";
 
 interface MobileHeaderContentProps {
   instagramUrl: string;
