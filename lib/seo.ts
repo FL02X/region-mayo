@@ -3,9 +3,9 @@
 export const SITE_FULL_NAME = "Iglesia Gentil de Cristo A.R. Región Mayo";
 export const SITE_NAME = "IGC Region Mayo";
 export const SITE_OFFICIAL_TITLE =
-  "Iglesia Gentil de Cristo A.R. Región Mayo: igcmayo.com | Sitio oficial";
+  "Sitio oficial de la Iglesia Gentil de Cristo A.R. Región Mayo";
 export const SITE_DESCRIPTION =
-  "Calendario regional, templos, pastores, coros, directiva y álbumes de la Iglesia Gentil de Cristo en la Región Mayo.";
+  "Consulte nuestras próximas actividades de evangelización y de predicación de la palabra de Dios.";
 export const DEFAULT_OG_IMAGE_PATH = "/opengraph-image";
 
 export function getSiteUrl() {

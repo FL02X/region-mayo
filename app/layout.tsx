@@ -85,10 +85,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/images/LOGO.ico", type: "image/x-icon" },
-      { url: "/images/region-mayo-logo-192.jpg", type: "image/jpeg", sizes: "192x192" },
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "256x256" },
     ],
-    shortcut: "/images/LOGO.ico",
+    shortcut: "/favicon.ico",
     apple: "/images/region-mayo-logo-180.jpg",
   },
   alternates: {
