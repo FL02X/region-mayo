@@ -4,6 +4,10 @@
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
+const CALENDAR_SECTION_ID = "calendario";
+const APP_HEADER_SELECTOR = "[data-app-header]";
+const FALLBACK_HEADER_HEIGHT = 51;
+
 export function GoToCalendar() {
   const [visible, setVisible] = useState(true);
 
@@ -11,14 +15,14 @@ export function GoToCalendar() {
     let frameId = 0;
 
     const updateVisibility = () => {
-      const target = document.getElementById("calendario");
+      const target = document.getElementById(CALENDAR_SECTION_ID);
       if (!target) {
         setVisible(true);
         return;
       }
 
-      const header = document.querySelector<HTMLElement>("[data-app-header]");
-      const headerHeight = header?.offsetHeight ?? 51;
+      const header = document.querySelector<HTMLElement>(APP_HEADER_SELECTOR);
+      const headerHeight = header?.offsetHeight ?? FALLBACK_HEADER_HEIGHT;
       const calendarTop = target.getBoundingClientRect().top + window.scrollY;
       const shouldShow = window.scrollY < calendarTop - headerHeight - 1;
 
@@ -47,10 +51,10 @@ export function GoToCalendar() {
   }, []);
 
   const handleClick = () => {
-    const target = document.getElementById("calendario");
+    const target = document.getElementById(CALENDAR_SECTION_ID);
     if (target) {
-      const header = document.querySelector<HTMLElement>("[data-app-header]");
-      const headerHeight = header?.offsetHeight ?? 51;
+      const header = document.querySelector<HTMLElement>(APP_HEADER_SELECTOR);
+      const headerHeight = header?.offsetHeight ?? FALLBACK_HEADER_HEIGHT;
       const rect = target.getBoundingClientRect();
       const top = rect.top + window.scrollY - headerHeight;
       window.scrollTo({ top, behavior: "smooth" });

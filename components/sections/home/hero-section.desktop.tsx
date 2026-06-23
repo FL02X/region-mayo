@@ -1,36 +1,17 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+// Donde: home, hero superior desktop. Viewports: desktop. Funcion: muestra carousel, spotlight elegido por ranking y CTA hacia calendario.
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Newsreader, Playfair_Display } from "next/font/google";
-import { createPortal } from "react-dom";
 import {
-  ArrowRight,
-  Calendar,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  HeartHandshake,
-  Map as MapIcon,
-  MapPin,
-  Maximize2,
-  Megaphone,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HeroDebugPanel } from "./hero-debug-panel";
-import { Lightbox } from "@/components/shared/lightbox";
-import {
-  formatRegionDateInput,
-  formatRegionWeekdayDayMonth,
-  getRegionCalendarParts,
-  getRegionDateTime,
-} from "@/lib/region-date";
 import { getEventMapsUrl } from "@/lib/event-share-text";
 import { useTime } from "@/lib/time-context";
-import useLockBodyScroll from "@/hooks/use-lock-scroll";
 import type {
   Event,
   HeroImage,
@@ -41,9 +22,21 @@ import type {
 } from "@/lib/types";
 import type { HeroCandidate } from "@/lib/ranker";
 import { pickHeroAndDeck, getAccentColor } from "@/lib/ranker";
+import {
+  CUSTOM_BANNER_ACCENT,
+  getCountdownDisplay,
+  getRegionDateKey,
+  getRegionDayEndMs,
+  type CountdownDisplay,
+  type CountdownOccurrence,
+} from "@/components/sections/home/hero-section/desktop-hero-utils";
+import { HeroPrayerCard } from "@/components/sections/home/hero-section/desktop-prayer-card";
+import {
+  DesktopCustomSpotlightCard,
+  DesktopEventSpotlightCard,
+  DesktopSocialSpotlightCard,
+} from "@/components/sections/home/hero-section/desktop-spotlight-cards";
 
-const CUSTOM_BANNER_ACCENT = "#e36600";
-const CUSTOM_BANNER_CTA = "#e98432";
 const editorialFont = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -66,272 +59,6 @@ interface HeroSectionProps {
   instagramUrl?: string;
   facebookUrl?: string;
   regionPresident: RegionPresident | null;
-}
-
-type CountdownOccurrence = {
-  date: Date;
-  time: string;
-  note?: string;
-};
-
-type CountdownDisplay = {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  isDisabled: boolean;
-};
-
-const getRegionDateKey = (date: Date) => {
-  const parts = getRegionCalendarParts(date);
-  return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
-};
-
-const getRegionDayEndMs = (date: Date) => {
-  const endOfDay = getRegionDateTime(formatRegionDateInput(date), "23:59");
-  return endOfDay ? endOfDay.getTime() + 59_999 : date.getTime();
-};
-
-const getCountdownDisplay = (target: Date, now: Date): CountdownDisplay => {
-  const diffMs = Math.max(0, target.getTime() - now.getTime());
-  const msPerSecond = 1000;
-  const msPerMinute = msPerSecond * 60;
-  const msPerHour = msPerMinute * 60;
-  const msPerDay = msPerHour * 24;
-
-  return {
-    days: Math.floor(diffMs / msPerDay),
-    hours: Math.floor((diffMs % msPerDay) / msPerHour),
-    minutes: Math.floor((diffMs % msPerHour) / msPerMinute),
-    seconds: Math.floor((diffMs % msPerMinute) / msPerSecond),
-    isDisabled: false,
-  };
-};
-
-function CompactCountdownCell({ value, label, disabled = false }: { value: number; label: string; disabled?: boolean }) {
-  const [displayValue, setDisplayValue] = useState(value);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    if (value === displayValue) return;
-
-    setIsAnimating(true);
-    const swapTimer = window.setTimeout(() => setDisplayValue(value), 120);
-    const endTimer = window.setTimeout(() => setIsAnimating(false), 280);
-
-    return () => {
-      window.clearTimeout(swapTimer);
-      window.clearTimeout(endTimer);
-    };
-  }, [value, displayValue]);
-
-  return (
-    <div className="py-2.5 text-center">
-      <div
-        className={`text-[24px] font-bold tabular-nums leading-none transition-transform duration-200 ${
-          isAnimating ? "-translate-y-[1px] scale-[0.97]" : "translate-y-0 scale-100"
-        } ${disabled ? "text-[#5b6876]" : "text-[#1f2833]"}`}
-      >
-        {String(displayValue).padStart(2, "0")}
-      </div>
-      <p className={`text-[9px] uppercase tracking-[0.14em] mt-1 font-semibold ${disabled ? "text-[#7a8490]" : "text-[#5b6876]"}`}>{label}</p>
-    </div>
-  );
-}
-
-type HeroPrayer = NonNullable<PrayerWallConfig["selectedPrayers"]>[number];
-
-function HeroPrayerCard({
-  mode,
-  prayers = [],
-  onCollect,
-}: {
-  mode: "collect" | "show";
-  prayers?: HeroPrayer[];
-  onCollect?: () => void;
-}) {
-  const [index, setIndex] = useState(0);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-  const [showFullPrayerModal, setShowFullPrayerModal] = useState(false);
-  const prayerTextRef = useRef<HTMLParagraphElement | null>(null);
-
-  const currentPrayer = prayers[index];
-  const canNavigate = prayers.length > 1;
-  const prayerText = currentPrayer?.text ?? "";
-  const textSize =
-    prayerText.length <= 70
-      ? "text-[20px]"
-      : prayerText.length <= 135
-        ? "text-[18px]"
-        : "text-[17px]";
-  const maxVisibleLines = 5;
-
-  useLockBodyScroll(showFullPrayerModal);
-
-  useLayoutEffect(() => {
-    const textEl = prayerTextRef.current;
-    if (!textEl || mode !== "show") return;
-
-    const updateOverflow = () => {
-      window.requestAnimationFrame(() => {
-        const needsMoreSpace = textEl.scrollHeight > textEl.clientHeight + 1;
-        setIsOverflowing(needsMoreSpace);
-      });
-    };
-
-    updateOverflow();
-    window.addEventListener("resize", updateOverflow);
-    return () => window.removeEventListener("resize", updateOverflow);
-  }, [mode, prayerText, textSize]);
-
-  const goToPrayer = (direction: "previous" | "next") => {
-    setIndex((current) => {
-      if (direction === "previous") return (current - 1 + prayers.length) % prayers.length;
-      return (current + 1) % prayers.length;
-    });
-  };
-
-  return (
-    <article className="desktop-next-event-lift relative flex min-h-[270px] w-full flex-col overflow-hidden rounded-[2px] bg-white/93 p-4 backdrop-blur-[1px]">
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-[0.12em] text-[#2d6a4f]">
-            <HeartHandshake className="h-3 w-3" aria-hidden="true" />
-            Peticiones de oracion
-          </span>
-        </div>
-
-        {mode === "collect" ? (
-          <>
-            <h3 className={`${editorialFont.className} type-human-title mb-2 text-[22px] font-bold leading-snug`}>
-              Muro de oraciones · comparte tu petición
-            </h3>
-            <p className="type-system mb-5 text-[15px] leading-relaxed">
-              Tu mensaje es anónimo y será revisado por el equipo.
-            </p>
-            <button
-              type="button"
-              onClick={onCollect}
-              className="mt-auto inline-flex w-fit items-center gap-1 text-[17px] font-semibold leading-tight text-[#2d6a4f] transition-colors hover:text-[#24573f] hover:underline underline-offset-2"
-            >
-              Pedir oración
-              <ArrowRight className="h-3 w-3" aria-hidden="true" />
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="mt-0 flex min-h-0 flex-1 items-center justify-center">
-              {currentPrayer ? (
-                <div className="w-full">
-                  <p
-                    ref={prayerTextRef}
-                    className={`${editorialFont.className} type-human ${textSize} text-center font-normal italic leading-[1.62]`}
-                    style={{
-                      display: "-webkit-box",
-                      WebkitBoxOrient: "vertical",
-                      WebkitLineClamp: maxVisibleLines,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">“</span>
-                    {currentPrayer.text}
-                    <span className="font-serif text-[1.35em] leading-none text-[#9aa3ad]">”</span>
-                  </p>
-                  {isOverflowing && (
-                    <button
-                      type="button"
-                      onClick={() => setShowFullPrayerModal(true)}
-                      className="mx-auto ml-2 mt-4 inline-flex w-fit items-center gap-1 text-[15px] font-normal leading-tight text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-2"
-                    >
-                      Leer completo...
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <p className={`${editorialFont.className} type-human text-center text-[18px] leading-relaxed`}>
-                  La comunidad está orando · únete
-                </p>
-              )}
-            </div>
-
-            {canNavigate && (
-              <div className="mt-3 flex items-center justify-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => goToPrayer("previous")}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#eef2f5] hover:text-[#2d6a4f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93]"
-                  aria-label="Ver oración anterior"
-                >
-                  <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                </button>
-
-                <div className="flex items-center justify-center gap-1.5" aria-label={`Oración ${index + 1} de ${prayers.length}`}>
-                  {prayers.map((prayer, idx) => (
-                    <span
-                      key={prayer._id ?? `${prayer.submittedAt}-${idx}`}
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        idx === index ? "w-7 bg-[#2d6a4f]" : "w-2 bg-[#c9d2d8]"
-                      }`}
-                      aria-hidden="true"
-                    />
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => goToPrayer("next")}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-[#6b7280] transition-colors hover:bg-[#eef2f5] hover:text-[#2d6a4f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f5e93]"
-                  aria-label="Ver siguiente oración"
-                >
-                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {showFullPrayerModal && currentPrayer
-        ? createPortal(
-            <div
-              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 p-4"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Oración completa"
-            >
-              <button
-                type="button"
-                className="absolute inset-0"
-                aria-label="Cerrar oración completa"
-                onClick={() => setShowFullPrayerModal(false)}
-              />
-              <div
-                className="relative max-h-[80vh] w-full max-w-md overflow-hidden border border-black bg-white shadow-[0_18px_48px_rgba(0,0,0,0.45)]"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="flex h-16 items-center justify-between bg-[#757575] pl-5">
-                  <h3 className="text-[17px] font-bold text-white">Oración completa</h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowFullPrayerModal(false)}
-                    className="flex h-full w-14 items-center justify-center bg-[#434343] text-white transition-colors hover:bg-[#2f2f2f]"
-                    aria-label="Cerrar"
-                  >
-                    <span className="text-3xl leading-none">×</span>
-                  </button>
-                </div>
-                <div className="max-h-[calc(80vh-64px)] overflow-y-auto p-6">
-                  <p className={`${editorialFont.className} type-human text-[16px] italic leading-relaxed`}>
-                    “{currentPrayer.text}”
-                  </p>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
-    </article>
-  );
 }
 
 export function HeroSection({
@@ -487,10 +214,6 @@ export function HeroSection({
     return (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null;
   }, [spotlightHero, socialPosts]);
 
-  const spotlightEventUrl = useMemo(() => {
-    if (!isDesktop || !spotlightEvent || typeof window === "undefined") return "";
-    return `${window.location.origin}/#${encodeURIComponent(spotlightEvent.id)}`;
-  }, [isDesktop, spotlightEvent]);
   const spotlightEventSchedule = useMemo<CountdownOccurrence[]>(() => {
     if (!spotlightEvent) return [];
     const schedule =
@@ -635,14 +358,6 @@ export function HeroSection({
     }
   };
 
-  const timeUnits = countdownDisplay
-    ? [
-        { value: countdownDisplay.days, label: "Días" },
-        { value: countdownDisplay.hours, label: "Hrs" },
-        { value: countdownDisplay.minutes, label: "Min" },
-        { value: countdownDisplay.seconds, label: "Seg" },
-      ]
-    : [];
   const countdownIsDisabled = countdownDisplay?.isDisabled ?? false;
   const spotlightEventMapsUrl = spotlightEvent ? getEventMapsUrl(spotlightEvent) : "";
 
@@ -728,188 +443,39 @@ export function HeroSection({
             <div className="w-full grid md:grid-cols-[minmax(290px,390px)_1fr] gap-4 md:gap-5 items-center">
               <div className="hidden md:block">
                 {spotlightEvent && (
-                  <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
-                    <p
-                      className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2"
-                      style={{ color: spotlightAccent }}
-                    >
-                      Nuestro Próximo Evento
-                    </p>
-                    <h3
-                      className="type-human-title mb-5 text-[34px] font-bold leading-[1.04]"
-                      style={{ fontFamily: '"Canela", Georgia, serif' }}
-                    >
-                      {spotlightEvent.title}
-                    </h3>
-                    <div className="type-system space-y-1.5 text-[13px] mb-3.5">
-                      <div className="flex items-start gap-2">
-                        <Calendar className="mt-[2px] h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        <div className="space-y-1">
-                          {spotlightEventSchedule.map((occurrence, index) => (
-                            <span
-                              key={`${occurrence.date.toISOString()}-${index}`}
-                              className="block font-bold text-ink"
-                            >
-                              {formatRegionWeekdayDayMonth(occurrence.date)} · {occurrence.time}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2 min-w-0">
-                        <MapPin className="mt-[2px] h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        <span className="truncate text-ink">
-                          {spotlightEvent.address || spotlightEvent.location}
-                        </span>
-                      </div>
-                    </div>
-
-                    {countdownDisplay && (
-                      <div className={`grid grid-cols-4 border border-[#d5dbe3] divide-x divide-[#d5dbe3] bg-white/95 mb-3 ${countdownIsDisabled ? "opacity-60 saturate-0" : ""}`}>
-                        {timeUnits.map((unit) => (
-                          <CompactCountdownCell
-                            key={unit.label}
-                            value={unit.value}
-                            label={unit.label}
-                            disabled={countdownIsDisabled}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {spotlightEventMapsUrl ? (
-                      <button
-                        type="button"
-                        onClick={() => window.open(spotlightEventMapsUrl, "_blank")}
-                        className="mb-1 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[18px] font-extrabold leading-tight tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
-                        aria-label="Abrir ubicación del evento"
-                      >
-                        <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                        <span className="min-w-0">VER UBICACION</span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled
-                        className="mb-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[17px] font-extrabold leading-tight tracking-[0.02em] text-white opacity-60"
-                      >
-                        <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                        <span className="min-w-0">VER UBICACION</span>
-                      </button>
-                    )}
-
-                    {spotlightEvent.registrationEnabled !== false && (
-                      <Button
-                        onClick={() => setIsRegisterModalOpen(true)}
-                        className="w-full h-10 text-[13px] font-extrabold tracking-[0.04em] text-white rounded-[2px]"
-                        style={{ backgroundColor: spotlightAccent }}
-                      >
-                        REGISTRARSE
-                      </Button>
-                    )}
-                  </article>
+                  <DesktopEventSpotlightCard
+                    event={spotlightEvent}
+                    schedule={spotlightEventSchedule}
+                    accentColor={spotlightAccent}
+                    countdownDisplay={countdownDisplay}
+                    countdownIsDisabled={countdownIsDisabled}
+                    mapsUrl={spotlightEventMapsUrl}
+                    onOpenMaps={() => window.open(spotlightEventMapsUrl, "_blank")}
+                    onRegister={() => setIsRegisterModalOpen(true)}
+                  />
                 )}
 
                 {showCustomCard && customHeroCard && (
-                  <article className="desktop-next-event-lift overflow-hidden rounded-[2px] bg-white/93 p-3 backdrop-blur-[1px]">
-                    <p className="type-system mb-1.5 inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em]">
-                      <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span>AVISO</span>
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setIsLightboxOpen(true)}
-                      aria-haspopup="dialog"
-                      aria-label="Ver imagen en pantalla completa"
-                      className="mx-auto block w-full"
-                    >
-                      <div
-                        className={`group relative w-full overflow-hidden border border-[#d5dbe3] bg-[#f5f6f8] flex items-center justify-center p-1.5 ${
-                          customHeroCard.media.isVertical ? "h-[334px]" : "h-[220px]"
-                        }`}
-                      >
-                        <img
-                          src={customHeroCard.media.url}
-                          alt={customHeroCard.media.alt || "Contenido destacado"}
-                          className="block max-h-full max-w-full w-auto h-auto object-contain"
-                          decoding="async"
-                        />
-
-                        <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
-                          <div className="rounded-[2px] border-2 border-white/15 bg-black/45 p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                            <Maximize2 className="h-6 w-6 text-white" aria-hidden="true" />
-                          </div>
-                        </div>
-
-                        <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
-                          <div className="bg-white/90 rounded-full p-2 shadow">
-                            <Maximize2 className="h-4 w-4 text-black" aria-hidden="true" />
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                    {isLightboxOpen && (
-                      <Lightbox
-                        src={customHeroCard.media.url}
-                        alt={customHeroCard.media.alt || "Contenido destacado"}
-                        onClose={() => setIsLightboxOpen(false)}
-                      />
-                    )}
-                    {customHeroCard.url && (
-                      <Button
-                        asChild
-                        className="mt-2.5 w-full h-9 text-[12px] font-extrabold tracking-[0.04em] text-white rounded-[2px]"
-                        style={{ backgroundColor: CUSTOM_BANNER_CTA }}
-                      >
-                        <a href={customHeroCard.url} target="_blank" rel="noopener noreferrer">
-                          <span className="inline-flex items-center justify-center gap-1.5 w-full">
-                            {customHeroCard.ctaText || "Ver más información"}
-                            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                          </span>
-                        </a>
-                      </Button>
-                    )}
-                  </article>
+                  <DesktopCustomSpotlightCard
+                    card={customHeroCard}
+                    isLightboxOpen={isLightboxOpen}
+                    onOpenLightbox={() => setIsLightboxOpen(true)}
+                    onCloseLightbox={() => setIsLightboxOpen(false)}
+                  />
                 )}
 
                 {showSocialCard && spotlightHero && spotlightHero.type === "social" && (
-                  <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
-                    <p
-                      className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2"
-                      style={{ color: spotlightAccent }}
-                    >
-                      {spotlightHero.network === "instagram" ? "Instagram" : "Facebook"}
-                    </p>
-                    {spotlightSocialPost?.media?.url && (
-                      <div
-                        className={`relative w-full overflow-hidden border border-[#dce2e9] bg-[#f5f6f8] mb-3 ${
-                          spotlightSocialPost.media.isVertical ? "h-[360px]" : "h-[220px]"
-                        }`}
-                      >
-                        <Image
-                          src={spotlightSocialPost.media.url}
-                          alt={spotlightSocialPost.caption || "Publicación destacada"}
-                          fill
-                          sizes="(min-width: 768px) 390px"
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <a
-                      href={spotlightHero.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm font-semibold"
-                      style={{ color: spotlightAccent }}
-                    >
-                      Ver publicación
-                      <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                    </a>
-                  </article>
+                  <DesktopSocialSpotlightCard
+                    hero={spotlightHero}
+                    post={spotlightSocialPost}
+                    accentColor={spotlightAccent}
+                  />
                 )}
 
                 {showPrayerCollectCard && (
                   <HeroPrayerCard
                     mode="collect"
+                    editorialFontClassName={editorialFont.className}
                     onCollect={() => setIsPrayerModalOpen(true)}
                   />
                 )}
@@ -918,6 +484,7 @@ export function HeroSection({
                   <HeroPrayerCard
                     mode="show"
                     prayers={prayerWall.selectedPrayers}
+                    editorialFontClassName={editorialFont.className}
                   />
                 )}
               </div>
