@@ -691,16 +691,24 @@ export function DirectivaContent({
           </div>,
           document.body,
         )}
-      <div className="desktop-content-pane min-h-screen max-w-[950px] mx-auto px-4 md:px-8 py-6 pt-[78px] md:pt-[88px] bg-paper md:border-x focus:outline-none">
-        <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
+      <div className="desktop-content-pane min-h-screen max-w-[1150px] mx-auto px-4 md:px-0 py-6 pt-[78px] md:pt-[88px] bg-paper md:border-x focus:outline-none">
+        <div className="max-w mx-auto md:pt-1 md:px-16">
           {/* Header */}
           <div className="mb-6 pb-5 border-b border-border/70">
-            <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">
-              Directiva de jovenes
-            </h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              Miembros de la directiva regional
-            </p>
+            <div className="grid grid-cols-1 gap-4 items-center md:grid-cols-[auto_minmax(0,1fr)]">
+              <div
+                className="hidden h-20 w-20 bg-contain bg-center bg-no-repeat md:block md:bg-[url('/images/directorio.png')]"
+                aria-hidden="true"
+              />
+              <div className="min-w-0">
+                <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">
+                  Directiva de jovenes
+                </h1>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Miembros de la directiva regional
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Search Bar */}

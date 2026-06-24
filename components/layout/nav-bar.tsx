@@ -137,12 +137,12 @@ export function AppHeader({
     <>
       <header
         data-app-header
-        className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-brand border-b border-black/15 text-white h-[51px] md:h-[45px] shadow-[inset_0_-1px_0_rgba(28,25,23,0.28)]`}
+        className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-brand border-b border-black/15 text-white h-[51px] md:h-[48px] shadow-[inset_0_-1px_0_rgba(28,25,23,0.28)]`}
       >
-        <div className="h-full max-w-[950px] mx-auto relative z-[61]">
+        <div className="h-full max-w-[1150px] mx-auto relative z-[61]">
           <div
             ref={desktopTrackRef}
-            className="desktop-header-track hidden md:flex cursor-default items-center h-full px-4 lg:px-0 gap-2"
+            className="desktop-header-track hidden md:flex cursor-default items-center h-full px-4 lg:px-4 gap-2"
             onMouseMove={handleDesktopTrackMouseMove}
             onMouseLeave={clearDesktopHighlight}
           >

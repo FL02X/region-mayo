@@ -1,6 +1,8 @@
 "use client";
 
-// Donde: home, hero superior desktop. Viewports: desktop. Funcion: muestra carousel, spotlight elegido por ranking y CTA hacia calendario.
+// Donde: home, hero superior desktop. 
+// Viewports: desktop. 
+// Funcion: muestra carousel, spotlight elegido por ranking y CTA hacia calendario.
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Newsreader, Playfair_Display } from "next/font/google";
@@ -389,8 +391,8 @@ export function HeroSection({
   }
 
   return (
-    <div className="w-full relative bg-[#f1f1f1]">
-      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x">
+    <div className="w-full relative bg-[#f1f1f1]"> {/* 950px */}
+      <div className="desktop-content-pane max-w-[1150px] mx-auto bg-[#ffffff] md:border-x">
         <section
           className="relative overflow-hidden h-[min(60vh,480px)] md:h-auto md:min-h-[420px]"
           aria-label="Bienvenida a Región Mayo"
@@ -439,8 +441,8 @@ export function HeroSection({
             aria-hidden="true"
           />
 
-          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[70px] md:min-h-[420px] md:px-6 md:pb-8 md:pt-[78px]">
-            <div className="w-full grid md:grid-cols-[minmax(290px,390px)_1fr] gap-4 md:gap-5 items-center">
+          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[70px] md:min-h-[420px] md:px-16 md:pb-8 md:pt-[78px]">
+            <div className="w-full grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 md:gap-5 items-center">
               <div className="hidden md:block">
                 {spotlightEvent && (
                   <DesktopEventSpotlightCard
@@ -490,11 +492,11 @@ export function HeroSection({
               </div>
 
               <div className="w-full max-w-[390px] flex flex-col justify-center text-center md:text-left md:justify-self-end">
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/85 opacity-75">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/95">
                   Iglesia Gentil de Cristo
                 </p>
-                <h1 className={`${heroTitleFont.className} mb-5 text-[2.05rem] font-semibold leading-[1.04] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)] sm:text-[2.45rem]`}>
-                  <span className="block">Calendario</span>
+                <h1 className={`${heroTitleFont.className} mb-5 text-[2.05rem] font-semibold leading-[1.08] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)] sm:text-[2.45rem]`}>
+                  <span className="block">Sitio oficial de la</span>
                   <span className="block font-normal">Región Mayo</span>
                 </h1>
                 <button

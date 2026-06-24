@@ -754,7 +754,7 @@ function TemploCard({
       </div>
 
       {/* Content */}
-      <div className="p-4 pb-0 flex flex-col flex-1">
+      <div className="p-4 md:p-6 pb-0 flex flex-col flex-1">
         <div data-eq-head>
           <h3 className={`${cardTitleFont.className} font-semibold text-lg text-foreground leading-snug mb-3`}>
             <HighlightedText text={templo.temploName} query={searchQuery} />
@@ -762,7 +762,7 @@ function TemploCard({
 
           {/* Availability badge — focus on anticipation (next service) or live state */}
           {availability && (
-            <div className="mb-2 -ml-2">
+            <div className="mb-2">
               <span className={`availability-pill inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-none whitespace-nowrap ${availabilityBadgeClasses}`}>
                 <Clock className="h-3.5 w-3.5 opacity-80" aria-hidden="true" />
                 {(availability.tone === "open" || availability.tone === "opening-soon") ? (
@@ -790,7 +790,7 @@ function TemploCard({
 
           {/* Address preview (always visible if present) */}
           {templo.address && (
-            <div className="flex items-start gap-2 mb-0 mt-4">
+            <div className="flex items-start gap-2 mb-1 mt-4">
               <MapPin
                 className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5"
                 aria-hidden="true"
@@ -805,12 +805,12 @@ function TemploCard({
           {templo.googleMapsUrl && (
             <button
               onClick={openGoogleMaps}
-              className="w-full flex min-h-10 items-start justify-start gap-2 text-left text-sm text-primary font-normal leading-tight hover:text-primary/80 hover:underline underline-offset-2 transition-colors pt-1 pb-3 px-4 -mx-4"
+              className="w-full mb-2.5 md:mb-5 flex min-h-10 items-start justify-start gap-2 text-left text-sm text-primary font-normal leading-tight hover:text-primary/80 hover:underline underline-offset-2 transition-colors pt-1 pb-3 px-4 -mx-4"
               aria-label={`Ver ubicación de ${templo.temploName} en Google Maps`}
             >
               <div className="flex min-w-0 items-start gap-2">
                 <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className="min-w-0">Ver ubicación en Maps</span>
+                <span className="min-w-0">Ver ubicación</span>
               </div>
               <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             </button>
@@ -867,7 +867,7 @@ function TemploCard({
                       </p>
                       <Link
                         href={`/pastores#${pastor.id}`}
-                        className="inline-flex items-center gap-1 w-fit text-md font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
+                        className="inline-flex items-center gap-1 w-fit text-[16px] font-normal text-primary hover:text-primary/80 hover:underline underline-offset-2 leading-tight mb-2 transition-colors"
                         aria-label={`Ver información de ${pastor.fullName}`}
                       >
                         <span className="inline-block">
@@ -1534,14 +1534,22 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
           </div>
         </div>
       )}
-      <div className={`desktop-content-pane ${shouldShowLoader ? "invisible" : "visible"} mx-auto w-full max-w-[950px] overflow-x-hidden bg-paper px-4 py-8 pt-[82px] focus:outline-none md:border-x md:px-8 md:pt-[88px]`}>
-        <div className="max-w-4xl mx-auto md:pl-4 md:pr-4 md:pt-1">
+      <div className={`desktop-content-pane ${shouldShowLoader ? "invisible" : "visible"} mx-auto w-full max-w-[1150px] overflow-x-hidden bg-paper px-4 md:px-0 py-8 pt-[82px] focus:outline-none md:border-x md:pt-[88px]`}>
+        <div className="max-w mx-auto md:px-16 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">
-          <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">Asista a nuestras iglesias</h1>
-          <p className="text-[16px] text-muted-foreground mt-2">
-            Todos son invitamos a nuestros servicios. Busque el templo mas cercano a usted.
-          </p>
+          <div className="grid grid-cols-1 gap-4 items-center md:grid-cols-[auto_minmax(0,1fr)]">
+            <div
+              className="hidden h-20 w-20 bg-contain bg-center bg-no-repeat md:block md:bg-[url('/images/iglesias2.png')]"
+              aria-hidden="true"
+            />
+            <div className="min-w-0">
+              <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">Asista a nuestras iglesias</h1>
+              <p className="text-[16px] text-muted-foreground mt-2">
+                Todos son invitamos a nuestros servicios. Busque el templo mas cercano a usted.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Search Bar */}

@@ -10,9 +10,9 @@ interface DesktopSearchProps {
 
 export function DesktopSearch({ onSubmit }: DesktopSearchProps) {
   return (
-    <div className="w-[180px] shrink-0 h-full items-center flex">
+    <div className="w-[200px] shrink-0 h-full items-center flex">
       <form
-        className="relative w-full h-[32px] max-[914px]:h-[40px] bg-[#f7f7f7] rounded-[2px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
+        className="relative w-full h-[34px] max-[914px]:h-[40px] bg-[#f7f7f7] rounded-[4px] flex items-center overflow-hidden border border-[#9aa1ab] focus-within:border-[#6c8fbc] transition-colors"
         onSubmit={onSubmit}
       >
         <input
@@ -25,10 +25,10 @@ export function DesktopSearch({ onSubmit }: DesktopSearchProps) {
         <div className="h-[20px] w-px bg-[#b2b8c1] shrink-0" aria-hidden="true" />
         <button
           type="submit"
-          className="desktop-search-button w-[36px] max-[914px]:w-[44px] h-full flex items-center justify-center bg-[#f4f4f4] hover:bg-[#ececec] transition-colors cursor-pointer"
+          className="desktop-search-button w-[36px] max-[914px]:w-[44px] h-full flex items-center justify-center bg-transparent hover:bg-[#ececec] transition-colors cursor-pointer"
           aria-label="Ejecutar búsqueda"
         >
-          <Search className="desktop-search-icon h-[16px] w-[16px] text-[#4a4a4a]" strokeWidth={1.6} />
+          <Search className="desktop-search-icon h-[16px] w-[16px] text-[#4a4a4a]" strokeWidth={1.2} />
         </button>
       </form>
     </div>

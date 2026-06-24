@@ -49,7 +49,7 @@ export function DesktopEventSpotlightCard({
     : [];
 
   return (
-    <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-4 rounded-[2px]">
+    <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-6 rounded-[2px]">
       <p
         className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2"
         style={{ color: accentColor }}

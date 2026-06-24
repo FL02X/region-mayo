@@ -372,7 +372,7 @@ export function EventsFeed({
       className="w-full relative bg-[#f1f1f1]"
       /* [#f1f1f1] */ data-events-feed="true"
     >
-      <div className="desktop-content-pane max-w-[950px] mx-auto bg-[#ffffff] md:border-x">
+      <div className="desktop-content-pane max-w-[1150px] mx-auto bg-[#ffffff] md:border-x">
         {/* Priority spotlight section (mobile only) */}
         <div className="offline-hide-when-offline md:hidden">
           <CountdownSection
@@ -409,11 +409,11 @@ export function EventsFeed({
         {/* Calendar section */}
         <section
           id="calendario"
-          className={`mt-0 md:mt-0 px-4 md:px-[32px] pt-6 pb-4 border-border/70 bg-muted/20 ${
+          className={`mt-0 md:mt-0 px-4 md:px-16 pt-6 md:pt-8 pb-4 border-border/70 bg-muted/20 ${
             hasFirstVisitDivider ? "" : "border-t md:border-t-0"
           }`}
         >
-          <div className="mt-1 max-w-4xl mx-auto w-full">
+          <div className="mt-1 max-w mx-auto w-full">
 
             <div className="mb-5">
               <h2
@@ -491,9 +491,9 @@ export function EventsFeed({
         {shouldRenderLegacyCalendar && (
           <section
             id="eventos"
-            className="bg-muted/20 px-4 md:px-[32px] md:py-[24px] pt-4 pb-14"
+            className="bg-muted/20 px-4 md:px-16 md:py-[24px] pt-4 pb-14"
           >
-          <div className="mt-0 max-w-4xl mx-auto w-full">
+          <div className="mt-0 max-w mx-auto w-full">
             {/* Month label */}
             <div className="mb-6 flex items-start justify-between gap-4">
               <div className="min-w-0">
