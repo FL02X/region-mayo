@@ -79,7 +79,7 @@ export function CountdownEventSpotlightCard({
           {event.title}
         </h3>
 
-        <div className="space-y-1.5 text-sm text-muted-foreground">
+        <div className="">
           <div className="flex items-start gap-2 text-foreground mb-3">
             <Calendar
               className="mt-[3px] h-4.5 w-4.5 shrink-0"

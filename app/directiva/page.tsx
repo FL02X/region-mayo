@@ -16,6 +16,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function DirectivaPage() {
+  //La cookie que le dice que vista debe renderizar al entrar
   const initialViewMode = await readInitialViewMode("rm-view-mode-directiva");
   const [region, generations] = await Promise.all([
     getRegionConfig("region-mayo"),

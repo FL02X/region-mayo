@@ -1,4 +1,6 @@
-// Donde: bloque mobile de primera visita en home. Viewports: mobile. Funcion: centraliza textos, preguntas, storage keys y duraciones.
+// Donde: bloque mobile de primera visita en home.
+//  Viewports: mobile. 
+// Funcion: centraliza textos, preguntas, storage keys y duraciones.
 export type FirstVisitQuestion = {
   question: string;
   answer: string;

@@ -1,4 +1,6 @@
-// Donde: bloque mobile de primera visita en home. Viewports: mobile. Funcion: piezas visuales para card, aviso ocultado y modal FAQ.
+// Donde: bloque mobile de primera visita en home. 
+// Viewports: mobile. 
+// Funcion: piezas visuales para card, aviso ocultado y modal FAQ.
 import Image from "next/image";
 import { ChevronDown, ChevronRight, Undo2 } from "lucide-react";
 import type { RefObject } from "react";
