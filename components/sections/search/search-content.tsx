@@ -95,9 +95,9 @@ function SearchContentInner({ data }: SearchContentProps) {
 
   return (
     <div className="w-full relative bg-[#f1f1f1]" id="main-content">
-      <div className="desktop-content-pane max-w-[1150px] min-h-[calc(110dvh-51px)] md:min-h-[calc(110dvh-45px)] mx-auto px-4 md:px-0 py-8 pt-[82px] md:pt-[88px] bg-[#ffffff] md:border-x border-[#dce2e9] dark:border-[#27272a] focus:outline-none">
+      <div className="desktop-content-pane max-w-[1150px] min-h-[calc(110dvh-51px)] md:min-h-[calc(110dvh-45px)] mx-auto px-4 md:px-0 py-8 pt-[82px] md:pt-[88px] bg-paper md:border-x border-[#dce2e9] dark:border-[#27272a] focus:outline-none">
         <div className="max-w mx-auto md:px-16 md:pt-1">
-          <div className="mb-4 space-y-3 rounded-[2px] border border-[#d7dbe1] bg-[#e9eaec] px-2.5 py-2.5">
+          <div className="mb-6 space-y-3 rounded-[2px] border border-[#d7dbe1] bg-paper-highlight px-2.5 py-2.5">
             <form
               onSubmit={(e) => e.preventDefault()}
               className="relative w-full h-[42px] bg-paper-highlight rounded-[2px] flex items-center overflow-hidden border border-[#b8c1cc]"
@@ -114,7 +114,7 @@ function SearchContentInner({ data }: SearchContentProps) {
               />
               <button
                 type="submit"
-                className="w-[42px] h-full flex items-center justify-center bg-[#2f5e93] hover:bg-[#284e79] transition-colors"
+                className="w-[42px] h-full flex items-center justify-center bg-brand hover:bg-[#284e79] transition-colors"
                 aria-label="Ejecutar búsqueda"
               >
                 <Search className="h-[17px] w-[17px] text-white" strokeWidth={2} />
@@ -131,16 +131,16 @@ function SearchContentInner({ data }: SearchContentProps) {
                     type="button"
                     onClick={() => setActiveFilter(filter.key)}
                     className={[
-                      "shrink-0 border px-3 py-1.5 text-[17px] transition-colors rounded-[2px]",
+                      "shrink-0 border px-3 mb-3 py-1.5 text-[17px] transition-colors rounded-[2px]",
                       isActive
-                        ? "bg-[#2f5e93] text-white border-[#2f5e93]"
+                        ? "bg-brand-soft text-ink border-[#2f5e93]"
                         : "bg-white text-[#2f5e93] border-[#d2d6dc] hover:bg-[#f6f8fb]",
                     ].join(" ")}
                     aria-pressed={isActive}
                     aria-label={`Filtrar por ${filter.label}`}
                   >
-                    {filter.label}
-                    {hasActiveQuery ? <span className="opacity-80">({count})</span> : null}
+                    {filter.label} {" "}
+                    {hasActiveQuery ? <span className="">({count})</span> : null}
                   </button>
                 );
               })}
@@ -149,7 +149,7 @@ function SearchContentInner({ data }: SearchContentProps) {
           </div>
 
           {hasActiveQuery && !isRefreshingResults && (
-            <p className="mb-7 px-0.5 text-[13px] text-[#6f7480] leading-tight" aria-live="polite">
+            <p className="mb-8 px-0.5 text-[15px] text-[#6f7480] leading-tight" aria-live="polite">
               {filteredResults.length} resultado{filteredResults.length !== 1 ? "s" : ""} obtenido{filteredResults.length !== 1 ? "s" : ""}
             </p>
           )}
@@ -183,7 +183,7 @@ function SearchContentInner({ data }: SearchContentProps) {
             </div>
           ) : hasActiveQuery ? null : (
             <div className="py-7 ml-2 text-foreground">
-              <p className="text-lg text-[15px] text-muted-foreground">Escriba en el campo "Buscar"</p>
+              <p className="text-[16px] text-muted-foreground">Escriba en el campo "Buscar"</p>
             </div>
           )}
         </div>

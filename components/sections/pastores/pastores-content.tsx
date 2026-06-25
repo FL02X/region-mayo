@@ -161,8 +161,8 @@ function PastorCard({
         id={pastor.id}
         className="md:bg-card md:border-y md:border-border/80 scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:border-x md:transition-all md:duration-700"
       >
-        <div className="flex gap-3 px-0 py-4 md:gap-5 md:px-4 md:py-5">
-          <div className="offline-hide-when-offline offline-aware-image offline-aware-image--fixed relative h-[82px] w-[82px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
+        <div className="flex gap-4 px-0 py-4 md:gap-5 md:px-4 md:py-5">
+          <div className="offline-hide-when-offline offline-aware-image offline-aware-image--fixed relative h-[112px] w-[112px] shrink-0 bg-muted md:h-[108px] md:w-[112px]">
             {pastor.photo ? (
               <Image
                 src={getPastorImageUrl(pastor.photo, "thumb")}
@@ -182,7 +182,7 @@ function PastorCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className={`${cardTitleFont.className} text-[16px] font-bold leading-snug text-foreground md:text-[21px]`}>
+            <h3 className={`${cardTitleFont.className} text-[18px] font-bold leading-snug text-foreground md:text-[21px]`}>
               <HighlightedText text={pastor.fullName} query={searchQuery} />
             </h3>
             {pastor.temploName && (

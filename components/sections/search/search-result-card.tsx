@@ -119,7 +119,7 @@ export function SearchResultCard({
         )}
       </div>
       <div className="p-4 flex flex-col flex-1 sm:pr-4 pointer-events-none">
-        <span className="text-[10px] font-semibold tracking-[0.14em] text-[#2f5e93] mb-1 uppercase">
+        <span className="text-[13px] font-semibold tracking-[0.14em] text-[#2f5e93] mb-4 uppercase">
           {label}
         </span>
         <h3 className="text-[20px] sm:text-[21px] font-semibold text-[#222b35] dark:text-gray-100 sm:group-hover:text-[#2f5e93] transition-colors leading-snug mb-1 tracking-tight">
@@ -135,9 +135,9 @@ export function SearchResultCard({
             <ResultHighlightedText text={description} query={query} />
           </p>
         ) : null}
-        <div className="mt-4 sm:hidden flex items-center justify-end gap-1 text-[13px] uppercase tracking-wide text-[#2f5e93]">
-          <span className="font-semibold">Toca para ver</span>
-          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+        <div className="mt-6 sm:hidden flex items-center justify-end gap-1 text-[15px] uppercase tracking-wide text-[#2f5e93]">
+          <span className="font-bold">Toca para ver información</span>
+          <ChevronRight className="h-7 w-7" aria-hidden="true" />
         </div>
       </div>
     </Link>
