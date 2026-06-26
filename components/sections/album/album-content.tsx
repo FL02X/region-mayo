@@ -96,11 +96,11 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
             {/* <p className="mb-5 text-[12px] font-semibold uppercase text-white/42">
               Archivo
             </p> */}
-            <h1 className="max-w-[11ch] font-serif text-[2.85rem] font-normal leading-[0.95] text-white md:text-[4rem]">
+            <h1 className={`${editorialFont.className} max-w-[11ch] text-[3rem] font-normal leading-[0.95] text-ink-white md:text-[4rem]`}>
               Álbum de Actividades
             </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/85 md:text-[17px]">
-              Revive momentos especiales de nuestros actividades ✨
+            <p className="mt-4 max-w-xl text-[15px] leading-6 text-white/85 md:text-[17px]">
+                Archivo de fotos y grabaciones de las actividades regionales y generales de la Iglesia Gentil de Cristo.
             </p>
           </section>
 
@@ -129,7 +129,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
                 Añadidos recientemente
               </h2>
             </div>
-            <div className="mt-1">
+            <div className="mt-4">
               {activeRecentAlbums.length > 0 ? (
                 activeRecentAlbums.map((album) => (
                   <AlbumRecentItem key={album.id} album={album} />
@@ -772,7 +772,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   Álbum de Actividades
                 </h1>
                 <p className="mt-2 text-[15px] text-muted-foreground">
-                  Revive los momentos especiales de nuestros eventos.
+                  Archivo de fotos y grabaciones de las actividades regionales y generales.
                 </p>
               </div>
             </div>

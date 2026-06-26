@@ -409,7 +409,7 @@ export function EventsFeed({
         {/* Calendar section */}
         <section
           id="calendario"
-          className={`mt-0 md:mt-0 px-4 md:px-16 pt-6 md:pt-8 pb-4 border-border/70 bg-muted/20 ${
+          className={`mt-0 md:mt-0 px-4 md:px-16 pt-9 md:pt-8 pb-4 border-border/70 bg-muted/20 ${
             hasFirstVisitDivider ? "" : "border-t md:border-t-0"
           }`}
         >
@@ -418,7 +418,7 @@ export function EventsFeed({
             <div className="mb-5">
               <h2
                 id="calendar-title"
-                className={`${editorialFont.className} type-human-title text-[1.625rem] font-semibold tracking-tight mb-2`}
+                className={`${editorialFont.className} type-human-title text-[1.725rem] font-semibold tracking-tight mb-2`}
               >
                 Calendario 2026
               </h2>

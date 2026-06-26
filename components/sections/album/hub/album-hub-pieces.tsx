@@ -1,5 +1,8 @@
-// Donde: ruta /album. Viewports: desktop y mobile. Funcion: muestra accesos a galerias/grabaciones y la lista reciente del hub.
+// Donde: ruta /album. 
+// Viewports: desktop y mobile. 
+// Funcion: muestra accesos a galerias/grabaciones y la lista reciente del hub.
 import { useEffect, useRef, useState } from "react";
+import { Newsreader } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,6 +17,13 @@ import {
 } from "@/components/sections/album/shared/album-utils";
 
 const HUB_TAP_FEEDBACK_CLASS = "bg-white/[0.08]";
+
+const editorialFont = Newsreader({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
+});
 
 function useMobileTapFeedback() {
   const isMobile = useIsMobile();
@@ -114,7 +124,7 @@ export function AlbumHubEntryCard({
         router.push(href);
       }}
       onPointerDown={triggerFlick}
-      className="relative flex min-h-[142px] overflow-hidden border border-black bg-paper p-[7px] text-ink transition-[border-color,box-shadow] md:block md:min-h-0 md:p-2 md:hover:shadow-[0_16px_45px_rgba(0,0,0,0.28)]"
+      className="relative flex min-h-[142px] overflow-hidden border border-black bg-ink-white p-[7px] text-ink transition-[border-color,box-shadow] md:block md:min-h-0 md:p-2 md:hover:shadow-[0_16px_45px_rgba(0,0,0,0.28)]"
     >
       <Link
         href={href}
@@ -257,11 +267,11 @@ export function AlbumRecentItem({ album }: { album: Album }) {
             href={getAlbumDetailPath(album)}
             aria-label={`Abrir ${album.title}`}
             onPointerDown={triggerFlick}
-            className="block max-w-full font-serif text-[15px] font-normal leading-tight text-white transition-colors hover:text-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className={`${editorialFont.className} block max-w-full text-[18px] font-normal leading-tight text-white transition-colors hover:text-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
           >
             <span className="block truncate">{album.title}</span>
           </Link>
-          <p className="mt-1 truncate text-[11px] uppercase text-white/42">
+          <p className="mt-1 truncate text-[11px] uppercase text-white/62">
             {formatAlbumPreviewDate(album.startDate)} ·{" "}
             {formatHubRecentContext(album)}
           </p>

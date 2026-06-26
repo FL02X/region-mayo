@@ -48,7 +48,7 @@ export function MobileHeroTitleBand({
   return (
     <div
       data-mobile-hero-title-band
-      className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] border-[#000000] px-5 pb-3 pt-3 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-10px_18px_rgba(20,35,50,0.10)]"
+      className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] border-[#000000] px-5 pb-4.5 pt-4.5 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-10px_18px_rgba(20,35,50,0.10)]"
     >
       <MobileHeroWatermark />
       <div className="relative z-10 flex items-center">

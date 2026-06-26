@@ -71,6 +71,7 @@
   --bg-paper-dark: #EAE6DF;
   /* OLD NAV AND HERO COLOR: #21252b */
   --text-ink: #1C1917;
+  --text-ink-white: #e9e8e0;
   --text-ink-soft: #292524;
   --text-muted: #57534E;
   --text-muted-light: #78716C;
@@ -166,6 +167,7 @@
   --color-paper-highlight: var(--bg-paper-highlight);
   --color-paper-dark: var(--bg-paper-dark);
   --color-ink: var(--text-ink);
+  --color-ink-white: var(--text-ink-white);
   --color-ink-soft: var(--text-ink-soft);
   --color-ink-muted: var(--text-muted);
   --color-ink-muted-light: var(--text-muted-light);

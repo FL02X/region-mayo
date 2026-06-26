@@ -60,6 +60,6 @@ export const FIRST_VISIT_COPY = {
   modalTitle: "¿Vienes por primera vez?",
   cardTitle: "¿Vienes por primera vez? 👋",
   cardDescription:
-    "Todos son bienvenidos. Resuelva sus dudas antes de asistir a cualquier de nuestros cultos. ",
+    "Todos son bienvenidos. Resuelva sus dudas antes de asistir a los cultos de la Iglesia Gentil de Cristo. ",
   cardButtonLabel: "Qué esperar al asistir",
 };

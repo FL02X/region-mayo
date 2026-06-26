@@ -60,7 +60,7 @@ export function CountdownEventSpotlightCard({
 }) {
   return (
     <div
-      className={`desktop-card-lift border bg-paper-highlight border-x border-b border-t-0 overflow-hidden mb-6 ${MOBILE_FLOATING_CARD_CLASS}`}
+      className={`desktop-card-lift border bg-paper-highlight border-x border-b border-t-0 overflow-hidden ${MOBILE_FLOATING_CARD_CLASS}`}
     >
       <div className="h-[5px] bg-brand" aria-hidden="true" />
 
