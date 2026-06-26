@@ -263,6 +263,17 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  html[data-in-app-browser="true"],
+  html[data-in-app-browser="true"] body {
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  html[data-in-app-browser="true"] body {
+    font-size: calc(16px * var(--app-font-scale, 1));
+    line-height: 1.52;
+  }
+
   @supports (zoom: 1) {
     html {
       zoom: var(--app-zoom);

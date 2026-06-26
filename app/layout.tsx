@@ -124,6 +124,24 @@ export default async function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  var ua = navigator.userAgent || "";
+                  var isInAppBrowser =
+                    /Instagram|FBAN|FBAV|FB_IAB|FB4A|Facebook/i.test(ua) ||
+                    /; wv\\)/i.test(ua);
+
+                  if (isInAppBrowser) {
+                    document.documentElement.dataset.inAppBrowser = "true";
+                  }
+                } catch (error) {}
+              })();
+            `,
+          }}
+        />
         <style>{`
           html,
           body {
