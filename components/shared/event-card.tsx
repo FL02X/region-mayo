@@ -1496,7 +1496,7 @@ export function EventCard({
       >
         {/* ── Image with date/time strip ── */}
         <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
-          {event.image ? (
+          {event.image ? ( 
             <>
               <Image
                 src={gridThumbnailUrl}

@@ -1,6 +1,8 @@
 "use client";
 
-// Donde: home, hero superior mobile. Viewports: mobile. Funcion: muestra imagen principal, texto oficial y CTA GPS hacia templo cercano.
+// Donde: home, hero superior mobile. 
+// Viewports: mobile.
+//  Funcion: muestra imagen principal, texto oficial y CTA GPS hacia templo cercano.
 import { useEffect, useRef, useState } from "react";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { findNearestChurch } from "@/lib/location-service";
