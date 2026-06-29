@@ -66,7 +66,7 @@ function RecordingAlbumListItem({ album }: { album: Album }) {
             {formatAlbumPreviewDate(album.startDate)}
           </p>
           <p
-            className={`${editorialFont.className} text-ink-white font-bold line-clamp-2 text-sm`}
+            className={`${editorialFont.className} text-ink-white font-bold line-clamp-4 text-sm`}
           >
             {album.title}
           </p>
