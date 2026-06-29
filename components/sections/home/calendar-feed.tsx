@@ -424,12 +424,15 @@ export function EventsFeed({
         >
           <div className="mt-1 max-w mx-auto w-full">
 
-            <div className="mb-5">
+            <div className="mb-9">
               <h2
                 id="calendar-title"
-                className={`${editorialFont.className} type-human-title text-[1.725rem] font-semibold tracking-tight mb-2`}
+                className={`${editorialFont.className} flex flex-row gap-3 items-center type-human-title text-[1.725rem] font-semibold tracking-tight mb-1.5`}
               >
-                Calendario 2026
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-icon text-brand lucide-calendar mt-[2px]"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+                <span className="mt-3">
+                  Calendario 2026
+                </span>
               </h2>
               <p className="type-system text-[15px] mt-0.5">
                 Selecciona un mes para ver los eventos

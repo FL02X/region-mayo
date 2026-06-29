@@ -1492,7 +1492,7 @@ export function EventCard({
       <article
         id={articleId}
         data-eq-card
-        className="self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+        className="self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 mx-[-7px]"
       >
         {/* ── Image with date/time strip ── */}
         <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
@@ -1537,7 +1537,7 @@ export function EventCard({
         </div>
 
         {/* ── Card body ── */}
-        <div className="p-5 bg-paper-highlight">
+        <div className="p-5 pb-7 bg-paper-highlight">
           <div data-eq-head>
             {/* Event type — plain uppercase label */}
             <span className={`mb-3 inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[13px] font-medium uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}>
