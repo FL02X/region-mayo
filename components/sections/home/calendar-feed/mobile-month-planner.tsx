@@ -86,7 +86,7 @@ const MonthCalendarGrid = memo(function MonthCalendarGrid({
             {CALENDAR_MONTHS[monthParts.month - 1]}
           </h3>
         </div>
-        <p className="flex items-center gap-1.5 text-[14px] text-ink">
+        <p className="flex items-center gap-1.5 text-[14px] text-ink-soft">
           Desliza para cambiar
           {/* <ArrowRight className="mt-1 h-4.5 w-4.5" aria-hidden="true" /> */}
         </p>
@@ -452,9 +452,9 @@ export function MobileMonthPlanner({
       </div>
 
       <div className="mt-5">
-        <div className="mb-3 flex items-end justify-between gap-3 border-b pb-2">
+        <div className="mb-3 flex items-end justify-between gap-3 border-b-2 border-border pb-2">
           <div>
-            <p className="text-[14px] font-semibold uppercase tracking-[0.14em] text-brand-text">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
               Eventos del mes
             </p>
             {!isMonthContentPending && (

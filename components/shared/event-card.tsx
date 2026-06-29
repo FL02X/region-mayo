@@ -59,9 +59,7 @@ import { useConnectivity } from "@/hooks/use-connectivity";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
-import {
-  formatRegionDayMonth,
-} from "@/lib/region-date";
+import { formatRegionDayMonth } from "@/lib/region-date";
 import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
@@ -79,8 +77,8 @@ const eventTypeLabels: Record<EventType, string> = {
   campana: "Campaña",
   convencion: "Convención General",
   recorrido: "Recorrido Regional",
-  confraternidadJuvenilRegional: "Confraternidad Juvenil Regional",
-  confraternidadJuvenilGeneral: "Confraternidad Juvenil General",
+  confraternidadJuvenilRegional: "Confra. Juvenil Regional",
+  confraternidadJuvenilGeneral: "Confra. Juvenil General",
   cultoJuvenil: "Culto Juvenil",
   culto: "Culto",
   visita: "Visita",
@@ -110,22 +108,20 @@ const eventTypeIcons: Record<EventType, typeof Church> = {
 };
 
 const eventTypeBadgeClasses: Record<EventType, string> = {
-  campana: "border-[#2f5e93]/25 bg-[#e6edf6] text-[#2f5e93]",
-  convencion: "border-[#8c731e]/25 bg-[#fdf6e1] text-[#8c731e]",
-  recorrido: "border-[#1a737f]/25 bg-[#e1f3f6] text-[#1a737f]",
-  confraternidadJuvenilRegional:
-    "border-[#a83e3e]/25 bg-[#fef2f2] text-[#a83e3e]",
-  confraternidadJuvenilGeneral:
-    "border-[#a83e3e]/25 bg-[#fef2f2] text-[#a83e3e]",
-  cultoJuvenil: "border-[#a83e3e]/25 bg-[#fef2f2] text-[#a83e3e]",
-  culto: "border-[#26733a]/25 bg-[#e6f6eb] text-[#26733a]",
-  visita: "border-[#1a737f]/25 bg-[#e1f3f6] text-[#1a737f]",
-  ensayo: "border-[#26733a]/25 bg-[#e6f6eb] text-[#26733a]",
-  actividad: "border-[#26733a]/25 bg-[#e6f6eb] text-[#26733a]",
-  estudioBiblico: "border-[#26733a]/25 bg-[#e6f6eb] text-[#26733a]",
-  biregional: "border-[#8c731e]/25 bg-[#fdf6e1] text-[#8c731e]",
-  congresoBrilla: "border-[#6a3f91]/25 bg-[#f1e6f6] text-[#6a3f91]",
-  boda: "border-[#6a3f91]/25 bg-[#f1e6f6] text-[#6a3f91]",
+  campana: "border-[#2f5e93]/25  text-[#2f5e93]",
+  convencion: "border-[#8c731e]/25  text-[#8c731e]",
+  recorrido: "border-[#1a737f]/25  text-[#1a737f]",
+  confraternidadJuvenilRegional: "border-[#a83e3e]/25  text-[#a83e3e]",
+  confraternidadJuvenilGeneral: "border-[#a83e3e]/25  text-[#a83e3e]",
+  cultoJuvenil: "border-[#a83e3e]/25  text-[#a83e3e]",
+  culto: "border-[#26733a]/25 text-[#26733a]",
+  visita: "border-[#1a737f]/25  text-[#1a737f]",
+  ensayo: "border-[#26733a]/25 text-[#26733a]",
+  actividad: "border-[#26733a]/25 text-[#26733a]",
+  estudioBiblico: "border-[#26733a]/25  text-[#26733a]",
+  biregional: "border-[#8c731e]/25  text-[#8c731e]",
+  congresoBrilla: "border-[#6a3f91]/25  text-[#6a3f91]",
+  boda: "border-[#6a3f91]/25  text-[#6a3f91]",
 };
 
 const vestimentaLabels: Record<Vestimenta, string> = {
@@ -314,7 +310,10 @@ export function EventCard({
     }
 
     const detailsPreviewTop = viewportHeight - DETAILS_PREVIEW_BOTTOM_MARGIN;
-    const scrollDownForDetails = Math.max(0, detailsRect.top - detailsPreviewTop);
+    const scrollDownForDetails = Math.max(
+      0,
+      detailsRect.top - detailsPreviewTop,
+    );
     const scrollDownWhileKeepingButtonVisible = Math.max(
       0,
       buttonRect.top - DETAILS_TOGGLE_TOP_MARGIN,
@@ -452,7 +451,8 @@ export function EventCard({
     updateScheduleScrollIndicators();
   };
 
-  const buildEventCopyText = () => buildEventShareText(event, eventHighlightUrl);
+  const buildEventCopyText = () =>
+    buildEventShareText(event, eventHighlightUrl);
 
   /* Does the card have any expandable details? */
   const hasDetails =
@@ -467,10 +467,14 @@ export function EventCard({
   const hasDropdownCtas = hasAlbum || hasFacebookPost;
   const compactHasDetails = variant === "compact" && hasMobileCompactDetails;
   const gridHasDetails = variant === "grid" && hasDescription;
-  const actionMenuLabel = hasDetails || compactHasDetails || gridHasDetails ? "Ver detalles" : "Opciones";
-  const actionMenuExpandedLabel = hasDetails || compactHasDetails || gridHasDetails
-    ? "Ocultar detalles"
-    : "Ocultar opciones";
+  const actionMenuLabel =
+    hasDetails || compactHasDetails || gridHasDetails
+      ? "Ver detalles"
+      : "Opciones";
+  const actionMenuExpandedLabel =
+    hasDetails || compactHasDetails || gridHasDetails
+      ? "Ocultar detalles"
+      : "Ocultar opciones";
   const eventUtilityButtonClass =
     "mt-[-25px] inline-flex min-h-10 w-fit max-w-full items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-3 py-2 text-sm font-medium leading-tight whitespace-normal text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventUtilityButtonSmallClass =
@@ -495,17 +499,18 @@ export function EventCard({
         fit: "max",
       })
     : "";
-  const registerActionButton = !isPastEvent && canRegister ? (
-    <button
-      type="button"
-      onClick={() => onRegister(event)}
-      className={eventPrimaryMapsButtonClass}
-      style={{ minWidth: "unset" }}
-    >
-      REGISTRARSE
-      <ChevronRight className="h-5 w-5 ml-2 shrink-0" aria-hidden="true" />
-    </button>
-  ) : null;
+  const registerActionButton =
+    !isPastEvent && canRegister ? (
+      <button
+        type="button"
+        onClick={() => onRegister(event)}
+        className={eventPrimaryMapsButtonClass}
+        style={{ minWidth: "unset" }}
+      >
+        REGISTRARSE
+        <ChevronRight className="h-5 w-5 ml-2 shrink-0" aria-hidden="true" />
+      </button>
+    ) : null;
   const dropdownCtaButtons = hasDropdownCtas ? (
     <div className="space-y-2.5">
       <div className="flex flex-wrap items-center gap-2.5">
@@ -517,7 +522,10 @@ export function EventCard({
           >
             <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="ml-1.5 min-w-0">Ver en Facebook</span>
-            <ChevronRight className="ml-1 h-4 w-4 shrink-0" aria-hidden="true" />
+            <ChevronRight
+              className="ml-1 h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
           </Button>
         )}
         {hasAlbum && (
@@ -528,7 +536,10 @@ export function EventCard({
           >
             <Images className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="ml-1.5 min-w-0">Ver Álbum</span>
-            <ChevronRight className="ml-1 h-4 w-4 shrink-0" aria-hidden="true" />
+            <ChevronRight
+              className="ml-1 h-4 w-4 shrink-0"
+              aria-hidden="true"
+            />
           </Button>
         )}
       </div>
@@ -569,10 +580,12 @@ export function EventCard({
       {/* En compact desktop la descripcion ya esta visible; aqui solo va cuando haga falta. */}
       {options.showDescription && hasDescription && (
         <section className="space-y-3">
-          <p className={`text-[17px] font-bold`}>
-            Más información
+          <p className={`text-[17px] font-bold`}>Más información</p>
+          <p
+            className={`text-[18px] leading-relaxed text-ink mb-7 ${editorialTextClass}`}
+          >
+            {event.description}
           </p>
-          <p className={`text-[18px] leading-relaxed text-ink mb-7 ${editorialTextClass}`}>{event.description}</p>
         </section>
       )}
 
@@ -580,9 +593,7 @@ export function EventCard({
         event.speakers?.pastorMensaje ||
         event.speakers?.jovenPreside) && (
         <section className="space-y-4">
-          <p className={`mb-6 text-[17px] font-bold`}>
-            Información general
-          </p>
+          <p className={`mb-6 text-[17px] font-bold`}>Información general</p>
           <div className="space-y-3 border-l-2 border-[#2f5e93]/20 py-0.5 pl-3 mb-0">
             {event.vestimenta && (
               <div className="flex items-start gap-2.5">
@@ -591,11 +602,13 @@ export function EventCard({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-[15px] font-semibold">
-                    Vestimenta
-                  </p>
-                  <div className={`mt-1 mb-2 flex items-start gap-1.5 text-[18px] leading-snug ${editorialTextClass}`}>
-                    <span className="min-w-0">{formatVestimentaValue(event)}</span>
+                  <p className="text-[15px] font-semibold">Vestimenta</p>
+                  <div
+                    className={`mt-1 mb-2 flex items-start gap-1.5 text-[18px] leading-snug ${editorialTextClass}`}
+                  >
+                    <span className="min-w-0">
+                      {formatVestimentaValue(event)}
+                    </span>
                     <button
                       ref={vestimentaHelpRef}
                       type="button"
@@ -604,10 +617,12 @@ export function EventCard({
                         setShowVestimentaHelp((value) => !value);
                       }}
                       onPointerEnter={(event) => {
-                        if (event.pointerType === "mouse") setShowVestimentaHelp(true);
+                        if (event.pointerType === "mouse")
+                          setShowVestimentaHelp(true);
                       }}
                       onPointerLeave={(event) => {
-                        if (event.pointerType === "mouse") setShowVestimentaHelp(false);
+                        if (event.pointerType === "mouse")
+                          setShowVestimentaHelp(false);
                       }}
                       className="inline-flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
                       aria-label="Información sobre la vestimenta"
@@ -627,10 +642,10 @@ export function EventCard({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-[15px] font-semibold">
-                    Pastor a cargo
-                  </p>
-                  <div className={`mt-1 text-[15px] leading-snug ${editorialTextClass}`}>
+                  <p className="text-[15px] font-semibold">Pastor a cargo</p>
+                  <div
+                    className={`mt-1 text-[15px] leading-snug ${editorialTextClass}`}
+                  >
                     {pastorNameNode}
                   </div>
                 </div>
@@ -643,10 +658,10 @@ export function EventCard({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-[15px] font-semibold">
-                    Preside
-                  </p>
-                  <p className={`mt-1 text-[18px] leading-snug ${editorialTextClass}`}>
+                  <p className="text-[15px] font-semibold">Preside</p>
+                  <p
+                    className={`mt-1 text-[18px] leading-snug ${editorialTextClass}`}
+                  >
                     {event.speakers.jovenPreside}
                   </p>
                 </div>
@@ -668,9 +683,7 @@ export function EventCard({
                 Alimentos
               </p>
               {event.alimentos.location && (
-                <p className="text-xs">
-                  {event.alimentos.location}
-                </p>
+                <p className="text-xs">{event.alimentos.location}</p>
               )}
               {event.alimentos.description && (
                 <p className="text-xs mt-0.5 whitespace-pre-line">
@@ -716,7 +729,9 @@ export function EventCard({
             </div>
             {event.juntaJuvenil.googleMapsUrl && (
               <button
-                onClick={() => openGoogleMaps(event.juntaJuvenil?.googleMapsUrl)}
+                onClick={() =>
+                  openGoogleMaps(event.juntaJuvenil?.googleMapsUrl)
+                }
                 className="mt-4 mr-5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 aria-label="Ver ubicación de junta juvenil en Maps"
                 style={{ minHeight: "unset", minWidth: "unset" }}
@@ -791,9 +806,7 @@ export function EventCard({
         ))}
       </div>
       {shouldScrollSchedule && canScrollScheduleLeft ? (
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 flex w-14 items-center justify-start bg-gradient-to-r from-brand-soft via-brand-soft/80 to-transparent pl-1.5"
-        >
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex w-14 items-center justify-start bg-gradient-to-r from-brand-soft via-brand-soft/80 to-transparent pl-1.5">
           <button
             type="button"
             onClick={() => scrollEventSchedule("left")}
@@ -806,9 +819,7 @@ export function EventCard({
         </div>
       ) : null}
       {shouldScrollSchedule && canScrollScheduleRight ? (
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 flex w-14 items-center justify-end bg-gradient-to-l from-brand-soft via-brand-soft/80 to-transparent pr-1.5"
-        >
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex w-14 items-center justify-end bg-gradient-to-l from-brand-soft via-brand-soft/80 to-transparent pr-1.5">
           <button
             type="button"
             onClick={() => scrollEventSchedule("right")}
@@ -837,73 +848,89 @@ export function EventCard({
       ),
     },
     ...(event.location || event.address
-      ? [{
-          id: "location",
-          label: "Ubicación",
-          icon: <MapPin className="rm-print-icon" aria-hidden="true" />,
-          content: (
-            <p>
-              {event.location}
-              {event.address ? `\n${event.address}` : ""}
-            </p>
-          ),
-        }]
+      ? [
+          {
+            id: "location",
+            label: "Ubicación",
+            icon: <MapPin className="rm-print-icon" aria-hidden="true" />,
+            content: (
+              <p>
+                {event.location}
+                {event.address ? `\n${event.address}` : ""}
+              </p>
+            ),
+          },
+        ]
       : []),
     ...(eventCoordinates
-      ? [{
-          id: "coordinates",
-          label: "Coordenadas",
-          icon: <MapPin className="rm-print-icon" aria-hidden="true" />,
-          content: <p>{eventCoordinates}</p>,
-        }]
+      ? [
+          {
+            id: "coordinates",
+            label: "Coordenadas",
+            icon: <MapPin className="rm-print-icon" aria-hidden="true" />,
+            content: <p>{eventCoordinates}</p>,
+          },
+        ]
       : []),
     ...(event.alimentos?.enabled
-      ? [{
-          id: "alimentos",
-          label: "Alimentos",
-          icon: <Utensils className="rm-print-icon" aria-hidden="true" />,
-          content: <p>{eventAlimentosPrintText}</p>,
-        }]
+      ? [
+          {
+            id: "alimentos",
+            label: "Alimentos",
+            icon: <Utensils className="rm-print-icon" aria-hidden="true" />,
+            content: <p>{eventAlimentosPrintText}</p>,
+          },
+        ]
       : []),
     ...(event.juntaJuvenil?.enabled
-      ? [{
-          id: "junta",
-          label: "Junta Juvenil",
-          icon: <Users className="rm-print-icon" aria-hidden="true" />,
-          content: <p>{eventJuntaJuvenilPrintText}</p>,
-        }]
+      ? [
+          {
+            id: "junta",
+            label: "Junta Juvenil",
+            icon: <Users className="rm-print-icon" aria-hidden="true" />,
+            content: <p>{eventJuntaJuvenilPrintText}</p>,
+          },
+        ]
       : []),
     ...(event.vestimenta
-      ? [{
-          id: "vestimenta",
-          label: "Vestimenta",
-          icon: <Shirt className="rm-print-icon" aria-hidden="true" />,
-          content: <p>{formatVestimentaValue(event)}</p>,
-        }]
+      ? [
+          {
+            id: "vestimenta",
+            label: "Vestimenta",
+            icon: <Shirt className="rm-print-icon" aria-hidden="true" />,
+            content: <p>{formatVestimentaValue(event)}</p>,
+          },
+        ]
       : []),
     ...(event.speakers?.pastorMensaje
-      ? [{
-          id: "pastor",
-          label: "Pastor a cargo",
-          icon: <Mic className="rm-print-icon" aria-hidden="true" />,
-          content: <p>{event.speakers.pastorMensaje}</p>,
-        }]
+      ? [
+          {
+            id: "pastor",
+            label: "Pastor a cargo",
+            icon: <Mic className="rm-print-icon" aria-hidden="true" />,
+            content: <p>{event.speakers.pastorMensaje}</p>,
+          },
+        ]
       : []),
     ...(event.speakers?.jovenPreside
-      ? [{
-          id: "preside",
-          label: "Preside",
-          icon: <User className="rm-print-icon" aria-hidden="true" />,
-          content: <p>{event.speakers.jovenPreside}</p>,
-        }]
+      ? [
+          {
+            id: "preside",
+            label: "Preside",
+            icon: <User className="rm-print-icon" aria-hidden="true" />,
+            content: <p>{event.speakers.jovenPreside}</p>,
+          },
+        ]
       : []),
     ...(hasDescription
-      ? [{
-          id: "description",
-          label: "Descripción",
-          icon: <Info className="rm-print-icon" aria-hidden="true" />,
-          content: <p>{event.description}</p>,
-        }]
+      ? [
+          {
+            id: "description",
+            label: "Descripción",
+            icon: <Info className="rm-print-icon" aria-hidden="true" />,
+            content: <p>{event.description}</p>,
+          },
+        ]
       : []),
   ];
 
@@ -1140,7 +1167,8 @@ export function EventCard({
             className="border border-border bg-background px-3 py-2 text-left text-xs leading-relaxed text-muted-foreground shadow-lg"
             style={vestimentaTooltipStyle}
           >
-            Todos pueden llevar cualquier ropa. Esta vestimenta es solo para jóvenes miembros de la iglesia.
+            Todos pueden llevar cualquier ropa. Esta vestimenta es solo para
+            jóvenes miembros de la iglesia.
           </div>,
           document.body,
         )
@@ -1159,10 +1187,7 @@ export function EventCard({
   const eventPortals = (
     <>
       {showCopyToast &&
-        createPortal(
-          <CopyToast visible={isCopyToastVisible} />,
-          document.body,
-        )}
+        createPortal(<CopyToast visible={isCopyToastVisible} />, document.body)}
       {printEvent &&
         createPortal(
           <div className="rm-print-root rm-event-print-root">
@@ -1209,7 +1234,8 @@ export function EventCard({
             Requiere conexión a internet
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Para ahorrar datos y almacenamiento, las imágenes ampliadas no se descargan para uso sin conexión.
+            Para ahorrar datos y almacenamiento, las imágenes ampliadas no se
+            descargan para uso sin conexión.
           </p>
         </div>
       ) : (
@@ -1248,9 +1274,7 @@ export function EventCard({
           id={articleId}
           className="overflow-hidden border-x border-y border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
         >
-          <div className="border-b border-border/70">
-            {eventScheduleGrid}
-          </div>
+          <div className="border-b border-border/70">{eventScheduleGrid}</div>
 
           <div className="flex gap-4 px-4 pb-1 pt-4 md:gap-5 md:pb-5 md:pt-5">
             <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted md:h-[136px] md:w-[136px]">
@@ -1289,19 +1313,21 @@ export function EventCard({
 
             <div className="min-w-0 flex-1">
               <div className="min-w-0 space-y-2.5 text-left">
-                <span className={`mb-1 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] md:text-xs ${eventTypeBadgeClass}`}>
+                <span
+                  className={`mb-1 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] md:text-xs ${eventTypeBadgeClass}`}
+                >
                   <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>{eventTypeLabels[eventType]}</span>
                 </span>
 
                 <div className="mt-1 md:mt-0">
-                  <h3 className={`text-[20px] font-semibold leading-[1.35] md:text-[20px] ${editorialTitleClass}`}>
+                  <h3
+                    className={`text-[20px] font-semibold leading-[1.35] md:text-[20px] ${editorialTitleClass}`}
+                  >
                     {event.title}
                   </h3>
                   {registerActionButton && (
-                    <div className="mt-4 md:hidden">
-                      {registerActionButton}
-                    </div>
+                    <div className="mt-4 md:hidden">{registerActionButton}</div>
                   )}
                   <button
                     onClick={handleToggle}
@@ -1309,7 +1335,9 @@ export function EventCard({
                     aria-expanded={isExpanded}
                     aria-controls={detailsId}
                   >
-                    <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+                    <span>
+                      {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
+                    </span>
                     <ChevronDown
                       className={`h-6 w-6 shrink-0 transition-transform duration-200 ${
                         isExpanded ? "rotate-180" : ""
@@ -1320,7 +1348,9 @@ export function EventCard({
                 </div>
 
                 {event.location && (
-                  <p className={`hidden min-w-0 items-start gap-2 text-[15px] leading-snug md:flex md:text-[15px] md:mt-4 md:mb-0.5`}>
+                  <p
+                    className={`hidden min-w-0 items-start gap-2 text-[15px] leading-snug md:flex md:text-[15px] md:mt-4 md:mb-0.5`}
+                  >
                     <Church
                       className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                       aria-hidden="true"
@@ -1340,27 +1370,31 @@ export function EventCard({
                 )}
 
                 {hasDescription && (
-                  <p className={`hidden text-[15px] leading-snug md:block md:text-[16px] ${editorialTextClass}`}>
+                  <p
+                    className={`hidden text-[15px] leading-snug md:block md:text-[16px] ${editorialTextClass}`}
+                  >
                     {event.description}
                   </p>
                 )}
-
               </div>
 
               {(registerActionButton || event.location) && (
-                <div
-                  className="mt-3 hidden flex-col items-start gap-2 md:mt-5 md:flex md:flex-row md:flex-wrap md:items-center"
-                >
+                <div className="mt-3 hidden flex-col items-start gap-2 md:mt-5 md:flex md:flex-row md:flex-wrap md:items-center">
                   {registerActionButton}
 
                   {event.location && (
                     <button
-                      onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
+                      onClick={() =>
+                        openGoogleMaps(event.googleMapsUrl, event.address)
+                      }
                       className={compactDesktopMapsButtonClass}
                       aria-label={`Abrir ${event.location} en Google Maps`}
                       style={{ minWidth: "unset" }}
                     >
-                      <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <ExternalLink
+                        className="h-4 w-4 shrink-0"
+                        aria-hidden="true"
+                      />
                       Maps
                     </button>
                   )}
@@ -1373,7 +1407,9 @@ export function EventCard({
                 aria-expanded={isExpanded}
                 aria-controls={detailsId}
               >
-                <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+                <span>
+                  {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
+                </span>
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
                     isExpanded ? "rotate-180" : ""
@@ -1381,7 +1417,6 @@ export function EventCard({
                   aria-hidden="true"
                 />
               </button>
-
             </div>
           </div>
 
@@ -1406,14 +1441,16 @@ export function EventCard({
                     </div>
                   )}
                   {hasMobileCompactDetails && (
-                    <div className={`py-2 md:hidden pb-[-4px] ${hasDropdownCtas ? "pt-5" : ""}`}>
+                    <div
+                      className={`py-2 md:hidden pb-[-4px] ${hasDropdownCtas ? "pt-5" : ""}`}
+                    >
                       {(event.location || event.address) && (
                         <section className="space-y-3">
-                          <p className={`text-[17px] font-bold`}>
-                            Ubicación
-                          </p>
+                          <p className={`text-[17px] font-bold`}>Ubicación</p>
                           {event.location && (
-                            <div className={`flex min-w-0 items-start gap-2 text-[15px] leading-snug`}>
+                            <div
+                              className={`flex min-w-0 items-start gap-2 text-[15px] leading-snug`}
+                            >
                               <Church
                                 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                                 aria-hidden="true"
@@ -1434,12 +1471,20 @@ export function EventCard({
 
                           {event.location && (
                             <button
-                              onClick={() => openGoogleMaps(event.googleMapsUrl, event.address)}
+                              onClick={() =>
+                                openGoogleMaps(
+                                  event.googleMapsUrl,
+                                  event.address,
+                                )
+                              }
                               className={compactMobileMapsButtonClass}
                               aria-label={`Abrir ${event.location} en Google Maps`}
                               style={{ minWidth: "unset" }}
                             >
-                              <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+                              <ExternalLink
+                                className="h-4 w-4 shrink-0"
+                                aria-hidden="true"
+                              />
                               Abrir en Google Maps
                             </button>
                           )}
@@ -1447,11 +1492,13 @@ export function EventCard({
                       )}
 
                       {hasDescription && (
-                        <section className={`${event.location || event.address ? "mt-3 pt-5" : ""} space-y-3`}>
-                          <p className={`text-[17px] font-bold`}>
-                            Descripción
-                          </p>
-                          <p className={`text-[18px] leading-relaxed ${editorialTextClass}`}>
+                        <section
+                          className={`${event.location || event.address ? "mt-3 pt-5" : ""} space-y-3`}
+                        >
+                          <p className={`text-[17px] font-bold`}>Descripción</p>
+                          <p
+                            className={`text-[18px] leading-relaxed ${editorialTextClass}`}
+                          >
                             {event.description}
                           </p>
                         </section>
@@ -1462,10 +1509,10 @@ export function EventCard({
                     renderExpandedDetails(
                       `${hasMobileCompactDetails ? "pt-5" : "pt-4"} space-y-5 pb-4 md:py-5`,
                     )}
-                  <div className={`pb-4 md:pb-5 ${hasDetails || hasDropdownCtas ? "" : "pt-4 md:pt-5"}`}>
-                    <div className="[&>div]:mt-3">
-                      {eventActionButtons}
-                    </div>
+                  <div
+                    className={`pb-4 md:pb-5 ${hasDetails || hasDropdownCtas ? "" : "pt-4 md:pt-5"}`}
+                  >
+                    <div className="[&>div]:mt-3">{eventActionButtons}</div>
                   </div>
                 </div>
               </motion.div>
@@ -1496,7 +1543,7 @@ export function EventCard({
       >
         {/* ── Image with date/time strip ── */}
         <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
-          {event.image ? ( 
+          {event.image ? (
             <>
               <Image
                 src={gridThumbnailUrl}
@@ -1540,13 +1587,21 @@ export function EventCard({
         <div className="p-5 pb-7 bg-paper-highlight">
           <div data-eq-head>
             {/* Event type — plain uppercase label */}
-            <span className={`mb-3 inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[13px] font-medium uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}>
-              <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            <span
+              className={`mb-3 inline-flex items-center gap-3 rounded-sm border px-2 py-2 text-[13px] font-medium uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}
+            >
+              <EventTypeIcon
+                className="h-6 w-6"
+                strokeWidth={1.25}
+                aria-hidden="true"
+              />
               <span>{eventTypeLabels[eventType]}</span>
             </span>
 
             {/* Title — editorial type only when this card is opted into Home's bulletin tone. */}
-            <h3 className={`${event.location ? "mb-4" : "mb-0"} text-[28px] font-extrabold leading-[1.25] tracking-tight md:text-[22px] ${editorialTitleClass}`}>
+            <h3
+              className={`${event.location ? "mb-4" : "mb-0"} text-[28px] font-extrabold leading-[1.25] tracking-tight md:text-[22px] ${editorialTitleClass}`}
+            >
               {event.title}
             </h3>
 
@@ -1569,7 +1624,9 @@ export function EventCard({
                         className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
                         aria-hidden="true"
                       />
-                      <p className={`text-[16px] leading-snug ${isEditorialTone ? "type-system" : "text-foreground/85"}`}>
+                      <p
+                        className={`text-[16px] leading-snug ${isEditorialTone ? "type-system" : "text-foreground/85"}`}
+                      >
                         {event.address}
                       </p>
                     </div>
@@ -1583,7 +1640,10 @@ export function EventCard({
                   aria-label={`Abrir ${event.location} en Google Maps`}
                   style={{ minWidth: "unset" }}
                 >
-                  <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <ExternalLink
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden="true"
+                  />
                   Abrir en Google Maps
                 </button>
               </div>
@@ -1598,7 +1658,10 @@ export function EventCard({
                 className="mt-3.5 h-auto min-h-10 whitespace-normal py-3 text-center text-sm font-bold leading-tight tracking-[0.01em] bg-brand hover:bg-brand-hover text-white"
               >
                 REGISTRARSE
-                <ChevronRight className="h-4 w-4 ml-2 shrink-0" aria-hidden="true" />
+                <ChevronRight
+                  className="h-4 w-4 ml-2 shrink-0"
+                  aria-hidden="true"
+                />
               </Button>
             </div>
           )}
@@ -1609,7 +1672,9 @@ export function EventCard({
             aria-expanded={isExpanded}
             aria-controls={detailsId}
           >
-            <span>{isExpanded ? actionMenuExpandedLabel : actionMenuLabel}</span>
+            <span>
+              {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
+            </span>
             <ChevronDown
               className={`h-6 w-6 shrink-0 transition-transform duration-200 ${
                 isExpanded ? "rotate-180" : ""
@@ -1634,9 +1699,7 @@ export function EventCard({
                 className="-mx-5 mt-1 overflow-hidden bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-2"
               >
                 {hasDropdownCtas && (
-                  <div className="px-5 pb-0 pt-4">
-                    {dropdownCtaButtons}
-                  </div>
+                  <div className="px-5 pb-0 pt-4">{dropdownCtaButtons}</div>
                 )}
                 {(hasDetails || hasDescription) &&
                   renderExpandedDetails(
@@ -1647,7 +1710,9 @@ export function EventCard({
                   )}
                 <div
                   className={`px-5 pb-5 ${
-                    hasDetails || hasDropdownCtas ? "[&>div]:mt-5" : "[&>div]:mt-4"
+                    hasDetails || hasDropdownCtas
+                      ? "[&>div]:mt-5"
+                      : "[&>div]:mt-4"
                   }`}
                 >
                   {eventActionButtons}
