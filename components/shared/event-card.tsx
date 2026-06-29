@@ -1492,7 +1492,7 @@ export function EventCard({
       <article
         id={articleId}
         data-eq-card
-        className="self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 mx-[-7px]"
+        className="self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
       >
         {/* ── Image with date/time strip ── */}
         <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
