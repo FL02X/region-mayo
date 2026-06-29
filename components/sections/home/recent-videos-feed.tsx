@@ -39,7 +39,7 @@ function RecordingAlbumListItem({ album }: { album: Album }) {
       aria-label="Abrir grabacion"
     >
       <div className="flex flex-row gap-3 pt-4 pb-4 w-full h-auto items-center group-active:bg-brand-active">
-        <div className="relative w-24 h-20 aspect-video shrink-0 rounded-md overflow-hidden group-active:bg-transparent">
+        <div className="relative w-24 min-h-20 aspect-video shrink-0 rounded-md overflow-hidden group-active:bg-transparent">
           {thumbnailUrl ? (
             <Image
               src={thumbnailUrl}
@@ -61,12 +61,12 @@ function RecordingAlbumListItem({ album }: { album: Album }) {
             </span>
           )}
         </div>
-        <div className="flex-1 h-20 pr-10">
+        <div className="flex-1 min-w-0 justify-center py-1 min-h-[5rem] pr-10">
           <p className="text-ink-white/70 uppercase text-xs mb-0.5">
             {formatAlbumPreviewDate(album.startDate)}
           </p>
           <p
-            className={`${editorialFont.className} text-ink-white font-bold line-clamp-4 text-sm`}
+            className={`${editorialFont.className} text-ink-white font-bold line-clamp-3 text-sm break-words`}
           >
             {album.title}
           </p>
