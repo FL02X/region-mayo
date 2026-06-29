@@ -21,6 +21,7 @@ import {
   getPrayerWallConfig,
   getLatestSocialPosts,
   getTemplos,
+  getAlbums,
 } from "@/lib/api";
 import { buildPageMetadata, SITE_OFFICIAL_TITLE } from "@/lib/seo";
 
@@ -44,7 +45,7 @@ export default async function Home() {
   ]);
   const now = Date.now();
 
-  const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts, templos] =
+  const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts, templos, albums] =
     await Promise.all([
       getRegionConfig("region-mayo"),
       getEvents("region-mayo"),
@@ -54,6 +55,7 @@ export default async function Home() {
       getPrayerWallConfig("region-mayo"),
       getLatestSocialPosts(6),
       getTemplos("region-mayo"),
+      getAlbums("region-mayo"),
     ]);
 
   const nextUpcomingEvent =
@@ -119,6 +121,7 @@ export default async function Home() {
             now={now}
             initialViewMode={initialViewMode}
             initialCalendarLayoutMode={initialCalendarLayoutMode}
+            albums={albums}
           />
         </div>
 

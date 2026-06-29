@@ -18,7 +18,7 @@ import {
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { Lightbox } from "@/components/shared/lightbox";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
-import { BADGE_META, CTA_LABEL } from "@/components/sections/home/action-deck/action-deck-copy";
+import { BADGE_META, CTA_LABEL } from "@/components/sections/home/action-deck/action-deck-types-copy";
 import { PrayerMiniCarousel } from "@/components/sections/home/action-deck/prayer-mini-carousel";
 import { SocialVideoModal } from "@/components/sections/home/action-deck/social-video-modal";
 import type {

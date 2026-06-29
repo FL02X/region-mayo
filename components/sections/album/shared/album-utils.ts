@@ -1,4 +1,6 @@
-// Donde: no renderiza UI directo. Viewports: afecta todas las vistas de album. Funcion: formatos, rutas y helpers simples.
+// Donde: no renderiza UI directo. 
+// Viewports: afecta todas las vistas de album. 
+// Funcion: formatos, rutas y helpers simples.
 import type { Album, AlbumGalleryItem, AlbumVideo } from "@/lib/types";
 
 export function formatAlbumDate(startDate: Date, endDate: Date) {

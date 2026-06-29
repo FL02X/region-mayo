@@ -1,4 +1,6 @@
-// Donde: no renderiza UI directo. Viewports: mobile. Funcion: marca transiciones decorativas entre selector y detalle.
+// Donde: no renderiza UI directo. 
+// Viewports: mobile. 
+// Funcion: marca transiciones decorativas entre selector y detalle.
 export const ALBUM_TRANSITION_STORAGE_KEY = "rm-album-transition-next";
 
 export function markAlbumTransition() {

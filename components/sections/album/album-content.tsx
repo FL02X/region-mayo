@@ -1,6 +1,8 @@
 "use client";
 
-// Donde: rutas /album, /album/galerias, /album/grabaciones y detalles de album. Viewports: desktop y mobile. Funcion: coordina las pantallas publicas del album y deja las piezas visuales en archivos internos.
+// Donde: rutas /album, /album/galerias, /album/grabaciones y detalles de album.
+// Viewports: desktop y mobile. 
+// Funcion: coordina las pantallas publicas del album y deja las piezas visuales en archivos internos.
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Newsreader } from "next/font/google";

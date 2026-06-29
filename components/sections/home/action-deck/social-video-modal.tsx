@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 import type { DeckItem } from "@/components/sections/home/action-deck/action-deck-types";
-import { BADGE_META } from "@/components/sections/home/action-deck/action-deck-copy";
+import { BADGE_META } from "@/components/sections/home/action-deck/action-deck-types-copy";
 import { getSocialEmbedUrl } from "@/components/sections/home/action-deck/action-deck-utils";
 
 export function SocialVideoModal({

@@ -1,4 +1,6 @@
-// Donde: tarjeta de oraciones dentro del action deck. Viewports: desktop y mobile. Funcion: muestra oraciones seleccionadas y permite leer textos largos.
+// Donde: tarjeta de oraciones dentro del action deck.
+//  Viewports: desktop y mobile. 
+// Funcion: muestra oraciones seleccionadas y permite leer textos largos.
 import { useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 

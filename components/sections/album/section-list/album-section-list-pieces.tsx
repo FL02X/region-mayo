@@ -1,4 +1,7 @@
-// Donde: rutas /album/galerias y /album/grabaciones. Viewports: desktop y mobile. Funcion: muestra filtros, tiles de galerias y filas de grabaciones.
+// Donde: rutas /album/galerias y /album/grabaciones. 
+// Viewports: desktop y mobile. 
+// Funcion: muestra filtros, tiles de galerias y filas de grabaciones.
+
 import Image from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";

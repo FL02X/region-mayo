@@ -1,6 +1,8 @@
 "use client";
 
-// Donde: home, boton flotante hacia #calendario. Viewports: mobile. Funcion: aparece antes del calendario y hace scroll suave.
+// Donde: home, boton flotante hacia #calendario. 
+// Viewports: mobile. 
+// Funcion: aparece antes del calendario y hace scroll suave.
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -64,7 +66,7 @@ export function GoToCalendar() {
   return (
     <div
       aria-hidden={!visible}
-      className="fixed bottom-4 right-4 z-[50] md:hidden pointer-events-none"
+      className="fixed bottom-4 right-4 z-50 md:hidden pointer-events-none"
       style={{
         paddingBottom: "env(safe-area-inset-bottom)",
         paddingRight: "env(safe-area-inset-right)",

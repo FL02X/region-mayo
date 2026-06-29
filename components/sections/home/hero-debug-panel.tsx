@@ -1,6 +1,8 @@
 "use client"
 
-// Donde: home con ?debug=hero-ranking en localhost. Viewports: desktop. Funcion: inspecciona por que se eligio el hero.
+// Donde: home con ?debug=hero-ranking en localhost. 
+// Viewports: desktop. 
+// Funcion: inspecciona por que se eligio el hero.
 import { useEffect, useState } from "react"
 import type { RankedCandidate } from "@/lib/ranker"
 import {

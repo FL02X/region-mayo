@@ -331,7 +331,7 @@ export function CountdownSection({
       data-countdown-section
       aria-label="Sección destacada"
     >
-      <div className="max-w-md mx-auto w-full space-y-4">
+      <div className="max-w mx-auto w-full space-y-4">
         {/* Spotlight: event */}
         {countdownEvent && countdownDisplay && (
           <CountdownEventSpotlightCard

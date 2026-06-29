@@ -1,4 +1,6 @@
-// Donde: badges y CTAs visibles en action deck. Viewports: desktop y mobile. Funcion: centraliza textos, colores e iconos editables de cada tarjeta.
+// Donde: badges y CTAs visibles en action deck. 
+// Viewports: desktop y mobile. 
+// Funcion: centraliza textos, colores e iconos editables de cada tarjeta.
 import type { ReactNode } from "react";
 import {
   Calendar,

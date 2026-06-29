@@ -72,7 +72,7 @@ export function FirstVisitCard({
         transition: transitionStyle,
       }}
     >
-      <div ref={contentRef} className="py-8">
+      <div ref={contentRef} className="pt-8 pb-10">
         <div className="flex items-start gap-3">
           <div className="relative mt-1.5 pr-12 h-[50px] w-[50px] shrink-0 overflow-hidden bg-[#1d3765]">
             <Image src="/images/faq4.png" alt="" fill sizes="50px" className="object-cover" />

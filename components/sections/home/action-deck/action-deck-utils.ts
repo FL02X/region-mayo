@@ -1,4 +1,6 @@
-// Donde: no renderiza UI directo. Viewports: afecta action deck en desktop y mobile. Funcion: arma y ordena las tarjetas destacadas.
+// Donde: no renderiza UI directo. 
+// Viewports: afecta action deck en desktop y mobile. 
+// Funcion: arma y ordena las tarjetas destacadas.
 import type { HeroCandidate } from "@/lib/ranker";
 import { pickHeroAndDeck } from "@/lib/ranker";
 import { REGION_TIME_ZONE, formatRegionWeekdayDayMonth } from "@/lib/region-date";

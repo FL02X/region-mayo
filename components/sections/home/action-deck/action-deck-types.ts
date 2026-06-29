@@ -1,4 +1,6 @@
-// Donde: no renderiza UI directo. Viewports: afecta action deck en desktop y mobile. Funcion: tipos compartidos para tarjetas destacadas.
+// Donde: no renderiza UI directo. 
+// Viewports: afecta action deck en desktop y mobile. 
+// Funcion: tipos compartidos para tarjetas destacadas.
 import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
 
 export type DeckItem =

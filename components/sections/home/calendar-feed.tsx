@@ -1,6 +1,9 @@
 "use client";
 
-// Donde: home, seccion Calendario. Viewports: desktop y mobile. Funcion: coordina selector de mes, lista/mes, eventos y modal de registro.
+// Donde: home, seccion Calendario. 
+// Viewports: desktop y mobile. 
+// Funcion: coordina selector de mes, lista/mes, eventos y modal de registro.
+
 import {
   useState,
   useMemo,
@@ -28,6 +31,7 @@ import {
 import { CountdownSection } from "./countdown-section.mobile";
 import { ActionDeck } from "./action-deck";
 import { FirstVisitInfoMobile } from "./first-visit-info.mobile";
+import { RecentVideosFeed } from "./recent-videos-feed";
 import { HomeInfoCards } from "./home-info-cards";
 import type {
   Event,
@@ -35,6 +39,7 @@ import type {
   HeroCard,
   PrayerWallConfig,
   SocialPost,
+  Album,
 } from "@/lib/types";
 import {
   CALENDAR_FADE_TRANSITION,
@@ -73,6 +78,7 @@ interface EventsFeedProps {
   now?: number;
   initialViewMode?: CalendarViewMode;
   initialCalendarLayoutMode?: CalendarLayoutMode;
+  albums?: Album[];
 }
 
 export function EventsFeed({
@@ -86,6 +92,7 @@ export function EventsFeed({
   now: nowProp,
   initialViewMode,
   initialCalendarLayoutMode,
+  albums,
 }: EventsFeedProps) {
   const [selectedMonth, setSelectedMonth] = useState(() =>
     getInitialCalendarMonth(events, nowProp),
@@ -402,6 +409,8 @@ export function EventsFeed({
         <FirstVisitInfoMobile
           onDividerVisibilityChange={setHasFirstVisitDivider}
         />
+
+        <RecentVideosFeed album={albums} />
 
         {/* Info Cards (Services, Bible, Hymnal) - HIDDEN */}
         {/* <HomeInfoCards /> */}
