@@ -1,4 +1,6 @@
-// Donde: hero mobile de home. Viewports: mobile. Funcion: centraliza textos, storage keys y ajustes visuales del hero.
+// Donde: hero mobile de home. 
+// Viewports: mobile. 
+// Funcion: centraliza textos, storage keys y ajustes visuales del hero.
 export const MOBILE_HERO_FALLBACK_SRC = "/images/event-conference.jpg";
 
 export const DISTANCE_ORDER_ENABLED_KEY = "region-mayo-templos-distance-order-enabled";
@@ -23,7 +25,7 @@ export const MOBILE_HERO_COPY = {
   eyebrow: "Iglesia Gentil de Cristo A.R.",
   titlePrefix: "Sitio oficial de la",
   titleRegion: "Región Mayo",
-  description: "Eventos, avisos e información de nuestras iglesias de la Región Mayo.",
+  description: "Eventos e información de nuestras iglesias de la Región Mayo.",
   nearestChurchLabel: "Iglesia más cercana",
   gpsIdleLabel: "Ubicar la iglesia más cercana",
   gpsLoadingLabel: "Buscando iglesia cercana...",

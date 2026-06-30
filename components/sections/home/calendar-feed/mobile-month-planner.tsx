@@ -77,11 +77,11 @@ const MonthCalendarGrid = memo(function MonthCalendarGrid({
     <>
       <div className="mb-3 flex items-end justify-between border-b border-border-line pb-2">
         <div>
-          <p className="type-system text-[14px] font-semibold uppercase tracking-[0.16em] text-brand-text">
+          <p className="type-system text-[13px] font-semibold uppercase tracking-[0.16em] text-brand-text mb-1">
             {monthParts.year}
           </p>
           <h3
-            className={`${editorialFont.className} type-human-title text-[32px] font-semibold leading-none`}
+            className={`${editorialFont.className} type-human-title text-[28px] font-semibold leading-none`}
           >
             {CALENDAR_MONTHS[monthParts.month - 1]}
           </h3>

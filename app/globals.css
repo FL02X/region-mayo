@@ -66,8 +66,11 @@
   --app-font-scale: 1;
 
   /* Newsletter skeuomorphism layer: paper/newsprint palette helpers. */
-  --bg-paper: #f7f3ed;
+/*   --bg-paper: #f7f3ed;
   --bg-paper-highlight: #FBF8F4;
+   */
+  --bg-paper-highlight: #FFFDF8;
+  --bg-paper: #F6F1E8;
   --bg-paper-dark: #EAE6DF;
   /* OLD NAV AND HERO COLOR: #21252b */
   --text-ink: #1C1917;
@@ -92,10 +95,17 @@
   --paper-ink-soft: rgba(35, 42, 51, 0.08);
   --paper-crease: rgba(108, 89, 56, 0.12);
   --paper-noise-layer:
-    radial-gradient(circle at 18% 24%, rgba(76, 59, 33, 0.08) 0 0.45px, transparent 0.8px),
-    radial-gradient(circle at 72% 38%, rgba(255, 255, 255, 0.34) 0 0.5px, transparent 0.85px),
-    radial-gradient(circle at 42% 78%, rgba(76, 59, 33, 0.06) 0 0.4px, transparent 0.75px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035), rgba(24, 31, 40, 0.018), rgba(255, 255, 255, 0.03));
+radial-gradient(circle at 12% 18%, rgba(80, 67, 46, 0.028) 0 0.5px, transparent 0.7px),
+  radial-gradient(circle at 74% 27%, rgba(80, 67, 46, 0.022) 0 0.45px, transparent 0.65px),
+  radial-gradient(circle at 38% 72%, rgba(80, 67, 46, 0.025) 0 0.5px, transparent 0.7px),
+  radial-gradient(circle at 82% 84%, rgba(255,255,255,.18) 0 0.4px, transparent 0.6px),
+  repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.012) 0px,
+      rgba(255,255,255,.012) 1px,
+      transparent 1px,
+      transparent 4px
+  );
   --brand-ink: var(--brand-text);
   --brand-ink-strong: var(--brand-active);
 }
@@ -249,11 +259,6 @@
   body {
     @apply bg-background text-foreground;
     background-color: var(--surface-shell);
-    background-image:
-      radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.72) 0 1px, transparent 1.4px),
-      radial-gradient(circle at 78% 36%, rgba(70, 56, 34, 0.055) 0 0.8px, transparent 1.2px),
-      linear-gradient(90deg, rgba(24, 31, 40, 0.035), transparent 18%, transparent 82%, rgba(24, 31, 40, 0.035)),
-      linear-gradient(180deg, #f3f3ef 0%, #ecebe6 100%);
     background-size: 17px 17px, 23px 23px, 100% 100%, 100% 100%;
     font-family: var(--font-sans);
     font-size: calc(18px * var(--app-font-scale, 1));
@@ -606,9 +611,13 @@ body[data-user-interacted="true"] :target {
 /* Paper noise for every `bg-paper` surface. Remove this block to revert. */
 .bg-paper {
   background-image: var(--paper-noise-layer);
-  background-blend-mode: multiply, screen, multiply, overlay;
   background-repeat: repeat;
-  background-size: 11px 11px, 13px 13px, 17px 17px, 100% 100%;
+  background-size:
+    7px 7px,
+    9px 9px,
+    11px 11px,
+    13px 13px,
+    100% 100%;
 }
 
 .bg-brand-paper {

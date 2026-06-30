@@ -89,7 +89,7 @@ export function CountdownEventSpotlightCard({
               {schedule.map((occurrence, index) => (
                 <span
                   key={`${occurrence.date.toISOString()}-${index}`}
-                  className="flex items-baseline gap-2 text-[17px] mb-0.5 font-bold leading-[1.5] tabular-nums"
+                  className="flex items-baseline gap-2 text-[17px] mb-1.5 font-bold leading-[1.5] tabular-nums"
                 >
                   <span>{formatMobileCountdownDate(occurrence.date)}</span>
                   <span className="text-[#2f5e93]" aria-hidden="true">
@@ -111,7 +111,7 @@ export function CountdownEventSpotlightCard({
           </div>
         </div>
 
-        <div
+        {/* <div
           className={`grid grid-cols-4 border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS} ${countdownGridClassName}`}
           role="timer"
           aria-label="Tiempo restante para el evento"
@@ -126,7 +126,7 @@ export function CountdownEventSpotlightCard({
               disabled={countdownIsDisabled}
             />
           ))}
-        </div>
+        </div> */}
 
         <div className="mt-5">
           {mapsUrl ? (

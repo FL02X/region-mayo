@@ -90,7 +90,7 @@ export function RecentVideosFeed({ album }: RecentVideosFeedProps) {
         <div className="flex flex-row mb-5 items-center justify-between w-full">
           <div>
             <h2
-              className={`${editorialFont.className} font-semibold text-lg text-ink-white`}
+              className={`${editorialFont.className} font-semibold text-xl text-ink-white`}
             >
               Videos recientes
             </h2>
@@ -99,7 +99,7 @@ export function RecentVideosFeed({ album }: RecentVideosFeedProps) {
             <Link
               href="/album/grabaciones"
               aria-label="Ver archivo de grabaciones"
-              className="mb-0.5 flex flex-row items-center text-center gap-2 text-ink-white text-sm active:bg-brand-active"
+              className="mb-0.5 flex flex-row items-center text-center gap-1 text-ink-white text-sm active:bg-brand-active"
             >
               <Archive className="w-4 h-4" />
               <span className="tracking-tighter">Ver archivo</span>

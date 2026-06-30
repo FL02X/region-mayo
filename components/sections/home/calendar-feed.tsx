@@ -418,7 +418,7 @@ export function EventsFeed({
         {/* Calendar section */}
         <section
           id="calendario"
-          className={`mt-0 md:mt-0 px-4 md:px-16 pt-9 md:pt-8 pb-4 border-border/70 bg-muted/20 ${
+          className={`mt-0 md:mt-0 px-4 md:px-16 pt-6 md:pt-8 pb-4 border-border/70 bg-muted/20 ${
             hasFirstVisitDivider ? "" : "border-t md:border-t-0"
           }`}
         >
@@ -429,7 +429,6 @@ export function EventsFeed({
                 id="calendar-title"
                 className={`${editorialFont.className} flex flex-row gap-3 items-center type-human-title text-[1.725rem] font-semibold tracking-tight mb-1.5`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-icon text-brand lucide-calendar mt-[2px]"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
                 <span className="mt-3">
                   Calendario 2026
                 </span>

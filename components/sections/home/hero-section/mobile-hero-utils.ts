@@ -1,4 +1,6 @@
-// Donde: imagen del hero mobile de home. Viewports: mobile. Funcion: normaliza URLs de Sanity y conserva fallback local.
+// Donde: imagen del hero mobile de home. 
+// Viewports: mobile. 
+// Funcion: normaliza URLs de Sanity y conserva fallback local.
 import {
   MOBILE_HERO_FALLBACK_SRC,
   MOBILE_HERO_IMAGE_WIDTH,

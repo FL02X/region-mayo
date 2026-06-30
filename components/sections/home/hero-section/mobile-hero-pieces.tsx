@@ -94,12 +94,12 @@ export function MobileHeroGpsButton({
       onClick={onClick}
       disabled={locationPhase === "loading"}
       data-loading={locationPhase === "loading"}
-      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-3 text-left text-[15px] font-bold leading-none text-white transition-all duration-300 ease-in-out ${
+      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-3 text-left text-[16px] font-bold leading-none text-white transition-all duration-300 ease-in-out ${
         locationPhase === "success"
           ? "btn-sucess border-[#4E7A68] text-white shadow-none"
           : locationPhase === "loading"
             ? "border-transparent bg-transparent text-white shadow-none"
-            : "border-gray-200/20 bg-transparent hover:border-[#0b6ea6] hover:bg-[#0b6ea6]"
+            : "bg-brand hover:border-brand-hover"
       }`}
       style={{ fontFamily: '"Switzer", Arial, sans-serif' }}
       aria-label={
@@ -110,7 +110,7 @@ export function MobileHeroGpsButton({
     >
       <span className="relative flex min-w-0 items-center gap-2 ">
         <MapPin
-          className="h-4 w-4 shrink-0 text-white transition-colors duration-300"
+          className="h-5 w-5 shrink-0 text-white transition-colors duration-300"
           aria-hidden="true"
           strokeWidth={2}
         />
