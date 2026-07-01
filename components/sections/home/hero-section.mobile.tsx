@@ -23,8 +23,8 @@ import {
   MobileHeroGpsError,
   MobileHeroImage,
   MobileHeroTitleBand,
-} from "@/components/sections/home/hero-section/mobile-hero-pieces";
-import { getMobileHeroImageSrc } from "@/components/sections/home/hero-section/mobile-hero-utils";
+} from "@/components/sections/home/hero-section/mobile-hero-frontend";
+import { getMobileHeroImageSrc } from "@/components/sections/home/hero-section/mobile-hero-image-utils";
 
 interface MobileHeroProps {
   src?: string;

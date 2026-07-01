@@ -1,7 +1,7 @@
 ﻿import type { Metadata } from "next";
 
 export const SITE_FULL_NAME = "Iglesia Gentil de Cristo A.R. Región Mayo";
-export const SITE_NAME = "IGC Region Mayo";
+export const SITE_NAME = "IGC Región Mayo";
 export const SITE_OFFICIAL_TITLE =
   "Sitio oficial de la Iglesia Gentil de Cristo A.R. Región Mayo";
 export const SITE_DESCRIPTION =

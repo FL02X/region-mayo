@@ -111,7 +111,7 @@ export function CountdownEventSpotlightCard({
           </div>
         </div>
 
-        {/* <div
+        <div
           className={`grid grid-cols-4 border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS} ${countdownGridClassName}`}
           role="timer"
           aria-label="Tiempo restante para el evento"
@@ -126,7 +126,7 @@ export function CountdownEventSpotlightCard({
               disabled={countdownIsDisabled}
             />
           ))}
-        </div> */}
+        </div>
 
         <div className="mt-5">
           {mapsUrl ? (

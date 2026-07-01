@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { TimeProvider } from "@/lib/time-context";
-import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME, SITE_NAME, getSiteUrl } from "@/lib/seo";
+import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME, SITE_NAME, getSiteUrl, SITE_OFFICIAL_TITLE } from "@/lib/seo";
 import { HighlightClearer } from "@/components/layout/highlight-removal";
 import { RouteBodyFlags } from "@/components/layout/connection-route-body-flags";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
@@ -72,7 +72,7 @@ const structuredData = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: SITE_NAME,
+    default: SITE_OFFICIAL_TITLE,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
