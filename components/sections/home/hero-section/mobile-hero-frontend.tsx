@@ -48,7 +48,7 @@ export function MobileHeroTitleBand({
   return (
     <div
       data-mobile-hero-title-band
-      className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] border-[#000000] px-5 pb-4.5 pt-4.5 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-10px_18px_rgba(20,35,50,0.10)]"
+      className="paper-cut-y relative z-10 -mt-[10px] w-full bg-[#21252b] border-[#000000] px-5 pb-6 pt-5 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-10px_18px_rgba(20,35,50,0.10)]"
     >
       {/* <MobileHeroWatermark /> */}
       <div className="relative z-10 flex items-center">
@@ -60,7 +60,7 @@ export function MobileHeroTitleBand({
             {MOBILE_HERO_COPY.eyebrow}
           </p>
           <p
-            className="mt-1.5 mb-1.5 text-[34px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white"
+            className="mt-2.5 mb-1.5 text-[34px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white"
             style={{ fontFamily: '"Canela", Georgia, serif' }}
           >
             {MOBILE_HERO_COPY.titlePrefix}{" "}
@@ -94,12 +94,12 @@ export function MobileHeroGpsButton({
       onClick={onClick}
       disabled={locationPhase === "loading"}
       data-loading={locationPhase === "loading"}
-      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-3 text-left text-[16px] font-bold leading-none text-white transition-all duration-300 ease-in-out ${
+      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-2.5 text-left text-[16px] font-bold text-ink-white transition-all duration-300 ease-in-out ${
         locationPhase === "success"
-          ? "btn-sucess border-[#4E7A68] text-white shadow-none"
+          ? "btn-sucess border-[#4E7A68] text-ink shadow-none"
           : locationPhase === "loading"
-            ? "border-transparent bg-transparent text-white shadow-none"
-            : "bg-brand hover:border-brand-hover"
+            ? "border-transparent bg-brand-active text-ink shadow-none"
+            : "bg-brand hover:bg-brand-hover active:bg-brand-active"
       }`}
       style={{ fontFamily: '"Switzer", Arial, sans-serif' }}
       aria-label={
@@ -116,10 +116,10 @@ export function MobileHeroGpsButton({
         />
         {locationPhase === "success" ? (
           <span className="flex min-w-0 flex-col items-start gap-1 transition-all duration-300 ease-in-out">
-            <span className="text-[11px] font-semibold leading-none text-white/80">
+            <span className="text-[13px] font-normal leading-none tracking-wide text-white/80">
               {MOBILE_HERO_COPY.nearestChurchLabel}
             </span>
-            <span className="min-w-0 text-[15px] font-extrabold leading-tight text-white">
+            <span className="min-w-0 text-[15px] font-extrabold leading-tight text-ink-white">
               {nearestChurchName} · {nearestChurchDistanceKm ?? 0} km
             </span>
           </span>
@@ -227,7 +227,7 @@ function MobileHeroGpsStyles() {
           #6b7280
         );
         background-size: 260% 260%;
-        padding: 2px;
+        padding: 6px;
         -webkit-mask:
           linear-gradient(#fff 0 0) content-box,
           linear-gradient(#fff 0 0);

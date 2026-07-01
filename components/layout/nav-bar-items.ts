@@ -35,7 +35,7 @@ export const desktopNavItems: LayoutNavigationItem[] = [
 
 export const mobileMainMenuItems: LayoutNavigationItem[] = [
   { href: "/", label: "Inicio", icon: Home },
-  { href: "/coros", label: "Coros Locales", icon: Music },
+  { href: "/coros", label: "Coros", icon: Music },
   { href: "/album", label: "Álbum de Actividades", icon: Images },
   { href: "/directiva", label: "Directiva", icon: UserCircle },
 ];

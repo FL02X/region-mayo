@@ -92,7 +92,7 @@ export function RecentVideosFeed({ album }: RecentVideosFeedProps) {
             <h2
               className={`${editorialFont.className} font-semibold text-lg  text-ink-white`}
             >
-              Videos recientes
+              Grabaciones recientes
             </h2>
           </div>
           <div>

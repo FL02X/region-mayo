@@ -28,7 +28,7 @@ export const MOBILE_HERO_COPY = {
   description: "Eventos e información de nuestras iglesias de la Región Mayo.",
   nearestChurchLabel: "Iglesia más cercana",
   gpsIdleLabel: "Ubicar la iglesia más cercana",
-  gpsLoadingLabel: "Buscando iglesia cercana...",
+  gpsLoadingLabel: "Buscando...",
   gpsButtonAria: "Buscar iglesia más cercana por GPS",
 };
 
