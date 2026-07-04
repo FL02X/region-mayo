@@ -567,7 +567,7 @@ export function MobileMonthPlanner({
                 align-items: center;
                 justify-content: center;
                 color: #ffffff;
-                left: 24%;
+                left: 76%;
                 opacity: 0;
                 transform: translate3d(-50%, -50%, 0) scale(0.92);
                 animation: calendarSwipeHintHandMove 1.6s ease-in-out 2 both;
@@ -590,6 +590,7 @@ export function MobileMonthPlanner({
                 height: 3px;
                 overflow: hidden;
                 background: rgba(255, 255, 255, 0.22);
+                transform: scaleX(-1);
               }
 
               .calendar-swipe-hint__trail::after {
@@ -634,22 +635,22 @@ export function MobileMonthPlanner({
               @keyframes calendarSwipeHintHandMove {
                 0%,
                 100% {
-                  left: 24%;
+                  left: 76%;
                   opacity: 0;
                   transform: translate3d(-50%, -50%, 0) scale(0.92);
                 }
                 10% {
-                  left: 24%;
+                  left: 76%;
                   opacity: 1;
                   transform: translate3d(-50%, -50%, 0) scale(1);
                 }
                 78% {
-                  left: 76%;
+                  left: 24%;
                   opacity: 1;
                   transform: translate3d(-50%, -50%, 0) scale(1);
                 }
                 92% {
-                  left: 76%;
+                  left: 24%;
                   opacity: 0;
                   transform: translate3d(-50%, -50%, 0) scale(0.94);
                 }
