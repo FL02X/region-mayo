@@ -37,7 +37,7 @@ import {
   DesktopCustomSpotlightCard,
   DesktopEventSpotlightCard,
   DesktopSocialSpotlightCard,
-} from "@/components/sections/home/hero-section/desktop-spotlight-cards";
+} from "@/components/sections/home/hero-section/countdown-card.desktop";
 
 const editorialFont = Newsreader({
   subsets: ["latin"],
@@ -441,8 +441,8 @@ export function HeroSection({
             aria-hidden="true"
           />
 
-          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[70px] md:min-h-[420px] md:px-16 md:pb-8 md:pt-[78px]">
-            <div className="w-full grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 md:gap-5 items-center">
+          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[90px] md:min-h-[420px] md:px-16 md:pb-8">
+            <div className="w-full grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-20 items-center">
               <div className="hidden md:block">
                 {spotlightEvent && (
                   <DesktopEventSpotlightCard
@@ -491,17 +491,17 @@ export function HeroSection({
                 )}
               </div>
 
-              <div className="w-full max-w-[390px] flex flex-col justify-center text-center md:text-left md:justify-self-end">
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/95">
+              <div className="w-full max-w-[390px] flex flex-col justify-center text-center md:text-left">
+                <p className="mb-2 text-[11px] uppercase tracking-[0.24em] text-white/95">
                   Iglesia Gentil de Cristo
                 </p>
-                <h1 className={`${heroTitleFont.className} mb-5 text-[2.05rem] font-semibold leading-[1.08] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)] sm:text-[2.45rem]`}>
+                <h1 className={`${heroTitleFont.className} mb-5 text-[3rem] leading-[1.08] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)]`}>
                   <span className="block">Sitio oficial de la</span>
-                  <span className="block font-normal">Región Mayo</span>
+                  <span className="font-normal">Región Mayo</span>
                 </h1>
                 <button
                   onClick={scrollToContent}
-                  className="group flex w-full items-center justify-start gap-2 py-3 text-[15px] font-semibold text-white/90 opacity-75 transition-colors hover:text-white"
+                  className="group flex w-full items-center justify-start gap-2 py-3 text-[18px] font-semibold text-white/90 opacity-75 transition-colors hover:text-white"
                   aria-label="Explorar calendario y desplazarse hacia abajo"
                 >
                   Explorar Calendario 2026

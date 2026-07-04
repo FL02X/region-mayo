@@ -1,4 +1,6 @@
-// Donde: columna izquierda del hero desktop. Viewports: desktop. Funcion: tarjetas visibles para evento, aviso personalizado y post social destacado.
+// Donde: columna izquierda del hero desktop. 
+// Viewports: desktop. 
+// Funcion: tarjetas visibles para evento, aviso personalizado y post social destacado.
 import Image from "next/image";
 import {
   Calendar,
@@ -19,6 +21,7 @@ import {
   type CountdownOccurrence,
 } from "@/components/sections/home/hero-section/desktop-hero-utils";
 import { CompactCountdownCell } from "@/components/sections/home/hero-section/desktop-countdown-cell";
+import { formatDesktopCountdownDate, formatMobileCountdownDate } from "../countdown-section/countdown-utils";
 
 export function DesktopEventSpotlightCard({
   event,
@@ -51,40 +54,40 @@ export function DesktopEventSpotlightCard({
   return (
     <article className="desktop-next-event-lift bg-white/93 backdrop-blur-[1px] p-6 rounded-[2px]">
       <p
-        className="text-[10px] font-bold uppercase tracking-[0.16em] mb-2"
+        className="text-[13px] font-bold uppercase tracking-[0.16em] mb-3"
         style={{ color: accentColor }}
       >
         Nuestro Próximo Evento
       </p>
       <h3
-        className="type-human-title mb-5 text-[34px] font-bold leading-[1.04]"
+        className="type-human-title mb-6 text-[36px] font-bold leading-[1.04] tracking-tight mr-30"
         style={{ fontFamily: '"Canela", Georgia, serif' }}
       >
         {event.title}
       </h3>
-      <div className="type-system space-y-1.5 text-[13px] mb-3.5">
+      <div className="type-system space-y-1.5 text-[17px] mb-6">
         <div className="flex items-start gap-2">
-          <Calendar className="mt-[2px] h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <div className="space-y-1">
+          <Calendar className="mt-[2px] h-5 w-5 shrink-0" aria-hidden="true" />
+          <div className="space-y-1.5 mb-3">
             {schedule.map((occurrence, index) => (
               <span
                 key={`${occurrence.date.toISOString()}-${index}`}
                 className="block font-bold text-ink"
               >
-                {formatRegionWeekdayDayMonth(occurrence.date)} · {occurrence.time}
+                {formatDesktopCountdownDate(occurrence.date)} · {occurrence.time}
               </span>
             ))}
           </div>
         </div>
-        <div className="flex items-start gap-2 min-w-0">
-          <MapPin className="mt-[2px] h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span className="truncate text-ink">
+        <div className="flex items-start gap-2 min-w-0 italic">
+          <MapPin className="mt-[2px] h-5 w-5 shrink-0" aria-hidden="true" />
+          <span className="text-ink">
             {event.address || event.location}
           </span>
         </div>
       </div>
 
-      {countdownDisplay && (
+      {/* {countdownDisplay && (
         <div className={`grid grid-cols-4 border border-[#d5dbe3] divide-x divide-[#d5dbe3] bg-white/95 mb-3 ${countdownIsDisabled ? "opacity-60 saturate-0" : ""}`}>
           {timeUnits.map((unit) => (
             <CompactCountdownCell
@@ -95,17 +98,17 @@ export function DesktopEventSpotlightCard({
             />
           ))}
         </div>
-      )}
+      )} */}
 
       {mapsUrl ? (
         <button
           type="button"
           onClick={onOpenMaps}
-          className="mb-1 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[18px] font-extrabold leading-tight tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
+          className="mb-1 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[18px] font-extrabold leading-tight tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
           aria-label="Abrir ubicación del evento"
         >
           <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0">VER UBICACION</span>
+          <span className="min-w-0">VER UBICACIÓN</span>
         </button>
       ) : (
         <button
@@ -114,7 +117,7 @@ export function DesktopEventSpotlightCard({
           className="mb-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[17px] font-extrabold leading-tight tracking-[0.02em] text-white opacity-60"
         >
           <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="min-w-0">VER UBICACION</span>
+          <span className="min-w-0">VER UBICACIÓN</span>
         </button>
       )}
 

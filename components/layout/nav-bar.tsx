@@ -137,7 +137,7 @@ export function AppHeader({
     <>
       <header
         data-app-header
-        className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-brand border-b border-black/15 text-white h-[51px] md:h-[48px] shadow-[inset_0_-1px_0_rgba(28,25,23,0.28)]`}
+        className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-brand border-b border-black/15 text-white h-[51px] md:h-[46px] shadow-[inset_0_-1px_0_rgba(28,25,23,0.28)]`}
       >
         <div className="h-full max-w-[1150px] mx-auto relative z-[61]">
           <div

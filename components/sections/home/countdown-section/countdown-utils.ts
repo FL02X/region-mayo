@@ -36,6 +36,13 @@ const longDateFormatter = new Intl.DateTimeFormat("es-MX", {
   month: "long",
 });
 
+const longDateFormatterLargeWeekdayName = new Intl.DateTimeFormat("es-MX", {
+  timeZone: REGION_TIME_ZONE,
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
 function capitalizeDateLabel(value: string) {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
@@ -44,6 +51,17 @@ function capitalizeDateLabel(value: string) {
 export function formatMobileCountdownDate(date: Date) {
   const parts = Object.fromEntries(
     longDateFormatter.formatToParts(date).map((part) => [part.type, part.value]),
+  ) as Record<string, string>;
+
+  const weekday = capitalizeDateLabel(parts.weekday ?? "");
+  const month = capitalizeDateLabel(parts.month ?? "");
+
+  return `${weekday}, ${parts.day} ${month}`;
+}
+
+export function formatDesktopCountdownDate(date: Date) {
+  const parts = Object.fromEntries(
+    longDateFormatterLargeWeekdayName.formatToParts(date).map((part) => [part.type, part.value]),
   ) as Record<string, string>;
 
   const weekday = capitalizeDateLabel(parts.weekday ?? "");

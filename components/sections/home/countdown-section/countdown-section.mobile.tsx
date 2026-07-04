@@ -4,7 +4,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Newsreader } from "next/font/google";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
-import { HeroDebugPanel } from "./hero-debug-panel";
+import { HeroDebugPanel } from "../hero-debug-panel";
 import { Lightbox } from "@/components/shared/lightbox";
 import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
 import type {

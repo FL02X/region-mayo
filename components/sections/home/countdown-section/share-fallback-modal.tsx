@@ -1,4 +1,6 @@
-// Donde: modal de compartir del countdown mobile. Viewports: mobile. Funcion: muestra texto para copiar y enlace de WhatsApp cuando Web Share no aplica.
+// Donde: modal de compartir del countdown mobile. 
+// Viewports: mobile. 
+// Funcion: muestra texto para copiar y enlace de WhatsApp cuando Web Share no aplica.
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Copy, X } from "lucide-react";

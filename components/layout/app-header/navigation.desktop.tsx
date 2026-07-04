@@ -31,7 +31,7 @@ export function DesktopNavigation({
             href={href}
             onMouseEnter={(event) => onItemHover(event.currentTarget)}
             className={cn(
-              "desktop-header-item flex cursor-pointer items-center gap-1.5 h-full px-2.5 lg:px-3 max-[914px]:w-12 max-[914px]:justify-center max-[914px]:gap-0 max-[914px]:px-0 max-[914px]:text-[0px] min-[915px]:px-3 min-[915px]:gap-0 min-[915px]:justify-center min-[915px]:text-[12px] min-[1101px]:justify-start min-[1101px]:gap-1.5 text-[11px] transition-colors font-medium whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
+              "desktop-header-item flex cursor-pointer items-center gap-1.5 h-full px-2.5 lg:px-3.5 max-[914px]:w-12 max-[914px]:justify-center max-[914px]:gap-0 max-[914px]:px-0 max-[914px]:text-[0px] min-[915px]:px-3 min-[915px]:gap-0 min-[915px]:justify-center min-[915px]:text-[14px] min-[1101px]:justify-start min-[1101px]:gap-2 text-[14px] transition-colors whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
               isActive
                 ? "text-white border-[#2f5e93] bg-[#2f5e93]"
                 : "text-white hover:text-white hover:border-white/30"
