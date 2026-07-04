@@ -716,7 +716,7 @@ function TemploCard({
               animate={{ height: "auto", opacity: 1 }}
               exit={isMobile ? { height: 0, opacity: 0 } : undefined}
               transition={isMobile ? expandTransition : { duration: 0 }}
-              className="overflow-hidden"
+              className="overflow-hidden md:border-x md:border-b md:border-brand"
             >
               <div className="border-t border-border/80 bg-muted/20 w-full space-y-5 px-3 py-4 md:px-5 md:py-5">
                 {detailsContent}

@@ -501,7 +501,7 @@ export function HeroSection({
                 </h1>
                 <button
                   onClick={scrollToContent}
-                  className="group flex w-full items-center justify-start gap-2 py-3 text-[16px] font-semibold text-white/90 opacity-75 transition-colors hover:text-white lg:text-[18px]"
+                  className="group flex w-fit items-center justify-start gap-2 py-3 text-[16px] font-semibold text-white/90 opacity-75 transition-colors hover:text-white lg:text-[18px] hover:bg-brand-hover"
                   aria-label="Explorar calendario y desplazarse hacia abajo"
                 >
                   Explorar Calendario 2026

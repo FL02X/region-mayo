@@ -96,7 +96,7 @@ export function FirstVisitCard({
           <button
             type="button"
             onClick={onOpen}
-            className="ml-[58px] inline-flex min-h-[34px] w-fit max-w-[calc(100%-58px)] items-center justify-start gap-2 bg-brand px-3 py-1 text-left text-[17px] font-normal leading-tight text-white [&>span]:min-w-0 hover:bg-brand-hover"
+            className="ml-[58px] inline-flex min-h-[34px] w-fit max-w-[calc(100%-58px)] items-center justify-start gap-2 bg-brand px-3 py-1 text-left text-[17px] font-normal leading-tight text-white [&>span]:min-w-0 hover:bg-brand-active"
           >
             <span>{FIRST_VISIT_COPY.cardButtonLabel}</span>
             <ChevronRight className="h-6 w-6 shrink-0 stroke-[1.4]" aria-hidden="true" />

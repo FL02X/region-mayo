@@ -100,7 +100,7 @@ export function RecentVideosFeed({ album, className }: RecentVideosFeedProps) {
             <Link
               href="/album/grabaciones"
               aria-label="Ver archivo de grabaciones"
-              className="mb-0.5 flex flex-row items-center text-center gap-2 text-ink-white text-sm active:bg-brand-active"
+              className="mb-0.5 flex flex-row items-center text-center gap-2 text-ink-white text-sm active:bg-brand-active hover:bg-brand-hover"
             >
               <Archive className="w-4 h-4" />
               <span className="tracking-tighter">Ver archivo</span>
@@ -114,7 +114,7 @@ export function RecentVideosFeed({ album, className }: RecentVideosFeedProps) {
             recentVideos.map((item, index) => (
               <div
                 key={index}
-                className="border-b border-border last:border-none"
+                className="border-b border-border last:border-none hover:bg-brand-hover md:pl-3"
               >
                 <RecordingAlbumListItem album={item} />
               </div>
