@@ -418,11 +418,11 @@ export function EventsFeed({
         {/* Calendar section */}
         <section
           id="calendario"
-          className={`mt-0 md:mt-0 px-4 md:px-16 pt-6 md:pt-8 pb-4 border-border/70 bg-muted/20 ${
+          className={`mt-0 px-4 md:px-16 pt-6 md:pt-8 pb-4 border-border/70 bg-muted/20 ${
             hasFirstVisitDivider ? "" : "border-t md:border-t-0"
           }`}
         >
-          <div className="mt-1 max-w mx-auto w-full">
+          <div className="mt-4 max-w mx-auto w-full">
 
             <div className="mb-9">
               <h2

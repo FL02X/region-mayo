@@ -52,7 +52,7 @@ export function DesktopEventSpotlightCard({
     : [];
 
   return (
-    <article className="desktop-next-event-lift bg-paper backdrop-blur-[1px] p-6 rounded-[2px]">
+    <article className="desktop-next-event-lift w-full bg-paper p-5 backdrop-blur-[1px] md:p-6 rounded-[2px]">
       <p
         className="text-[13px] font-bold uppercase tracking-[0.16em] mb-3"
         style={{ color: accentColor }}
@@ -60,7 +60,7 @@ export function DesktopEventSpotlightCard({
         Nuestro Próximo Evento
       </p>
       <h3
-        className="type-human-title mb-6 text-[36px] font-bold leading-[1.04] tracking-tight mr-30"
+        className="type-human-title mb-6 text-[clamp(30px,3.25vw,36px)] font-bold leading-[1.04] tracking-tight lg:mr-30 lg:text-[36px]"
         style={{ fontFamily: '"Canela", Georgia, serif' }}
       >
         {event.title}

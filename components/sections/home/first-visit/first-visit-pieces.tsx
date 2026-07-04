@@ -76,13 +76,13 @@ export function FirstVisitCard({
         transition: transitionStyle,
       }}
     >
-      <div ref={contentRef} className="pt-8 pb-10">
+      <div ref={contentRef} className="pt-8 pb-10 md:pt-12">
         <div className="flex items-start gap-3">
-          <div className="relative mt-1.5 pr-12 h-[50px] w-[50px] shrink-0 overflow-hidden bg-[#1d3765]">
+          <div className="relative mt-1.5 pr-12 h-[50px] w-[50px] md:h-[70px] md:w-[70px] shrink-0 overflow-hidden bg-[#1d3765]">
             <Image src="/images/faq4.png" alt="Preguntas frecuentes" fill sizes="50px" className="object-cover" />
           </div>
 
-          <div className="min-w-0 flex-1 pt-0.5">
+          <div className="min-w-0 flex-1 pt-0.5 md:pl-5">
             <h2 className={`${titleFontClassName} text-[22px] font-bold leading-[1.18]`}>
               {FIRST_VISIT_COPY.cardTitle}
             </h2>
@@ -92,11 +92,11 @@ export function FirstVisitCard({
           </div>
         </div>
 
-        <div className="mt-0.5 pt-5">
+        <div className="mt-0.5 pt-5 md:pl-11">
           <button
             type="button"
             onClick={onOpen}
-            className="ml-[58px] inline-flex min-h-[34px] w-fit max-w-[calc(100%-58px)] items-center justify-start gap-2 bg-brand px-3 py-1 text-left text-[17px] font-normal leading-tight text-white [&>span]:min-w-0"
+            className="ml-[58px] inline-flex min-h-[34px] w-fit max-w-[calc(100%-58px)] items-center justify-start gap-2 bg-brand px-3 py-1 text-left text-[17px] font-normal leading-tight text-white [&>span]:min-w-0 hover:bg-brand-hover"
           >
             <span>{FIRST_VISIT_COPY.cardButtonLabel}</span>
             <ChevronRight className="h-6 w-6 shrink-0 stroke-[1.4]" aria-hidden="true" />

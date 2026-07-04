@@ -89,7 +89,7 @@ export default async function Home() {
           />
         </div>
 
-        {/* <DesktopHomeInfoWrapper albums={albums} /> */}
+        <DesktopHomeInfoWrapper albums={albums} />
 
         <MobileHero
           src={siteSettings?.mobileHeroImage?.url || "/images/event-conference.jpg"}

@@ -441,9 +441,9 @@ export function HeroSection({
             aria-hidden="true"
           />
 
-          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[44px] md:min-h-[420px] md:px-16 md:pb-8">
-            <div className="w-full grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-20 items-center">
-              <div className="hidden md:block">
+          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[44px] md:min-h-[420px] md:px-10 md:pb-8 lg:px-16">
+            <div className="grid w-full items-center gap-8 md:grid-cols-[minmax(350px,1.15fr)_minmax(220px,0.85fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
+              <div className="hidden min-w-0 md:block">
                 {spotlightEvent && (
                   <DesktopEventSpotlightCard
                     event={spotlightEvent}
@@ -491,17 +491,17 @@ export function HeroSection({
                 )}
               </div>
 
-              <div className="w-full max-w-[390px] flex flex-col justify-center text-center md:text-left">
-                <p className="mb-2 text-[11px] uppercase tracking-[0.24em] text-white/95">
+              <div className="flex w-full min-w-0 max-w-[390px] flex-col justify-center text-center md:text-left">
+                <p className="mb-2 text-[10px] uppercase tracking-[0.22em] text-white/95 lg:text-[11px] lg:tracking-[0.24em]">
                   Iglesia Gentil de Cristo
                 </p>
-                <h1 className={`${heroTitleFont.className} mb-5 text-[3rem] leading-[1.08] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)]`}>
+                <h1 className={`${heroTitleFont.className} mb-5 text-[clamp(2.25rem,4.1vw,3rem)] leading-[1.08] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)] lg:text-[3rem]`}>
                   <span className="block">Sitio oficial de la</span>
                   <span className="font-normal">Región Mayo</span>
                 </h1>
                 <button
                   onClick={scrollToContent}
-                  className="group flex w-full items-center justify-start gap-2 py-3 text-[18px] font-semibold text-white/90 opacity-75 transition-colors hover:text-white"
+                  className="group flex w-full items-center justify-start gap-2 py-3 text-[16px] font-semibold text-white/90 opacity-75 transition-colors hover:text-white lg:text-[18px]"
                   aria-label="Explorar calendario y desplazarse hacia abajo"
                 >
                   Explorar Calendario 2026
