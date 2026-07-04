@@ -90,7 +90,7 @@ export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {
   return (
     <div className="w-full overflow-x-clip bg-black" id="main-content">
       <div
-        className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[1150px] overflow-x-clip bg-[#050505] px-0 pb-0 pt-[85px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:border-white/10 md:pb-16 md:pt-[92px]"
+        className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[1150px] overflow-x-clip bg-[#050505] px-0 pb-0 pt-[32px] md:pt-[44px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:border-white/10 md:pb-16"
         style={{ backgroundColor: "#111111" }}
       >
         <div className="mx-auto w-full md:w-[calc(100%-32px)]">
@@ -208,8 +208,8 @@ export function AlbumSectionContent({
   );
 
   return (
-    <div className="w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
-      <div className="desktop-content-pane mx-auto min-h-[calc(100dvh-51px)] max-w-[1150px] overflow-x-clip bg-paper px-0 pb-14 pt-6 focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:pb-16 md:pt-8">
+    <div className="w-full overflow-x-clip bg-[#f1f1f1] md:overflow-x-visible" id="main-content">
+      <div className="desktop-content-pane mx-auto min-h-[calc(100dvh-51px)] max-w-[1150px] overflow-x-clip bg-paper px-0 pb-14 pt-[32px] md:overflow-x-visible md:pt-[44px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x border-border md:pb-16 md:pt-8">
         <div className="mx-auto w-full md:w-[calc(100%-32px)]">
           <section className="px-4 pb-5 pt-0 md:px-8 md:pb-6">
             <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-primary">
@@ -463,12 +463,12 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
 
     return (
       <div
-        className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1]"
+        className="album-detail-surface w-full overflow-x-clip bg-[#f1f1f1] md:overflow-x-visible"
         id="main-content"
       >
         <motion.div
           key={`album-detail-${album.slug}-${shouldAnimate ? "mobile" : "static"}`}
-          className="desktop-content-pane mx-auto min-h-[calc(100dvh-95px)] max-w-[1150px] overflow-x-clip bg-paper px-0 pb-14 pt-6 focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:pb-16 md:pt-8"
+          className="desktop-content-pane mx-auto min-h-[calc(100dvh-95px)] max-w-[1150px] overflow-x-clip bg-paper px-0 pb-14 pt-[32px] md:overflow-x-visible md:pt-[44px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x border-border md:pb-16"
           {...pageMotionProps}
         >
           <div className="mx-auto w-full md:w-[calc(100%-32px)]">
@@ -760,10 +760,10 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   }
 
   return (
-    <div className="w-full overflow-x-clip bg-[#f1f1f1]" id="main-content">
+    <div className="w-full overflow-x-clip bg-[#f1f1f1] md:overflow-x-visible" id="main-content">
       <motion.div
         key={`album-list-${shouldAnimate ? "mobile" : "static"}`}
-        className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-paper px-4 pb-14 pt-[82px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:px-8 md:pb-16 md:pt-[88px]"
+        className="desktop-content-pane mx-auto min-h-[100dvh] max-w-[950px] overflow-x-clip bg-paper px-4 pb-14 pt-[32px] md:overflow-x-visible md:pt-[44px] focus:outline-none md:min-h-[calc(100dvh-45px)] md:border-x md:px-8 md:pb-16"
         {...pageMotionProps}
       >
         <div className="mx-auto w-full md:w-[calc(100%-32px)] md:px-4 md:pt-1">

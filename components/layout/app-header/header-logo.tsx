@@ -39,7 +39,6 @@ export function DesktopHeaderBrand() {
           unoptimized
         />
       </Link>
-      <HeaderTitle className="hidden min-[1101px]:flex flex-col justify-center leading-tight pr-2" />
     </div>
   );
 }

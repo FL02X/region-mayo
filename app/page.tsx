@@ -6,6 +6,7 @@ import {
 } from "@/lib/cookie-utils";
 import { LocationNotificationBar } from "@/components/layout/location-popup-bar";
 import { HeroSection } from "@/components/sections/home/hero-section.desktop";
+import { DesktopHomeInfoWrapper } from "@/components/sections/home/desktop-home-info-wrapper";
 import { MobileHero } from "@/components/sections/home/hero-section.mobile";
 import { EventsFeed } from "@/components/sections/home/calendar-feed";
 import { ActionDeck } from "@/components/sections/home/action-deck";
@@ -88,13 +89,13 @@ export default async function Home() {
           />
         </div>
 
-        <div className="pt-[51px] md:pt-0">
-          <MobileHero
-            src={siteSettings?.mobileHeroImage?.url || "/images/event-conference.jpg"}
-            alt={siteSettings?.mobileHeroImage?.alt || "Conferencia Regional"}
-            templos={templos}
-          />
-        </div>
+        {/* <DesktopHomeInfoWrapper albums={albums} /> */}
+
+        <MobileHero
+          src={siteSettings?.mobileHeroImage?.url || "/images/event-conference.jpg"}
+          alt={siteSettings?.mobileHeroImage?.alt || "Conferencia Regional"}
+          templos={templos}
+        />
 
         {/* Desktop only: ActionDeck below hero — keep tight to hero, decorative bottom rules in component */}
         <div className="offline-hide-when-offline hidden md:block max-w-[950px] mx-auto md:border-x border-[#dce2e9] bg-white mt-0 mb-0">

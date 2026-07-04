@@ -19,7 +19,6 @@ import {
 export default function ConfiguracionPage() {
   const { isInstalled } = useInstallPrompt();
   const { isOnline, connection } = useConnectivity();
-  const headerBehavior = isInstalled ? "sticky" : "fixed";
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(0);
@@ -84,8 +83,8 @@ export default function ConfiguracionPage() {
 
   return (
     <main className="min-h-screen bg-[#f1f1f1]">
-      <AppHeader behavior={headerBehavior} />
-      <div className="pt-[51px] md:pt-0 max-w-[950px] mx-auto px-4 md:px-6 py-8 space-y-6">
+      <AppHeader />
+      <div className="max-w-[950px] mx-auto px-4 md:px-6 py-8 space-y-6">
         <section className="bg-white border border-border/60 p-5">
           <h1 className="text-lg font-bold text-foreground uppercase tracking-wide">Configuración</h1>
           <p className="mt-1 text-sm text-muted-foreground">

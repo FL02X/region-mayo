@@ -379,7 +379,7 @@ export function EventsFeed({
       className="w-full relative bg-[#f1f1f1]"
       /* [#f1f1f1] */ data-events-feed="true"
     >
-      <div className="desktop-content-pane max-w-[1150px] mx-auto bg-[#ffffff] md:border-x">
+      <div className="desktop-content-pane max-w-[1150px] mx-auto bg-[#ffffff] md:border-x border-border">
         {/* Priority spotlight section (mobile only) */}
         <div className="offline-hide-when-offline md:hidden">
           <CountdownSection
@@ -427,13 +427,13 @@ export function EventsFeed({
             <div className="mb-9">
               <h2
                 id="calendar-title"
-                className={`${editorialFont.className} flex flex-row gap-3 items-center type-human-title text-[1.725rem] font-semibold tracking-tight mb-1.5`}
+                className={`${editorialFont.className} flex flex-row gap-3 items-center type-human-title text-[1.725rem] md:text-[1.925rem] font-semibold tracking-tight mb-1.5`}
               >
                 <span className="mt-3">
                   Calendario 2026
                 </span>
               </h2>
-              <p className="type-system text-[15px] mt-0.5">
+              <p className="type-system text-[15px] md:text-[17px] mt-0.5">
                 Selecciona un mes para ver los eventos
               </p>
             </div>
@@ -502,19 +502,19 @@ export function EventsFeed({
         {shouldRenderLegacyCalendar && (
           <section
             id="eventos"
-            className="bg-muted/20 px-4 md:px-16 md:py-[24px] pt-4 pb-14"
+            className="bg-muted/20 px-4 md:px-16 md:py-[24px] pt-4 pb-14 md:pb-30"
           >
           <div className="mt-0 max-w mx-auto w-full">
             {/* Month label */}
             <div className="mb-6 flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <h3
-                  className={`${editorialFont.className} type-human-title font-semibold text-[1.425rem] tracking-tight`}
+                  className={`${editorialFont.className} type-human-title font-semibold text-[1.425rem] md:text-[1.7rem] tracking-tight`}
                 >
                   {CALENDAR_MONTHS[getRegionCalendarParts(selectedMonth).month - 1]}{" "}
                   {getRegionCalendarParts(selectedMonth).year}
                 </h3>
-                <p className="type-system text-[15px] mt-1">
+                <p className="type-system text-[15px] md:text-[16px] mt-1 md:pb-6">
                   {filteredEvents.length === 0
                     ? "No hay eventos programados"
                     : `${filteredEvents.length} ${

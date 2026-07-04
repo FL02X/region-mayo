@@ -101,8 +101,8 @@ export function SectionNavBar({
 
   return (
     <>
-      <div className="mt-[51px] bg-[#f1f1f1] md:mt-[45px]">
-        <div className="mx-auto flex h-11 max-w-[950px] md:max-w-[1152px] items-center justify-between md:border-x-2 border-b border-[#d6d0c5] bg-[#f1f1f1] px-4 shadow-[0_2px_8px_rgba(15,23,42,0.05)] md:px-8">
+      <div className="mt-[3px] bg-[#f1f1f1] md:mt-[0px]">
+        <div className="desktop-side-shadow mx-auto flex h-11 max-w-[950px] md:max-w-[1150px] items-center justify-between md:border-x border-b border-border bg-[#f1f1f1] px-4 shadow-[0_2px_8px_rgba(15,23,42,0.05)] md:px-8">
           <div className="min-w-0">
             {parentHref && parentLabel ? (
               <Link

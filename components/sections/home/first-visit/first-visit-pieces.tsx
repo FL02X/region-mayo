@@ -13,14 +13,16 @@ import {
 export function FirstVisitHiddenNotice({
   isVisible,
   onRestore,
+  className = "md:hidden border-y bg-white px-[20px] py-3",
 }: {
   isVisible: boolean;
   onRestore: () => void;
+  className?: string;
 }) {
   return (
     <section
       aria-label={FIRST_VISIT_COPY.hiddenSectionLabel}
-      className="md:hidden border-y bg-white px-[20px] py-3"
+      className={className}
     >
       <div
         className="flex items-center justify-between gap-3 border border-[#d9dee7] bg-paper-highlight px-3.5 py-3"
@@ -52,17 +54,19 @@ export function FirstVisitCard({
   transitionStyle,
   titleFontClassName,
   onOpen,
+  className = "md:hidden border-y bg-white px-[20px]",
 }: {
   contentRef: RefObject<HTMLDivElement | null>;
   isHiding: boolean;
   transitionStyle: string;
   titleFontClassName: string;
   onOpen: () => void;
+  className?: string;
 }) {
   return (
     <section
       aria-label={FIRST_VISIT_COPY.sectionLabel}
-      className="md:hidden border-y bg-white px-[20px]"
+      className={className}
       style={{
         opacity: isHiding ? 0 : 1,
         maxHeight: isHiding ? 0 : undefined,

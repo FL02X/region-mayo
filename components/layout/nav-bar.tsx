@@ -26,7 +26,6 @@ import { DebugTimePicker } from "@/components/shared/debug-time-picker";
 interface AppHeaderProps {
   instagramUrl?: string;
   facebookUrl?: string;
-  behavior?: "fixed" | "sticky";
 }
 
 function getOffsetWithinTrack(element: HTMLElement, track: HTMLElement) {
@@ -44,7 +43,6 @@ function getOffsetWithinTrack(element: HTMLElement, track: HTMLElement) {
 export function AppHeader({
   instagramUrl = DEFAULT_INSTAGRAM_URL,
   facebookUrl = DEFAULT_FACEBOOK_URL,
-  behavior = "fixed",
 }: AppHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -130,44 +128,44 @@ export function AppHeader({
     "--header-highlight-opacity": `${desktopHoverState.opacity}`,
   } as CSSProperties;
 
-  const headerPosition = behavior === "sticky" ? "sticky" : "fixed";
-  const headerDesktopPosition = behavior === "sticky" ? "md:sticky" : "md:absolute";
-
   return (
     <>
-      <header
-        data-app-header
-        className={`${headerPosition} ${headerDesktopPosition} top-0 left-0 right-0 z-[60] bg-brand border-b border-black/15 text-white h-[51px] md:h-[46px] shadow-[inset_0_-1px_0_rgba(28,25,23,0.28)]`}
-      >
-        <div className="h-full max-w-[1150px] mx-auto relative z-[61]">
-          <div
-            ref={desktopTrackRef}
-            className="desktop-header-track hidden md:flex cursor-default items-center h-full px-4 lg:px-4 gap-2"
-            onMouseMove={handleDesktopTrackMouseMove}
-            onMouseLeave={clearDesktopHighlight}
-          >
+      {/* Wrapper fantasma: reserva 51px en móvil, en desktop se adapta automáticamente al contenido estático */}
+      <div className="h-[51px] w-full md:h-auto">
+        <header
+          data-app-header
+          className="fixed top-0 left-0 z-[60] w-full bg-brand border-y border-black/15 text-white h-[51px] md:static md:h-[50px]"
+        >
+          <div className="h-full max-w-[1150px] mx-auto relative z-[61]">
             <div
-              className="desktop-header-hover-indicator"
-              style={desktopHighlightStyle}
-              aria-hidden="true"
-            />
-            <DesktopHeaderBrand />
-            <DesktopNavigation
-              activePath={activePath}
-              isMounted={isMounted}
-              onItemHover={moveDesktopHighlight}
-            />
-            <DesktopSearch onSubmit={handleSearchSubmit} />
-            <HeaderSocialLinks
-              instagramUrl={instagramUrl}
-              facebookUrl={facebookUrl}
-              onItemHover={moveDesktopHighlight}
-            />
-          </div>
+              ref={desktopTrackRef}
+              className="desktop-header-track hidden md:flex cursor-default items-center h-full px-4 lg:px-4 gap-2"
+              onMouseMove={handleDesktopTrackMouseMove}
+              onMouseLeave={clearDesktopHighlight}
+            >
+              <div
+                className="desktop-header-hover-indicator"
+                style={desktopHighlightStyle}
+                aria-hidden="true"
+              />
+              <DesktopHeaderBrand />
+              <DesktopNavigation
+                activePath={activePath}
+                isMounted={isMounted}
+                onItemHover={moveDesktopHighlight}
+              />
+              <DesktopSearch onSubmit={handleSearchSubmit} />
+              <HeaderSocialLinks
+                instagramUrl={instagramUrl}
+                facebookUrl={facebookUrl}
+                onItemHover={moveDesktopHighlight}
+              />
+            </div>
 
-          <MobileHeaderContent instagramUrl={instagramUrl} facebookUrl={facebookUrl} />
-        </div>
-      </header>
+            <MobileHeaderContent instagramUrl={instagramUrl} facebookUrl={facebookUrl} />
+          </div>
+        </header>
+      </div>
 
       {process.env.NODE_ENV === "development" && (
         <div className="fixed bottom-16 left-4 z-[70] hidden md:block">

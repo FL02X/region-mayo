@@ -1497,7 +1497,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
 
   return (
     <div
-      className="relative w-full max-w-full overflow-x-hidden overscroll-x-none bg-[#f1f1f1]"
+      className="relative w-full max-w-full overflow-x-hidden overscroll-x-none bg-[#f1f1f1] md:overflow-x-visible"
       id="main-content"
       data-view-mode={viewMode}
     >
@@ -1534,7 +1534,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
           </div>
         </div>
       )}
-      <div className={`desktop-content-pane ${shouldShowLoader ? "invisible" : "visible"} mx-auto w-full max-w-[1150px] overflow-x-hidden bg-paper px-4 md:px-0 py-8 pt-[82px] focus:outline-none md:border-x md:pt-[88px]`}>
+      <div className={`desktop-content-pane ${shouldShowLoader ? "invisible" : "visible"} mx-auto w-full max-w-[1150px] overflow-x-hidden bg-paper px-4 md:px-0 py-8 pt-[32px] md:pt-[44px] focus:outline-none md:overflow-x-visible md:border-x border-border`}>
         <div className="max-w mx-auto md:px-16 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">

@@ -33,10 +33,14 @@ const editorialFont = Newsreader({
 
 interface FirstVisitInfoMobileProps {
   onDividerVisibilityChange?: (isVisible: boolean) => void;
+  cardClassName?: string;
+  hiddenNoticeClassName?: string;
 }
 
 export function FirstVisitInfoMobile({
   onDividerVisibilityChange,
+  cardClassName,
+  hiddenNoticeClassName,
 }: FirstVisitInfoMobileProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [openQuestion, setOpenQuestion] = useState<string | null>(
@@ -269,7 +273,11 @@ export function FirstVisitInfoMobile({
 
   if (isDismissed) {
     return (
-      <FirstVisitHiddenNotice isVisible={undoNoticeVisible} onRestore={restoreCard} />
+      <FirstVisitHiddenNotice
+        isVisible={undoNoticeVisible}
+        onRestore={restoreCard}
+        className={hiddenNoticeClassName}
+      />
     );
   }
 
@@ -295,6 +303,7 @@ export function FirstVisitInfoMobile({
         isHiding={isHiding}
         transitionStyle={cardTransition}
         titleFontClassName={editorialFont.className}
+        className={cardClassName}
         onOpen={() => {
           setOpenQuestion(INITIAL_OPEN_QUESTION);
           setIsOpen(true);

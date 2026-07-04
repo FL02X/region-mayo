@@ -82,6 +82,18 @@ export function MobileMenu({
     };
   }, []);
 
+  useEffect(() => {
+    if (open) {
+      document.body.dataset.mobileMenuOpen = "true";
+    } else {
+      document.body.removeAttribute("data-mobile-menu-open");
+    }
+
+    return () => {
+      document.body.removeAttribute("data-mobile-menu-open");
+    };
+  }, [open]);
+
   const triggerTouchFeedback = (href: string) => {
     setTouchFeedbackHref(href);
 

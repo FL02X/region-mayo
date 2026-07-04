@@ -680,7 +680,7 @@ export function CorosContent({ coros, initialViewMode }: CorosContentProps) {
         </div>,
         document.body
       )}
-      <div className="desktop-content-pane max-w-[1150px] mx-auto px-4 md:px-0 py-8 pt-[82px] md:pt-[88px] bg-paper md:border-x focus:outline-none">
+      <div className="desktop-content-pane max-w-[1150px] mx-auto px-4 md:px-0 py-8 pt-[32px] md:pt-[44px] bg-paper md:border-x border-border focus:outline-none">
         <div className="max-w mx-auto md:px-16 md:pt-1">
           {/* Header */}
         <div className="mb-6 pb-5 border-b border-border/70">

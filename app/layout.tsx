@@ -6,6 +6,7 @@ import { TimeProvider } from "@/lib/time-context";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME, SITE_NAME, getSiteUrl, SITE_OFFICIAL_TITLE } from "@/lib/seo";
 import { HighlightClearer } from "@/components/layout/highlight-removal";
 import { RouteBodyFlags } from "@/components/layout/connection-route-body-flags";
+import { DesktopBrandNavBar } from "@/components/layout/desktop-brand-nav-bar";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { InstallAppBanner } from "@/components/pwa/install-app-sticky-banner.mobile";
@@ -165,6 +166,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <HighlightClearer />
         </Suspense>
+        <DesktopBrandNavBar />
         <TimeProvider initialTimeISO={new Date().toISOString()}>{children}</TimeProvider>
         <InstallAppBanner />
         <OfflineBanner />

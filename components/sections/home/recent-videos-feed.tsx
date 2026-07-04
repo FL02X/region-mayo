@@ -17,6 +17,7 @@ import { markAlbumTransition } from "../album/shared/album-transition";
 
 interface RecentVideosFeedProps {
   album?: Album[];
+  className?: string;
 }
 
 const editorialFont = Newsreader({
@@ -76,7 +77,7 @@ function RecordingAlbumListItem({ album }: { album: Album }) {
   );
 }
 
-export function RecentVideosFeed({ album }: RecentVideosFeedProps) {
+export function RecentVideosFeed({ album, className }: RecentVideosFeedProps) {
   const allAlbums = album || [];
   const videoAlbums = allAlbums.filter((item) => item.albumType === "youtube");
   const sortedVideos = videoAlbums.sort(
@@ -85,7 +86,7 @@ export function RecentVideosFeed({ album }: RecentVideosFeedProps) {
   const recentVideos = sortedVideos.slice(0, 3);
 
   return (
-    <div className="md:hidden bg-[#050505] pt-10 pb-10 px-4">
+    <div className={className ?? "md:hidden bg-[#050505] pt-10 pb-10 px-4"}>
       <div className="mx-auto max-w bg-[#050505]">
         <div className="flex flex-row mb-5 items-center justify-between w-full">
           <div>

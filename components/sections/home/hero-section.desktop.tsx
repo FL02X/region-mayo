@@ -392,7 +392,7 @@ export function HeroSection({
 
   return (
     <div className="w-full relative bg-[#f1f1f1]"> {/* 950px */}
-      <div className="desktop-content-pane max-w-[1150px] mx-auto bg-[#ffffff] md:border-x">
+      <div className="desktop-content-pane max-w-[1150px] mx-auto bg-paper md:border-x border-border">
         <section
           className="relative overflow-hidden h-[min(60vh,480px)] md:h-auto md:min-h-[420px]"
           aria-label="Bienvenida a Región Mayo"
@@ -441,7 +441,7 @@ export function HeroSection({
             aria-hidden="true"
           />
 
-          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[90px] md:min-h-[420px] md:px-16 md:pb-8">
+          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[44px] md:min-h-[420px] md:px-16 md:pb-8">
             <div className="w-full grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-20 items-center">
               <div className="hidden md:block">
                 {spotlightEvent && (

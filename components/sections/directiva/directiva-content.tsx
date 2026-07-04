@@ -691,7 +691,7 @@ export function DirectivaContent({
           </div>,
           document.body,
         )}
-      <div className="desktop-content-pane min-h-screen max-w-[1150px] mx-auto px-4 md:px-0 py-6 pt-[78px] md:pt-[88px] bg-paper md:border-x focus:outline-none">
+      <div className="desktop-content-pane min-h-screen max-w-[1150px] mx-auto px-4 md:px-0 py-6 pt-[32px] md:pt-[44px] bg-paper md:border-x border-border focus:outline-none">
         <div className="max-w mx-auto md:pt-1 md:px-16">
           {/* Header */}
           <div className="mb-6 pb-5 border-b border-border/70">
