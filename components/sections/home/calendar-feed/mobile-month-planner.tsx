@@ -586,24 +586,27 @@ export function MobileMonthPlanner({
                 position: absolute;
                 left: calc(24% - 18px);
                 right: calc(24% + 18px);
-                top: calc(50% - 32px);
-                height: 3px;
-                overflow: hidden;
+                top: calc(50% - 40px);
+                height: 5px;
+                overflow: visible;
                 background: rgba(255, 255, 255, 0.22);
-                transform: scaleX(-1);
+                border-radius: 999px;
               }
 
               .calendar-swipe-hint__trail::after {
                 content: "";
                 position: absolute;
-                inset: 0;
-                background: linear-gradient(
-                  90deg,
-                  transparent,
-                  rgba(255, 255, 255, 0.95),
-                  transparent
-                );
-                transform: translateX(-100%);
+                left: 100%;
+                top: 50%;
+                height: 22px;
+                width: 22px;
+                border: 2px solid rgba(255, 255, 255, 0.95);
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.12);
+                box-shadow:
+                  0 0 0 5px rgba(255, 255, 255, 0.12),
+                  0 0 18px rgba(255, 255, 255, 0.55);
+                transform: translate3d(-50%, -50%, 0) scale(0.78);
                 animation: calendarSwipeHintTrail 1.6s ease-in-out 2 both;
               }
 
@@ -676,19 +679,23 @@ export function MobileMonthPlanner({
                 0%,
                 100% {
                   opacity: 0;
-                  transform: translateX(-100%);
+                  left: 100%;
+                  transform: translate3d(-50%, -50%, 0) scale(0.78);
                 }
                 10% {
                   opacity: 1;
-                  transform: translateX(-100%);
+                  left: 100%;
+                  transform: translate3d(-50%, -50%, 0) scale(1);
                 }
                 78% {
                   opacity: 1;
-                  transform: translateX(100%);
+                  left: 0%;
+                  transform: translate3d(-50%, -50%, 0) scale(1);
                 }
                 92% {
                   opacity: 0;
-                  transform: translateX(100%);
+                  left: 0%;
+                  transform: translate3d(-50%, -50%, 0) scale(0.78);
                 }
               }
 
