@@ -51,6 +51,7 @@ export function FirstVisitHiddenNotice({
 export function FirstVisitCard({
   contentRef,
   isHiding,
+  collapseMaxHeight,
   transitionStyle,
   titleFontClassName,
   onOpen,
@@ -58,6 +59,7 @@ export function FirstVisitCard({
 }: {
   contentRef: RefObject<HTMLDivElement | null>;
   isHiding: boolean;
+  collapseMaxHeight?: string;
   transitionStyle: string;
   titleFontClassName: string;
   onOpen: () => void;
@@ -69,7 +71,7 @@ export function FirstVisitCard({
       className={className}
       style={{
         opacity: isHiding ? 0 : 1,
-        maxHeight: isHiding ? 0 : undefined,
+        maxHeight: isHiding ? 0 : collapseMaxHeight,
         marginTop: isHiding ? 0 : undefined,
         marginBottom: isHiding ? 0 : undefined,
         overflow: isHiding ? "hidden" : "visible",

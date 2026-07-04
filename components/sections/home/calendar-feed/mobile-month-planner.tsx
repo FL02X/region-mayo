@@ -9,7 +9,7 @@ import {
 } from "react";
 import Image from "next/image";
 import { Newsreader } from "next/font/google";
-import { Calendar } from "lucide-react";
+import { Calendar, Pointer } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import {
   EventCard,
@@ -50,6 +50,35 @@ const editorialFont = Newsreader({
   display: "swap",
   preload: false,
 });
+
+const CALENDAR_SWIPE_HINT_STORAGE_KEY = "rm-calendar-swipe-hint-seen";
+
+function isCalendarSwipeHintDebugHost() {
+  const hostname = window.location.hostname;
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1"
+  );
+}
+
+function readCalendarSwipeHintSeen() {
+  try {
+    return (
+      window.localStorage.getItem(CALENDAR_SWIPE_HINT_STORAGE_KEY) === "true"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function saveCalendarSwipeHintSeen() {
+  try {
+    window.localStorage.setItem(CALENDAR_SWIPE_HINT_STORAGE_KEY, "true");
+  } catch {
+    // Persistence is best-effort; the hint should still get out of the way.
+  }
+}
 
 interface MonthCalendarGridProps {
   month: Date;
@@ -188,6 +217,8 @@ export function MobileMonthPlanner({
   onRegister,
 }: MobileMonthPlannerProps) {
   const initialRangeStartRef = useRef<Date | null>(null);
+  const touchAreaRef = useRef<HTMLDivElement | null>(null);
+  const hasTriggeredSwipeHintRef = useRef(false);
 
   if (!initialRangeStartRef.current) {
     const fallbackStart = getCalendarMonthByOffset(
@@ -233,6 +264,7 @@ export function MobileMonthPlanner({
 
   const initialMonthIndex = initialMonthIndexRef.current;
   const [activeMonthIndex, setActiveMonthIndex] = useState(initialMonthIndex);
+  const [shouldShowSwipeHint, setShouldShowSwipeHint] = useState(false);
   const emblaOptions = useMemo(
     () => ({
       align: "start" as const,
@@ -413,6 +445,47 @@ export function MobileMonthPlanner({
   ]);
 
   useEffect(() => {
+    const shouldForceSwipeHint = isCalendarSwipeHintDebugHost();
+    if (!shouldForceSwipeHint && readCalendarSwipeHintSeen()) return;
+
+    const touchArea = touchAreaRef.current;
+    if (!touchArea) return;
+
+    const revealSwipeHint = () => {
+      if (hasTriggeredSwipeHintRef.current) return;
+
+      hasTriggeredSwipeHintRef.current = true;
+      if (!shouldForceSwipeHint) {
+        saveCalendarSwipeHintSeen();
+      }
+      setShouldShowSwipeHint(true);
+    };
+
+    if (!("IntersectionObserver" in window)) {
+      const fallbackTimer = window.setTimeout(revealSwipeHint, 500);
+      return () => window.clearTimeout(fallbackTimer);
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting || entry.intersectionRatio < 0.45) return;
+
+        revealSwipeHint();
+        observer.disconnect();
+      },
+      {
+        rootMargin: "0px",
+        threshold: [0.98, 1],
+      },
+    );
+
+    observer.observe(touchArea);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (monthCommitTimerRef.current !== null) {
         window.clearTimeout(monthCommitTimerRef.current);
@@ -422,7 +495,10 @@ export function MobileMonthPlanner({
 
   return (
     <div className="md:hidden">
-      <div className="relative -mx-4 mt-4 overflow-hidden border-y border-border-line bg-[#fbf8f4]">
+      <div
+        ref={touchAreaRef}
+        className="relative -mx-4 mt-4 overflow-hidden border-y border-border-line bg-[#fbf8f4]"
+      >
         <div
           ref={emblaRef}
           className="overflow-hidden touch-pan-y"
@@ -449,6 +525,187 @@ export function MobileMonthPlanner({
             ))}
           </div>
         </div>
+
+        {shouldShowSwipeHint && (
+          <div
+            className="calendar-swipe-hint pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/70 px-8 text-white"
+            role="status"
+            aria-live="polite"
+            onAnimationEnd={(event) => {
+              if (
+                event.currentTarget !== event.target ||
+                !event.animationName.includes("calendarSwipeHintOverlay")
+              ) {
+                return;
+              }
+
+              setShouldShowSwipeHint(false);
+            }}
+          >
+            <div className="relative h-32 w-full max-w-[300px]" aria-hidden="true">
+              <span className="calendar-swipe-hint__trail" />
+              <div className="calendar-swipe-hint__frame">
+                <span className="calendar-swipe-hint__touch-ring" />
+                <Pointer className="h-20 w-20 -rotate-12" strokeWidth={1.7} />
+              </div>
+            </div>
+            <p className="calendar-swipe-hint__label type-system mt-5 text-center text-[22px] font-bold leading-tight text-white">
+              Desliza para ver más meses
+            </p>
+
+            <style jsx>{`
+              .calendar-swipe-hint {
+                animation: calendarSwipeHintOverlay 3.2s ease both;
+              }
+
+              .calendar-swipe-hint__frame {
+                position: absolute;
+                top: 50%;
+                display: flex;
+                height: 104px;
+                width: 104px;
+                align-items: center;
+                justify-content: center;
+                color: #ffffff;
+                left: 24%;
+                opacity: 0;
+                transform: translate3d(-50%, -50%, 0) scale(0.92);
+                animation: calendarSwipeHintHandMove 1.6s ease-in-out 2 both;
+              }
+
+              .calendar-swipe-hint__touch-ring {
+                position: absolute;
+                inset: 4px;
+                border: 2px solid rgba(255, 255, 255, 0.72);
+                border-radius: 999px;
+                opacity: 0;
+                transform: scale(0.62);
+              }
+
+              .calendar-swipe-hint__trail {
+                position: absolute;
+                left: calc(24% - 18px);
+                right: calc(24% + 18px);
+                top: calc(50% - 32px);
+                height: 3px;
+                overflow: hidden;
+                background: rgba(255, 255, 255, 0.22);
+              }
+
+              .calendar-swipe-hint__trail::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(
+                  90deg,
+                  transparent,
+                  rgba(255, 255, 255, 0.95),
+                  transparent
+                );
+                transform: translateX(-100%);
+                animation: calendarSwipeHintTrail 1.6s ease-in-out 2 both;
+              }
+
+              .calendar-swipe-hint__label {
+                max-width: 280px;
+                padding: 8px 12px;
+                background: rgba(0, 0, 0, 0.52);
+                color: #ffffff;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+              }
+
+              .calendar-swipe-hint__touch-ring {
+                animation: calendarSwipeHintTouchRing 1.6s ease-in-out 2 both;
+              }
+
+              @keyframes calendarSwipeHintOverlay {
+                0% {
+                  opacity: 0;
+                }
+                8%,
+                88% {
+                  opacity: 1;
+                }
+                100% {
+                  opacity: 0;
+                }
+              }
+
+              @keyframes calendarSwipeHintHandMove {
+                0%,
+                100% {
+                  left: 24%;
+                  opacity: 0;
+                  transform: translate3d(-50%, -50%, 0) scale(0.92);
+                }
+                10% {
+                  left: 24%;
+                  opacity: 1;
+                  transform: translate3d(-50%, -50%, 0) scale(1);
+                }
+                78% {
+                  left: 76%;
+                  opacity: 1;
+                  transform: translate3d(-50%, -50%, 0) scale(1);
+                }
+                92% {
+                  left: 76%;
+                  opacity: 0;
+                  transform: translate3d(-50%, -50%, 0) scale(0.94);
+                }
+              }
+
+              @keyframes calendarSwipeHintTouchRing {
+                0%,
+                12%,
+                100% {
+                  opacity: 0;
+                  transform: scale(0.62);
+                }
+                22% {
+                  opacity: 0.85;
+                }
+                46% {
+                  opacity: 0;
+                  transform: scale(1.15);
+                }
+              }
+
+              @keyframes calendarSwipeHintTrail {
+                0%,
+                100% {
+                  opacity: 0;
+                  transform: translateX(-100%);
+                }
+                10% {
+                  opacity: 1;
+                  transform: translateX(-100%);
+                }
+                78% {
+                  opacity: 1;
+                  transform: translateX(100%);
+                }
+                92% {
+                  opacity: 0;
+                  transform: translateX(100%);
+                }
+              }
+
+              @media (prefers-reduced-motion: reduce) {
+                .calendar-swipe-hint {
+                  animation-duration: 2.2s;
+                }
+
+                .calendar-swipe-hint__frame,
+                .calendar-swipe-hint__trail::after,
+                .calendar-swipe-hint__touch-ring {
+                  animation-duration: 2.2s;
+                  animation-iteration-count: 1;
+                }
+              }
+            `}</style>
+          </div>
+        )}
       </div>
 
       <div className="mt-5">

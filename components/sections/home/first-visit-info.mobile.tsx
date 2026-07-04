@@ -6,6 +6,7 @@ import { Newsreader } from "next/font/google";
 import { createPortal } from "react-dom";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   CARD_COLLAPSE_DELAY_MS,
   DEBUG_DISMISS_PARAM,
@@ -42,6 +43,7 @@ export function FirstVisitInfoMobile({
   cardClassName,
   hiddenNoticeClassName,
 }: FirstVisitInfoMobileProps) {
+  const isMobileViewport = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [openQuestion, setOpenQuestion] = useState<string | null>(
     INITIAL_OPEN_QUESTION,
@@ -54,6 +56,9 @@ export function FirstVisitInfoMobile({
   const [dismissalChecked, setDismissalChecked] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isHiding, setIsHiding] = useState(false);
+  const [cardCollapseMaxHeight, setCardCollapseMaxHeight] = useState<
+    string | undefined
+  >();
   const [undoAvailable, setUndoAvailable] = useState(false);
   const [undoNoticeVisible, setUndoNoticeVisible] = useState(false);
   const cardContentRef = useRef<HTMLDivElement | null>(null);
@@ -90,7 +95,9 @@ export function FirstVisitInfoMobile({
         clearFirstVisitDismissed();
       }
 
-      if (!local || canDismissOnLocalhost) {
+      if (!isMobileViewport) {
+        setIsDismissed(false);
+      } else if (!local || canDismissOnLocalhost) {
         setIsDismissed(readFirstVisitDismissed());
       } else {
         setIsDismissed(false);
@@ -100,7 +107,7 @@ export function FirstVisitInfoMobile({
     }
 
     setDismissalChecked(true);
-  }, []);
+  }, [isMobileViewport]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -198,6 +205,7 @@ export function FirstVisitInfoMobile({
   };
 
   const hideCardAfterModalClose = () => {
+    if (!isMobileViewport) return;
     if (isLocalhost && !allowLocalhostDismissal) return;
 
     saveFirstVisitDismissed();
@@ -207,7 +215,12 @@ export function FirstVisitInfoMobile({
     }
 
     hideDelayTimeoutRef.current = setTimeout(() => {
-      setIsHiding(true);
+      const contentHeight = cardContentRef.current?.scrollHeight;
+      setCardCollapseMaxHeight(contentHeight ? `${contentHeight}px` : undefined);
+
+      requestAnimationFrame(() => {
+        setIsHiding(true);
+      });
     }, FIRST_VISIT_TIMING.cardHideDelayMs);
 
     if (dismissTimeoutRef.current) {
@@ -249,29 +262,34 @@ export function FirstVisitInfoMobile({
     setUndoNoticeVisible(false);
     setUndoAvailable(false);
     setIsHiding(false);
+    setCardCollapseMaxHeight(undefined);
     setIsDismissed(false);
     setOpenQuestion(INITIAL_OPEN_QUESTION);
   };
 
+  const effectiveIsDismissed = isMobileViewport && isDismissed;
+  const effectiveIsHiding = isMobileViewport && isHiding;
+  const shouldHideForStandalonePwa =
+    isMobileViewport && isStandalonePwa && !isLocalhost;
   const hasVisibleDivider =
     dismissalChecked &&
-    !(isStandalonePwa && !isLocalhost) &&
-    !(isDismissed && !undoAvailable);
+    !shouldHideForStandalonePwa &&
+    !(effectiveIsDismissed && !undoAvailable);
   const cardTransition = `opacity ${FIRST_VISIT_TIMING.cardFadeMs}ms ease, max-height ${FIRST_VISIT_TIMING.cardCollapseMs}ms ease ${FIRST_VISIT_TIMING.cardFadeMs}ms, margin ${FIRST_VISIT_TIMING.cardCollapseMs}ms ease ${FIRST_VISIT_TIMING.cardFadeMs}ms`;
 
   useEffect(() => {
     onDividerVisibilityChange?.(hasVisibleDivider);
   }, [hasVisibleDivider, onDividerVisibilityChange]);
 
-  if (!dismissalChecked || (isStandalonePwa && !isLocalhost)) {
+  if (!dismissalChecked || shouldHideForStandalonePwa) {
     return null;
   }
 
-  if (isDismissed && !undoAvailable) {
+  if (effectiveIsDismissed && !undoAvailable) {
     return null;
   }
 
-  if (isDismissed) {
+  if (effectiveIsDismissed) {
     return (
       <FirstVisitHiddenNotice
         isVisible={undoNoticeVisible}
@@ -300,7 +318,8 @@ export function FirstVisitInfoMobile({
     <>
       <FirstVisitCard
         contentRef={cardContentRef}
-        isHiding={isHiding}
+        isHiding={effectiveIsHiding}
+        collapseMaxHeight={cardCollapseMaxHeight}
         transitionStyle={cardTransition}
         titleFontClassName={editorialFont.className}
         className={cardClassName}

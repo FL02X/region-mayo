@@ -103,7 +103,7 @@ export function DesktopHomeInfoWrapper({
           hiddenNoticeClassName="border-0 bg-white px-5 py-8"
         />
 
-        <div className="mx-8 grid grid-cols-2 divide-x divide-[#dce2e9] border-t border-[#dce2e9] lg:mx-16">
+        <div className="mx-8 grid grid-cols-2 divide-x divide-[#dce2e9] border-t border-[#dce2e9] lg:mx-19">
           <SiteLinkCard
             href="/templos"
             title="Encuentra una congregación"
@@ -130,7 +130,7 @@ export function DesktopHomeInfoWrapper({
       <div className="flex w-3/8 justify-center bg-[#050505]">
         <RecentVideosFeed
           album={albums}
-          className="h-full w-[82%] min-w-0 bg-[#050505] py-20"
+          className="h-full w-[82%] min-w-0 bg-[#050505] py-26"
         />
       </div>
     </div>
