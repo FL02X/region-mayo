@@ -177,6 +177,8 @@ export function NativeYoutubePlayer({
   const playerRef = useRef<YoutubePlayer | null>(null);
   const touchControlsTimerRef = useRef<number | null>(null);
   const fullscreenControlsTimerRef = useRef<number | null>(null);
+  const bodyOverflowBeforeFullscreenRef = useRef<string | null>(null);
+  const htmlOverflowBeforeFullscreenRef = useRef<string | null>(null);
   const suppressVideoLayerClickRef = useRef(false);
   const isScrubbingRef = useRef(false);
   const [started, setStarted] = useState(false);
@@ -306,6 +308,33 @@ export function NativeYoutubePlayer({
     iframe.setAttribute("aria-hidden", "true");
     iframe.style.pointerEvents = "none";
     iframe.addEventListener("focus", () => shellRef.current?.focus(), { once: true });
+  };
+
+  const cleanupFullscreenState = () => {
+    clearFullscreenControlsTimer();
+    setFullscreenControlsActive(false);
+    setTouchControlsActive(false);
+    setSettingsOpen(false);
+    setSettingsView("main");
+    setHoverTime(null);
+    setVolumeHover(null);
+    suppressVideoLayerClickRef.current = false;
+    isScrubbingRef.current = false;
+
+    if (bodyOverflowBeforeFullscreenRef.current !== null) {
+      document.body.style.overflow = bodyOverflowBeforeFullscreenRef.current;
+      bodyOverflowBeforeFullscreenRef.current = null;
+    }
+
+    if (htmlOverflowBeforeFullscreenRef.current !== null) {
+      document.documentElement.style.overflow = htmlOverflowBeforeFullscreenRef.current;
+      htmlOverflowBeforeFullscreenRef.current = null;
+    }
+
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement && shellRef.current?.contains(activeElement)) {
+      activeElement.blur();
+    }
   };
 
   useEffect(() => {
@@ -482,8 +511,14 @@ export function NativeYoutubePlayer({
     const handleFullscreenChange = () => {
       const nextIsFullscreen = document.fullscreenElement === shellRef.current;
       setIsFullscreen(nextIsFullscreen);
-      setFullscreenControlsActive(nextIsFullscreen);
       clearFullscreenControlsTimer();
+
+      if (!nextIsFullscreen) {
+        cleanupFullscreenState();
+        return;
+      }
+
+      setFullscreenControlsActive(true);
 
       if (nextIsFullscreen && isPlaying && !settingsOpen) {
         fullscreenControlsTimerRef.current = window.setTimeout(() => {
@@ -621,6 +656,8 @@ export function NativeYoutubePlayer({
     if (document.fullscreenElement) {
       await document.exitFullscreen();
     } else {
+      bodyOverflowBeforeFullscreenRef.current = document.body.style.overflow;
+      htmlOverflowBeforeFullscreenRef.current = document.documentElement.style.overflow;
       await shellRef.current.requestFullscreen();
     }
   };

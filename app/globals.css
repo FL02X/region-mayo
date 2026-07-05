@@ -279,17 +279,11 @@ radial-gradient(circle at 12% 18%, rgba(80, 67, 46, 0.028) 0 0.5px, transparent 
     line-height: 1.52;
   }
 
-  @supports (zoom: 1) {
-    html {
-      zoom: var(--app-zoom);
-    }
-
-    body {
-      width: auto;
-      min-height: 100%;
-      transform: none;
-      transform-origin: initial;
-    }
+  body {
+    width: auto;
+    min-height: 100%;
+    transform: none;
+    transform-origin: initial;
   }
   /* Removed transform fallback to avoid creating new stacking contexts
      which break position:fixed / sticky behavior across the app.
