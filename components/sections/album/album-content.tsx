@@ -18,6 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ImageGalleryModal } from "@/components/shared/image-album-modal";
+import { NativeYoutubePlayer } from "@/components/shared/native-youtube-player";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Album } from "@/lib/types";
@@ -339,12 +340,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
   const [selectedType, setSelectedType] = useState<string>(ALL_FILTER);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
-  const [youtubeEmbedOrigin, setYoutubeEmbedOrigin] = useState("");
   const [isSubmissionNoticeOpen, setIsSubmissionNoticeOpen] = useState(false);
-
-  useEffect(() => {
-    setYoutubeEmbedOrigin(window.location.origin);
-  }, []);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -452,13 +448,6 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     const selectedVideo =
       album.videos.find((video) => video.id === selectedVideoId) ||
       album.videos[0];
-    const selectedVideoEmbedUrl = selectedVideo
-      ? `https://www.youtube.com/embed/${selectedVideo.id}${
-          youtubeEmbedOrigin
-            ? `?origin=${encodeURIComponent(youtubeEmbedOrigin)}`
-            : ""
-        }`
-      : undefined;
     const totalItems = isYoutubeAlbum
       ? album.videos.length
       : albumMedia.length;
@@ -516,7 +505,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                 {album.relatedEvent ? (
                   <Link
                     href={`/buscar?q=${encodeURIComponent(album.relatedEvent.title)}`}
-                    className="inline-flex items-center justify-center gap-2 rounded-none border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-accent md:hover:text-accent-foreground"
+                    className="inline-flex items-center justify-center gap-2 rounded-none border border-border bg-background px-3 py-2 text-sm font-medium text-foreground touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-brand-hover md:hover:text-accent-foreground"
                     onClick={(event) => {
                       event.currentTarget.blur();
                     }}
@@ -530,7 +519,7 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                     href={album.youtubeUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-2 rounded-none border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-accent md:hover:text-accent-foreground"
+                    className="inline-flex items-center justify-center gap-2 rounded-none border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-accent md:hover:text-accent-foreground"
                   >
                     <Youtube className="h-4 w-4" aria-hidden="true" />
                     Ver en YouTube
@@ -584,24 +573,13 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                   <div className="px-0 pt-0 sm:px-4 md:px-8 md:pt-5">
                     {selectedVideo ? (
                       <div className="mb-5 overflow-hidden border border-border bg-black">
-                        <div
-                          data-youtube-player-shell
-                          className={`${
-                            selectedVideoIsPortrait
-                              ? "mx-auto aspect-[9/16] w-full max-w-[420px] bg-black"
-                              : "aspect-video"
-                          }`}
-                        >
-                          <iframe
-                            src={selectedVideoEmbedUrl}
-                            title={selectedVideo.title}
-                            className="youtube-embed-frame h-full w-full"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                            referrerPolicy="strict-origin-when-cross-origin"
-                            loading="lazy"
-                          />
-                        </div>
+                        <NativeYoutubePlayer
+                          videoId={selectedVideo.id}
+                          title={selectedVideo.title}
+                          thumbnailUrl={selectedVideo.thumbnailUrl}
+                          isPortrait={selectedVideoIsPortrait}
+                          shareLabel={album.title}
+                        />
                       </div>
                     ) : (
                       <div className="border border-border bg-card p-8 text-center">

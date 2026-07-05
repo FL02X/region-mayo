@@ -907,6 +907,10 @@ select,
   .album-detail-surface a:hover {
     background-color: #005998;
   }
+
+  .album-detail-surface .native-player-video-hit-area:hover {
+    background-color: transparent;
+  }
 }
 
 .youtube-embed-frame:fullscreen {
