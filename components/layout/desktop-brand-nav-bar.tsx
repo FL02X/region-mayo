@@ -14,7 +14,12 @@ const brandFont = Newsreader({
 
 export function DesktopBrandNavBar() {
   const pathname = usePathname();
+  const isStudioRoute = pathname?.startsWith("/studio") ?? false;
   const isAlbumPage = pathname === "/album";
+
+  if (isStudioRoute) {
+    return null;
+  }
 
   return (
     <div

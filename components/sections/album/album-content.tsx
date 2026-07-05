@@ -339,7 +339,12 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_PHOTOS);
   const [selectedType, setSelectedType] = useState<string>(ALL_FILTER);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [youtubeEmbedOrigin, setYoutubeEmbedOrigin] = useState("");
   const [isSubmissionNoticeOpen, setIsSubmissionNoticeOpen] = useState(false);
+
+  useEffect(() => {
+    setYoutubeEmbedOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -447,6 +452,13 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
     const selectedVideo =
       album.videos.find((video) => video.id === selectedVideoId) ||
       album.videos[0];
+    const selectedVideoEmbedUrl = selectedVideo
+      ? `https://www.youtube.com/embed/${selectedVideo.id}${
+          youtubeEmbedOrigin
+            ? `?origin=${encodeURIComponent(youtubeEmbedOrigin)}`
+            : ""
+        }`
+      : undefined;
     const totalItems = isYoutubeAlbum
       ? album.videos.length
       : albumMedia.length;
@@ -581,11 +593,12 @@ export function AlbumContent({ albums = [], album }: AlbumContentProps) {
                           }`}
                         >
                           <iframe
-                            src={`https://www.youtube.com/embed/${selectedVideo.id}`}
+                            src={selectedVideoEmbedUrl}
                             title={selectedVideo.title}
                             className="youtube-embed-frame h-full w-full"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"
                             allowFullScreen
+                            referrerPolicy="strict-origin-when-cross-origin"
                             loading="lazy"
                           />
                         </div>

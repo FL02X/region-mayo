@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
-import { Images, Wifi, X, ChevronLeft, ChevronRight, Download, PlayCircle } from "lucide-react"
+import { Images, Wifi, X, ChevronLeft, ChevronRight, Download } from "lucide-react"
 import useEmblaCarousel from "embla-carousel-react"
 import { Button } from "@/components/ui/button"
 import { useConnectivity } from "@/hooks/use-connectivity"
@@ -38,6 +38,9 @@ interface ImageGalleryModalProps {
 const IMAGE_ZOOM_SCALE = 2
 const IMAGE_ZOOM_MAX_SCALE = 4
 const IMAGE_ZOOM_OVERSCROLL = 56
+
+const isMobileGalleryViewport = () =>
+  typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches
 
 type ZoomState = {
   index: number
@@ -107,14 +110,11 @@ export function ImageGalleryModal({
   const initialMobileIndexRef = useRef(currentIndex)
   const instantMobileNavigationIndexRef = useRef<number | null>(null)
   const lastImageTapRef = useRef({ index: -1, time: 0 })
-  const ignoreSyntheticDoubleClickUntilRef = useRef(0)
-  const lastTouchInputUntilRef = useRef(0)
   const imageTapStartRef = useRef({ x: 0, y: 0 })
   const imagePanRef = useRef<ImagePanState | null>(null)
   const imagePointersRef = useRef(new Map<number, ImagePointerPosition>())
   const imagePinchRef = useRef<ImagePinchState | null>(null)
   const zoomedImageIndexRef = useRef<number | null>(null)
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [mobileDisplayIndex, setMobileDisplayIndex] = useState(currentIndex)
   const [zoomState, setZoomState] = useState<ZoomState | null>(null)
   const [isZoomPanning, setIsZoomPanning] = useState(false)
@@ -173,23 +173,18 @@ export function ImageGalleryModal({
 
   useEffect(() => {
     const videos = Array.from(galleryRootRef.current?.querySelectorAll("video") ?? [])
-    let activeVideo: HTMLVideoElement | null = null
 
     videos.forEach((video) => {
       const isActiveVideo =
         video.dataset.galleryIndex === String(currentIndex) && video.offsetParent !== null
 
-      if (isActiveVideo) {
-        activeVideo = video
-        return
-      }
+      if (isActiveVideo) return
 
       video.pause()
     })
 
     const shouldKeepZoom = zoomedImageIndexRef.current === currentIndex
 
-    setIsVideoPlaying(Boolean(activeVideo && !activeVideo.paused))
     setMobileDisplayIndex(currentIndex)
     setZoomState((currentZoom) => (currentZoom?.index === currentIndex ? currentZoom : null))
 
@@ -224,17 +219,6 @@ export function ImageGalleryModal({
       window.history.replaceState({ imageGalleryModalClosed: true }, "", window.location.href)
     }
   }, [restoreModalScrollPosition])
-
-  const handleVideoPlay = async (video: HTMLVideoElement | null) => {
-    if (!video) return
-
-    try {
-      await video.play()
-      setIsVideoPlaying(true)
-    } catch {
-      setIsVideoPlaying(false)
-    }
-  }
 
   const getBaseImageSize = (image: HTMLImageElement) => {
     const rect = image.getBoundingClientRect()
@@ -339,10 +323,6 @@ export function ImageGalleryModal({
     index: number,
   ) => {
     imageTapStartRef.current = { x: e.clientX, y: e.clientY }
-
-    if (e.pointerType === "touch") {
-      lastTouchInputUntilRef.current = Date.now() + 1200
-    }
 
     if (zoomedImageIndex !== index || e.pointerType !== "touch") return
 
@@ -499,7 +479,6 @@ export function ImageGalleryModal({
     if (isDoubleTap) {
       toggleImageZoom(image, index, e.clientX, e.clientY)
       lastImageTapRef.current = { index: -1, time: 0 }
-      ignoreSyntheticDoubleClickUntilRef.current = Date.now() + 1200
       return
     }
 
@@ -508,12 +487,19 @@ export function ImageGalleryModal({
 
   useEffect(() => {
     if (!mobileEmblaApi) return
+    if (typeof window === "undefined") return
+
+    const mobileMediaQuery = window.matchMedia("(max-width: 639px)")
 
     const handleSelect = () => {
+      if (!mobileMediaQuery.matches) return
+
       setMobileDisplayIndex(mobileEmblaApi.selectedScrollSnap())
     }
 
     const handleSettle = () => {
+      if (!mobileMediaQuery.matches) return
+
       const selectedIndex = mobileEmblaApi.selectedScrollSnap()
 
       if (selectedIndex !== currentIndex) {
@@ -521,18 +507,29 @@ export function ImageGalleryModal({
       }
     }
 
+    const handleViewportChange = () => {
+      if (mobileMediaQuery.matches) {
+        handleSelect()
+      } else {
+        setMobileDisplayIndex(currentIndex)
+      }
+    }
+
     mobileEmblaApi.on("select", handleSelect)
     mobileEmblaApi.on("settle", handleSettle)
-    handleSelect()
+    handleViewportChange()
+    mobileMediaQuery.addEventListener("change", handleViewportChange)
 
     return () => {
       mobileEmblaApi.off("select", handleSelect)
       mobileEmblaApi.off("settle", handleSettle)
+      mobileMediaQuery.removeEventListener("change", handleViewportChange)
     }
   }, [currentIndex, mobileEmblaApi, onNavigate])
 
   useEffect(() => {
     if (!mobileEmblaApi) return
+    if (!isMobileGalleryViewport()) return
     if (mobileEmblaApi.selectedScrollSnap() === currentIndex) return
 
     const shouldJump = instantMobileNavigationIndexRef.current === currentIndex
@@ -603,7 +600,7 @@ export function ImageGalleryModal({
     const isVideo = item.type === "video"
 
     return isVideo ? (
-      <div className="relative h-full w-screen sm:h-auto sm:w-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="relative h-full w-screen sm:flex sm:w-full sm:items-center sm:justify-center" onClick={(e) => e.stopPropagation()}>
         <video
           key={index}
           data-gallery-index={index}
@@ -620,36 +617,14 @@ export function ImageGalleryModal({
           controls
           playsInline
           preload="metadata"
-          className="block h-full max-h-full w-full bg-black object-contain sm:h-auto sm:max-h-[calc(100vh-320px)] sm:max-w-[min(920px,82vw)] sm:w-auto"
-          onPlay={() => {
-            if (index === currentIndex) setIsVideoPlaying(true)
-          }}
-          onPause={() => {
-            if (index === currentIndex) setIsVideoPlaying(false)
-          }}
-          onEnded={() => {
-            if (index === currentIndex) setIsVideoPlaying(false)
-          }}
+          className="block h-full max-h-full w-full bg-black object-contain sm:max-h-full sm:max-w-full"
         >
           <source src={item.url} type={item.mimeType || undefined} />
         </video>
-        {index === currentIndex && !isVideoPlaying ? (
-          <button
-            type="button"
-            className="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white shadow-2xl ring-1 ring-white/30 transition hover:bg-black/70 sm:h-24 sm:w-24"
-            aria-label={`Reproducir ${item.title}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              void handleVideoPlay(e.currentTarget.parentElement?.querySelector("video") ?? null)
-            }}
-          >
-            <PlayCircle className="h-11 w-11 sm:h-12 sm:w-12" aria-hidden="true" />
-          </button>
-        ) : null}
       </div>
     ) : (
       <div
-        className={`relative flex h-full w-screen items-center justify-center overflow-hidden sm:h-auto sm:w-auto ${
+        className={`relative flex h-full w-screen items-center justify-center overflow-hidden sm:w-full ${
           zoomedImageIndex === index ? "touch-none" : ""
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -682,7 +657,7 @@ export function ImageGalleryModal({
             fit: "max",
           })}
           alt={item.alt || `${alt} ${index + 1}`}
-          className={`block h-auto w-full max-w-none object-contain sm:max-h-[calc(100vh-320px)] sm:max-w-[min(920px,82vw)] sm:w-auto ${
+          className={`block h-auto w-full max-w-none object-contain sm:h-full sm:max-h-full sm:max-w-full ${
             zoomedImageIndex === index
               ? `cursor-grab touch-none ${isZoomPanning ? "" : "transition-transform duration-200 ease-out"}`
               : "scale-100 touch-manipulation transition-transform duration-200"
@@ -696,12 +671,7 @@ export function ImageGalleryModal({
           loading={index === currentIndex ? "eager" : "lazy"}
           decoding="async"
           onClick={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => {
-            e.stopPropagation()
-            if (Date.now() < lastTouchInputUntilRef.current) return
-            if (Date.now() < ignoreSyntheticDoubleClickUntilRef.current) return
-            toggleImageZoom(e.currentTarget, index, e.clientX, e.clientY)
-          }}
+          onDoubleClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => {
             if (zoomedImageIndex === index) return
             handleImagePointerDown(e, e.currentTarget, index)
@@ -801,7 +771,7 @@ export function ImageGalleryModal({
         </div>
       </div>
 
-      <div className="relative flex items-center justify-center overflow-hidden p-0 sm:p-4" style={{ height: "calc(100vh - 220px)" }} onClick={handleClose}>
+      <div className="relative flex h-[calc(100vh-220px)] items-center justify-center overflow-hidden p-0 sm:min-h-0 sm:flex-1 sm:p-4" onClick={handleClose}>
         <div
           ref={mobileEmblaRef}
           className="h-full w-screen overflow-hidden sm:hidden"
@@ -837,7 +807,7 @@ export function ImageGalleryModal({
         )}
 
         <div
-          className="relative hidden w-full items-center justify-center sm:flex sm:max-h-[calc(100vh-320px)] sm:max-w-[min(920px,82vw)]"
+          className="relative hidden h-full w-full items-center justify-center sm:flex sm:max-w-[calc(100vw-160px)]"
         >
           {renderGalleryMedia(currentItem, currentIndex)}
         </div>
@@ -905,11 +875,6 @@ export function ImageGalleryModal({
                 ) : (
                   <span className="absolute inset-0 bg-black" aria-hidden="true" />
                 )}
-                {item.type === "video" ? (
-                  <span className="absolute inset-0 flex items-center justify-center bg-black/25 text-white">
-                    <PlayCircle className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                ) : null}
               </button>
             ))}
           </div>
