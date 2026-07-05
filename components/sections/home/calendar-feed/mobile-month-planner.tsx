@@ -542,7 +542,10 @@ export function MobileMonthPlanner({
               setShouldShowSwipeHint(false);
             }}
           >
-            <div className="relative h-32 w-full max-w-[300px]" aria-hidden="true">
+            <div
+              className="relative h-32 w-full max-w-[300px] translate-x-3"
+              aria-hidden="true"
+            >
               <span className="calendar-swipe-hint__trail" />
               <div className="calendar-swipe-hint__frame">
                 <span className="calendar-swipe-hint__touch-ring" />
