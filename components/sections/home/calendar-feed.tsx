@@ -11,9 +11,8 @@ import {
   useEffect,
 } from "react";
 import { Newsreader } from "next/font/google";
-import { Calendar } from "lucide-react";
+import { Calendar, CalendarDays, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MonthNavigator } from "@/components/shared/month-navigator";
 import {
   EventCard,
   getEventCardThumbnailUrl,
@@ -53,6 +52,8 @@ import {
   getCalendarMonthByOffset,
   getInitialCalendarMonth,
   getMostRelevantEvent,
+  getRegionMonthKey,
+  getRelevantEventEndTime,
 } from "@/components/sections/home/calendar-feed/calendar-utils";
 import { MobileMonthPlanner } from "@/components/sections/home/calendar-feed/mobile-month-planner";
 
@@ -63,9 +64,12 @@ const editorialFont = Newsreader({
   preload: false,
 });
 
+const LIST_MONTH_BATCH_SIZE = 3;
+
 type CalendarViewMode = ViewMode;
 type CalendarLayoutMode = "list" | "month";
 type CalendarChangeReason = "month" | "view" | null;
+type CalendarEventFlow = "upcoming" | "past";
 
 interface EventsFeedProps {
   events: Event[];
@@ -120,6 +124,15 @@ export function EventsFeed({
     useState<Event | null>(null);
   const [thumbnailPreloadMonth, setThumbnailPreloadMonth] =
     useState(selectedMonth);
+  const [calendarEventFlow, setCalendarEventFlow] =
+    useState<CalendarEventFlow>("upcoming");
+  const [visibleListMonthCount, setVisibleListMonthCount] =
+    useState(LIST_MONTH_BATCH_SIZE);
+  const [showListMonthFab, setShowListMonthFab] = useState(false);
+  const [pendingJumpMonthKey, setPendingJumpMonthKey] = useState<string | null>(
+    null,
+  );
+  const calendarReferenceMsRef = useRef(nowProp ?? Date.now());
 
   useEffect(() => {
     let isSubscribed = true;
@@ -154,13 +167,11 @@ export function EventsFeed({
   const isMobile = useIsMobile();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const eventDates = useMemo(() => events.map((e) => e.date), [events]);
-  const selectedMonthKey = useMemo(
-    () =>
-      `${getRegionCalendarParts(selectedMonth).year}-${String(getRegionCalendarParts(selectedMonth).month).padStart(2, "0")}`,
-    [selectedMonth],
+  const calendarReferenceMs = calendarReferenceMsRef.current;
+  const calendarReferenceDate = useMemo(
+    () => new Date(calendarReferenceMs),
+    [calendarReferenceMs],
   );
-
   const filteredEvents = useMemo(() => {
     const selectedParts = getRegionCalendarParts(selectedMonth);
     return events
@@ -172,13 +183,6 @@ export function EventsFeed({
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [events, selectedMonth]);
 
-  const calendarStateKey = `${selectedMonthKey}-${renderedViewMode}-${
-    filteredEvents.length === 0
-      ? "empty"
-      : filteredEvents.length === 1
-        ? "single"
-        : "grid"
-  }`;
   const shouldAnimateCalendarChange =
     isMobile && calendarChangeReason === "view";
   const compactMobileResultsFloorClass =
@@ -186,6 +190,134 @@ export function EventsFeed({
   const shouldRenderLegacyCalendar = !isMobile || !isMonthPlannerEnabled;
   const shouldRenderMobileMonthPlanner = isMobile && isMonthPlannerEnabled;
   const [hasFirstVisitDivider, setHasFirstVisitDivider] = useState(false);
+
+  const listMonthGroups = useMemo(() => {
+    const groupedEvents = new Map<
+      string,
+      { month: Date; events: Event[] }
+    >();
+
+    events.forEach((event) => {
+      const eventEndTime = getRelevantEventEndTime(event, calendarReferenceDate);
+      const belongsToFlow =
+        calendarEventFlow === "upcoming"
+          ? eventEndTime >= calendarReferenceMs
+          : eventEndTime < calendarReferenceMs;
+
+      if (!belongsToFlow) return;
+
+      const month = getRegionMonthStart(event.date);
+      const monthKey = getRegionMonthKey(month);
+      const currentGroup = groupedEvents.get(monthKey);
+
+      if (currentGroup) {
+        currentGroup.events.push(event);
+        return;
+      }
+
+      groupedEvents.set(monthKey, { month, events: [event] });
+    });
+
+    return Array.from(groupedEvents.values())
+      .map((group) => ({
+        ...group,
+        events: [...group.events].sort((a, b) =>
+          calendarEventFlow === "upcoming"
+            ? a.date.getTime() - b.date.getTime()
+            : b.date.getTime() - a.date.getTime(),
+        ),
+      }))
+      .sort((a, b) =>
+        calendarEventFlow === "upcoming"
+          ? a.month.getTime() - b.month.getTime()
+          : b.month.getTime() - a.month.getTime(),
+      );
+  }, [calendarEventFlow, calendarReferenceDate, calendarReferenceMs, events]);
+
+  const visibleListMonthGroups = useMemo(
+    () => listMonthGroups.slice(0, visibleListMonthCount),
+    [listMonthGroups, visibleListMonthCount],
+  );
+
+  const listMonthPickerYears = useMemo(() => {
+    if (events.length === 0) return [];
+
+    const monthAccess = new Map<
+      string,
+      { month: Date; upcoming: boolean; past: boolean }
+    >();
+
+    events.forEach((event) => {
+      const month = getRegionMonthStart(event.date);
+      const monthKey = getRegionMonthKey(month);
+      const eventEndTime = getRelevantEventEndTime(event, calendarReferenceDate);
+      const currentAccess =
+        monthAccess.get(monthKey) ?? {
+          month,
+          upcoming: false,
+          past: false,
+        };
+
+      if (eventEndTime >= calendarReferenceMs) {
+        currentAccess.upcoming = true;
+      } else {
+        currentAccess.past = true;
+      }
+
+      monthAccess.set(monthKey, currentAccess);
+    });
+
+    const sortedEventMonths = Array.from(monthAccess.values()).sort(
+      (a, b) => a.month.getTime() - b.month.getTime(),
+    );
+    const firstMonth = sortedEventMonths[0]?.month;
+    const lastMonth = sortedEventMonths[sortedEventMonths.length - 1]?.month;
+
+    if (!firstMonth || !lastMonth) return [];
+
+    const years = new Map<
+      number,
+      Array<{
+        month: Date;
+        monthKey: string;
+        upcoming: boolean;
+        past: boolean;
+      }>
+    >();
+
+    let cursor = firstMonth;
+
+    while (cursor.getTime() <= lastMonth.getTime()) {
+      const monthKey = getRegionMonthKey(cursor);
+      const access = monthAccess.get(monthKey);
+      const year = getRegionCalendarParts(cursor).year;
+
+      years.set(year, [
+        ...(years.get(year) ?? []),
+        {
+          month: cursor,
+          monthKey,
+          upcoming: access?.upcoming ?? false,
+          past: access?.past ?? false,
+        },
+      ]);
+
+      cursor = getCalendarMonthByOffset(cursor, 1);
+    }
+
+    return Array.from(years.entries());
+  }, [calendarReferenceDate, calendarReferenceMs, events]);
+
+  const listMonthPickerAccessibleCount = useMemo(
+    () =>
+      listMonthPickerYears
+        .flatMap(([, months]) => months)
+        .filter((month) => month.upcoming || month.past).length,
+    [listMonthPickerYears],
+  );
+
+  const hasMoreListMonths =
+    visibleListMonthCount < listMonthGroups.length && shouldRenderLegacyCalendar;
 
   useEffect(() => {
     if (!isMonthPlannerEnabled) {
@@ -374,6 +506,140 @@ export function EventsFeed({
     });
   };
 
+  const handleCalendarEventFlowChange = (nextFlow: CalendarEventFlow) => {
+    setCalendarEventFlow(nextFlow);
+    setVisibleListMonthCount(LIST_MONTH_BATCH_SIZE);
+  };
+
+  const getListMonthIndexForFlow = (
+    targetMonthKey: string,
+    targetFlow: CalendarEventFlow,
+  ) => {
+    const monthKeys = Array.from(
+      new Set(
+        events
+          .filter((event) => {
+            const eventEndTime = getRelevantEventEndTime(
+              event,
+              calendarReferenceDate,
+            );
+
+            return targetFlow === "upcoming"
+              ? eventEndTime >= calendarReferenceMs
+              : eventEndTime < calendarReferenceMs;
+          })
+          .map((event) => getRegionMonthKey(getRegionMonthStart(event.date))),
+      ),
+    ).sort((a, b) => {
+      const [yearA, monthA] = a.split("-").map(Number);
+      const [yearB, monthB] = b.split("-").map(Number);
+      const valueA = yearA * 12 + monthA;
+      const valueB = yearB * 12 + monthB;
+
+      return targetFlow === "upcoming" ? valueA - valueB : valueB - valueA;
+    });
+
+    return monthKeys.findIndex((monthKey) => monthKey === targetMonthKey);
+  };
+
+  const handleJumpToListMonth = (
+    month: Date,
+    targetFlow: CalendarEventFlow = calendarEventFlow,
+  ) => {
+    const targetKey = getRegionMonthKey(month);
+    const targetIndex = getListMonthIndexForFlow(targetKey, targetFlow);
+
+    if (targetIndex >= 0) {
+      setVisibleListMonthCount(Math.max(LIST_MONTH_BATCH_SIZE, targetIndex + 1));
+    }
+
+    setCalendarEventFlow(targetFlow);
+    setCalendarChangeReason("month");
+    setSelectedMonth(month);
+    setPendingJumpMonthKey(targetKey);
+  };
+
+  const handleMonthJumpSelect = (value: string) => {
+    if (!value) return;
+
+    const [targetFlow, targetKey] = value.split(":") as [
+      CalendarEventFlow,
+      string,
+    ];
+    const targetMonth = listMonthPickerYears
+      .flatMap(([, months]) => months)
+      .find((month) => month.monthKey === targetKey)?.month;
+
+    if (!targetMonth) return;
+
+    handleJumpToListMonth(targetMonth, targetFlow);
+  };
+
+  useEffect(() => {
+    if (!shouldRenderLegacyCalendar || !hasMoreListMonths) return;
+
+    const handleScrollLoad = () => {
+      const documentHeight = document.documentElement.scrollHeight;
+      const viewportBottom = window.scrollY + window.innerHeight;
+
+      if (viewportBottom < documentHeight - 720) return;
+
+      setVisibleListMonthCount((currentCount) =>
+        Math.min(currentCount + LIST_MONTH_BATCH_SIZE, listMonthGroups.length),
+      );
+    };
+
+    handleScrollLoad();
+    window.addEventListener("scroll", handleScrollLoad, { passive: true });
+    window.addEventListener("resize", handleScrollLoad);
+
+    return () => {
+      window.removeEventListener("scroll", handleScrollLoad);
+      window.removeEventListener("resize", handleScrollLoad);
+    };
+  }, [hasMoreListMonths, listMonthGroups.length, shouldRenderLegacyCalendar]);
+
+  useEffect(() => {
+    if (!isMobile || !shouldRenderLegacyCalendar) {
+      setShowListMonthFab(false);
+      return;
+    }
+
+    const updateFabVisibility = () => {
+      const eventsSection = document.getElementById("eventos");
+      if (!eventsSection) {
+        setShowListMonthFab(false);
+        return;
+      }
+
+      const sectionTop = eventsSection.getBoundingClientRect().top;
+      setShowListMonthFab(
+        sectionTop < -160 && listMonthPickerAccessibleCount > 1,
+      );
+    };
+
+    updateFabVisibility();
+    window.addEventListener("scroll", updateFabVisibility, { passive: true });
+    window.addEventListener("resize", updateFabVisibility);
+
+    return () => {
+      window.removeEventListener("scroll", updateFabVisibility);
+      window.removeEventListener("resize", updateFabVisibility);
+    };
+  }, [isMobile, listMonthPickerAccessibleCount, shouldRenderLegacyCalendar]);
+
+  useEffect(() => {
+    if (!pendingJumpMonthKey) return;
+
+    const targetElement = document.getElementById(
+      `calendar-list-month-${pendingJumpMonthKey}`,
+    );
+    if (!targetElement) return;
+
+    targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    setPendingJumpMonthKey(null);
+  }, [pendingJumpMonthKey, visibleListMonthGroups]);
+
   return (
     <div
       className="w-full relative bg-[#f1f1f1]"
@@ -475,16 +741,6 @@ export function EventsFeed({
                 </span>
               </button>
             </div>
-            {/* Navigator aligned with left content edge on desktop */}
-            {shouldRenderLegacyCalendar && (
-              <div className="max-w-md w-full">
-                <MonthNavigator
-                  selectedMonth={selectedMonth}
-                  onMonthSelect={handleMonthSelect}
-                  eventDates={eventDates}
-                />
-              </div>
-            )}
             {shouldRenderMobileMonthPlanner && (
               <MobileMonthPlanner
                 events={events}
@@ -505,30 +761,39 @@ export function EventsFeed({
             className="bg-muted/20 px-4 md:px-16 md:py-[24px] pt-4 pb-14 md:pb-30"
           >
           <div className="mt-0 max-w mx-auto w-full">
-            {/* Month label */}
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h3
-                  className={`${editorialFont.className} type-human-title font-semibold text-[1.425rem] md:text-[1.7rem] tracking-tight`}
-                >
-                  {CALENDAR_MONTHS[getRegionCalendarParts(selectedMonth).month - 1]}{" "}
-                  {getRegionCalendarParts(selectedMonth).year}
-                </h3>
-                <p className="type-system text-[15px] md:text-[16px] mt-1 md:pb-6">
-                  {filteredEvents.length === 0
-                    ? "No hay eventos programados"
-                    : `${filteredEvents.length} ${
-                        filteredEvents.length === 1 ? "evento" : "eventos"
-                      } programados`}
-                </p>
-              </div>
-
+            <div className="mb-7 flex justify-end">
               <ViewModeToggle
                 value={renderedViewMode}
                 onChange={handleViewModeChange}
                 ariaLabel="Cambiar vista del calendario"
                 disableGrid={isOfflinePwa}
               />
+            </div>
+
+            <div className="mb-8 max-w-md">
+              <div className="relative inline-flex w-fit items-center">
+                <select
+                  value={calendarEventFlow}
+                  onChange={(event) =>
+                    handleCalendarEventFlowChange(
+                      event.currentTarget.value as CalendarEventFlow,
+                    )
+                  }
+                  className={`${editorialFont.className} appearance-none cursor-pointer bg-transparent pr-8 text-[1.7rem] font-semibold leading-none tracking-tight text-brand-ink outline-none transition-colors hover:text-primary/80 hover:underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-primary/60 md:text-[1.8rem]`}
+                  aria-label="Seleccionar tipo de eventos"
+                >
+                  <option className="text-base" value="upcoming">
+                    Eventos proximos
+                  </option>
+                  <option className="text-base" value="past">
+                    Eventos pasados
+                  </option>
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-ink/70"
+                  aria-hidden="true"
+                />
+              </div>
             </div>
 
             {/* Cards layout:
@@ -541,9 +806,9 @@ export function EventsFeed({
                 mode={shouldAnimateCalendarChange ? "wait" : "sync"}
                 initial={false}
               >
-                {filteredEvents.length === 0 ? (
+                {visibleListMonthGroups.length === 0 ? (
                   <motion.div
-                    key={calendarStateKey}
+                    key={`${calendarEventFlow}-empty`}
                     initial={
                       shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false
                     }
@@ -562,72 +827,16 @@ export function EventsFeed({
                   >
                     <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm font-medium text-foreground mb-1">
-                      Sin eventos este mes
+                      Sin eventos para mostrar
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Selecciona otro mes en el calendario para ver más
                       actividades.
                     </p>
                   </motion.div>
-                ) : renderedViewMode === "compact" ? (
-                  <motion.div
-                    key={calendarStateKey}
-                    initial={
-                      shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false
-                    }
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={
-                      shouldAnimateCalendarChange
-                        ? { opacity: 0, y: -4 }
-                        : undefined
-                    }
-                    transition={
-                      shouldAnimateCalendarChange
-                        ? CALENDAR_FADE_TRANSITION
-                        : { duration: 0 }
-                    }
-                    className="-mx-2.5 p-0.5 flex flex-col gap-5 pb-14 md:gap-6"
-                  >
-                    {filteredEvents.map((event) => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        onRegister={handleRegister}
-                        showAlbumButton={event.status === "past"}
-                        variant="compact"
-                        tone="editorial"
-                      />
-                    ))}
-                  </motion.div>
-                ) : filteredEvents.length === 1 ? (
-                  <motion.div
-                    key={calendarStateKey}
-                    initial={
-                      shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false
-                    }
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={
-                      shouldAnimateCalendarChange
-                        ? { opacity: 0, y: -4 }
-                        : undefined
-                    }
-                    transition={
-                      shouldAnimateCalendarChange
-                        ? CALENDAR_FADE_TRANSITION
-                        : { duration: 0 }
-                    }
-                    className="max-w-md mx-auto"
-                  >
-                    <EventCard
-                      event={filteredEvents[0]}
-                      onRegister={handleRegister}
-                      showAlbumButton={filteredEvents[0].status === "past"}
-                      tone="editorial"
-                    />
-                  </motion.div>
                 ) : (
                   <motion.div
-                    key={calendarStateKey}
+                    key={`${calendarEventFlow}-${renderedViewMode}`}
                     initial={
                       shouldAnimateCalendarChange ? { opacity: 0, y: 6 } : false
                     }
@@ -642,17 +851,86 @@ export function EventsFeed({
                         ? CALENDAR_FADE_TRANSITION
                         : { duration: 0 }
                     }
-                    className="grid grid-cols-1 gap-5 md:grid-cols-2"
+                    className="space-y-11"
                   >
-                    {filteredEvents.map((event) => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        onRegister={handleRegister}
-                        showAlbumButton={event.status === "past"}
-                        tone="editorial"
-                      />
-                    ))}
+                    {visibleListMonthGroups.map((group) => {
+                      const monthParts = getRegionCalendarParts(group.month);
+                      const monthKey = getRegionMonthKey(group.month);
+                      const isPastFlow = calendarEventFlow === "past";
+
+                      return (
+                        <section
+                          key={monthKey}
+                          id={`calendar-list-month-${monthKey}`}
+                          className="scroll-mt-28"
+                        >
+                          <div className="mb-6 min-w-0">
+                            <h3
+                              className={`${editorialFont.className} type-human-title font-semibold text-[1.425rem] md:text-[1.7rem] tracking-tight ${
+                                isPastFlow ? "text-stone-600" : ""
+                              }`}
+                            >
+                              {CALENDAR_MONTHS[monthParts.month - 1]}{" "}
+                              {monthParts.year}
+                            </h3>
+                            <p
+                              className={`type-system text-[15px] md:text-[16px] mt-1 md:pb-6 ${
+                                isPastFlow ? "text-stone-500" : ""
+                              }`}
+                            >
+                              {`${group.events.length} ${
+                                group.events.length === 1
+                                  ? "evento"
+                                  : "eventos"
+                              } ${
+                                isPastFlow ? "pasados" : "programados"
+                              }`}
+                            </p>
+                          </div>
+
+                          {renderedViewMode === "compact" ? (
+                            <div className="-mx-2.5 p-0.5 flex flex-col gap-5 md:gap-6">
+                              {group.events.map((event) => (
+                                <EventCard
+                                  key={event.id}
+                                  event={event}
+                                  onRegister={handleRegister}
+                                  showAlbumButton={event.status === "past"}
+                                  variant="compact"
+                                  tone="editorial"
+                                  mutedPast={isPastFlow}
+                                />
+                              ))}
+                            </div>
+                          ) : group.events.length === 1 ? (
+                            <div className="max-w-md mx-auto">
+                              <EventCard
+                                event={group.events[0]}
+                                onRegister={handleRegister}
+                                showAlbumButton={
+                                  group.events[0].status === "past"
+                                }
+                                tone="editorial"
+                                mutedPast={isPastFlow}
+                              />
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                              {group.events.map((event) => (
+                                <EventCard
+                                  key={event.id}
+                                  event={event}
+                                  onRegister={handleRegister}
+                                  showAlbumButton={event.status === "past"}
+                                  tone="editorial"
+                                  mutedPast={isPastFlow}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </section>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -661,6 +939,55 @@ export function EventsFeed({
           </section>
         )}
       </div>
+
+      {shouldRenderLegacyCalendar && (
+        <div
+          className={`fixed right-4 top-20 z-40 h-12 w-12 overflow-hidden bg-[#21252b] text-white shadow-lg transition-all md:hidden ${
+            showListMonthFab
+              ? "translate-y-0 opacity-100"
+              : "pointer-events-none -translate-y-2 opacity-0"
+          }`}
+        >
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <span className="relative inline-flex h-6 w-6 items-center justify-center">
+              <CalendarDays className="h-6 w-6" aria-hidden="true" />
+              <ChevronDown
+                className="absolute -bottom-1 -right-1 h-3.5 w-3.5 bg-[#21252b]"
+                aria-hidden="true"
+              />
+            </span>
+          </span>
+          <select
+            value=""
+            onChange={(event) => handleMonthJumpSelect(event.currentTarget.value)}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            aria-label="Seleccionar mes"
+          >
+            <option value="" disabled>
+              Seleccionar mes
+            </option>
+            {listMonthPickerYears.map(([year, months]) => (
+              <optgroup key={year} label={`${year}`}>
+                {months.map((month) => {
+                  const monthParts = getRegionCalendarParts(month.month);
+                  const isAccessible = month.upcoming || month.past;
+                  const targetFlow = month.upcoming ? "upcoming" : "past";
+
+                  return (
+                    <option
+                      key={month.monthKey}
+                      value={`${targetFlow}:${month.monthKey}`}
+                      disabled={!isAccessible}
+                    >
+                      {CALENDAR_MONTHS[monthParts.month - 1]} {year}
+                    </option>
+                  );
+                })}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Registration modal */}
       {selectedEvent && (

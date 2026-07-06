@@ -71,6 +71,7 @@ interface EventCardProps {
   variant?: "grid" | "compact";
   tone?: "default" | "editorial";
   idPrefix?: string;
+  mutedPast?: boolean;
 }
 
 const eventTypeLabels: Record<EventType, string> = {
@@ -233,6 +234,7 @@ export function EventCard({
   variant = "grid",
   tone = "default",
   idPrefix,
+  mutedPast = false,
 }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showEventImage, setShowEventImage] = useState(false);
@@ -266,12 +268,11 @@ export function EventCard({
     : `details-${event.id}`;
   const isEditorialTone = tone === "editorial";
   const editorialTitleClass = isEditorialTone
-    ? `${editorialFont.className} type-human-title`
+    ? `${editorialFont.className} type-human-title ${mutedPast ? "text-stone-600" : ""}`
     : "text-foreground";
   const editorialTextClass = isEditorialTone
-    ? `${editorialFont.className} type-human`
+    ? `${editorialFont.className} type-human ${mutedPast ? "text-stone-600" : ""}`
     : "text-foreground ";
-
   const openAlbum = () => {
     if (event.googleDriveAlbumUrl)
       window.open(event.googleDriveAlbumUrl, "_blank");
@@ -344,6 +345,18 @@ export function EventCard({
   const eventType = event.eventType || "culto";
   const EventTypeIcon = eventTypeIcons[eventType];
   const eventTypeBadgeClass = eventTypeBadgeClasses[eventType];
+  const mutedPastCardClass = mutedPast
+    ? "border-stone-300 bg-stone-100 text-stone-600 grayscale-[0.15]"
+    : "";
+  const mutedPastPanelClass = mutedPast
+    ? "border-stone-300 bg-stone-100"
+    : "border-border/70 bg-paper-highlight";
+  const mutedPastImageClass = mutedPast
+    ? "grayscale opacity-80 contrast-90"
+    : "";
+  const mutedPastBadgeClass = mutedPast
+    ? "border-stone-300 text-stone-500"
+    : eventTypeBadgeClass;
   const eventDateTimeLines = eventSchedule.map((occurrence) => {
     const label = `${formatRegionDayMonth(occurrence.date)} | ${occurrence.time}`;
     return occurrence.note ? `${label} - ${occurrence.note}` : label;
@@ -483,8 +496,6 @@ export function EventCard({
     "inline-flex ml-4.5 min-h-10 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-3 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-brand-hover";
   const eventPrimaryMapsButtonSmallClass =
     "inline-flex ml-4.5 min-h-11 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-2.5 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
-  const compactDesktopMapsButtonClass =
-    "hidden min-h-8 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-2.5 py-1.5 text-sm font-medium leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-[#4888b4] md:inline-flex";
   const compactMobileMapsButtonClass = eventPrimaryMapsButtonClass;
   const gridMapsButtonClass = canRegister
     ? eventUtilityButtonSmallClass
@@ -1272,20 +1283,20 @@ export function EventCard({
         {eventPortals}
         <article
           id={articleId}
-          className="overflow-hidden border-x border-y border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700"
+          className={`overflow-hidden border-x border-y border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700 ${mutedPastCardClass}`}
         >
-          <div className="border-b border-border/70">{eventScheduleGrid}</div>
+          <div className={`border-b ${mutedPast ? "border-stone-300" : "border-border/70"}`}>{eventScheduleGrid}</div>
 
-          <div className="flex gap-4 px-4 pb-1 pt-4 md:gap-5 md:pb-5 md:pt-5">
-            <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted md:h-[136px] md:w-[136px]">
+          <div className="flex gap-4 px-4 pb-1 pt-4">
+            <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted">
               {event.image ? (
                 <>
                   <Image
                     src={compactThumbnailUrl}
                     alt={event.title}
                     fill
-                    className="offline-image-online object-cover"
-                    sizes="(min-width: 768px) 136px, 112px"
+                    className={`offline-image-online object-cover ${mutedPastImageClass}`}
+                    sizes="112px"
                     unoptimized
                   />
                   {event.image !== "/placeholder.svg" ? (
@@ -1314,24 +1325,24 @@ export function EventCard({
             <div className="min-w-0 flex-1">
               <div className="min-w-0 space-y-2.5 text-left">
                 <span
-                  className={`mb-1 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] md:text-xs ${eventTypeBadgeClass}`}
+                  className={`mb-1 inline-flex w-fit items-center gap-1.5 rounded-sm border px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] ${mutedPastBadgeClass}`}
                 >
                   <EventTypeIcon className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>{eventTypeLabels[eventType]}</span>
                 </span>
 
-                <div className="mt-1 md:mt-0">
+                <div className="mt-1">
                   <h3
-                    className={`text-[20px] font-semibold leading-[1.35] md:text-[20px] ${editorialTitleClass}`}
+                    className={`text-[20px] font-semibold leading-[1.35] ${editorialTitleClass}`}
                   >
                     {event.title}
                   </h3>
                   {registerActionButton && (
-                    <div className="mt-4 md:hidden">{registerActionButton}</div>
+                    <div className="mt-4">{registerActionButton}</div>
                   )}
                   <button
                     onClick={handleToggle}
-                    className="mt-4 inline-flex max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:hidden"
+                    className="mt-4 inline-flex max-w-full items-center gap-2 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     aria-expanded={isExpanded}
                     aria-controls={detailsId}
                   >
@@ -1347,76 +1358,7 @@ export function EventCard({
                   </button>
                 </div>
 
-                {event.location && (
-                  <p
-                    className={`hidden min-w-0 items-start gap-2 text-[15px] leading-snug md:flex md:text-[15px] md:mt-4 md:mb-0.5`}
-                  >
-                    <Church
-                      className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    {temploNameNode}
-                  </p>
-                )}
-
-                {event.address && (
-                  <p className="hidden min-w-0 items-start gap-2 text-[15px] text-muted-foreground leading-snug text-foreground/90 md:flex md:mb-4 md:text-[15px]">
-                    <MapPin
-                      className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    <span className="min-w-0">{event.address}</span>
-                  </p>
-                )}
-
-                {hasDescription && (
-                  <p
-                    className={`hidden text-[15px] leading-snug md:block md:text-[16px] ${editorialTextClass}`}
-                  >
-                    {event.description}
-                  </p>
-                )}
               </div>
-
-              {(registerActionButton || event.location) && (
-                <div className="mt-3 hidden flex-col items-start gap-2 md:mt-5 md:flex md:flex-row md:flex-wrap md:items-center">
-                  {registerActionButton}
-
-                  {event.location && (
-                    <button
-                      onClick={() =>
-                        openGoogleMaps(event.googleMapsUrl, event.address)
-                      }
-                      className={compactDesktopMapsButtonClass}
-                      aria-label={`Abrir ${event.location} en Google Maps`}
-                      style={{ minWidth: "unset" }}
-                    >
-                      <ExternalLink
-                        className="h-4 w-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      Maps
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <button
-                onClick={handleToggle}
-                className="mt-5 hidden max-w-full items-center gap-2 text-[16px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 md:inline-flex"
-                aria-expanded={isExpanded}
-                aria-controls={detailsId}
-              >
-                <span>
-                  {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                  aria-hidden="true"
-                />
-              </button>
             </div>
           </div>
 
@@ -1442,7 +1384,7 @@ export function EventCard({
                   )}
                   {hasMobileCompactDetails && (
                     <div
-                      className={`py-2 md:hidden pb-[-4px] ${hasDropdownCtas ? "pt-5" : ""}`}
+                      className={`py-2 pb-[-4px] ${hasDropdownCtas ? "pt-5" : ""}`}
                     >
                       {(event.location || event.address) && (
                         <section className="space-y-3">
@@ -1539,7 +1481,7 @@ export function EventCard({
       <article
         id={articleId}
         data-eq-card
-        className="self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20"
+        className={`self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 ${mutedPastCardClass}`}
       >
         {/* ── Image with date/time strip ── */}
         <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
@@ -1549,7 +1491,7 @@ export function EventCard({
                 src={gridThumbnailUrl}
                 alt={event.title}
                 fill
-                className="offline-image-online object-cover"
+                className={`offline-image-online object-cover ${mutedPastImageClass}`}
                 loading="eager"
                 sizes="(min-width: 768px) 456px, calc(100vw - 32px)"
                 unoptimized
@@ -1579,16 +1521,16 @@ export function EventCard({
           )}
         </div>
 
-        <div className="border-b border-border/70 bg-paper-highlight">
+        <div className={`border-b ${mutedPastPanelClass}`}>
           {eventScheduleGrid}
         </div>
 
         {/* ── Card body ── */}
-        <div className="p-5 pb-7 bg-paper-highlight">
+        <div className={`p-5 pb-7 ${mutedPast ? "bg-stone-100" : "bg-paper-highlight"}`}>
           <div data-eq-head>
             {/* Event type — plain uppercase label */}
             <span
-              className={`mb-3 inline-flex items-center gap-3 rounded-sm border px-2 py-2 text-[13px] font-medium uppercase tracking-[0.12em] ${eventTypeBadgeClass}`}
+              className={`mb-3 inline-flex items-center gap-3 rounded-sm border px-2 py-2 text-[13px] font-medium uppercase tracking-[0.12em] ${mutedPastBadgeClass}`}
             >
               <EventTypeIcon
                 className="h-6 w-6"

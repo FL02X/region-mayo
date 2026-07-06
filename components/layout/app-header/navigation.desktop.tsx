@@ -1,6 +1,7 @@
-// Donde: barra superior dentro de AppHeader. 
+// Donde: Son los cuadros individuales de la barra superior DENTRO de AppHeader. 
 // Viewports: desktop/tablet md+. 
-// Funcion: muestra enlaces principales editables.
+// Funcion: renderiza con un map todos los enlaces de navegación.
+
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { desktopNavItems } from "@/components/layout/nav-bar-items";

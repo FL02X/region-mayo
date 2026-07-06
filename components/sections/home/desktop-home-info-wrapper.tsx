@@ -115,7 +115,7 @@ export function DesktopHomeInfoWrapper({
           <SiteLinkCard
             href="/album"
             title="Explora fotos de nuestras actividades"
-            description="Recuerdos de de las actividades regionales y generales de la Iglesia Gentil de Cristo."
+            description="Recuerdos de las actividades regionales y generales de la Iglesia Gentil de Cristo."
             buttonLabel="Ver álbumes"
             visual={<AlbumVisual />}
           />
@@ -127,12 +127,14 @@ export function DesktopHomeInfoWrapper({
         />
       </div>
 
+      
       <div className="flex w-3/8 justify-center bg-[#050505]">
         <RecentVideosFeed
           album={albums}
-          className="h-full w-[82%] min-w-0 bg-[#050505] py-26"
+          className="h-full w-[90%] min-w-0 bg-[#050505] py-26"
         />
       </div>
+
     </div>
   );
 }
