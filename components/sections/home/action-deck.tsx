@@ -41,7 +41,6 @@ const editorialFont = Newsreader({
 
 export function ActionDeck({
   events,
-  customHeroCard,
   prayerWall,
   socialPosts,
   now: nowProp,
@@ -71,12 +70,11 @@ export function ActionDeck({
 
     return buildActionDeck({
       events,
-      customHeroCard,
       prayerWall,
       socialPosts,
       now,
     });
-  }, [customHeroCard, prayerWall, socialPosts, events, nowProp]);
+  }, [prayerWall, socialPosts, events, nowProp]);
   // Update desktop scroll state and scrollbar thumb
   const updateScrollState = useCallback(() => {
     const container = scrollContainerRef.current;

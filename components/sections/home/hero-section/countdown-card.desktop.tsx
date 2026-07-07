@@ -1,6 +1,7 @@
 // Donde: columna izquierda del hero desktop. 
 // Viewports: desktop. 
 // Funcion: tarjetas visibles para evento, aviso personalizado y post social destacado.
+import { useState } from "react";
 import Image from "next/image";
 import {
   Calendar,
@@ -162,11 +163,16 @@ export function DesktopCustomSpotlightCard({
   onOpenLightbox: () => void;
   onCloseLightbox: () => void;
 }) {
+  const [isPortraitMedia, setIsPortraitMedia] = useState(card.media.isVertical);
+  const mediaImageClass = isPortraitMedia
+    ? "block h-auto max-h-[min(52vh,520px)] max-w-full object-contain"
+    : "block h-auto max-h-[220px] max-w-full object-contain";
+
   return (
-    <article className="desktop-next-event-lift overflow-hidden rounded-[2px] bg-white/93 p-3 backdrop-blur-[1px]">
-      <p className="type-system mb-1.5 inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em]">
-        <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
-        <span>AVISO</span>
+    <article className="desktop-next-event-lift overflow-hidden rounded-[2px] bg-white/93 px-3 pt-5 pb-7 backdrop-blur-[1px]">
+      <p className="type-system mb-5 ml-1 inline-flex items-center gap-1.5 text-[16px] font-bold uppercase tracking-[0.12em]">
+        <Megaphone className="h-5.5 w-5.5 mr-3" aria-hidden="true" />
+        <span>AVISO A LA CONGREGACIÓN</span>
       </p>
       <button
         type="button"
@@ -175,29 +181,25 @@ export function DesktopCustomSpotlightCard({
         aria-label="Ver imagen en pantalla completa"
         className="mx-auto block w-full"
       >
-        <div
-          className={`group relative w-full overflow-hidden border border-[#d5dbe3] bg-[#f5f6f8] flex items-center justify-center p-1.5 ${
-            card.media.isVertical ? "h-[334px]" : "h-[220px]"
-          }`}
-        >
-          <img
-            src={card.media.url}
-            alt={card.media.alt || "Contenido destacado"}
-            className="block max-h-full max-w-full w-auto h-auto object-contain"
-            decoding="async"
-          />
+        <div className="group flex w-full justify-center overflow-hidden border border-[#d5dbe3] bg-[#f5f6f8] p-1.5">
+          <span className="relative inline-flex max-w-full">
+            <img
+              src={card.media.url}
+              alt={card.media.alt || "Contenido destacado"}
+              className={mediaImageClass}
+              decoding="async"
+              onLoad={(event) => {
+                const image = event.currentTarget;
+                setIsPortraitMedia(image.naturalHeight > image.naturalWidth);
+              }}
+            />
 
-          <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
-            <div className="rounded-[2px] border-2 border-white/15 bg-black/45 p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-              <Maximize2 className="h-6 w-6 text-white" aria-hidden="true" />
+            <div className="pointer-events-none absolute bottom-2 right-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <div className="rounded-[2px] border-2 border-[#111827]/20 bg-white/90 p-1.5 shadow">
+                <Maximize2 className="h-4 w-4 text-black" aria-hidden="true" />
+              </div>
             </div>
-          </div>
-
-          <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
-            <div className="bg-white/90 rounded-full p-2 shadow">
-              <Maximize2 className="h-4 w-4 text-black" aria-hidden="true" />
-            </div>
-          </div>
+          </span>
         </div>
       </button>
       {isLightboxOpen && (

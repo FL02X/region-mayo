@@ -294,19 +294,20 @@ export function CountdownCustomSpotlightCard({
   onOpenLightbox: () => void;
   onCloseLightbox: () => void;
 }) {
-  const mediaHeightClass = card.media.isVertical
-    ? "h-[min(86vh,680px)] md:h-[520px]"
-    : "h-[210px] md:h-[250px]";
+  const [isPortraitMedia, setIsPortraitMedia] = useState(card.media.isVertical);
+  const mediaImageClass = isPortraitMedia
+    ? "block h-auto max-h-[min(76svh,720px)] max-w-full object-contain md:max-h-[520px]"
+    : "block h-auto max-h-[210px] max-w-full object-contain md:max-h-[250px]";
 
   return (
     <div
-      className={`desktop-card-lift bg-card border border-border overflow-hidden mb-3 ${MOBILE_FLOATING_CARD_CLASS}`}
+      className={`desktop-card-lift bg-card border border-orange-400 overflow-hidden mb-8 ${MOBILE_FLOATING_CARD_CLASS}`}
     >
-      <div className="h-[3px] bg-brand" aria-hidden="true" />
-      <div className="p-3">
-        <p className="type-system mb-2.5 inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.12em]">
-          <Megaphone className="h-3.5 w-3.5" aria-hidden="true" />
-          <span>Aviso a la congregacion</span>
+      <div className="h-[3px] bg-orange-400" aria-hidden="true" />
+      <div className="p-3 pb-4">
+        <p className="type-system mt-2 mb-6 ml-1 inline-flex items-center gap-1.5 text-[14px] font-semibold uppercase tracking-[0.12em]">
+          <Megaphone className="h-5.5 w-5.5 text-orange-400 mr-1.5" aria-hidden="true" />
+          <span>Aviso a la congregación</span>
         </p>
         <div>
           <button
@@ -316,33 +317,28 @@ export function CountdownCustomSpotlightCard({
             aria-label="Ver imagen en pantalla completa"
             className="mx-auto block w-full"
           >
-            <div
-              className={`group relative w-full overflow-hidden flex items-center justify-center bg-transparent ${mediaHeightClass}`}
-            >
-              <img
-                src={card.media.url}
-                alt={card.media.alt || "Contenido destacado"}
-                className="block mx-auto max-h-full max-w-full w-auto h-auto object-contain"
-                decoding="async"
-              />
+            <div className="group flex w-full justify-center bg-transparent">
+              <span className="relative inline-flex max-w-full">
+                <img
+                  src={card.media.url}
+                  alt={card.media.alt || "Contenido destacado"}
+                  className={mediaImageClass}
+                  decoding="async"
+                  onLoad={(event) => {
+                    const image = event.currentTarget;
+                    setIsPortraitMedia(image.naturalHeight > image.naturalWidth);
+                  }}
+                />
 
-              <div className="hidden md:flex pointer-events-none absolute inset-0 items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 rounded-full p-3">
-                  <Maximize2
-                    className="h-6 w-6 text-white"
-                    aria-hidden="true"
-                  />
+                <div className="pointer-events-none absolute bottom-2 right-2 md:opacity-0 md:transition-opacity md:duration-200 md:group-hover:opacity-100">
+                  <div className="rounded-[2px] border-2 border-[#111827]/20 bg-white/85 p-1.5">
+                    <Maximize2
+                      className="h-4 w-4 text-[#111827]"
+                      aria-hidden="true"
+                    />
+                  </div>
                 </div>
-              </div>
-
-              <div className="md:hidden pointer-events-none absolute bottom-2 right-2">
-                <div className="rounded-[2px] border-2 border-[#111827]/20 bg-white p-1.5">
-                  <Maximize2
-                    className="h-4 w-4 text-[#111827]"
-                    aria-hidden="true"
-                  />
-                </div>
-              </div>
+              </span>
             </div>
           </button>
           {isLightboxOpen && (

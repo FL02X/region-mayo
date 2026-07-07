@@ -4,12 +4,11 @@
 import type { HeroCandidate } from "@/lib/ranker";
 import { pickHeroAndDeck } from "@/lib/ranker";
 import { REGION_TIME_ZONE, formatRegionWeekdayDayMonth } from "@/lib/region-date";
-import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
+import type { Event, PrayerWallConfig, SocialPost } from "@/lib/types";
 import type { DeckItem } from "@/components/sections/home/action-deck/action-deck-types";
 
 export const MS_HOUR = 60 * 60 * 1000;
 export const MS_DAY = 24 * MS_HOUR;
-export const CUSTOM_BANNER_ACCENT = "#e36600";
 
 function isSocialVideoUrl(url?: string): boolean {
   if (!url) return false;
@@ -66,7 +65,6 @@ function mapCandidateToDeckItem(
       type: "promo",
       title: candidate.ctaText || "Novedad destacada",
       href: candidate.url,
-      pinned: candidate.pinned,
       image: (candidate as any).media?.url,
       accentColor: candidate.accentColor,
       ctaText: candidate.url ? candidate.ctaText : undefined,
@@ -140,36 +138,16 @@ function mapCandidateToDeckItem(
 
 export function buildActionDeck({
   events,
-  customHeroCard,
   prayerWall,
   socialPosts,
   now,
 }: {
   events: Event[];
-  customHeroCard?: HeroCard | null;
   prayerWall?: PrayerWallConfig | null;
   socialPosts?: SocialPost[];
   now: number;
 }) {
   const rankingCandidates: HeroCandidate[] = [];
-
-  if (customHeroCard?.media?.url) {
-    rankingCandidates.push({
-      type: "custom",
-      id: customHeroCard._id,
-      publishedAt: new Date(customHeroCard.publishedAt).getTime(),
-      accentColor: CUSTOM_BANNER_ACCENT,
-      media: {
-        isVertical: Boolean(customHeroCard.media.isVertical),
-        alt: customHeroCard.media.alt || "Contenido destacado",
-        url: customHeroCard.media.url,
-      },
-      url: customHeroCard.url,
-      ctaText: customHeroCard.ctaText,
-      pinned: customHeroCard.pinned,
-      priorityWeight: customHeroCard.priorityWeight,
-    });
-  }
 
   if (prayerWall && prayerWall.enabled && prayerWall.phase !== "paused") {
     rankingCandidates.push({

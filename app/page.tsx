@@ -103,7 +103,6 @@ export default async function Home() {
             events={events}
             instagramUrl={region?.socialLinks.instagram}
             facebookUrl={region?.socialLinks.facebook}
-            customHeroCard={heroCard}
             prayerWall={prayerWall}
             socialPosts={socialPosts}
             now={now}

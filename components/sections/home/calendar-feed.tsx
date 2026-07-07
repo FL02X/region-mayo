@@ -678,7 +678,7 @@ export function EventsFeed({
               <button
                 type="button"
                 onClick={handleCalendarLayoutToggle}
-                className="relative grid h-9 w-full grid-cols-2 overflow-hidden mb-3 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
+                className="relative grid h-12 w-full grid-cols-2 overflow-hidden mb-3 border border-border-line bg-paper-highlight p-0.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]"
                 aria-pressed={isMonthPlannerEnabled}
                 aria-label="Alternar vista mensual del calendario"
               >
@@ -692,7 +692,7 @@ export function EventsFeed({
                   aria-hidden="true"
                 />
                 <span
-                  className={`relative z-30 flex items-center justify-center text-[11px] font-semibold uppercase ${
+                  className={`relative z-30 flex items-center justify-center text-[12px] font-semibold uppercase ${
                     isMonthPlannerEnabled
                       ? "text-ink-muted"
                       : "text-primary-foreground"
@@ -701,7 +701,7 @@ export function EventsFeed({
                   Lista
                 </span>
                 <span
-                  className={`relative z-30 flex items-center justify-center text-[11px] font-semibold uppercase ${
+                  className={`relative z-30 flex items-center justify-center text-[12px] font-semibold uppercase ${
                     isMonthPlannerEnabled
                       ? "text-primary-foreground"
                       : "text-ink-muted"

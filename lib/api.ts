@@ -1381,7 +1381,6 @@ function mapHeroCard(raw: any): HeroCard {
     url: raw?.url || undefined,
     ctaText: raw?.url ? raw?.ctaText || "Ver más información" : undefined,
     publishedAt: raw?.publishedAt || new Date(0).toISOString(),
-    pinned: Boolean(raw?.pinned),
     priorityWeight: typeof raw?.priorityWeight === "number" ? raw.priorityWeight : 0,
   };
 }
@@ -1473,12 +1472,11 @@ export async function getLatestHeroCard(regionSlug: string = "mayo"): Promise<He
     const client = getSanityClient();
     const card = await client.fetch(
       `*[_type == "heroCard" && (!defined(region) || region->slug.current in $regionSlugs || region->name in $regionNames)]
-        | order(coalesce(pinned, false) desc, coalesce(publishedAt, _updatedAt, _createdAt) desc)[0]{
+        | order(coalesce(publishedAt, _updatedAt, _createdAt) desc)[0]{
           _id,
           url,
           ctaText,
           "publishedAt": coalesce(publishedAt, _updatedAt, _createdAt),
-          pinned,
           priorityWeight,
           media{
             isVertical,

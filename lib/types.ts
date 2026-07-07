@@ -390,7 +390,6 @@ export interface HeroCard {
   url?: string;
   ctaText?: string;
   publishedAt: string;
-  pinned?: boolean;
   priorityWeight?: number;
 }
 

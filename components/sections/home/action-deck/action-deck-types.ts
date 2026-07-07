@@ -1,7 +1,7 @@
 // Donde: no renderiza UI directo. 
 // Viewports: afecta action deck en desktop y mobile. 
 // Funcion: tipos compartidos para tarjetas destacadas.
-import type { Event, HeroCard, PrayerWallConfig, SocialPost } from "@/lib/types";
+import type { Event, PrayerWallConfig, SocialPost } from "@/lib/types";
 
 export type DeckItem =
   | {
@@ -71,7 +71,6 @@ export interface ActionDeckProps {
   events: Event[];
   instagramUrl?: string;
   facebookUrl?: string;
-  customHeroCard?: HeroCard | null;
   prayerWall?: PrayerWallConfig | null;
   socialPosts?: SocialPost[];
   now?: number;

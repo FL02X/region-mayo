@@ -33,7 +33,6 @@ export type HeroCandidate =
       media: { isVertical: boolean; alt: string; url?: string }
       url?: string
       ctaText?: string
-      pinned?: boolean
       priorityWeight?: number
     }
   | {
@@ -118,7 +117,7 @@ export function scoreCandidate(
   let score = 0
 
   // Bonus si está pinned (pero no anula las reglas absolutas de prayer+custom)
-  if (candidate.pinned && candidate.type !== 'prayer' && candidate.type !== 'custom') {
+  if (candidate.type !== 'prayer' && candidate.type !== 'custom' && candidate.pinned) {
     score += SCORE_BASE.pinned_boost
   }
 
@@ -155,9 +154,6 @@ export function scoreCandidate(
         score += candidate.priorityWeight
       }
 
-      if (candidate.pinned) {
-        score += SCORE_BASE.pinned_boost
-      }
       break
     }
 
@@ -260,11 +256,10 @@ export function rankCandidates(
  * Las reglas absolutas IGNORAN el scoring genérico.
  *
  * ORDEN DE AUTORIDAD (de mayor a menor):
- * 1. Custom pinned = SIEMPRE hero
- * 2. Custom <24h = SIEMPRE hero
- * 3. Prayer activo (COLLECT o SHOW) = SIEMPRE hero
- * 4. Next upcoming event = hero
- * 5. Más alto scored = fallback
+ * 1. Custom <24h = SIEMPRE hero
+ * 2. Prayer activo (COLLECT o SHOW) = SIEMPRE hero
+ * 3. Next upcoming event = hero
+ * 4. Más alto scored = fallback
  */
 export function pickHeroAndDeck(
   candidates: HeroCandidate[],
@@ -297,18 +292,7 @@ export function pickHeroAndDeck(
   let heroReason = ''
 
   // ───────────────────────────────────────────────────────────
-  // REGLA 1: Custom pinned = ABSOLUTE PRIORITY
-  // ───────────────────────────────────────────────────────────
-  const customPinned = ranked.find(
-    (r) => r.item.type === 'custom' && r.item.pinned
-  )
-  if (customPinned) {
-    hero = customPinned.item
-    heroReason = 'custom_pinned'
-  }
-
-  // ───────────────────────────────────────────────────────────
-  // REGLA 2: Custom <24h = HIGH PRIORITY
+  // REGLA 1: Custom <24h = HIGH PRIORITY
   // ───────────────────────────────────────────────────────────
   if (!hero) {
     const customFresh = ranked.find(
@@ -421,7 +405,6 @@ export function getHeroReasonLabel(reason: string): string {
   const labels: Record<string, string> = {
     prayer_show_active: '🟢 Muro de Oraciones activo',
     prayer_collect_active: '🟢 Muro de Oraciones activo',
-    custom_pinned: '📌 Tarjeta personalizada fijada',
     custom_fresh_24h: '🟦 Tarjeta personalizada reciente',
     event_within_72h: '🔵 Evento próximo (< 3 días)',
     next_upcoming_event: '🔵 Siguiente evento en calendario',

@@ -63,7 +63,6 @@ async function getLatestHeroCard(): Promise<HeroCandidate | null> {
       },
       url: card.url,
       ctaText: card.ctaText,
-      pinned: card.pinned,
       priorityWeight: card.priorityWeight,
     }
   } catch (error) {

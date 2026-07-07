@@ -103,7 +103,6 @@ export function HeroSection({
         },
         url: customHeroCard.url,
         ctaText: customHeroCard.ctaText,
-        pinned: customHeroCard.pinned,
         priorityWeight: customHeroCard.priorityWeight,
       });
     }

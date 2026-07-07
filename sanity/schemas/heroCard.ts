@@ -8,7 +8,6 @@
  * - Al publicar una tarjeta custom, toma PRIORIDAD MÁXIMA durante 24 horas
  * - Después de 24h, pierde prioridad gradualmente a favor de otros contenidos
  * - Si hay un "Muro de Oraciones" en fase SHOW, el muro SIEMPRE gana
- * - Puedes opcionalmente "fixar" (pin) la tarjeta para mantenerla en hero
  *
  * PARA ADMINS: Solo sube la imagen/video, nada más. El sistema automáticamente
  * detectará si es vertical o horizontal. Si quieres un link, añádelo abajo.
@@ -91,17 +90,6 @@ export default defineType({
     }),
 
     defineField({
-      name: 'pinned',
-      title: '🔧 Fijar en Hero (ignora prioridad automática)',
-      type: 'boolean',
-      initialValue: false,
-      description:
-        'Si activas esto, esta tarjeta SIEMPRE aparecerá en el hero, ' +
-        'sin importar si hay eventos próximos o muro de oraciones. ' +
-        '⚠️ Úsalo solo si realmente quieres que se vea esto ahora mismo.',
-    }),
-
-    defineField({
       name: 'priorityWeight',
       title: '🔧 Peso de Prioridad Adicional (0-1000)',
       type: 'number',
@@ -128,12 +116,10 @@ export default defineType({
     select: {
       media: 'media.file',
       title: 'title',
-      pinned: 'pinned',
     },
     prepare(selection) {
-      const { pinned } = selection
       return {
-        title: `${pinned ? '📌 ' : ''}Hero Card`,
+        title: 'Hero Card',
         media: selection.media,
       }
     },

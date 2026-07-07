@@ -14,7 +14,7 @@ import type {
   SocialPost,
 } from "@/lib/types";
 import type { HeroCandidate } from "@/lib/ranker";
-import { pickHeroAndDeck, getAccentColor } from "@/lib/ranker";
+import { rankCandidates, getAccentColor } from "@/lib/ranker";
 import { useTime } from "@/lib/time-context";
 import { getAlbumSharingEvents } from "@/lib/countdown-utils";
 import { MobilePrayerSpotlightCard } from "@/components/sections/home/countdown-section/mobile-prayer-spotlight-card";
@@ -26,7 +26,6 @@ import {
   CountdownSocialSpotlightCard,
 } from "@/components/sections/home/countdown-section/countdown-card.mobile";
 import {
-  CUSTOM_BANNER_ACCENT,
   canUseNativeShare,
   getCountdownDisplay,
   getRegionDateKey,
@@ -72,37 +71,10 @@ export function CountdownSection({
     setIsMounted(true);
   }, []);
 
-  const spotlightCandidates = useMemo<HeroCandidate[]>(() => {
+  const eventCandidates = useMemo<HeroCandidate[]>(() => {
     const nowMs = currentTime.getTime();
     const currentDayKey = getRegionDateKey(currentTime);
     const candidates: HeroCandidate[] = [];
-
-    if (customHeroCard?.media?.url) {
-      candidates.push({
-        type: "custom",
-        id: customHeroCard._id,
-        publishedAt: new Date(customHeroCard.publishedAt).getTime(),
-        accentColor: CUSTOM_BANNER_ACCENT,
-        media: {
-          isVertical: Boolean(customHeroCard.media.isVertical),
-          alt: customHeroCard.media.alt || "Contenido destacado",
-        },
-        url: customHeroCard.url,
-        ctaText: customHeroCard.ctaText,
-        pinned: customHeroCard.pinned,
-        priorityWeight: customHeroCard.priorityWeight,
-      });
-    }
-
-    if (prayerWall && prayerWall.enabled && prayerWall.phase !== "paused") {
-      candidates.push({
-        type: "prayer",
-        id: prayerWall._id,
-        phase: prayerWall.phase,
-        publishedAt: new Date(prayerWall.publishedAt).getTime(),
-        selectedPrayersCount: prayerWall.selectedPrayers?.length ?? 0,
-      });
-    }
 
     events.forEach((event) => {
       const eventSchedule =
@@ -130,6 +102,23 @@ export function CountdownSection({
         });
       });
     });
+
+    return candidates;
+  }, [currentTime, events]);
+
+  const spotlightCandidates = useMemo<HeroCandidate[]>(() => {
+    const nowMs = currentTime.getTime();
+    const candidates: HeroCandidate[] = [];
+
+    if (prayerWall && prayerWall.enabled && prayerWall.phase !== "paused") {
+      candidates.push({
+        type: "prayer",
+        id: prayerWall._id,
+        phase: prayerWall.phase,
+        publishedAt: new Date(prayerWall.publishedAt).getTime(),
+        selectedPrayersCount: prayerWall.selectedPrayers?.length ?? 0,
+      });
+    }
 
     (socialPosts ?? []).forEach((post) => {
       candidates.push({
@@ -179,28 +168,44 @@ export function CountdownSection({
     return candidates;
   }, [
     currentTime,
-    customHeroCard,
     prayerWall,
-    events,
     socialPosts,
     instagramUrl,
     facebookUrl,
   ]);
 
-  const spotlight = useMemo(
-    () => pickHeroAndDeck(spotlightCandidates, currentTime.getTime(), true),
-    [spotlightCandidates, currentTime],
-  );
+  const spotlight = useMemo(() => {
+    const ranked = rankCandidates(spotlightCandidates, currentTime.getTime());
+    return {
+      hero: ranked[0]?.item ?? null,
+      deck: ranked.slice(1).map((candidate) => candidate.item),
+      debug: {
+        allCandidates: ranked,
+        heroReason: ranked[0] ? "top_mobile_spotlight" : "no candidates",
+      },
+    };
+  }, [spotlightCandidates, currentTime]);
 
   const spotlightHero = spotlight.hero;
   const spotlightAccent = spotlightHero
     ? getAccentColor(spotlightHero)
     : "#2f5e93";
 
+  const countdownEventCandidate = useMemo(() => {
+    const nowMs = currentTime.getTime();
+    return (
+      eventCandidates
+        .filter(
+          (candidate): candidate is Extract<HeroCandidate, { type: "event" }> =>
+            candidate.type === "event" && candidate.date >= nowMs,
+        )
+        .sort((a, b) => a.date - b.date)[0] ?? null
+    );
+  }, [currentTime, eventCandidates]);
   const countdownEvent = useMemo(() => {
-    if (!spotlightHero || spotlightHero.type !== "event") return null;
-    return events.find((event) => event.id === spotlightHero.id) ?? null;
-  }, [spotlightHero, events]);
+    if (!countdownEventCandidate) return null;
+    return events.find((event) => event.id === countdownEventCandidate.id) ?? null;
+  }, [countdownEventCandidate, events]);
   const eventHighlightUrl = useMemo(() => {
     if (!isMounted || !countdownEvent) return "";
     return "igcmayo.com";
@@ -273,7 +278,13 @@ export function CountdownSection({
     );
   }, [spotlight]);
 
-  if (!isMounted || (!spotlightHero && albumEvents.length === 0)) {
+  if (
+    !isMounted ||
+    (!spotlightHero &&
+      !customHeroCard?.media?.url &&
+      !countdownEvent &&
+      albumEvents.length === 0)
+  ) {
     return null;
   }
 
@@ -308,6 +319,9 @@ export function CountdownSection({
   const countdownMapsUrl = countdownEvent
     ? getEventMapsUrl(countdownEvent)
     : "";
+  const countdownAccent = countdownEventCandidate
+    ? getAccentColor(countdownEventCandidate)
+    : "#2f5e93";
   const countdownPlacePhotoUrl =
     countdownEvent?.moreInfo?.enabled && countdownEvent.moreInfo.imageUrl
       ? countdownEvent.moreInfo.imageUrl
@@ -322,7 +336,7 @@ export function CountdownSection({
     spotlightHero?.type === "prayer" &&
     spotlightHero.phase === "show" &&
     (prayerWall?.selectedPrayers?.length ?? 0) > 0;
-  const showCustomCard = spotlightHero?.type === "custom";
+  const showCustomCard = Boolean(customHeroCard?.media?.url);
   const showSocialCard = spotlightHero?.type === "social";
 
   return (
@@ -332,37 +346,6 @@ export function CountdownSection({
       aria-label="Sección destacada"
     >
       <div className="max-w mx-auto w-full space-y-4">
-        {/* Spotlight: event */}
-        {countdownEvent && countdownDisplay && (
-          <CountdownEventSpotlightCard
-            event={countdownEvent}
-            schedule={countdownSchedule}
-            countdownDisplay={countdownDisplay}
-            countdownIsDisabled={countdownIsDisabled}
-            countdownGridClassName={countdownGridClassName}
-            mapsUrl={countdownMapsUrl}
-            placePhotoUrl={countdownPlacePhotoUrl}
-            canRegister={canRegisterCountdownEvent}
-            canShare={Boolean(countdownShareText)}
-            accentColor={spotlightAccent}
-            editorialFontClassName={editorialFont.className}
-            onOpenMaps={openGoogleMaps}
-            onOpenPlacePhoto={() => setIsPlacePhotoOpen(true)}
-            onShare={handleShare}
-            onRegister={onRegister}
-          />
-        )}
-
-        {/* Spotlight: custom media */}
-        {showCustomCard && customHeroCard && (
-          <CountdownCustomSpotlightCard
-            card={customHeroCard}
-            isLightboxOpen={isLightboxOpen}
-            onOpenLightbox={() => setIsLightboxOpen(true)}
-            onCloseLightbox={() => setIsLightboxOpen(false)}
-          />
-        )}
-
         {/* Spotlight: social */}
         {showSocialCard && spotlightHero && spotlightHero.type === "social" && (
           <CountdownSocialSpotlightCard
@@ -387,6 +370,37 @@ export function CountdownSection({
             mode="show"
             prayers={prayerWall.selectedPrayers}
             editorialFontClassName={editorialFont.className}
+          />
+        )}
+
+        {/* Aviso: independent from ranking */}
+        {showCustomCard && customHeroCard && (
+          <CountdownCustomSpotlightCard
+            card={customHeroCard}
+            isLightboxOpen={isLightboxOpen}
+            onOpenLightbox={() => setIsLightboxOpen(true)}
+            onCloseLightbox={() => setIsLightboxOpen(false)}
+          />
+        )}
+
+        {/* Próximo evento: fixed below the ranked mobile spotlight */}
+        {countdownEvent && countdownDisplay && (
+          <CountdownEventSpotlightCard
+            event={countdownEvent}
+            schedule={countdownSchedule}
+            countdownDisplay={countdownDisplay}
+            countdownIsDisabled={countdownIsDisabled}
+            countdownGridClassName={countdownGridClassName}
+            mapsUrl={countdownMapsUrl}
+            placePhotoUrl={countdownPlacePhotoUrl}
+            canRegister={canRegisterCountdownEvent}
+            canShare={Boolean(countdownShareText)}
+            accentColor={countdownAccent}
+            editorialFontClassName={editorialFont.className}
+            onOpenMaps={openGoogleMaps}
+            onOpenPlacePhoto={() => setIsPlacePhotoOpen(true)}
+            onShare={handleShare}
+            onRegister={onRegister}
           />
         )}
 
