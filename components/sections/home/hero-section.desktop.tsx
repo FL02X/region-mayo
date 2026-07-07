@@ -471,7 +471,7 @@ export function HeroSection({
             aria-hidden="true"
           />
 
-          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 pb-7 pt-[44px] md:min-h-[420px] md:px-10 md:pb-8 lg:px-16">
+          <div className="relative z-10 flex min-h-[min(60vh,480px)] items-center px-5 py-[44px] md:min-h-[420px] md:px-10 lg:px-16">
             <div className="grid w-full items-center gap-8 md:grid-cols-[minmax(350px,1.15fr)_minmax(220px,0.85fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
               <div className="hidden min-w-0 md:block">
                 {spotlightEvent && (

@@ -1588,7 +1588,7 @@ export function TemplosContent({ templos, initialViewMode }: TemploContentProps)
           />
         </div>
 
-        <div className="mb-4 flex justify-end">
+        <div className="mb-5 flex justify-end">
           <ViewModeToggle
             value={viewMode}
             onChange={handleViewModeChange}

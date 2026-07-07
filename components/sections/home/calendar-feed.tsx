@@ -11,7 +11,7 @@ import {
   useEffect,
 } from "react";
 import { Newsreader } from "next/font/google";
-import { Calendar, CalendarDays, ChevronDown } from "lucide-react";
+import { Calendar, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   EventCard,
@@ -111,7 +111,6 @@ export function EventsFeed({
   const [calendarChangeReason, setCalendarChangeReason] =
     useState<CalendarChangeReason>(null);
   const [isOfflinePwa, setIsOfflinePwa] = useState(false);
-  const renderedViewMode = viewMode;
   const lastOnlineViewModeRef = useRef<CalendarViewMode>(
     resolvedInitialViewMode,
   );
@@ -128,7 +127,6 @@ export function EventsFeed({
     useState<CalendarEventFlow>("upcoming");
   const [visibleListMonthCount, setVisibleListMonthCount] =
     useState(LIST_MONTH_BATCH_SIZE);
-  const [showListMonthFab, setShowListMonthFab] = useState(false);
   const [pendingJumpMonthKey, setPendingJumpMonthKey] = useState<string | null>(
     null,
   );
@@ -165,6 +163,7 @@ export function EventsFeed({
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const isMobile = useIsMobile();
+  const renderedViewMode: CalendarViewMode = isMobile ? "compact" : viewMode;
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const calendarReferenceMs = calendarReferenceMsRef.current;
@@ -600,35 +599,6 @@ export function EventsFeed({
   }, [hasMoreListMonths, listMonthGroups.length, shouldRenderLegacyCalendar]);
 
   useEffect(() => {
-    if (!isMobile || !shouldRenderLegacyCalendar) {
-      setShowListMonthFab(false);
-      return;
-    }
-
-    const updateFabVisibility = () => {
-      const eventsSection = document.getElementById("eventos");
-      if (!eventsSection) {
-        setShowListMonthFab(false);
-        return;
-      }
-
-      const sectionTop = eventsSection.getBoundingClientRect().top;
-      setShowListMonthFab(
-        sectionTop < -160 && listMonthPickerAccessibleCount > 1,
-      );
-    };
-
-    updateFabVisibility();
-    window.addEventListener("scroll", updateFabVisibility, { passive: true });
-    window.addEventListener("resize", updateFabVisibility);
-
-    return () => {
-      window.removeEventListener("scroll", updateFabVisibility);
-      window.removeEventListener("resize", updateFabVisibility);
-    };
-  }, [isMobile, listMonthPickerAccessibleCount, shouldRenderLegacyCalendar]);
-
-  useEffect(() => {
     if (!pendingJumpMonthKey) return;
 
     const targetElement = document.getElementById(
@@ -889,7 +859,7 @@ export function EventsFeed({
                           </div>
 
                           {renderedViewMode === "compact" ? (
-                            <div className="-mx-2.5 md:-mx-0 p-0.5 flex flex-col gap-5 md:gap-6 mt-10 md:mt-0 md:mb-12">
+                            <div className="-mx-2.5 md:-mx-0 p-0.5 flex flex-col gap-5 md:gap-6 mt-10 md:mt-0 md:mb-12 last:mb-4 last:md:mb-10">
                               {group.events.map((event) => (
                                 <EventCard
                                   key={event.id}
@@ -915,7 +885,7 @@ export function EventsFeed({
                               />
                             </div>
                           ) : (
-                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:mb-6">
                               {group.events.map((event) => (
                                 <EventCard
                                   key={event.id}
@@ -939,55 +909,6 @@ export function EventsFeed({
           </section>
         )}
       </div>
-
-      {shouldRenderLegacyCalendar && (
-        <div
-          className={`fixed right-4 top-20 z-40 h-12 w-12 overflow-hidden bg-[#21252b] text-white shadow-lg transition-all md:hidden ${
-            showListMonthFab
-              ? "translate-y-0 opacity-100"
-              : "pointer-events-none -translate-y-2 opacity-0"
-          }`}
-        >
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <span className="relative inline-flex h-6 w-6 items-center justify-center">
-              <CalendarDays className="h-6 w-6" aria-hidden="true" />
-              <ChevronDown
-                className="absolute -bottom-1 -right-1 h-3.5 w-3.5 bg-[#21252b]"
-                aria-hidden="true"
-              />
-            </span>
-          </span>
-          <select
-            value=""
-            onChange={(event) => handleMonthJumpSelect(event.currentTarget.value)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            aria-label="Seleccionar mes"
-          >
-            <option value="" disabled>
-              Seleccionar mes
-            </option>
-            {listMonthPickerYears.map(([year, months]) => (
-              <optgroup key={year} label={`${year}`}>
-                {months.map((month) => {
-                  const monthParts = getRegionCalendarParts(month.month);
-                  const isAccessible = month.upcoming || month.past;
-                  const targetFlow = month.upcoming ? "upcoming" : "past";
-
-                  return (
-                    <option
-                      key={month.monthKey}
-                      value={`${targetFlow}:${month.monthKey}`}
-                      disabled={!isAccessible}
-                    >
-                      {CALENDAR_MONTHS[monthParts.month - 1]} {year}
-                    </option>
-                  );
-                })}
-              </optgroup>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* Registration modal */}
       {selectedEvent && (

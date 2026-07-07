@@ -33,7 +33,7 @@ export function DesktopNavigation({
             onMouseEnter={(event) => onItemHover(event.currentTarget)}
             data-active={isActive ? "true" : undefined}
             className={cn(
-              "desktop-header-item flex cursor-pointer items-center gap-1.5 h-full px-2.5 lg:px-3.5 max-[914px]:w-12 max-[914px]:justify-center max-[914px]:gap-0 max-[914px]:px-0 max-[914px]:text-[0px] min-[915px]:px-3 min-[915px]:gap-0 min-[915px]:justify-center min-[915px]:text-[14px] min-[1101px]:justify-start min-[1101px]:gap-2 text-[14px] transition-colors whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
+              "desktop-header-item flex cursor-pointer items-center gap-1.5 h-full px-2.5 lg:px-3.5 max-[914px]:w-25 max-[914px]:justify-center max-[914px]:gap-0 max-[914px]:px-0 max-[914px]:text-[0px] min-[915px]:px-3 min-[915px]:gap-0 min-[915px]:justify-center min-[916px]:text-[16px] min-[1101px]:justify-start min-[916px]:gap-2 min-[1101px]:text-[14px] text-[14px] transition-colors whitespace-nowrap tracking-[0.04em] uppercase border-b-2 border-transparent",
               isActive
                 ? "-my-px h-[calc(100%+2px)] text-white bg-brand-active hover:bg-ink"
                 : "text-white hover:text-white hover:border-white/30"
@@ -42,7 +42,7 @@ export function DesktopNavigation({
             aria-current={isActive ? "page" : undefined}
           >
             <Icon
-              className="desktop-header-icon h-[15px] w-[15px] shrink-0 opacity-80 hidden max-[914px]:block min-[1101px]:block"
+              className="desktop-header-icon h-[15px] w-[15px] max-[914px]:h-[23px] max-[914px]:w-[23px]  shrink-0 opacity-80 hidden max-[914px]:block min-[1101px]:block"
               aria-hidden="true"
               strokeWidth={1.75}
             />

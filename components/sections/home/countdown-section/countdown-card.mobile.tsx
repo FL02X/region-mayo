@@ -1,4 +1,7 @@
+"use client";
+
 // Donde: countdown mobile de home. Viewports: mobile. Funcion: tarjetas visibles para evento, aviso, social y albumes post-evento.
+import { useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Calendar,
@@ -24,6 +27,100 @@ import {
   type CountdownOccurrence,
 } from "@/components/sections/home/countdown-section/countdown-utils";
 import { FlipCountdownCell } from "@/components/sections/home/countdown-section/flip-countdown-cell";
+
+function CountdownScheduleLine({
+  occurrence,
+}: {
+  occurrence: CountdownOccurrence;
+}) {
+  const lineRef = useRef<HTMLSpanElement>(null);
+  const fullProbeRef = useRef<HTMLSpanElement>(null);
+  const shortDayProbeRef = useRef<HTMLSpanElement>(null);
+  const [dateFormat, setDateFormat] = useState<
+    "full" | "short-day" | "short-day-month"
+  >("full");
+
+  const fullDateLabel = formatMobileCountdownDate(occurrence.date);
+  const shortDayDateLabel = formatMobileCountdownDate(occurrence.date, {
+    weekdayFormat: "short",
+  });
+  const shortDayMonthDateLabel = formatMobileCountdownDate(occurrence.date, {
+    weekdayFormat: "short",
+    monthFormat: "short",
+  });
+  const dateLabel =
+    dateFormat === "short-day-month"
+      ? shortDayMonthDateLabel
+      : dateFormat === "short-day"
+        ? shortDayDateLabel
+        : fullDateLabel;
+
+  useLayoutEffect(() => {
+    const line = lineRef.current;
+    const fullProbe = fullProbeRef.current;
+    const shortDayProbe = shortDayProbeRef.current;
+    if (!line || !fullProbe || !shortDayProbe) return;
+
+    const updateDateFormat = () => {
+      if (fullProbe.scrollWidth <= line.clientWidth) {
+        setDateFormat("full");
+        return;
+      }
+
+      setDateFormat(
+        shortDayProbe.scrollWidth <= line.clientWidth
+          ? "short-day"
+          : "short-day-month",
+      );
+    };
+
+    updateDateFormat();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateDateFormat);
+      return () => window.removeEventListener("resize", updateDateFormat);
+    }
+
+    const observer = new ResizeObserver(updateDateFormat);
+    observer.observe(line);
+    return () => observer.disconnect();
+  }, [fullDateLabel, shortDayDateLabel, occurrence.time]);
+
+  return (
+    <span className="relative block max-w-full">
+      <span
+        ref={lineRef}
+        className="flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[17px] font-bold leading-[1.5] tabular-nums"
+      >
+        <span>{dateLabel}</span>
+        <span className="text-[#2f5e93]" aria-hidden="true">
+          &middot;
+        </span>
+        <span>{occurrence.time}</span>
+      </span>
+
+      <span
+        ref={fullProbeRef}
+        className="pointer-events-none invisible absolute left-0 top-0 flex w-max items-baseline gap-x-2 whitespace-nowrap text-[17px] font-bold leading-[1.5] tabular-nums"
+        aria-hidden="true"
+      >
+        <span>{fullDateLabel}</span>
+        <span>&middot;</span>
+        <span>{occurrence.time}</span>
+      </span>
+
+      <span
+        ref={shortDayProbeRef}
+        className="pointer-events-none invisible absolute left-0 top-0 flex w-max items-baseline gap-x-2 whitespace-nowrap text-[17px] font-bold leading-[1.5] tabular-nums"
+        aria-hidden="true"
+      >
+        <span>{shortDayDateLabel}</span>
+        <span>&middot;</span>
+        <span>{occurrence.time}</span>
+      </span>
+    </span>
+  );
+}
 
 export function CountdownEventSpotlightCard({
   event,
@@ -85,18 +182,12 @@ export function CountdownEventSpotlightCard({
               className="mt-[3px] h-4.5 w-4.5 shrink-0"
               aria-hidden="true"
             />
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1">
               {schedule.map((occurrence, index) => (
-                <span
+                <CountdownScheduleLine
                   key={`${occurrence.date.toISOString()}-${index}`}
-                  className="flex items-baseline gap-2 text-[17px] mb-1.5 font-bold leading-[1.5] tabular-nums"
-                >
-                  <span>{formatMobileCountdownDate(occurrence.date)}</span>
-                  <span className="text-[#2f5e93]" aria-hidden="true">
-                    ·
-                  </span>
-                  <span>{occurrence.time}</span>
-                </span>
+                  occurrence={occurrence}
+                />
               ))}
             </div>
           </div>

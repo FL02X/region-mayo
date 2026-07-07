@@ -39,19 +39,22 @@ const MOBILE_USER_AGENT_PATTERN =
   /Android|BlackBerry|iPhone|iPod|IEMobile|Mobile|Opera Mini|webOS/i;
 
 export async function readInitialViewMode(name: string): Promise<ViewMode> {
+  const headerStore = await headers();
+  const clientHintMobile = headerStore.get("sec-ch-ua-mobile");
+  if (clientHintMobile === "?1") return "compact";
+  const isMobileUserAgent = MOBILE_USER_AGENT_PATTERN.test(
+    headerStore.get("user-agent") ?? "",
+  );
+  if (isMobileUserAgent) return "compact";
+
   const cookieValue = await readCookieValue(name);
   if (cookieValue === "grid" || cookieValue === "compact") {
     return cookieValue;
   }
 
-  const headerStore = await headers();
-  const clientHintMobile = headerStore.get("sec-ch-ua-mobile");
-  if (clientHintMobile === "?1") return "compact";
-  if (clientHintMobile === "?0") return "grid";
+  if (clientHintMobile === "?0") return "compact";
 
-  return MOBILE_USER_AGENT_PATTERN.test(headerStore.get("user-agent") ?? "")
-    ? "compact"
-    : "grid";
+  return "compact";
 }
 
 export async function readInitialCalendarLayoutMode(

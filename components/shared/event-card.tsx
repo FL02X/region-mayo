@@ -488,6 +488,7 @@ export function EventCard({
   const hasDropdownCtas = hasAlbum || hasFacebookPost;
   const compactHasDetails = variant === "compact" && hasMobileCompactDetails;
   const gridHasDetails = variant === "grid" && hasDescription;
+  const shouldRenderGridDetailsInline = isMobile && variant === "grid";
   const actionMenuLabel =
     hasDetails || compactHasDetails || gridHasDetails
       ? "Ver detalles"
@@ -501,7 +502,7 @@ export function EventCard({
   const eventUtilityButtonSmallClass =
     "inline-flex ml-4.5 min-h-8 w-fit max-w-full items-center gap-1.5 rounded-sm border border-border bg-surface-pane px-2.5 py-1.5 text-sm font-medium leading-tight whitespace-normal text-brand-ink transition-[background-color,border-color] duration-150 hover:border-brand-ink hover:bg-primary/10";
   const eventPrimaryMapsButtonClass =
-    "inline-flex ml-4.5 min-h-10 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-3 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-brand-hover";
+    "inline-flex ml-4.5 mt-3 min-h-10 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-3 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-brand-hover";
   const eventPrimaryMapsButtonSmallClass =
     "inline-flex ml-4.5 min-h-11 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-2.5 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const compactMobileMapsButtonClass = eventPrimaryMapsButtonClass;
@@ -1343,7 +1344,7 @@ export function EventCard({
             {renderEventScheduleGrid("compact")}
           </div>
 
-          <div className="flex gap-4 py-5 px-4 md:px-0 my-4 md:my-0 md:bg-paper-highlight md:px-5 md:border">
+          <div className="flex gap-4 py-5 px-4 md:px-0 mt-4 md:bg-paper-highlight md:px-5 md:border">
             {compactDesktopScheduleRail}
 
             <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted">
@@ -1540,7 +1541,7 @@ export function EventCard({
       <article
         id={articleId}
         data-eq-card
-        className={`self-start overflow-hidden border bg-transparent scroll-mt-[100px] transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 ${mutedPastCardClass}`}
+        className={`self-start overflow-hidden border bg-transparent scroll-mt-[100px] md:mb-15 transition-all duration-700 target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 ${mutedPastCardClass}`}
       >
         {/* ── Image with date/time strip ── */}
         <div className="offline-hide-when-offline relative h-40 w-full shrink-0 bg-muted">
@@ -1668,60 +1669,89 @@ export function EventCard({
             </div>
           )}
 
-          <button
-            onClick={handleToggle}
-            className="mt-8 inline-flex max-w-full items-center gap-1 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            aria-expanded={isExpanded}
-            aria-controls={detailsId}
-          >
-            <span>
-              {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
-            </span>
-            <ChevronDown
-              className={`h-6 w-6 shrink-0 transition-transform duration-200 ${
-                isExpanded ? "rotate-180" : ""
-              }`}
-              aria-hidden="true"
-            />
-          </button>
+          {!shouldRenderGridDetailsInline && (
+            <button
+              onClick={handleToggle}
+              className="mt-8 inline-flex max-w-full items-center gap-1 text-[18px] font-semibold leading-tight text-brand-ink transition-colors hover:text-brand-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              aria-expanded={isExpanded}
+              aria-controls={detailsId}
+            >
+              <span>
+                {isExpanded ? actionMenuExpandedLabel : actionMenuLabel}
+              </span>
+              <ChevronDown
+                className={`h-6 w-6 shrink-0 transition-transform duration-200 ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+          )}
 
           {/* El mismo renderer alimenta grid y compact para evitar duplicar detalles. */}
-          <AnimatePresence initial={false}>
-            {isExpanded && (
-              <motion.div
-                key="grid-details"
-                id={detailsId}
-                initial={isMobile ? { height: 0, opacity: 0 } : false}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={isMobile ? { height: 0, opacity: 0 } : undefined}
-                transition={isMobile ? expandTransition : { duration: 0 }}
-                onAnimationComplete={() => {
-                  if (isExpanded) scrollExpandedDetailsIntoView();
-                }}
-                className="-mx-5 mt-1 overflow-hidden bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-2"
-              >
-                {hasDropdownCtas && (
-                  <div className="px-5 pb-0 pt-4">{dropdownCtaButtons}</div>
+          {shouldRenderGridDetailsInline ? (
+            <div
+              id={detailsId}
+              className="-mx-5 mt-5 bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-2"
+            >
+              {hasDropdownCtas && (
+                <div className="px-5 pb-0 pt-4">{dropdownCtaButtons}</div>
+              )}
+              {(hasDetails || hasDescription) &&
+                renderExpandedDetails(
+                  hasDropdownCtas
+                    ? "space-y-1 pb-0 pt-5 px-5"
+                    : "space-y-1 pb-0 pt-4 px-5",
+                  { showDescription: true },
                 )}
-                {(hasDetails || hasDescription) &&
-                  renderExpandedDetails(
-                    hasDropdownCtas
-                      ? "space-y-1 pb-0 pt-5 px-5"
-                      : "space-y-1 pb-0 pt-4 px-5",
-                    { showDescription: true },
-                  )}
-                <div
-                  className={`px-5 pb-5 ${
-                    hasDetails || hasDropdownCtas
-                      ? "[&>div]:mt-5"
-                      : "[&>div]:mt-4"
-                  }`}
+              <div
+                className={`px-5 pb-5 ${
+                  hasDetails || hasDropdownCtas
+                    ? "[&>div]:mt-5"
+                    : "[&>div]:mt-4"
+                }`}
+              >
+                {eventActionButtons}
+              </div>
+            </div>
+          ) : (
+            <AnimatePresence initial={false}>
+              {isExpanded && (
+                <motion.div
+                  key="grid-details"
+                  id={detailsId}
+                  initial={isMobile ? { height: 0, opacity: 0 } : false}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={isMobile ? { height: 0, opacity: 0 } : undefined}
+                  transition={isMobile ? expandTransition : { duration: 0 }}
+                  onAnimationComplete={() => {
+                    if (isExpanded) scrollExpandedDetailsIntoView();
+                  }}
+                  className="-mx-5 mt-1 overflow-hidden bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-2"
                 >
-                  {eventActionButtons}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  {hasDropdownCtas && (
+                    <div className="px-5 pb-0 pt-4">{dropdownCtaButtons}</div>
+                  )}
+                  {(hasDetails || hasDescription) &&
+                    renderExpandedDetails(
+                      hasDropdownCtas
+                        ? "space-y-1 pb-0 pt-5 px-5"
+                        : "space-y-1 pb-0 pt-4 px-5",
+                      { showDescription: true },
+                    )}
+                  <div
+                    className={`px-5 pb-5 ${
+                      hasDetails || hasDropdownCtas
+                        ? "[&>div]:mt-5"
+                        : "[&>div]:mt-4"
+                    }`}
+                  >
+                    {eventActionButtons}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
         </div>
       </article>
 

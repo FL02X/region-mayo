@@ -109,7 +109,7 @@ export function DesktopEventSpotlightCard({
         <button
           type="button"
           onClick={onOpenMaps}
-          className="mb-1 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[18px] font-extrabold leading-tight tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
+          className="mb-1 inline-flex min-h-17 w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 text-center text-[18px] font-extrabold leading-tight tracking-[0.02em] text-white transition-colors hover:bg-brand-hover"
           aria-label="Abrir ubicación del evento"
         >
           <MapIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -132,7 +132,7 @@ export function DesktopEventSpotlightCard({
         type="button"
         onClick={onShare}
         disabled={!canShare}
-        className="mb-3 inline-flex min-h-10 w-full items-center justify-center gap-3 rounded-sm border border-border bg-paper-dark px-4 py-2.5 text-center text-[16px] font-semibold leading-tight tracking-[0.02em] text-foreground/80 transition-colors hover:bg-muted/30 disabled:opacity-60 [&>span]:min-w-0"
+        className="inline-flex min-h-10 w-full items-center justify-center gap-3 rounded-sm border border-border bg-paper-dark px-4 py-2.5 text-center text-[16px] font-semibold leading-tight tracking-[0.02em] text-foreground/80 transition-colors hover:bg-gray-300 text-ink disabled:opacity-60 [&>span]:min-w-0"
       >
         <Share2 className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
         <span className="min-w-0">COMPARTIR UBICACIÓN</span>

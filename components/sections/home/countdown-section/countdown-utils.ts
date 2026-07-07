@@ -31,9 +31,30 @@ export type TimeUnit = {
 
 const longDateFormatter = new Intl.DateTimeFormat("es-MX", {
   timeZone: REGION_TIME_ZONE,
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
+const shortWeekdayDateFormatter = new Intl.DateTimeFormat("es-MX", {
+  timeZone: REGION_TIME_ZONE,
   weekday: "short",
   day: "numeric",
   month: "long",
+});
+
+const shortMonthDateFormatter = new Intl.DateTimeFormat("es-MX", {
+  timeZone: REGION_TIME_ZONE,
+  weekday: "long",
+  day: "numeric",
+  month: "short",
+});
+
+const shortWeekdayAndMonthDateFormatter = new Intl.DateTimeFormat("es-MX", {
+  timeZone: REGION_TIME_ZONE,
+  weekday: "short",
+  day: "numeric",
+  month: "short",
 });
 
 const longDateFormatterLargeWeekdayName = new Intl.DateTimeFormat("es-MX", {
@@ -48,9 +69,26 @@ function capitalizeDateLabel(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export function formatMobileCountdownDate(date: Date) {
+export function formatMobileCountdownDate(
+  date: Date,
+  {
+    weekdayFormat = "long",
+    monthFormat = "long",
+  }: {
+    weekdayFormat?: "long" | "short";
+    monthFormat?: "long" | "short";
+  } = {},
+) {
+  const formatter =
+    weekdayFormat === "short" && monthFormat === "short"
+      ? shortWeekdayAndMonthDateFormatter
+      : weekdayFormat === "short"
+        ? shortWeekdayDateFormatter
+        : monthFormat === "short"
+          ? shortMonthDateFormatter
+          : longDateFormatter;
   const parts = Object.fromEntries(
-    longDateFormatter.formatToParts(date).map((part) => [part.type, part.value]),
+    formatter.formatToParts(date).map((part) => [part.type, part.value]),
   ) as Record<string, string>;
 
   const weekday = capitalizeDateLabel(parts.weekday ?? "");
