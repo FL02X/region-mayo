@@ -78,7 +78,7 @@ export function FirstVisitCard({
         transition: transitionStyle,
       }}
     >
-      <div ref={contentRef} className="pt-8 pb-10 md:pt-12">
+      <div ref={contentRef} className="pt-8 pb-10 md:pt-12 md:pb-5">
         <div className="flex items-start gap-3">
           <div className="relative mt-1.5 pr-12 h-[50px] w-[50px] md:h-[70px] md:w-[70px] shrink-0 overflow-hidden bg-[#1d3765]">
             <Image src="/images/faq4.png" alt="Preguntas frecuentes" fill sizes="50px" className="object-cover" />

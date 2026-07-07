@@ -36,7 +36,7 @@ function SiteLinkCard({
   visual,
 }: SiteLinkCardProps) {
   return (
-    <article className="min-w-0 px-3 py-8 first:pl-0 last:pr-0 mt-5 lg:px-6">
+    <article className="min-w-0 px-3 py-10 first:pl-0 last:pr-0  lg:px-6">
       <div className="flex items-start gap-4 lg:gap-6">
         {visual}
 
@@ -97,7 +97,7 @@ export function DesktopHomeInfoWrapper({
 }: DesktopHomeInfoWrapperProps) {
   return (
     <div className="hidden desktop-content-pane md:flex md:flex-col-2 max-w-[1150px] mx-auto grid-cols-2 border-x border-[#dce2e9] bg-white">
-      <div className="relative w-5/8 border-r border-border mt-5 pb-8">
+      <div className="relative w-5/8 border-r border-border">
         <FirstVisitInfoMobile
           cardClassName="border-0 bg-white px-8 mb-3 lg:px-16"
           hiddenNoticeClassName="border-0 bg-white px-5 py-8"
@@ -131,7 +131,7 @@ export function DesktopHomeInfoWrapper({
       <div className="flex w-3/8 justify-center bg-[#050505]">
         <RecentVideosFeed
           album={albums}
-          className="h-full w-[90%] min-w-0 bg-[#050505] py-26"
+          className="h-full w-[90%] min-w-0 bg-[#050505] pt-16"
         />
       </div>
 

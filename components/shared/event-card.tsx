@@ -361,6 +361,14 @@ export function EventCard({
     const label = `${formatRegionDayMonth(occurrence.date)} | ${occurrence.time}`;
     return occurrence.note ? `${label} - ${occurrence.note}` : label;
   });
+  const getCompactDesktopDateParts = (date: Date) => {
+    const [day = "", month = ""] = formatRegionDayMonth(date).split(" ");
+
+    return {
+      day,
+      month: month.slice(0, 3).toUpperCase(),
+    };
+  };
   const eventDateTimeLabel = eventDateTimeLines.join("\n");
   const visibleScheduleSlots = !isMobile && variant === "compact" ? 4 : 2;
   const shouldScrollSchedule = isMobile
@@ -767,9 +775,16 @@ export function EventCard({
     </div>
   );
 
-  const eventScheduleGrid = (
-    <div className="relative bg-paper-highlight">
+  const renderEventScheduleGrid = (mode: "compact" | "grid") => {
+    const isCompactSchedule = mode === "compact";
+
+    return (
       <div
+        className={
+          isCompactSchedule ? "relative bg-paper-dark border" : "relative bg-paper-highlight"
+        }
+      >
+        <div
         ref={scheduleScrollerRef}
         onScroll={updateScheduleScrollIndicators}
         onTouchStart={
@@ -789,8 +804,10 @@ export function EventCard({
           <div
             key={`${occurrence.date.toISOString()}-${occurrence.time}-${index}`}
             className={[
-              "flex min-w-0 shrink-0 items-start gap-2 px-3 py-3.5 mt-[-3px] mb-[-3px]",
-              index > 0 ? "border-l border" : "",
+              "flex min-w-0 shrink-0 items-start gap-2 px-3 mt-[-3px] mb-[-3px]",
+              isCompactSchedule
+                ? "py-3 border-r last:border-r-0"
+                : "py-3.5 border-l border",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -801,10 +818,20 @@ export function EventCard({
               aria-hidden="true"
             />
             <span className="min-w-0">
-              <span className="block truncate text-[18px] font-extrabold leading-tight text-foreground">
+              <span
+                className={[
+                  "block truncate text-[18px] leading-tight text-foreground",
+                  isCompactSchedule ? "font-semibold" : "font-extrabold",
+                ].join(" ")}
+              >
                 {formatRegionDayMonth(occurrence.date)}
               </span>
-              <span className="mt-0.5 block truncate text-[14px] font-medium leading-tight text-ink-soft tabular-nums">
+              <span
+                className={[
+                  "mt-0.5 block text-[14px] font-medium leading-tight text-ink-soft tabular-nums",
+                  isCompactSchedule ? "line-clamp-none" : "truncate",
+                ].join(" ")}
+              >
                 {occurrence.time}
               </span>
               {occurrence.note ? (
@@ -842,6 +869,33 @@ export function EventCard({
           </button>
         </div>
       ) : null}
+    </div>
+    );
+  };
+
+  //Tiles de fechas del viewport Desktop
+  const compactDesktopScheduleRail = (
+    <div className="hidden shrink-0 md:flex">
+      {eventSchedule.map((occurrence, index) => {
+        const dateParts = getCompactDesktopDateParts(occurrence.date);
+
+        return (
+          <div
+            key={`${occurrence.date.toISOString()}-${occurrence.time}-${index}`}
+            className="flex min-h-[112px] w-[66px] shrink-0 flex-col items-center justify-center border-y border-r first:border-l bg-paper-dark px-2 py-3 text-center text-ink"
+          >
+            <span className="text-[15px] font-semibold uppercase leading-none tracking-[0.04em] text-ink">
+              {dateParts.month}
+            </span>
+            <span className="mt-1 text-[34px] font-light leading-none tabular-nums">
+              {dateParts.day}
+            </span>
+            <span className="mt-2 text-[11px] font-medium leading-tight text-ink tabular-nums">
+              {occurrence.time}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 
@@ -1283,11 +1337,15 @@ export function EventCard({
         {eventPortals}
         <article
           id={articleId}
-          className={`overflow-hidden border-x border-y border-border/70 bg-paper-highlight scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:transition-all md:duration-700 ${mutedPastCardClass}`}
+          className={`overflow-hidden last:mb-3 scroll-mt-[100px] transition-none target:ring-4 target:ring-yellow-400 dark:target:bg-yellow-900/20 md:w-fit md:transition-all md:duration-700 ${mutedPastCardClass}`}
         >
-          <div className={`border-b ${mutedPast ? "border-stone-300" : "border-border/70"}`}>{eventScheduleGrid}</div>
+          <div className={`md:hidden ${mutedPast ? "border-stone-300" : ""}`}>
+            {renderEventScheduleGrid("compact")}
+          </div>
 
-          <div className="flex gap-4 px-4 pb-1 pt-4">
+          <div className="flex gap-4 py-5 px-4 md:px-0 my-4 md:my-0 md:bg-paper-highlight md:px-5 md:border">
+            {compactDesktopScheduleRail}
+
             <div className="offline-hide-when-offline relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-sm bg-muted">
               {event.image ? (
                 <>
@@ -1295,7 +1353,8 @@ export function EventCard({
                     src={compactThumbnailUrl}
                     alt={event.title}
                     fill
-                    className={`offline-image-online object-cover ${mutedPastImageClass}`}
+                    className={`offline-image-online object-cover cursor-pointer ${mutedPastImageClass}`}
+                    onClick={() => setShowEventImage(true)}
                     sizes="112px"
                     unoptimized
                   />
@@ -1333,7 +1392,7 @@ export function EventCard({
 
                 <div className="mt-1">
                   <h3
-                    className={`text-[20px] font-semibold leading-[1.35] ${editorialTitleClass}`}
+                    className={`text-[24px] md:text-[30px] font-semibold leading-[1.35] ${editorialTitleClass}`}
                   >
                     {event.title}
                   </h3>
@@ -1374,9 +1433,9 @@ export function EventCard({
                 onAnimationComplete={() => {
                   if (isExpanded) scrollExpandedDetailsIntoView();
                 }}
-                className="mt-4 overflow-hidden border-t border-border/70"
+                className="overflow-hidden bg-paper-highlight border-x border-t md:border-t-0"
               >
-                <div className="bg-gradient-to-b from-transparent via-muted/10 to-muted/20 px-5 pb-1 pt-3">
+                <div className="bg-gradient-to-b from-transparent via-muted/10 to-muted/20 px-5 pb-1 pt-3 bg-paper-highlight border-b">
                   {hasDropdownCtas && (
                     <div className="pb-0 pt-4 md:pt-5">
                       {dropdownCtaButtons}
@@ -1492,6 +1551,7 @@ export function EventCard({
                 alt={event.title}
                 fill
                 className={`offline-image-online object-cover ${mutedPastImageClass}`}
+                onClick={() => setShowEventImage(true)}
                 loading="eager"
                 sizes="(min-width: 768px) 456px, calc(100vw - 32px)"
                 unoptimized
@@ -1522,7 +1582,7 @@ export function EventCard({
         </div>
 
         <div className={`border-b ${mutedPastPanelClass}`}>
-          {eventScheduleGrid}
+          {renderEventScheduleGrid("grid")}
         </div>
 
         {/* ── Card body ── */}

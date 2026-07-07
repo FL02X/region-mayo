@@ -12,7 +12,7 @@ import {
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HeroDebugPanel } from "./hero-debug-panel";
-import { getEventMapsUrl } from "@/lib/event-share-text";
+import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
 import { useTime } from "@/lib/time-context";
 import type {
   Event,
@@ -32,12 +32,14 @@ import {
   type CountdownDisplay,
   type CountdownOccurrence,
 } from "@/components/sections/home/hero-section/desktop-hero-utils";
+import { canUseNativeShare } from "@/components/sections/home/countdown-section/countdown-utils";
 import { HeroPrayerCard } from "@/components/sections/home/hero-section/desktop-prayer-card";
 import {
   DesktopCustomSpotlightCard,
   DesktopEventSpotlightCard,
   DesktopSocialSpotlightCard,
 } from "@/components/sections/home/hero-section/countdown-card.desktop";
+import { ShareFallbackModal } from "@/components/sections/home/countdown-section/share-fallback-modal";
 
 const editorialFont = Newsreader({
   subsets: ["latin"],
@@ -82,6 +84,7 @@ export function HeroSection({
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isShareFallbackOpen, setIsShareFallbackOpen] = useState(false);
   const { currentTime } = useTime();
   const spotlightCandidates = useMemo<HeroCandidate[]>(() => {
     const nowMs = currentTime.getTime();
@@ -211,6 +214,14 @@ export function HeroSection({
     if (!spotlightHero || spotlightHero.type !== "event") return null;
     return events.find((event) => event.id === spotlightHero.id) ?? null;
   }, [spotlightHero, events]);
+  const spotlightEventUrl = useMemo(() => {
+    if (!isDesktop || !spotlightEvent) return "";
+    return "igcmayo.com";
+  }, [isDesktop, spotlightEvent]);
+  const spotlightEventShareText = useMemo(() => {
+    if (!spotlightEvent || !spotlightEventUrl) return "";
+    return buildEventShareText(spotlightEvent, spotlightEventUrl);
+  }, [spotlightEvent, spotlightEventUrl]);
   const spotlightSocialPost = useMemo(() => {
     if (!spotlightHero || spotlightHero.type !== "social") return null;
     return (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null;
@@ -362,6 +373,25 @@ export function HeroSection({
 
   const countdownIsDisabled = countdownDisplay?.isDisabled ?? false;
   const spotlightEventMapsUrl = spotlightEvent ? getEventMapsUrl(spotlightEvent) : "";
+  const handleShareSpotlightEvent = async () => {
+    if (!spotlightEvent) return;
+
+    const shareData = {
+      title: spotlightEvent.title,
+      text: spotlightEventShareText,
+    };
+
+    if (canUseNativeShare()) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        // Fall through to the fallback modal.
+      }
+    }
+
+    setIsShareFallbackOpen(true);
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -452,7 +482,9 @@ export function HeroSection({
                     countdownDisplay={countdownDisplay}
                     countdownIsDisabled={countdownIsDisabled}
                     mapsUrl={spotlightEventMapsUrl}
+                    canShare={Boolean(spotlightEventShareText)}
                     onOpenMaps={() => window.open(spotlightEventMapsUrl, "_blank")}
+                    onShare={handleShareSpotlightEvent}
                     onRegister={() => setIsRegisterModalOpen(true)}
                   />
                 )}
@@ -547,6 +579,13 @@ export function HeroSection({
             isOpen={isPrayerModalOpen}
             onClose={() => setIsPrayerModalOpen(false)}
             isCollecting={prayerWall?.phase === "collect"}
+          />
+
+          <ShareFallbackModal
+            isOpen={isShareFallbackOpen}
+            title={spotlightEvent?.title ?? "Evento"}
+            shareText={spotlightEventShareText}
+            onClose={() => setIsShareFallbackOpen(false)}
           />
 
           <HeroDebugPanel />

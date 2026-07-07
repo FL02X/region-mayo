@@ -684,7 +684,7 @@ export function EventsFeed({
         {/* Calendar section */}
         <section
           id="calendario"
-          className={`mt-0 px-4 md:px-16 pt-6 md:pt-8 pb-4 border-border/70 bg-muted/20 ${
+          className={`mt-0 px-4 md:px-16 pt-6 md:pt-8 pb-4 md:pb-0 border-border/70 bg-muted/20 ${
             hasFirstVisitDivider ? "" : "border-t md:border-t-0"
           }`}
         >
@@ -693,13 +693,13 @@ export function EventsFeed({
             <div className="mb-9">
               <h2
                 id="calendar-title"
-                className={`${editorialFont.className} flex flex-row gap-3 items-center type-human-title text-[1.725rem] md:text-[1.925rem] font-semibold tracking-tight mb-1.5`}
+                className={`${editorialFont.className} flex flex-row gap-3 items-center type-human-title text-[2.025rem] md:text-[1.925rem] font-semibold tracking-normal mb-1.5`}
               >
                 <span className="mt-3">
                   Calendario 2026
                 </span>
               </h2>
-              <p className="type-system text-[15px] md:text-[17px] mt-0.5">
+              <p className="text-ink text-[16px] md:text-[17px] mt-0.5">
                 Selecciona un mes para ver los eventos
               </p>
             </div>
@@ -758,19 +758,10 @@ export function EventsFeed({
         {shouldRenderLegacyCalendar && (
           <section
             id="eventos"
-            className="bg-muted/20 px-4 md:px-16 md:py-[24px] pt-4 pb-14 md:pb-30"
+            className="bg-muted/20 px-4 md:px-16 md:pt-[0px] pt-4 pb-14 md:pb-30"
           >
           <div className="mt-0 max-w mx-auto w-full">
-            <div className="mb-7 flex justify-end">
-              <ViewModeToggle
-                value={renderedViewMode}
-                onChange={handleViewModeChange}
-                ariaLabel="Cambiar vista del calendario"
-                disableGrid={isOfflinePwa}
-              />
-            </div>
-
-            <div className="mb-8 max-w-md">
+            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="relative inline-flex w-fit items-center">
                 <select
                   value={calendarEventFlow}
@@ -779,7 +770,7 @@ export function EventsFeed({
                       event.currentTarget.value as CalendarEventFlow,
                     )
                   }
-                  className={`${editorialFont.className} appearance-none cursor-pointer bg-transparent pr-8 text-[1.7rem] font-semibold leading-none tracking-tight text-brand-ink outline-none transition-colors hover:text-primary/80 hover:underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-primary/60 md:text-[1.8rem]`}
+                  className={`${editorialFont.className} appearance-none cursor-pointer bg-transparent pr-8 text-[1.7rem] md:text-[2.3rem] font-semibold leading-none tracking-tight text-brand-ink outline-none transition-colors hover:text-primary/80 hover:underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-primary/60 md:text-[1.8rem]`}
                   aria-label="Seleccionar tipo de eventos"
                 >
                   <option className="text-base" value="upcoming">
@@ -792,6 +783,15 @@ export function EventsFeed({
                 <ChevronDown
                   className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-ink/70"
                   aria-hidden="true"
+                />
+              </div>
+
+              <div className="hidden md:block">
+                <ViewModeToggle
+                  value={renderedViewMode}
+                  onChange={handleViewModeChange}
+                  ariaLabel="Cambiar vista del calendario"
+                  disableGrid={isOfflinePwa}
                 />
               </div>
             </div>
@@ -851,7 +851,7 @@ export function EventsFeed({
                         ? CALENDAR_FADE_TRANSITION
                         : { duration: 0 }
                     }
-                    className="space-y-11"
+                    className="space-y-7 md:space-y-15 md:mb-15"
                   >
                     {visibleListMonthGroups.map((group) => {
                       const monthParts = getRegionCalendarParts(group.month);
@@ -862,11 +862,11 @@ export function EventsFeed({
                         <section
                           key={monthKey}
                           id={`calendar-list-month-${monthKey}`}
-                          className="scroll-mt-28"
+                          className="scroll-mt-28 border-b-4 border-border mt-11 first:mt-3 last:border-b-0"
                         >
-                          <div className="mb-6 min-w-0">
+                          <div className="mb-6 min-w-0 md:mb-0">
                             <h3
-                              className={`${editorialFont.className} type-human-title font-semibold text-[1.425rem] md:text-[1.7rem] tracking-tight ${
+                              className={`${editorialFont.className} type-human-title font-semibold text-[1.725rem] md:text-[1.7rem] tracking-tight ${
                                 isPastFlow ? "text-stone-600" : ""
                               }`}
                             >
@@ -889,7 +889,7 @@ export function EventsFeed({
                           </div>
 
                           {renderedViewMode === "compact" ? (
-                            <div className="-mx-2.5 p-0.5 flex flex-col gap-5 md:gap-6">
+                            <div className="-mx-2.5 md:-mx-0 p-0.5 flex flex-col gap-5 md:gap-6 mt-10 md:mt-0 md:mb-12">
                               {group.events.map((event) => (
                                 <EventCard
                                   key={event.id}

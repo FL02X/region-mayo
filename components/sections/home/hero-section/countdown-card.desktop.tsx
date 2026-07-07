@@ -9,6 +9,7 @@ import {
   MapPin,
   Maximize2,
   Megaphone,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Lightbox } from "@/components/shared/lightbox";
@@ -30,7 +31,9 @@ export function DesktopEventSpotlightCard({
   countdownDisplay,
   countdownIsDisabled,
   mapsUrl,
+  canShare,
   onOpenMaps,
+  onShare,
   onRegister,
 }: {
   event: Event;
@@ -39,7 +42,9 @@ export function DesktopEventSpotlightCard({
   countdownDisplay: CountdownDisplay | null;
   countdownIsDisabled: boolean;
   mapsUrl: string;
+  canShare: boolean;
   onOpenMaps: () => void;
+  onShare: () => void;
   onRegister: () => void;
 }) {
   const timeUnits = countdownDisplay
@@ -120,6 +125,18 @@ export function DesktopEventSpotlightCard({
           <span className="min-w-0">VER UBICACIÓN</span>
         </button>
       )}
+
+      <div className="mx-4 my-3 border-t border-border/50" />
+
+      <button
+        type="button"
+        onClick={onShare}
+        disabled={!canShare}
+        className="mb-3 inline-flex min-h-10 w-full items-center justify-center gap-3 rounded-sm border border-border bg-paper-dark px-4 py-2.5 text-center text-[16px] font-semibold leading-tight tracking-[0.02em] text-foreground/80 transition-colors hover:bg-muted/30 disabled:opacity-60 [&>span]:min-w-0"
+      >
+        <Share2 className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
+        <span className="min-w-0">COMPARTIR UBICACIÓN</span>
+      </button>
 
       {event.registrationEnabled !== false && (
         <Button

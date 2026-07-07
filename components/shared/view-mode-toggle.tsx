@@ -34,7 +34,7 @@ export function ViewModeToggle({ value, onChange, ariaLabel, disableGrid = false
 
   return (
     <div className="flex shrink-0 items-center gap-2">
-      <span className="hidden text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-foreground sm:inline">
+      <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Cambiar vista
       </span>
       <div className="flex border border-border bg-paper" role="group" aria-label={ariaLabel}>
@@ -43,7 +43,7 @@ export function ViewModeToggle({ value, onChange, ariaLabel, disableGrid = false
           onClick={() => handleChange("grid")}
           disabled={disableGrid}
           className={`inline-flex h-9 w-9 items-center justify-center border-r border-border transition-none ${
-            value === "grid" ? "bg-[#757575] text-background" : "bg-paper text-muted-foreground"
+            value === "grid" ? "bg-[#757575] text-background" : "bg-paper-highlight text-muted-foreground"
           } ${feedbackVisible && value === "grid" ? "ring-2 ring-[#3b82f6] ring-inset" : ""} ${
             disableGrid ? "cursor-not-allowed opacity-40" : ""
           }`}
@@ -59,7 +59,7 @@ export function ViewModeToggle({ value, onChange, ariaLabel, disableGrid = false
           type="button"
           onClick={() => handleChange("compact")}
           className={`inline-flex h-9 w-9 items-center justify-center transition-none ${
-            value === "compact" ? "bg-[#757575] text-background" : "bg-paper text-muted-foreground"
+            value === "compact" ? "bg-[#757575] text-background" : "bg-paper-highlight text-muted-foreground"
           } ${feedbackVisible && value === "compact" ? "ring-2 ring-[#3b82f6] ring-inset" : ""}`}
           aria-label="Vista compacta en lista"
           aria-pressed={value === "compact"}
