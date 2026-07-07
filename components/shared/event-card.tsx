@@ -1692,7 +1692,7 @@ export function EventCard({
           {shouldRenderGridDetailsInline ? (
             <div
               id={detailsId}
-              className="-mx-5 mt-5 bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-2"
+              className="-mx-5 mt-2 md:mt-5 bg-gradient-to-b from-transparent via-muted/10 to-muted/20 pt-2"
             >
               {hasDropdownCtas && (
                 <div className="px-5 pb-0 pt-4">{dropdownCtaButtons}</div>
