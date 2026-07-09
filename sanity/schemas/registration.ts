@@ -89,7 +89,8 @@ export default defineType({
       options: {
         list: [
           { title: 'Oyente', value: 'oyente' },
-          { title: 'Miembro', value: 'miembro' },
+          { title: 'Varon / Dorca', value: 'varonDorca' },
+          { title: 'Joven MGR', value: 'jovenMGR' },
         ],
         layout: 'radio',
       },
@@ -163,7 +164,12 @@ export default defineType({
     },
     prepare({ title, eventTitle, date, attending }) {
       const eventDate = date ? new Date(date).toLocaleDateString('es-MX') : 'Sin fecha'
-      const attendingLabel = attending === 'miembro' ? '👤 Miembro' : '👁️ Oyente'
+      const attendingLabel =
+        attending === 'jovenMGR'
+          ? 'Joven MGR'
+          : attending === 'varonDorca'
+            ? 'Varon / Dorca'
+            : 'Oyente'
       return {
         title: title,
         subtitle: `${attendingLabel} • ${eventTitle || '?'} • ${eventDate}`,

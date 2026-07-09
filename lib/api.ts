@@ -1307,13 +1307,14 @@ export async function getRegionPresident(
     async () => {
       const client = getSanityClient();
 
-      // Preferred: explicit "Presidente Regional" role.
+      // Preferred: president from the current directiva generation.
       const president = await client.fetch(
         `*[
-          _type == "directiva" &&
-          (region->slug.current in $regionSlugs || region->name in $regionNames) &&
-          role == "Presidente Regional"
-        ][0]{
+          _type == "directivaGeneration" &&
+          !defined(deletedAt) &&
+          isCurrent == true &&
+          (region->slug.current in $regionSlugs || region->name in $regionNames)
+        ] | order(startYear desc, _createdAt desc)[0].members[role == "01_presidente_regional"][0]{
           fullName,
           phone
         }`,
@@ -1323,12 +1324,13 @@ export async function getRegionPresident(
       if (president?.fullName && president?.phone)
         return president as RegionPresident;
 
-      // Fallback: first directiva member (keeps the UI working for new/blank CMS setups).
+      // Fallback: legacy directiva president.
       const fallback = await client.fetch(
         `*[
           _type == "directiva" &&
-          (region->slug.current in $regionSlugs || region->name in $regionNames)
-        ] | order(order asc)[0]{
+          (region->slug.current in $regionSlugs || region->name in $regionNames) &&
+          role in ["01_presidente_regional", "Presidente Regional"]
+        ] | order(role asc, _createdAt desc)[0]{
           fullName,
           phone
         }`,

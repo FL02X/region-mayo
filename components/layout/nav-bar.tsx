@@ -28,6 +28,21 @@ interface AppHeaderProps {
   facebookUrl?: string;
 }
 
+const recorridoBrandStyle = {
+  "--brand": "var(--brand-green)",
+  "--brand-hover": "var(--brand-green-hover)",
+  "--brand-active": "var(--brand-green-active)",
+  "--brand-soft": "var(--brand-green-soft)",
+  "--brand-border": "var(--brand-green-border)",
+  "--brand-text": "var(--brand-green-text)",
+  "--color-brand": "var(--brand-green)",
+  "--color-brand-hover": "var(--brand-green-hover)",
+  "--color-brand-active": "var(--brand-green-active)",
+  "--color-brand-soft": "var(--brand-green-soft)",
+  "--color-brand-border": "var(--brand-green-border)",
+  "--color-brand-text": "var(--brand-green-text)",
+} as CSSProperties;
+
 function getOffsetWithinTrack(element: HTMLElement, track: HTMLElement) {
   let offset = 0;
   let node: HTMLElement | null = element;
@@ -127,6 +142,7 @@ export function AppHeader({
     "--header-highlight-w": `${desktopHoverState.width}px`,
     "--header-highlight-opacity": `${desktopHoverState.opacity}`,
   } as CSSProperties;
+  const isRecorridoRoute = pathname === "/recorrido-mayo-2026";
 
   return (
     <>
@@ -134,7 +150,10 @@ export function AppHeader({
       <div className="h-[51px] w-full md:h-auto">
         <header
           data-app-header
-          className="fixed top-0 left-0 z-[60] w-full bg-brand border-y border-black/15 text-white h-[51px] md:static md:h-[50px]"
+          className={`fixed top-0 left-0 z-[60] w-full border-y border-black/15 text-white h-[51px] md:static md:h-[50px] ${
+            isRecorridoRoute ? "bg-brand-green" : "bg-brand"
+          }`}
+          style={isRecorridoRoute ? recorridoBrandStyle : undefined}
         >
           <div className="h-full max-w-[1150px] mx-auto relative z-[61]">
             <div

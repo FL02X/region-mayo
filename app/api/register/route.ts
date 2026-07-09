@@ -10,6 +10,18 @@ const MIN_REQUEST_INTERVAL = 2000 // 2 seconds between requests
 
 // Simple honeypot field name (bots will fill this)
 const HONEYPOT_FIELD = "website"
+const ATTENDING_AS_VALUES = ["oyente", "varonDorca", "jovenMGR"] as const
+
+type RegistrationAttendingAs = (typeof ATTENDING_AS_VALUES)[number]
+
+function getRegistrationAttendingAs(
+  isBaptized: boolean,
+  isCoroMGR: boolean,
+): RegistrationAttendingAs {
+  if (isCoroMGR) return "jovenMGR"
+  if (isBaptized) return "varonDorca"
+  return "oyente"
+}
 
 function getSanityWriteClient() {
   const projectId = process.env.SANITY_PROJECT_ID
@@ -125,7 +137,10 @@ function validateRegistration(data: Record<string, unknown>): { valid: boolean; 
   }
 
   // Validate attendingAs
-  if (data.attendingAs && !["oyente", "miembro"].includes(String(data.attendingAs))) {
+  if (
+    data.attendingAs &&
+    !ATTENDING_AS_VALUES.includes(String(data.attendingAs) as RegistrationAttendingAs)
+  ) {
     errors.push("Tipo de asistencia inválido")
   }
 
@@ -190,7 +205,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Prepare sanitized data
-    const attendingAs = body.attendingAs === "miembro" ? "miembro" : "oyente"
+    const isCoroMGR = Boolean(body.isCoroMGR)
+    const isBaptized = Boolean(body.isBaptized) || isCoroMGR
+    const attendingAs = getRegistrationAttendingAs(isBaptized, isCoroMGR)
     const registrationData = {
       name: sanitizeString(body.name),
       phone: sanitizePhone(body.phone),
@@ -198,8 +215,8 @@ export async function POST(req: NextRequest) {
       needsLodging: Boolean(body.needsLodging),
       needsTransport: Boolean(body.needsTransport),
       attendingAs,
-      isBaptized: Boolean(body.isBaptized),
-      isCoroMGR: Boolean(body.isCoroMGR),
+      isBaptized,
+      isCoroMGR,
       registeredAt: new Date().toISOString(),
       ipAddress: ip,
       userAgent: userAgent.slice(0, 500),

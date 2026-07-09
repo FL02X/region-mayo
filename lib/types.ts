@@ -235,13 +235,15 @@ export interface DirectivaGeneration {
   members: DirectivaMember[];
 }
 
+export type RegistrationAttendingAs = "oyente" | "varonDorca" | "jovenMGR";
+
 // Registration form data
 export interface RegistrationFormData {
   name: string;
   phone: string;
   needsLodging: boolean;
   needsTransport: boolean;
-  attendingAs: "oyente" | "miembro";
+  attendingAs: RegistrationAttendingAs;
   isBaptized: boolean;
   isCoroMGR: boolean;
 }
@@ -293,7 +295,7 @@ export interface RegistrationSubmission {
   eventId: string;
   needsLodging: boolean;
   needsTransport: boolean;
-  attendingAs: "oyente" | "miembro";
+  attendingAs: RegistrationAttendingAs;
   isBaptized: boolean;
   isCoroMGR: boolean;
 }

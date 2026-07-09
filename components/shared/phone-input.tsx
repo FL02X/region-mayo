@@ -9,14 +9,24 @@ interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElemen
   countryCode?: string
 }
 
+function normalizeMexicanPhoneInput(value: string) {
+  const digitsOnly = value.replace(/\D/g, "")
+
+  if (digitsOnly.length >= 13 && digitsOnly.startsWith("521")) {
+    return digitsOnly.slice(3, 13)
+  }
+
+  if (digitsOnly.length >= 12 && digitsOnly.startsWith("52")) {
+    return digitsOnly.slice(2, 12)
+  }
+
+  return digitsOnly.slice(0, 10)
+}
+
 export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
   ({ value, onChange, countryCode = "+52", className = "", ...props }, ref) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // Only allow digits
-      const digitsOnly = e.target.value.replace(/\D/g, "")
-      // Limit to 10 digits (Mexican phone number without country code)
-      const trimmed = digitsOnly.slice(0, 10)
-      onChange(trimmed)
+      onChange(normalizeMexicanPhoneInput(e.target.value))
     }
 
     // Format number for display: XXX XXX XXXX

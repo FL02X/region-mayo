@@ -143,7 +143,8 @@ export const getDirectivaRolesByLevel = (level: 'regional' | 'local' | 'all') =>
 
 export const ATTENDANCE_TYPE = {
   OYENTE: { value: 'oyente', label: 'Oyente', description: 'No miembro que asiste' },
-  MIEMBRO: { value: 'miembro', label: 'Miembro', description: 'Miembro activo de iglesia' },
+  VARON_DORCA: { value: 'varonDorca', label: 'Varon / Dorca', description: 'Miembro bautizado que asiste' },
+  JOVEN_MGR: { value: 'jovenMGR', label: 'Joven MGR', description: 'Joven del coro MGR' },
 } as const
 
 export type AttendanceType = typeof ATTENDANCE_TYPE[keyof typeof ATTENDANCE_TYPE]['value']

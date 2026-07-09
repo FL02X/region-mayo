@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, type CSSProperties } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
-import { X, Check, Calendar, ChevronRight, ChevronLeft, User, Loader2, AlertCircle } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { z } from "zod"
+import { X, Check, ChevronRight, ChevronLeft, User, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,9 +13,9 @@ import { PhoneInput } from "@/components/shared/phone-input"
 import { WhatsAppIconButton } from "@/components/shared/whatsapp-button"
 import { ImageGalleryModal } from "@/components/shared/image-album-modal"
 import useLockBodyScroll from "@/hooks/use-lock-scroll"
+import { useModalHistoryClose } from "@/hooks/use-modal-history-close"
 import { useConnectivity } from "@/hooks/use-connectivity"
-import { formatPhoneForDisplay } from "@/lib/phone-utils"
-import type { Event, RegionPresident } from "@/lib/types"
+import type { Event, RegionPresident, RegistrationAttendingAs } from "@/lib/types"
 
 interface RegistrationModalProps {
   event: Event
@@ -22,12 +24,122 @@ interface RegistrationModalProps {
   regionPresident: RegionPresident | null
 }
 
+type ContactFieldErrors = Partial<Record<"name" | "phone", string>>
+
+const registrationCategoryLabels: Record<RegistrationAttendingAs, string> = {
+  oyente: "Oyente",
+  varonDorca: "Varon / Dorca",
+  jovenMGR: "Joven MGR",
+}
+
+function getRegistrationAttendingAs({
+  isBaptized,
+  isCoroMGR,
+}: {
+  isBaptized: boolean
+  isCoroMGR: boolean
+}): RegistrationAttendingAs {
+  if (isCoroMGR) return "jovenMGR"
+  if (isBaptized) return "varonDorca"
+  return "oyente"
+}
+
+const normalizeName = (name: string) => name.trim().replace(/\s+/g, " ")
+
+const getLocalMexicanPhoneDigits = (phone: string) => {
+  const digits = phone.replace(/\D/g, "")
+
+  if (digits.length === 12 && digits.startsWith("52")) {
+    return digits.slice(2)
+  }
+
+  if (digits.length === 13 && digits.startsWith("521")) {
+    return digits.slice(3)
+  }
+
+  return digits
+}
+
+const contactSchema = z.object({
+  name: z.string().transform(normalizeName).superRefine((name, ctx) => {
+    const letterCount = (name.match(/\p{L}/gu) ?? []).length
+
+    if (name.length < 2 || letterCount < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Escribe tu nombre completo.",
+      })
+      return
+    }
+
+    if (name.length > 80) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Usa 80 caracteres o menos.",
+      })
+      return
+    }
+
+    if (!/^[\p{L}\p{M}\s.'’-]+$/u.test(name)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Usa solo letras y espacios.",
+      })
+    }
+  }),
+  phone: z.string().transform(getLocalMexicanPhoneDigits).superRefine((phone, ctx) => {
+    if (phone.length !== 10) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Escribe los 10 digitos de tu celular.",
+      })
+      return
+    }
+
+    if (/^(\d)\1{9}$/.test(phone)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ese numero no parece valido.",
+      })
+    }
+  }),
+})
+
+const recorridoRegistrationBrandStyle = {
+  "--primary": "var(--brand-green)",
+  "--primary-foreground": "oklch(1 0 0)",
+  "--accent": "var(--brand-green-soft)",
+  "--accent-foreground": "var(--brand-green-active)",
+  "--border": "var(--brand-green-border)",
+  "--ring": "var(--brand-green)",
+  "--brand": "var(--brand-green)",
+  "--brand-hover": "var(--brand-green-hover)",
+  "--brand-active": "var(--brand-green-active)",
+  "--brand-soft": "var(--brand-green-soft)",
+  "--brand-border": "var(--brand-green-border)",
+  "--brand-text": "var(--brand-green-text)",
+  "--color-primary": "var(--brand-green)",
+  "--color-primary-foreground": "oklch(1 0 0)",
+  "--color-accent": "var(--brand-green-soft)",
+  "--color-accent-foreground": "var(--brand-green-active)",
+  "--color-border": "var(--brand-green-border)",
+  "--color-ring": "var(--brand-green)",
+  "--color-brand": "var(--brand-green)",
+  "--color-brand-hover": "var(--brand-green-hover)",
+  "--color-brand-active": "var(--brand-green-active)",
+  "--color-brand-soft": "var(--brand-green-soft)",
+  "--color-brand-border": "var(--brand-green-border)",
+  "--color-brand-text": "var(--brand-green-text)",
+} as CSSProperties
+
 export function RegistrationModal({ event, isOpen, onClose, regionPresident }: RegistrationModalProps) {
   const MIN_SUBMIT_LOADING_MS = 250
+  const pathname = usePathname()
   const contentScrollRef = useRef<HTMLDivElement>(null)
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<ContactFieldErrors>({})
   const [formStartTime, setFormStartTime] = useState<number>(0)
   const [honeypot, setHoneypot] = useState("")
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null)
@@ -38,12 +150,13 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     phone: "",
     needsLodging: false,
     needsTransport: false,
-    attendingAs: "oyente" as "oyente" | "miembro",
+    attendingAs: "oyente" as RegistrationAttendingAs,
     isBaptized: false,
     isCoroMGR: false,
   })
 
   useLockBodyScroll(isOpen)
+  useModalHistoryClose(isOpen, onClose)
 
   useEffect(() => {
     if (!isOpen) return
@@ -51,6 +164,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     setFormStartTime(Date.now())
     setStep(1)
     setSubmitError(null)
+    setFieldErrors({})
     setSelectedPhotoIndex(null)
   }, [isOpen])
 
@@ -61,10 +175,57 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const maxPhotosToShow = 3
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => {
+      if (field === "isCoroMGR" && value === true) {
+        return { ...prev, isCoroMGR: true, isBaptized: true }
+      }
+
+      if (field === "isBaptized" && value === false && prev.isCoroMGR) {
+        return { ...prev, isBaptized: true }
+      }
+
+      return { ...prev, [field]: value }
+    })
+
+    if (field === "name" || field === "phone") {
+      setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
+    }
+  }
+
+  const validateContactStep = () => {
+    const validation = contactSchema.safeParse({
+      name: formData.name,
+      phone: formData.phone,
+    })
+
+    if (validation.success) {
+      setFieldErrors({})
+      setFormData((prev) => ({
+        ...prev,
+        name: validation.data.name,
+        phone: validation.data.phone,
+      }))
+      return validation.data
+    }
+
+    const nextErrors: ContactFieldErrors = {}
+
+    validation.error.issues.forEach((issue) => {
+      const field = issue.path[0]
+      if ((field === "name" || field === "phone") && !nextErrors[field]) {
+        nextErrors[field] = issue.message
+      }
+    })
+
+    setFieldErrors(nextErrors)
+    return null
   }
 
   const handleNext = () => {
+    if (step === 1 && !validateContactStep()) {
+      return
+    }
+
     if (step < totalSteps) {
       setStep(step + 1)
     }
@@ -77,6 +238,13 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   }
 
   const handleSubmit = async () => {
+    const contactData = validateContactStep()
+
+    if (!contactData) {
+      setStep(1)
+      return
+    }
+
     if (contentScrollRef.current) {
       contentScrollRef.current.scrollTop = 0
     }
@@ -97,13 +265,13 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: formData.name,
-          phone: formData.phone,
+          name: contactData.name,
+          phone: contactData.phone,
           eventId: event.id,
           needsLodging: formData.needsLodging,
           needsTransport: formData.needsTransport,
-          attendingAs: formData.isCoroMGR ? "miembro" : "oyente",
-          isBaptized: formData.isBaptized,
+          attendingAs: getRegistrationAttendingAs(formData),
+          isBaptized: formData.isBaptized || formData.isCoroMGR,
           isCoroMGR: formData.isCoroMGR,
           website: honeypot,
           _requestTime: formStartTime,
@@ -129,13 +297,6 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     }
   }
 
-  const addToGoogleCalendar = () => {
-    const startDate = event.date.toISOString().replace(/-|:|\.\d\d\d/g, "")
-    const endDate = new Date(event.date.getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/-|:|\.\d\d\d/g, "")
-    const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate}/${endDate}&details=${encodeURIComponent(`Evento de Región Mayo: ${event.title}`)}&location=${encodeURIComponent(event.address)}`
-    window.open(url, "_blank")
-  }
-
   const openPhotoViewer = (index: number) => {
     setSelectedPhotoIndex(index)
   }
@@ -149,6 +310,17 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   }
 
   const stepLabels = ["Contacto", "Logística", "Confirmar"]
+  const isRecorridoRoute = pathname === "/recorrido-mayo-2026"
+  const modalAccentStyle = isRecorridoRoute ? recorridoRegistrationBrandStyle : undefined
+  const selectedToggleClassName = isRecorridoRoute
+    ? "bg-brand-green text-white hover:bg-brand-green-hover hover:text-white active:bg-brand-green-active"
+    : "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+  const unselectedToggleClassName = isRecorridoRoute
+    ? "hover:bg-brand-green-soft"
+    : "hover:bg-muted"
+  const primaryButtonClassName = isRecorridoRoute
+    ? "bg-brand-green text-white hover:bg-brand-green-hover active:bg-brand-green-active"
+    : "bg-primary hover:bg-primary/90 text-primary-foreground"
 
   const ToggleQuestion = ({ label, value, field }: { label: string, value: boolean, field: string }) => (
     <div className="flex items-center justify-between py-4 border-b border-border/50 last:border-0">
@@ -158,7 +330,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           variant="ghost"
           size="sm"
           onClick={() => handleInputChange(field, true)}
-          className={`rounded-none h-10 px-5 text-sm ${value ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "hover:bg-muted"}`}
+          className={`rounded-none h-10 px-5 text-sm ${value ? selectedToggleClassName : unselectedToggleClassName}`}
         >
           Sí
         </Button>
@@ -167,7 +339,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           variant="ghost"
           size="sm"
           onClick={() => handleInputChange(field, false)}
-          className={`rounded-none h-10 px-5 text-sm ${!value ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : "hover:bg-muted"}`}
+          className={`rounded-none h-10 px-5 text-sm ${!value ? selectedToggleClassName : unselectedToggleClassName}`}
         >
           No
         </Button>
@@ -177,7 +349,10 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
 
   const modalContent = (
     <>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 overflow-hidden">
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 overflow-hidden"
+        style={modalAccentStyle}
+      >
         {/* Backdrop */}
         <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={onClose} />
 
@@ -227,8 +402,15 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                       value={formData.name}
                       onChange={(e) => handleInputChange("name", e.target.value)}
                       placeholder="Escribe tu nombre"
-                      className="mt-2 rounded-none h-12 border-input focus-visible:ring-1"
+                      aria-invalid={Boolean(fieldErrors.name)}
+                      aria-describedby={fieldErrors.name ? "registration-name-error" : undefined}
+                      className={`mt-2 rounded-none h-12 border border-brand-green-border focus-visible:ring-1 ${fieldErrors.name ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20" : ""}`}
                     />
+                    {fieldErrors.name && (
+                      <p id="registration-name-error" className="mt-2 text-xs font-medium text-destructive">
+                        {fieldErrors.name}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="phone" className="text-sm font-bold text-foreground uppercase tracking-wider">Teléfono</Label>
@@ -237,8 +419,16 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                         id="phone"
                         value={formData.phone}
                         onChange={(value) => handleInputChange("phone", value)}
+                        aria-invalid={Boolean(fieldErrors.phone)}
+                        aria-describedby={fieldErrors.phone ? "registration-phone-error" : undefined}
+                        className={`border border-brand-green-border focus-visible:ring-1 ${fieldErrors.phone ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20" : ""}`}
                       />
                     </div>
+                    {fieldErrors.phone && (
+                      <p id="registration-phone-error" className="mt-2 text-xs font-medium text-destructive">
+                        {fieldErrors.phone}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -254,7 +444,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 <div className="border border-border/50 bg-background px-4">
                   <ToggleQuestion label="¿Necesitas hospedaje?" value={formData.needsLodging} field="needsLodging" />
                   <ToggleQuestion label="¿Necesitas transporte?" value={formData.needsTransport} field="needsTransport" />
-                  <ToggleQuestion label="¿Eres bautizado?" value={formData.isBaptized} field="isBaptized" />
+                  <ToggleQuestion label="¿Estás bautizado en nuestra iglesia?" value={formData.isBaptized} field="isBaptized" />
                   <ToggleQuestion label="¿Eres joven del coro MGR?" value={formData.isCoroMGR} field="isCoroMGR" />
                 </div>
               </div>
@@ -343,7 +533,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Asistiré como:</span>
-                      <span className="text-foreground font-medium capitalize">{formData.isCoroMGR ? "Miembro" : "Oyente"}</span>
+                      <span className="text-foreground font-medium">{registrationCategoryLabels[getRegistrationAttendingAs(formData)]}</span>
                     </div>
                   </div>
                 </div>
@@ -355,11 +545,9 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
             {/* Confirmation Step */}
             {step === 4 && (
               <ConfirmationStep 
-                onAddToCalendar={addToGoogleCalendar}
                 eventTitle={event.title}
                 regionPresident={regionPresident}
-                needsTransport={formData.needsTransport}
-                needsLodging={formData.needsLodging}
+                isRecorridoAccent={isRecorridoRoute}
               />
             )}
           </div>
@@ -401,7 +589,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 <Button
                   onClick={step === totalSteps ? handleSubmit : handleNext}
                   disabled={isSubmitting || (step === totalSteps && isOffline)}
-                  className="flex-1 rounded-none h-14 bg-primary hover:bg-primary/90 text-primary-foreground uppercase tracking-wider font-bold text-sm"
+                  className={`min-w-0 flex-1 shrink rounded-none h-14 whitespace-normal px-3 text-center text-sm font-bold uppercase leading-tight tracking-wider ${primaryButtonClassName}`}
                 >
                   {isSubmitting ? (
                     <>
@@ -421,7 +609,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
 
           {step === 4 && (
             <div className="shrink-0 bg-background p-4 border-t border-border/50">
-              <Button onClick={onClose} className="w-full rounded-none h-14 bg-primary hover:bg-primary/90 text-primary-foreground uppercase tracking-wider font-bold">
+              <Button onClick={onClose} className={`w-full rounded-none h-14 uppercase tracking-wider font-bold ${primaryButtonClassName}`}>
                 Cerrar
               </Button>
             </div>
@@ -447,95 +635,44 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
 
 // Confirmation step with WhatsApp contact dropdown
 function ConfirmationStep({ 
-  onAddToCalendar, 
   eventTitle,
   regionPresident,
-  needsTransport,
-  needsLodging,
+  isRecorridoAccent,
 }: { 
-  onAddToCalendar: () => void
   eventTitle: string
   regionPresident: RegionPresident | null
-  needsTransport: boolean
-  needsLodging: boolean
+  isRecorridoAccent: boolean
 }) {
-  const showLogisticsInfo = needsTransport || needsLodging
+  const successIconClassName = isRecorridoAccent
+    ? "bg-brand-green text-white"
+    : "bg-primary text-primary-foreground"
+  const contactIconClassName = isRecorridoAccent
+    ? "bg-brand-green-soft text-brand-green"
+    : "bg-primary/10 text-primary"
 
   return (
-    <div className="text-center py-6">
-      <div className="w-12 h-12 bg-primary flex items-center justify-center mx-auto mb-3 rounded-none">
-        <Check className="h-6 w-6 text-primary-foreground" />
+    <div className="py-6">
+      <div className={`w-12 h-12 flex items-center justify-center mx-auto mb-3 rounded-none ${successIconClassName}`}>
+        <Check className="h-6 w-6" />
       </div>
-      <h3 className="text-base sm:text-lg font-bold text-foreground mb-3 uppercase tracking-wide whitespace-nowrap">¡Registro Exitoso!</h3>
-      {showLogisticsInfo ? (
-        <div className="mb-8 text-left border border-border/50 bg-muted/10 p-4 sm:p-5 space-y-4">
-          <p className="text-base sm:text-lg font-bold text-foreground uppercase tracking-wide text-center sm:text-left">
-            Esto es lo que haremos
-          </p>
-
-          {needsTransport && (
-            <div className="flex items-start gap-3 sm:gap-4 border border-border/50 bg-background p-3 sm:p-4">
-              <div className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden ring-1 ring-border/60 shrink-0">
-                <Image
-                  src="/images/transporte.webp"
-                  alt="Apoyo para transporte"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="min-w-0 pt-0.5">
-                <p className="text-sm sm:text-base font-bold text-foreground uppercase tracking-wide">
-                  BUSCAREMOS TRANSPORTE
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-                  Trataremos de buscar y comunicarnos lo mas pronto posible con hermanos locales, para ofrecerte transporte gratuito.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {needsLodging && (
-            <div className="flex items-start gap-3 sm:gap-4 border border-border/50 bg-background p-3 sm:p-4">
-              <div className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden ring-1 ring-border/60 shrink-0">
-                <Image
-                  src="/images/hospedaje.webp"
-                  alt="Apoyo para hospedaje"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="min-w-0 pt-0.5">
-                <p className="text-sm sm:text-base font-bold text-foreground uppercase tracking-wide">
-                  BUSCAREMOS HOSPEDAJE
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-                  Trataremos de buscar y comunicarnos lo mas pronto posible con hermanos locales, para ofrecerte hospedaje gratuito.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground mb-8">
+      <h3 className="text-base sm:text-lg font-bold text-foreground mb-5 uppercase tracking-wide whitespace-nowrap text-center">¡Registro Exitoso!</h3>
+      <p className="text-sm mb-8 text-center">
           El staff ha sido notificado de tu asistencia. ¡Pronto estaremos en contacto!
-        </p>
-      )}
+      </p>
+      <p className="text-sm text-muted-foreground mb-4 text-baseline">
+        Si tienes dudas o necesitas ayuda, puedes contactar al presidente regional:
+      </p>
       
       <div className="space-y-4">
-        <Button onClick={onAddToCalendar} variant="outline" className="w-full rounded-none h-14 gap-2 font-bold uppercase tracking-wider text-sm border-input">
-          <Calendar className="h-5 w-5" />
-          Agregar a Google Calendar
-        </Button>
-
         {regionPresident ? (
           <div className="text-left border border-border/50 bg-background">
             <div className="p-4 bg-muted/10">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 bg-primary/10 flex items-center justify-center shrink-0 rounded-none">
-                  <User className="h-6 w-6 text-primary" />
+                <div className={`h-12 w-12 flex items-center justify-center shrink-0 rounded-none ${contactIconClassName}`}>
+                  <User className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground truncate">{regionPresident.fullName}</p>
+                  <p className="text-sm font-bold text-foreground mb-3">{regionPresident.fullName}</p>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">Presidente Regional</p>
                 </div>
                 <WhatsAppIconButton 
