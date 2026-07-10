@@ -278,6 +278,7 @@ function mapEvent(raw: any, now: Date): Event {
     id: raw._id,
     title: raw.title,
     eventType: raw.eventType ?? "culto",
+    recorridoActivityType: raw.recorridoActivityType ?? undefined,
     type: typeColor,
     typeColor,
     schedule,
@@ -1315,6 +1316,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
       const rawEvents = (recorrido?.activities ?? []).map((activity: any, index: number) => ({
         ...activity,
         _id: `${recorrido._id}-${activity._key ?? index}`,
+        recorridoActivityType: activity.eventType,
         eventType: "recorrido",
         schedule: activity.schedule
           ? [{

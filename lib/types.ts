@@ -81,6 +81,8 @@ export interface Event {
   id: string;
   title: string;
   eventType: EventType;
+  /** Label used by activities that belong to a Recorrido. */
+  recorridoActivityType?: string;
   // Legacy field
   type?: string;
   typeColor?: EventTypeColor;
