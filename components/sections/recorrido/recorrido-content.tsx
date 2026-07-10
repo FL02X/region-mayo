@@ -52,6 +52,8 @@ const recorridoBrandStyle = {
 
 interface RecorridoContentProps {
   events: Event[];
+  startDate: Date | null;
+  endDate: Date | null;
   albums: Album[];
   templos: Templo[];
   regionPresident: RegionPresident | null;
@@ -151,6 +153,8 @@ function formatRecorridoDayMonth(date: Date) {
 
 export function RecorridoContent({
   events,
+  startDate,
+  endDate,
   albums,
   templos,
   regionPresident,
@@ -178,10 +182,6 @@ export function RecorridoContent({
   const countdownGridClassName = countdownIsDisabled
     ? "opacity-60 saturate-0"
     : "";
-  const recorridoStartDate = nextRecorridoEvent?.schedule[0]?.date ?? null;
-  const recorridoEndDate =
-    nextRecorridoEvent?.schedule[nextRecorridoEvent.schedule.length - 1]?.date ??
-    recorridoStartDate;
   const recorridoRegistrationEvent = nextRecorridoEvent?.event ?? null;
   const canOpenRegistration =
     !!recorridoRegistrationEvent &&
@@ -223,7 +223,7 @@ export function RecorridoContent({
             />
           </div>
         </div>
-        <div className="max-w mx-auto md:px-42 md:pt-1">
+        <div className="max-w mx-auto md:px-12 lg:px-62 md:pt-5">
           <p className="text-[20px] font-semibold tracking-tight text-brand">
             Lo invitamos a nuestro:
           </p>
@@ -236,12 +236,12 @@ export function RecorridoContent({
             <span className="hidden md:inline"> </span>
             <span className="block md:inline">2026</span>
           </p>
-          {recorridoStartDate && recorridoEndDate && (
+          {startDate && endDate && (
             <p className="mt-6.5 text-sm">
               <span className="text-bold">Fecha: </span>
-              <span className="text-brand">{formatRecorridoDayMonth(recorridoStartDate)}</span>
+              <span className="text-brand">{formatRecorridoDayMonth(startDate)}</span>
               <span className="text-normal">, hasta el </span>
-              <span className="text-brand">{formatRecorridoDayMonth(recorridoEndDate)}</span>
+              <span className="text-brand">{formatRecorridoDayMonth(endDate)}</span>
             </p>
           )}
           {countdownDisplay && (
@@ -307,8 +307,12 @@ export function RecorridoContent({
                   Registrar asistencia
                   <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 </button>
-              </div>
+              </div>            
             </div>
+          </div>
+          <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
+          <div className="mt-8 w-full px-0 pt-3 pb-3">
+            <span>Hola</span>
           </div>
         </div>
       </div>

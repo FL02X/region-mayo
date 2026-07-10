@@ -153,6 +153,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     attendingAs: "oyente" as RegistrationAttendingAs,
     isBaptized: false,
     isCoroMGR: false,
+    isFromAnotherRegion: false,
   })
 
   useLockBodyScroll(isOpen)
@@ -273,6 +274,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           attendingAs: getRegistrationAttendingAs(formData),
           isBaptized: formData.isBaptized || formData.isCoroMGR,
           isCoroMGR: formData.isCoroMGR,
+          isFromAnotherRegion: formData.isFromAnotherRegion,
           website: honeypot,
           _requestTime: formStartTime,
         }),
@@ -446,6 +448,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                   <ToggleQuestion label="¿Necesitas transporte?" value={formData.needsTransport} field="needsTransport" />
                   <ToggleQuestion label="¿Estás bautizado en nuestra iglesia?" value={formData.isBaptized} field="isBaptized" />
                   <ToggleQuestion label="¿Eres joven del coro MGR?" value={formData.isCoroMGR} field="isCoroMGR" />
+                  <ToggleQuestion label="¿Eres de otra región?" value={formData.isFromAnotherRegion} field="isFromAnotherRegion" />
                 </div>
               </div>
             )}
@@ -499,7 +502,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                           <ChevronRight className="h-3 w-3" />
                         </button>
                       )}
-                    </div>
+                    </div> 
                   </div>
                 )}
 
@@ -508,7 +511,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                   <h4 className="font-bold text-xs text-foreground mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Resumen de tu registro</h4>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between border-b border-border/20 pb-2">
-                      <span className="text-muted-foreground">Nombre:</span>
+                      <span className="text-muted-foreground">Nombre y apellido:</span>
                       <span className="text-foreground font-medium">{formData.name || "—"}</span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
@@ -530,6 +533,10 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Coro MGR:</span>
                       <span className="text-foreground font-medium">{formData.isCoroMGR ? "Sí" : "No"}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/20 pb-2">
+                      <span className="text-muted-foreground">Región:</span>
+                      <span className="text-foreground font-medium">{formData.isFromAnotherRegion ? "Otra región" : "Mayo"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Asistiré como:</span>

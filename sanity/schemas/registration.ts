@@ -113,6 +113,15 @@ export default defineType({
       description: 'Marca especial para jóvenes del movimiento',
     }),
 
+    defineField({
+      name: 'isFromAnotherRegion',
+      title: 'Es de otra región',
+      type: 'boolean',
+      group: 'status',
+      initialValue: false,
+      description: 'Distingue entre asistentes de Región Mayo y otra región',
+    }),
+
     // Timestamps & Metadata
     defineField({
       name: 'registeredAt',

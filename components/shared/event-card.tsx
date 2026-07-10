@@ -340,7 +340,11 @@ export function EventCard({
   const isPastEvent = event.status === "past";
   const hasAlbum = event.albumEnabled && event.googleDriveAlbumUrl;
   const hasFacebookPost = !!event.facebookPostUrl;
-  const canRegister = !isPastEvent && event.registrationEnabled !== false;
+  const isRegistrationAvailable =
+    !isPastEvent && event.registrationEnabled !== false;
+  const shouldShowRegisterButton = isRegistrationAvailable;
+  const isRegisterButtonDisabled = true;
+  const shouldRenderRegisterButton = false;
   const hasDescription = !!event.description && event.description.length > 0;
   const eventType = event.eventType || "culto";
   const EventTypeIcon = eventTypeIcons[eventType];
@@ -506,9 +510,13 @@ export function EventCard({
   const eventPrimaryMapsButtonSmallClass =
     "inline-flex ml-4.5 min-h-11 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-2.5 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-[#4888b4]";
   const compactMobileMapsButtonClass = eventPrimaryMapsButtonClass;
-  const gridMapsButtonClass = canRegister
+  const gridMapsButtonClass = shouldShowRegisterButton
     ? eventUtilityButtonSmallClass
     : eventPrimaryMapsButtonSmallClass;
+  const eventRegisterButtonClass =
+    "inline-flex mt-3 min-h-10 w-fit max-w-full items-center gap-1.5 rounded-sm bg-brand px-3 py-2 text-sm font-normal leading-tight whitespace-normal text-white transition-colors duration-150 hover:bg-brand-hover disabled:pointer-events-none disabled:opacity-50";
+  const eventRegisterGridButtonClass =
+    "mt-3.5 h-auto min-h-10 whitespace-normal py-3 text-center text-sm font-bold leading-tight tracking-[0.01em] bg-brand hover:bg-brand-hover text-white";
   const compactThumbnailUrl = getEventCardThumbnailUrl(event.image, "compact");
   const gridThumbnailUrl = getEventCardThumbnailUrl(event.image, "grid");
   const moreInfoImageUrl = event.moreInfo?.imageUrl
@@ -520,11 +528,12 @@ export function EventCard({
       })
     : "";
   const registerActionButton =
-    !isPastEvent && canRegister ? (
+    shouldRenderRegisterButton && shouldShowRegisterButton ? (
       <button
         type="button"
         onClick={() => onRegister(event)}
-        className={eventPrimaryMapsButtonClass}
+        disabled={isRegisterButtonDisabled}
+        className={eventRegisterButtonClass}
         style={{ minWidth: "unset" }}
       >
         REGISTRARSE
@@ -1658,7 +1667,8 @@ export function EventCard({
             <div className="pt-1 mt-1">
               <Button
                 onClick={() => onRegister(event)}
-                className="mt-3.5 h-auto min-h-10 whitespace-normal py-3 text-center text-sm font-bold leading-tight tracking-[0.01em] bg-brand hover:bg-brand-hover text-white"
+                disabled={isRegisterButtonDisabled}
+                className={eventRegisterGridButtonClass}
               >
                 REGISTRARSE
                 <ChevronRight

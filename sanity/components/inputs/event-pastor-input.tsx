@@ -25,7 +25,10 @@ const API_VERSION = '2025-01-01'
 export function EventPastorInput(
   props: ObjectInputProps<Reference, ReferenceSchemaType>,
 ) {
-  const templo = useFormValue(['templo']) as TempleValue | undefined
+  const templo = useFormValue([
+    ...props.path.slice(0, -1),
+    'templo',
+  ]) as TempleValue | undefined
   const client = useClient({ apiVersion: API_VERSION })
   const lastAutoPastorRef = useRef<string | null>(null)
   const [isResolving, setIsResolving] = useState(false)

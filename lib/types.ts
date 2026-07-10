@@ -44,6 +44,7 @@ export type Vestimenta = "uniformeMGR" | "formalCasual" | "informal" | "otro";
 export interface EventOccurrence {
   date: Date;
   time: string;
+  endTime?: string;
   note?: string;
 }
 
@@ -246,6 +247,7 @@ export interface RegistrationFormData {
   attendingAs: RegistrationAttendingAs;
   isBaptized: boolean;
   isCoroMGR: boolean;
+  isFromAnotherRegion: boolean;
 }
 
 // Countdown data
@@ -298,6 +300,7 @@ export interface RegistrationSubmission {
   attendingAs: RegistrationAttendingAs;
   isBaptized: boolean;
   isCoroMGR: boolean;
+  isFromAnotherRegion: boolean;
 }
 
 // Pastor shown inline inside a Templo card

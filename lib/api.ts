@@ -178,12 +178,17 @@ function normalizeEventSchedule(raw: any): EventOccurrence[] {
       const date = dateValue ? getRegionDateTime(dateValue, time) : null;
       if (!date || !time) return null;
 
+      const endTime =
+        typeof item?.endTime === "string" && item.endTime.trim()
+          ? item.endTime.trim()
+          : undefined;
+
       const note =
         typeof item?.note === "string" && item.note.trim().length > 0
           ? item.note.trim()
           : undefined;
 
-      return { date, time, note };
+      return { date, time, endTime, note };
     })
     .filter(Boolean) as EventOccurrence[];
 
@@ -1237,6 +1242,101 @@ export async function getDirectiva(
 
     return (directiva ?? []).map(mapDirectivaMember);
   });
+}
+
+type RecorridoData = {
+  events: Event[];
+  startDate: Date | null;
+  endDate: Date | null;
+};
+
+export async function getRecorrido(regionSlug: string = "mayo"): Promise<RecorridoData> {
+  if (!SANITY_ENABLED) {
+    const events = getEvents(regionSlug).filter((event) => event.eventType === "recorrido");
+    return {
+      events,
+      startDate: events[0]?.date ?? null,
+      endDate: events.at(-1)?.date ?? null,
+    };
+  }
+
+  return readWithDevSanityFallback(
+    "getRecorrido",
+    () => {
+      const events = getEvents(regionSlug).filter((event) => event.eventType === "recorrido");
+      return {
+        events,
+        startDate: events[0]?.date ?? null,
+        endDate: events.at(-1)?.date ?? null,
+      };
+    },
+    async () => {
+      const client = getSanityClient();
+      const recorrido = await client.fetch(
+        `*[_type == "recorrido" && year == 2026 && !defined(deletedAt)][0]{
+          _id,
+          startDate,
+          endDate,
+          activities[
+            region->slug.current in $regionSlugs || region->name in $regionNames
+          ]{
+            _key,
+            title,
+            eventType,
+            schedule{date, startTime, endTime},
+            description,
+            vestimenta,
+            vestimentaCustom,
+            templo->{
+              _id,
+              temploName,
+              address,
+              googleMapsUrl,
+              photos[]{asset->{url}},
+              "pastores": *[
+                _type == "pastor" &&
+                templo._ref == ^._id &&
+                !defined(deletedAt)
+              ]{_id, fullName}
+            },
+            location,
+            address,
+            googleMapsUrl,
+            pastorMensaje->{_id, fullName},
+            pastorMensajeCustom,
+            image{asset->{url}},
+            region->{_id, name, "slug": slug.current}
+          }
+        }`,
+        getRegionLookupParams(regionSlug),
+      );
+
+      const now = new Date();
+      const rawEvents = (recorrido?.activities ?? []).map((activity: any, index: number) => ({
+        ...activity,
+        _id: `${recorrido._id}-${activity._key ?? index}`,
+        eventType: "recorrido",
+        schedule: activity.schedule
+          ? [{
+              date: activity.schedule.date,
+              time: activity.schedule.startTime,
+              endTime: activity.schedule.endTime,
+            }]
+        : [],
+      }));
+
+      const parseDate = (value: unknown) => {
+        const dateInput = getLegacyEventDateInput(value);
+        return dateInput ? getRegionDateTime(dateInput, "12:00 PM") : null;
+      };
+
+      return {
+        events: rawEvents.map((activity: any) => mapEvent(activity, now)),
+        startDate: parseDate(recorrido?.startDate),
+        endDate: parseDate(recorrido?.endDate),
+      };
+    },
+  );
 }
 
 export async function getDirectivaGenerations(

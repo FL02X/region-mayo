@@ -36,6 +36,7 @@ const AUDITABLE_DOCUMENT_TYPES = [
   'coro',
   'directiva',
   'directivaGeneration',
+  'recorrido',
   'event',
   'album',
   'registration',
@@ -69,6 +70,7 @@ const MANUAL_DOCUMENT_TYPES = new Set([
   'coro',
   'directiva',
   'directivaGeneration',
+  'recorrido',
   'album',
 ])
 
@@ -127,6 +129,35 @@ const studioStructure = (S: any) =>
                         ),
                       S.divider(),
                       documentTypeItem(S, 'directivaGeneration', 'Todas las generaciones'),
+                    ]),
+                ),
+              S.listItem()
+                .id('recorrido-section')
+                .title('Recorrido')
+                .child(
+                  S.list()
+                    .title('Recorrido')
+                    .items([
+                      S.listItem()
+                        .title('Actual')
+                        .schemaType('recorrido')
+                        .child(
+                          S.documentTypeList('recorrido')
+                            .title('Recorrido actual')
+                            .filter('_type == "recorrido" && isCurrent == true && !defined(deletedAt)')
+                            .defaultOrdering([{ field: 'year', direction: 'desc' }]),
+                        ),
+                      S.listItem()
+                        .title('Anteriores')
+                        .schemaType('recorrido')
+                        .child(
+                          S.documentTypeList('recorrido')
+                            .title('Recorridos anteriores')
+                            .filter('_type == "recorrido" && isCurrent != true && !defined(deletedAt)')
+                            .defaultOrdering([{ field: 'year', direction: 'desc' }]),
+                        ),
+                      S.divider(),
+                      documentTypeItem(S, 'recorrido', 'Todos los recorridos'),
                     ]),
                 ),
             ]),

@@ -4,7 +4,7 @@ import Chatbot from "@/components/shared/chatbot";
 import { RecorridoContent } from "@/components/sections/recorrido/recorrido-content";
 import {
   getAlbums,
-  getEvents,
+  getRecorrido,
   getRegionConfig,
   getRegionPresident,
   getTemplos,
@@ -23,7 +23,7 @@ export const metadata: Metadata = buildPageMetadata({
 export default async function RecorridoMayo2026Page() {
   const [region, events, regionPresident, templos, albums] = await Promise.all([
     getRegionConfig("region-mayo"),
-    getEvents("region-mayo"),
+    getRecorrido("region-mayo"),
     getRegionPresident("region-mayo"),
     getTemplos("region-mayo"),
     getAlbums("region-mayo"),
@@ -36,7 +36,9 @@ export default async function RecorridoMayo2026Page() {
         facebookUrl={region?.socialLinks.facebook}
       />
       <RecorridoContent
-        events={events}
+        events={events.events}
+        startDate={events.startDate}
+        endDate={events.endDate}
         templos={templos}
         albums={albums}
         regionPresident={regionPresident}
