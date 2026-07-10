@@ -24,6 +24,7 @@ import type {
   AlbumVideo,
   AlbumYoutubeLayout,
   EventOccurrence,
+  Product,
 } from "./types";
 import { formatRegionDateInput, getRegionDateTime } from "./region-date";
 import { getSanityClient, isSanityNetworkError, SANITY_CACHE_TAG } from "./sanity/client";
@@ -1247,6 +1248,7 @@ export async function getDirectiva(
 
 type RecorridoData = {
   events: Event[];
+  products: Product[];
   startDate: Date | null;
   endDate: Date | null;
 };
@@ -1256,6 +1258,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
     const events = getEvents(regionSlug).filter((event) => event.eventType === "recorrido");
     return {
       events,
+      products: [],
       startDate: events[0]?.date ?? null,
       endDate: events.at(-1)?.date ?? null,
     };
@@ -1267,6 +1270,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
       const events = getEvents(regionSlug).filter((event) => event.eventType === "recorrido");
       return {
         events,
+        products: [],
         startDate: events[0]?.date ?? null,
         endDate: events.at(-1)?.date ?? null,
       };
@@ -1278,6 +1282,13 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
           _id,
           startDate,
           endDate,
+          productsEnabled,
+          products[]->{
+            _id,
+            name,
+            price,
+            photos[]{asset->{url}}
+          },
           activities[
             region->slug.current in $regionSlugs || region->name in $regionNames
           ]{
@@ -1334,6 +1345,14 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
 
       return {
         events: rawEvents.map((activity: any) => mapEvent(activity, now)),
+        products: recorrido?.productsEnabled
+          ? (recorrido.products ?? []).map((product: any) => ({
+              id: product._id,
+              name: product.name,
+              price: product.price,
+              photos: sanityImagesUrls(product.photos),
+            }))
+          : [],
         startDate: parseDate(recorrido?.startDate),
         endDate: parseDate(recorrido?.endDate),
       };

@@ -119,6 +119,13 @@ export interface Event {
   photos?: string[];
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  photos: string[];
+}
+
 export interface AlbumImage {
   type: "image";
   url: string;

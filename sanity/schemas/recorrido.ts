@@ -232,6 +232,26 @@ export default defineType({
       description: 'Estas actividades solo existen dentro del recorrido y no se listan como Eventos.',
     }),
     defineField({
+      name: 'productsEnabled',
+      title: 'HABILITAR PRODUCTOS',
+      type: 'boolean',
+      initialValue: false,
+      description: 'Activa la sublista de productos para este recorrido.',
+    }),
+    defineField({
+      name: 'products',
+      title: 'PRODUCTOS',
+      type: 'array',
+      hidden: ({ document }) => !document?.productsEnabled,
+      of: [
+        {
+          type: 'reference',
+          to: [{ type: 'product' }],
+        },
+      ],
+      description: 'Agrega o crea los productos disponibles para este recorrido.',
+    }),
+    defineField({
       name: 'audit',
       title: 'Auditoría',
       type: 'object',

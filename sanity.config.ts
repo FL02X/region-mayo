@@ -44,7 +44,8 @@ const AUDITABLE_DOCUMENT_TYPES = [
 
 const HERO_CARD_TYPE = 'heroCard'
 const PHOTO_SUBMISSION_TYPE = 'albumPhotoSubmission'
-const HIDDEN_DOCUMENT_TYPES = new Set([PHOTO_SUBMISSION_TYPE])
+const PRODUCT_TYPE = 'product'
+const HIDDEN_DOCUMENT_TYPES = new Set([PHOTO_SUBMISSION_TYPE, PRODUCT_TYPE])
 
 const isDraftDocumentId = (id?: string) => Boolean(id && id.startsWith('drafts.'))
 
