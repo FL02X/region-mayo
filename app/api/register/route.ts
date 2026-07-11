@@ -304,49 +304,7 @@ async function appendRegistrationToGoogleSheets(
   )
 
   if (!formatResponse.ok) {
-    throw new Error(`Google Sheets format failed: ${await formatResponse.text()}`)
-  }
-}
-
-function getSanityWriteClient() {
-  const projectId = process.env.SANITY_PROJECT_ID
-  const dataset = process.env.SANITY_DATASET
-  const token = process.env.SANITY_WRITE_TOKEN
-  const apiVersion = process.env.SANITY_API_VERSION ?? "2024-01-01"
-
-  if (!projectId || !dataset) {
-    throw new Error("Missing Sanity configuration")
-  }
-
-  return {
-    async createDocument(doc: Record<string, unknown>) {
-      const url = `https://${projectId}.api.sanity.io/v${apiVersion}/data/mutate/${dataset}`
-      
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          mutations: [
-            {
-              create: {
-                _type: "registration",
-                ...doc,
-              },
-            },
-          ],
-        }),
-      })
-
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(`Sanity mutation failed: ${text}`)
-      }
-
-      return res.json()
-    },
+    console.warn(`[register] Google Sheets format failed: ${await formatResponse.text()}`)
   }
 }
 
@@ -497,7 +455,6 @@ export async function POST(req: NextRequest) {
     const registrationData = {
       name: sanitizeString(body.name),
       phone: sanitizePhone(body.phone),
-      event: { _type: "reference", _ref: String(body.eventId) },
       needsLodging: Boolean(body.needsLodging),
       needsTransport: Boolean(body.needsTransport),
       attendingAs,
@@ -510,22 +467,6 @@ export async function POST(req: NextRequest) {
     }
 
     await appendRegistrationToGoogleSheets(registrationData)
-
-    // Check if Sanity is configured
-    const hasWriteToken = Boolean(process.env.SANITY_WRITE_TOKEN)
-    
-    if (hasWriteToken) {
-      // Save to Sanity
-      const client = getSanityWriteClient()
-      await client.createDocument(registrationData)
-    } else {
-      // Log for debugging when Sanity write is not configured
-      console.log("[register] Registration received (Sanity write not configured):", {
-        name: registrationData.name,
-        eventRef: body.eventId,
-        attendingAs: registrationData.attendingAs,
-      })
-    }
 
     return NextResponse.json({
       success: true,

@@ -512,7 +512,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Nombre y apellido:</span>
-                      <span className="text-foreground font-medium">{formData.name || "—"}</span>
+                      <span className="max-w-[60%] text-right text-foreground font-medium">{formData.name || "—"}</span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Teléfono:</span>

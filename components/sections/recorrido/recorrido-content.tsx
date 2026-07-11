@@ -173,7 +173,9 @@ export function RecorridoContent({
   }, [nextRecorridoEvent, currentTime]);
   const countdownIsDisabled = countdownDisplay?.isDisabled ?? false;
   const countdownGridClassName = countdownIsDisabled ? "opacity-60 saturate-0" : "";
-  const recorridoRegistrationEvent = nextRecorridoEvent?.event ?? null;
+  const recorridoRegistrationEvent = nextRecorridoEvent
+    ? { ...nextRecorridoEvent.event, title: "Recorrido Mayo 2026" }
+    : null;
   const canOpenRegistration =
     !!recorridoRegistrationEvent &&
     recorridoRegistrationEvent.registrationEnabled !== false;
@@ -223,12 +225,12 @@ export function RecorridoContent({
             <p className="mt-4 text-sm font-medium text-ink">Hebreos 13:7</p>
             <p className="mt-2 text-[16px] italic leading-relaxed text-foreground/80"><span className="mr-1 align-top text-2xl leading-none text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cual haya sido el resultado de su conducta, e imitad su fe.<span className="ml-1 align-bottom text-2xl leading-none text-foreground/35">&rdquo;</span></p>
           </div>
-          <div className="mt-4 w-full border border-border bg-paper-dark px-2 py-4">
+          <div className="mt-4 w-fit border border-border bg-paper-dark px-2 pr-4 py-4">
             <div className="flex items-center gap-4">
               <div className="flex shrink-0 items-center justify-center"><ClipboardList className="h-12 w-12 text-foreground/75" strokeWidth={1.35} aria-hidden="true" /></div>
-              <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
-                <button type="button" onClick={handleOpenRegistration} disabled={!canOpenRegistration} className="inline-flex min-h-10 uppercase items-center justify-center gap-1.5 bg-brand px-2 text-sm font-semibold text-white transition-colors hover:bg-brand-hover active:bg-brand-hover/90 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand">
-                  Registrar asistencia <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              <div className="flex min-w-0 flex-1 flex-col items-start gap-2 uppercase">
+                <button type="button" onClick={handleOpenRegistration} disabled={!canOpenRegistration} className="inline-flex min-h-10 items-center justify-center gap-1.5 bg-brand px-2 py-3 text-bg font-semibold uppercase leading-tight whitespace-normal text-white transition-colors hover:bg-brand-hover active:bg-brand-hover/90 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand">
+                  Registrar asistencia <ChevronRight className="h-5.5 w-5.5 shrink-0" aria-hidden="true" />
                 </button>
               </div>
             </div>
