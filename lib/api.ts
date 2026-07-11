@@ -1287,6 +1287,20 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
             _id,
             name,
             price,
+            deposit,
+            stock,
+            allowSizeSelection,
+            variantsEnabled,
+            variants[]->{
+              _id,
+              name,
+              photos[]{asset->{url}}
+            },
+            allowMultipleQuantity,
+            clabe,
+            recipientBank,
+            recipientName,
+            isDisabled,
             photos[]{asset->{url}}
           },
           activities[
@@ -1346,11 +1360,24 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
       return {
         events: rawEvents.map((activity: any) => mapEvent(activity, now)),
         products: recorrido?.productsEnabled
-          ? (recorrido.products ?? []).map((product: any) => ({
+          ? (recorrido.products ?? []).filter((product: any) => product && !product.isDisabled).map((product: any) => ({
               id: product._id,
               name: product.name,
               price: product.price,
               photos: sanityImagesUrls(product.photos),
+              deposit: typeof product.deposit === "number" ? product.deposit : undefined,
+              stock: typeof product.stock === "number" ? product.stock : undefined,
+              allowSizeSelection: Boolean(product.allowSizeSelection),
+              variantsEnabled: Boolean(product.variantsEnabled),
+              variants: (product.variants ?? []).filter(Boolean).map((variant: any) => ({
+                id: variant._id,
+                name: variant.name,
+                photos: sanityImagesUrls(variant.photos),
+              })),
+              allowMultipleQuantity: Boolean(product.allowMultipleQuantity),
+              clabe: product.clabe ?? undefined,
+              recipientBank: product.recipientBank ?? undefined,
+              recipientName: product.recipientName ?? undefined,
             }))
           : [],
         startDate: parseDate(recorrido?.startDate),
@@ -1463,6 +1490,52 @@ export async function getRegionPresident(
       }
 
       return fallback as RegionPresident;
+    },
+  );
+}
+
+export async function getRegionTreasurer(
+  regionSlug: string = "mayo",
+): Promise<RegionPresident | null> {
+  if (!SANITY_ENABLED) return null;
+
+  return readWithDevSanityFallback(
+    "getRegionTreasurer",
+    () => null,
+    async () => {
+      const client = getSanityClient();
+      const treasurer = await client.fetch(
+        `*[
+          _type == "directivaGeneration" &&
+          !defined(deletedAt) &&
+          isCurrent == true &&
+          (region->slug.current in $regionSlugs || region->name in $regionNames)
+        ] | order(startYear desc, _createdAt desc)[0].members[role == "09_tesorera"][0]{
+          fullName,
+          phone
+        }`,
+        getRegionLookupParams(regionSlug),
+      );
+
+      if (treasurer?.fullName && treasurer?.phone) {
+        return treasurer as RegionPresident;
+      }
+
+      const fallback = await client.fetch(
+        `*[
+          _type == "directiva" &&
+          (region->slug.current in $regionSlugs || region->name in $regionNames) &&
+          role in ["09_tesorera", "Tesoreria", "Tesorero", "Tesorera"]
+        ] | order(role asc, _createdAt desc)[0]{
+          fullName,
+          phone
+        }`,
+        getRegionLookupParams(regionSlug),
+      );
+
+      return fallback?.fullName && fallback?.phone
+        ? fallback as RegionPresident
+        : null;
     },
   );
 }

@@ -124,6 +124,21 @@ export interface Product {
   name: string;
   price: number;
   photos: string[];
+  deposit?: number;
+  stock?: number;
+  allowSizeSelection?: boolean;
+  variantsEnabled?: boolean;
+  variants?: ProductVariant[];
+  allowMultipleQuantity?: boolean;
+  clabe?: string;
+  recipientBank?: string;
+  recipientName?: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  photos: string[];
 }
 
 export interface AlbumImage {

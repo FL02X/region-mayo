@@ -7,6 +7,7 @@ import {
   getRecorrido,
   getRegionConfig,
   getRegionPresident,
+  getRegionTreasurer,
   getTemplos,
 } from "@/lib/api";
 import { buildPageMetadata } from "@/lib/seo";
@@ -21,10 +22,11 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function RecorridoMayo2026Page() {
-  const [region, events, regionPresident, templos, albums] = await Promise.all([
+  const [region, events, regionPresident, regionTreasurer, templos, albums] = await Promise.all([
     getRegionConfig("region-mayo"),
     getRecorrido("region-mayo"),
     getRegionPresident("region-mayo"),
+    getRegionTreasurer("region-mayo"),
     getTemplos("region-mayo"),
     getAlbums("region-mayo"),
   ]);
@@ -43,6 +45,7 @@ export default async function RecorridoMayo2026Page() {
         templos={templos}
         albums={albums}
         regionPresident={regionPresident}
+        regionTreasurer={regionTreasurer}
       />
       <Chatbot />
     </main>

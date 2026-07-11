@@ -18,6 +18,7 @@ import directiva from './directiva'
 import directivaGeneration from './directivaGeneration'
 import recorrido from './recorrido'
 import product from './product'
+import productVariant from './productVariant'
 import siteSettings from './siteSettings'
 import registration from './registration'
 import heroCard from './heroCard'
@@ -37,6 +38,7 @@ export const schemaTypes = [
   directivaGeneration,
   recorrido,
   product,
+  productVariant,
   siteSettings,
   registration,
   heroCard,

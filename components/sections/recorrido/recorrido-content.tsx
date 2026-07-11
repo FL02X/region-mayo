@@ -60,6 +60,7 @@ interface RecorridoContentProps {
   albums: Album[];
   templos: Templo[];
   regionPresident: RegionPresident | null;
+  regionTreasurer: RegionPresident | null;
 }
 
 function getEventSchedule(event: Event): CountdownOccurrence[] {
@@ -156,6 +157,7 @@ export function RecorridoContent({
   albums,
   templos,
   regionPresident,
+  regionTreasurer,
 }: RecorridoContentProps) {
   void albums;
   void templos;
@@ -239,7 +241,7 @@ export function RecorridoContent({
           <div className="mt-5.5 w-full px-0 pt-3">
             <p className="text-[14px] font-bold uppercase tracking-[0.16em] text-brand">SOUVENIRS</p>
             <p className={`mt-1 text-[24px] font-semibold tracking-tight leading-snug text-ink mb-7 ${editorialFont.className}`}>Llevate un recuerdo</p>
-            <RecorridoProductCards products={products} />
+            <RecorridoProductCards products={products} regionTreasurer={regionTreasurer} />
           </div>
           <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
           <RecorridoRoute events={events} />
