@@ -9,6 +9,11 @@ const recorridoActivityFields = [
     validation: (Rule) => Rule.required(),
   }),
   defineField({
+    name: 'city',
+    title: 'CIUDAD',
+    type: 'string',
+  }),
+  defineField({
     name: 'eventType',
     title: 'TIPO',
     type: 'string',

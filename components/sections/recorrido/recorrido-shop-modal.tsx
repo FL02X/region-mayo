@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
 import { Newsreader } from "next/font/google"
 import { usePathname } from "next/navigation"
+import Script from "next/script"
 import { Check, ChevronLeft, ChevronRight, Copy, Loader2, MessageCircle, Minus, Plus, User, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,11 +26,11 @@ const editorialFont = Newsreader({
 })
 
 const priceFormatter = new Intl.NumberFormat("es-MX", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  maximumFractionDigits: 0,
 })
 
-const SIZE_OPTIONS = ["S", "M", "L", "XL"] as const
+const SIZE_OPTIONS = ["CH", "M", "G", "XG"] as const
+const isTurnstileEnabled = false
 
 const recorridoShopBrandStyle = {
   "--primary": "var(--brand-green)",
@@ -61,6 +62,26 @@ const recorridoShopBrandStyle = {
 type ModalStage = "payment" | "contact" | "options" | "confirm"
 type ContactFieldErrors = Partial<Record<"name" | "phone", string>>
 
+type TurnstileApi = {
+  render: (
+    container: HTMLElement,
+    options: {
+      sitekey: string
+      callback: (token: string) => void
+      "expired-callback": () => void
+      "error-callback": () => void
+    },
+  ) => string
+  reset: (widgetId?: string) => void
+  remove: (widgetId?: string) => void
+}
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi
+  }
+}
+
 interface ShopModalProps {
   product: Product
   isOpen: boolean
@@ -83,7 +104,41 @@ function formatPrice(value: number) {
 }
 
 function PriceAmount({ value }: { value: number }) {
-  return <><span className="mr-0.5 align-super font-sans text-[0.52em] font-semibold leading-none">$</span>{formatPrice(value)} MXM</>
+  return <><span className="mr-0.5 align-super font-sans text-[0.52em] font-semibold leading-none">$</span>{formatPrice(value)} MXN</>
+}
+
+function QuantityFlip({ value, children }: { value: number; children: ReactNode }) {
+  const valueRef = useRef<HTMLSpanElement>(null)
+  const previousValueRef = useRef(value)
+
+  useEffect(() => {
+    if (previousValueRef.current === value) return
+    previousValueRef.current = value
+
+    const element = valueRef.current
+    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+
+    const animation = element.animate(
+      [
+        { transform: "perspective(400px) rotateX(0deg)", opacity: 1 },
+        { transform: "perspective(400px) rotateX(-82deg)", opacity: 0.55 },
+        { transform: "perspective(400px) rotateX(0deg)", opacity: 1 },
+      ],
+      { duration: 180, easing: "ease-out" },
+    )
+
+    return () => animation.cancel()
+  }, [value])
+
+  return (
+    <span
+      ref={valueRef}
+      className="inline-block"
+      style={{ transformOrigin: "50% 50%" }}
+    >
+      {children}
+    </span>
+  )
 }
 
 export function ShopModal({
@@ -98,14 +153,16 @@ export function ShopModal({
   const hasOptions = Boolean(product.variantsEnabled || product.allowSizeSelection)
   const stages = useMemo<ModalStage[]>(
     () => [
-      ...(hasDeposit ? ["payment" as const] : []),
-      "contact" as const,
       ...(hasOptions ? ["options" as const] : []),
+      "contact" as const,
+      ...(hasDeposit ? ["payment" as const] : []),
       "confirm" as const,
     ],
     [hasDeposit, hasOptions],
   )
   const contentScrollRef = useRef<HTMLDivElement>(null)
+  const turnstileContainerRef = useRef<HTMLDivElement>(null)
+  const turnstileWidgetIdRef = useRef<string | null>(null)
   const { isOnline } = useConnectivity()
   const [stepIndex, setStepIndex] = useState(0)
   const [paymentType, setPaymentType] = useState<"deposit" | "full">(hasDeposit ? "deposit" : "full")
@@ -113,12 +170,15 @@ export function ShopModal({
   const [phone, setPhone] = useState("")
   const [fieldErrors, setFieldErrors] = useState<ContactFieldErrors>({})
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
-  const [selectedSize, setSelectedSize] = useState<(typeof SIZE_OPTIONS)[number]>("S")
+  const [selectedSize, setSelectedSize] = useState<(typeof SIZE_OPTIONS)[number]>("CH")
   const [quantity, setQuantity] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isComplete, setIsComplete] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState("")
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""
+  const allowDevTurnstileBypass = process.env.NODE_ENV !== "production" && !turnstileSiteKey
 
   useLockBodyScroll(isOpen)
   useModalHistoryClose(isOpen, onClose)
@@ -132,12 +192,13 @@ export function ShopModal({
     setPhone("")
     setFieldErrors({})
     setSelectedVariantId(null)
-    setSelectedSize("S")
+    setSelectedSize("CH")
     setQuantity(1)
     setIsSubmitting(false)
     setSubmitError(null)
     setIsComplete(false)
     setCopied(false)
+    setTurnstileToken("")
   }, [hasDeposit, isOpen, product.id])
 
   const stage = stages[stepIndex]
@@ -147,10 +208,41 @@ export function ShopModal({
   const selectedImage = selectedVariant?.photos[0] || product.photos[0] || "/placeholder.svg"
   const unitPrice = paymentType === "deposit" && hasDeposit ? product.deposit! : product.price
   const totalPrice = unitPrice * quantity
+  const pendingBalance = paymentType === "deposit" ? Math.max(0, product.price * quantity - totalPrice) : 0
   const selectedVariantName = product.variantsEnabled
     ? selectedVariant?.name || product.name
     : undefined
   const canProvidePaymentDetails = Boolean(product.clabe && product.recipientBank && product.recipientName)
+  const canSubmitOrder = !isTurnstileEnabled || allowDevTurnstileBypass || Boolean(turnstileToken)
+
+  const renderTurnstile = useCallback(() => {
+    if (!turnstileSiteKey || !window.turnstile || !turnstileContainerRef.current) return
+    if (turnstileWidgetIdRef.current) return
+
+    turnstileWidgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
+      sitekey: turnstileSiteKey,
+      callback: (token) => {
+        setTurnstileToken(token)
+        setSubmitError(null)
+      },
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    })
+  }, [turnstileSiteKey])
+
+  useEffect(() => {
+    if (!isTurnstileEnabled || !isOpen || stage !== "confirm" || isComplete || isSubmitting) return
+
+    renderTurnstile()
+
+    return () => {
+      if (turnstileWidgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetIdRef.current)
+        turnstileWidgetIdRef.current = null
+      }
+      setTurnstileToken("")
+    }
+  }, [isComplete, isOpen, isSubmitting, renderTurnstile, stage])
 
   const validateContact = () => {
     const normalizedName = normalizeName(name)
@@ -202,6 +294,10 @@ export function ShopModal({
       setSubmitError("Sin conexion. Conectate a internet para registrar tu pedido.")
       return
     }
+    if (!canSubmitOrder) {
+      setSubmitError("Completa la verificacion de seguridad para continuar.")
+      return
+    }
 
     setIsSubmitting(true)
     setSubmitError(null)
@@ -217,6 +313,7 @@ export function ShopModal({
           variantId: selectedVariantId,
           size: product.allowSizeSelection ? selectedSize : null,
           quantity,
+          turnstileToken: turnstileToken || (allowDevTurnstileBypass ? "dev-bypass" : ""),
         }),
       })
       const data = await response.json()
@@ -259,6 +356,13 @@ export function ShopModal({
 
   const modal = (
     <div className="fixed inset-0 z-[120] flex items-center justify-center overflow-hidden sm:p-4" style={modalAccentStyle}>
+      {isTurnstileEnabled && turnstileSiteKey && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onLoad={renderTurnstile}
+        />
+      )}
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <section
         className="absolute inset-0 flex w-full flex-col bg-background shadow-2xl animate-in fade-in sm:relative sm:inset-auto sm:max-h-[88vh] sm:max-w-2xl sm:zoom-in-95"
@@ -294,7 +398,7 @@ export function ShopModal({
           {!isComplete && stage === "payment" && hasDeposit && (
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-bold uppercase tracking-wider text-foreground">Elige tu forma de pago</p>
+                <p className="text-sm font-bold uppercase tracking-wider text-foreground">Elige cuánto pagar ahora</p>
                 <p className="mt-1 text-sm text-muted-foreground">Selecciona lo que deseas cubrir hoy.</p>
               </div>
               {[
@@ -303,6 +407,7 @@ export function ShopModal({
                   title: "Anticipo",
                   description: "Aparta tu producto con un pago inicial.",
                   amount: product.deposit!,
+                  pendingAmount: Math.max(0, product.price - product.deposit!),
                 },
                 {
                   value: "full" as const,
@@ -317,12 +422,12 @@ export function ShopModal({
                     key={option.value}
                     type="button"
                     onClick={() => setPaymentType(option.value)}
-                    className={`flex min-h-28 w-full items-center gap-4 border p-5 text-left transition-opacity ${
-                      selected ? "border-brand bg-brand-soft/40 opacity-100" : "border-border bg-background opacity-55 hover:opacity-80"
+                    className={`flex min-h-28 w-full items-center gap-4 border p-5 text-left transition-colors ${
+                      selected ? "border-brand bg-brand-soft/40" : "border-border bg-background hover:border-brand/50"
                     }`}
                     aria-pressed={selected}
                   >
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${selected ? "border-brand" : "border-muted-foreground"}`}>
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${selected ? "border-brand" : "border-border"}`}>
                       {selected && <span className="h-3 w-3 rounded-full bg-brand" />}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -331,6 +436,11 @@ export function ShopModal({
                       <span className={`mt-3 block text-2xl font-semibold tracking-tight text-ink ${editorialFont.className}`}>
                         <PriceAmount value={option.amount} />
                       </span>
+                      {typeof option.pendingAmount === "number" && (
+                        <span className="mt-1 block text-sm font-medium text-muted-foreground">
+                          Pago pendiente: <PriceAmount value={option.pendingAmount} />
+                        </span>
+                      )}
                     </span>
                   </button>
                 )
@@ -452,7 +562,9 @@ export function ShopModal({
                         <Button variant="ghost" size="icon" onClick={() => setQuantity((current) => Math.max(1, current - 1))} disabled={quantity === 1} aria-label="Reducir cantidad" className="h-10 w-10 rounded-none">
                           <Minus className="h-4 w-4" />
                         </Button>
-                        <span className="flex h-10 min-w-10 items-center justify-center border-x px-3 text-sm font-bold">{quantity}</span>
+                        <span className="flex h-10 min-w-10 items-center justify-center border-x px-3 text-sm font-bold">
+                          <QuantityFlip value={quantity}>{quantity}</QuantityFlip>
+                        </span>
                         <Button variant="ghost" size="icon" onClick={() => setQuantity((current) => Math.min(99, current + 1))} aria-label="Aumentar cantidad" className="h-10 w-10 rounded-none">
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -460,10 +572,42 @@ export function ShopModal({
                     </div>
                   )}
 
-                  <div className="border border-brand bg-brand-soft/30 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-brand">Total a pagar</p>
-                    <p className={`mt-1 text-2xl font-semibold tracking-tight text-ink ${editorialFont.className}`}><PriceAmount value={totalPrice} /></p>
+                  <div className="space-y-3">
+                    <div className="border border-brand bg-brand-soft/30 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-brand">{paymentType === "deposit" ? "Pagas ahora" : "Total a pagar"}</p>
+                      <p className={`mt-1 text-2xl font-semibold tracking-tight text-ink ${editorialFont.className}`}>
+                        <QuantityFlip value={quantity}>
+                          <PriceAmount value={totalPrice} />
+                        </QuantityFlip>
+                      </p>
+                    </div>
+                    {paymentType === "deposit" && (
+                      <div className="border border-brand/30 bg-brand-soft/30 px-4 py-3 opacity-75">
+                        <p className="text-xs font-bold uppercase tracking-wider text-brand">Saldo pendiente</p>
+                        <p className={`mt-1 text-2xl font-semibold tracking-tight text-ink ${editorialFont.className}`}>
+                          <QuantityFlip value={quantity}>
+                            <PriceAmount value={pendingBalance} />
+                          </QuantityFlip>
+                        </p>
+                      </div>
+                    )}
                   </div>
+                  {product.allowSizeSelection && (
+                    <p className="ml-2 text-xs leading-relaxed text-muted-foreground">
+                      <span className="font-bold">NOTA:</span>
+                      <br />
+                      - Los productos seran entregados durante el transcurso de la actividad.
+                    </p>
+                  )}
+                  {isTurnstileEnabled && (allowDevTurnstileBypass ? (
+                    <p className="text-xs text-muted-foreground">Verificacion de seguridad no configurada en desarrollo.</p>
+                  ) : turnstileSiteKey ? (
+                    <div className="min-h-[65px] overflow-x-auto">
+                      <div ref={turnstileContainerRef} />
+                    </div>
+                  ) : (
+                    <p className="text-xs text-destructive">Falta configurar Turnstile para registrar pedidos.</p>
+                  ))}
                 </>
               )}
             </div>
@@ -544,10 +688,14 @@ export function ShopModal({
               )}
               <Button
                 onClick={stage === "confirm" ? handleSubmit : handleNext}
-                disabled={isSubmitting}
-                className="min-h-12 flex-1 rounded-none bg-brand font-bold uppercase tracking-wide text-white hover:bg-brand-hover"
+                disabled={isSubmitting || (stage === "confirm" && !canSubmitOrder)}
+                className="h-auto min-h-12 min-w-0 flex-1 shrink whitespace-normal break-words rounded-none bg-brand px-3 py-2 text-center font-bold uppercase leading-tight tracking-wide text-white hover:bg-brand-hover"
               >
-                {stage === "confirm" ? "Confirmar pedido" : <>Continuar <ChevronRight className="h-4 w-4" /></>}
+                {stage === "confirm" ? (
+                  <>Confirmar pedido <ChevronRight className="h-4 w-4" /></>
+                ) : (
+                  <>Continuar <ChevronRight className="h-4 w-4" /></>
+                )}
               </Button>
             </div>
           </footer>

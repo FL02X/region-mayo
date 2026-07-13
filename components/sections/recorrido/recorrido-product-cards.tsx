@@ -7,7 +7,7 @@ import { Images, ShoppingBag } from "lucide-react";
 import type { Product, RegionPresident } from "@/lib/types";
 import { ImageGalleryModal } from "@/components/shared/image-album-modal";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
-import { ShopModal } from "./shop-modal";
+import { ShopModal } from "./recorrido-shop-modal";
 
 const editorialFont = Newsreader({
   subsets: ["latin"],
@@ -17,8 +17,7 @@ const editorialFont = Newsreader({
 });
 
 const priceFormatter = new Intl.NumberFormat("es-MX", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
+  maximumFractionDigits: 0,
 });
 
 interface RecorridoProductCardsProps {
@@ -93,6 +92,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
           const remainingStock = remainingStockByProductId[product.id] ?? product.stock;
           const isSoldOut = typeof remainingStock === "number" && remainingStock <= 0;
           const hasDeposit = typeof product.deposit === "number";
+          const stockLabel = product.productType?.trim().toLocaleLowerCase("es-MX") || "existencias";
 
           const openGallery = () => {
             if (!canOpenGallery) return;
@@ -131,21 +131,21 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
               </button>
               <div className="pt-4">
                 {typeof remainingStock === "number" && (
-                  <p className="mb-4.5 mt-[-14px] text-xs font-medium text-muted-foreground">Quedan {remainingStock} existencias.</p>
+                  <p className="mb-4.5 mt-[-14px] text-xs font-medium text-muted-foreground">Quedan {remainingStock} {stockLabel}.</p>
                 )}
                 {hasDeposit && (
                   <div className="mb-4 border border-[#c9a96e]/50 bg-[#f5eddc] px-3 py-2">
                     <p className="text-xs font-bold uppercase tracking-wider text-[#9c7b36]">Anticipo</p>
                     <p className={`mt-0.5 text-2xl font-semibold tracking-tight text-[#7b5e27] ${editorialFont.className}`}>
                       <span className="mr-0.5 align-super font-sans text-[0.52em] font-semibold leading-none">$</span>
-                      {priceFormatter.format(product.deposit!)} MXM
+                      {priceFormatter.format(product.deposit!)} MXN
                     </p>
                   </div>
                 )}
                 <p className="text-sm font-semibold text-ink">{product.name}</p>
                 <p className={`mt-1 text-3xl font-semibold tracking-tight text-ink ${editorialFont.className}`}>
                   <span className="mr-0.5 align-super font-sans text-[0.52em] font-semibold leading-none">$</span>
-                  {priceFormatter.format(product.price)} MXM
+                  {priceFormatter.format(product.price)} MXN
                 </p>
                 <button
                   type="button"

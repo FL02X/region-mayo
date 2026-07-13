@@ -214,10 +214,15 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                       <span className={`mb-2 flex items-center gap-2 text-[0.88rem] font-medium uppercase tracking-[0.1em] text-foreground/70 ${isLeft ? "md:justify-end" : ""}`}>
                         {formatRecorridoTimeRange(event)}
                       </span>
-                      <span className={`mb-3 block text-[1.32rem] font-semibold leading-tight text-ink ${editorialFont.className}`}>
+                      <span className={`mb-3 block text-[1.52rem] font-semibold leading-tight text-ink ${editorialFont.className}`}>
                         {event.title}
                       </span>
-                      {event.location && <span className="mt-1.5 block text-sm text-foreground/70">{event.location}</span>}
+                      {event.city && (
+                        <span className={`mt-3 mb-3 block text-[16px] italic font-bold text-ink uppercase ${editorialFont.className}`}>
+                          {event.city}
+                        </span>
+                      )}
+                      {event.location && <span className="mt-1.5 block text-sm text-foreground/60">{event.location}</span>}
                       {mapsUrl ? (
                         <a href={mapsUrl} target="_blank" rel="noreferrer" className={`mt-3 inline-flex min-h-9 items-center gap-2 border px-3 text-xs font-semibold ${isLeft ? "md:ml-auto" : ""}`} style={{ borderColor: palette.root, color: palette.root }}>
                           <MapPin className="h-4 w-4" aria-hidden="true" />

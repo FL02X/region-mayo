@@ -2,6 +2,7 @@ import { getSanityClient } from "@/lib/sanity/client"
 
 const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
 const SHEET_HEADERS = {
+  orderId: "ID",
   name: "Nombre",
   phone: "Numero",
   orderedAt: "Fecha y hora",
@@ -10,6 +11,7 @@ const SHEET_HEADERS = {
   size: "Talla",
   quantity: "Cantidad",
   total: "Total (MXN)",
+  pendingBalance: "Saldo pendiente despues de pagar",
   status: "Estado",
 } as const
 
@@ -122,6 +124,7 @@ function getGoogleSheetRange(sheetName: string, range: string) {
 
 function getProductSheetHeaders(product: ProductOrderProduct): string[] {
   return [
+    SHEET_HEADERS.orderId,
     SHEET_HEADERS.name,
     SHEET_HEADERS.phone,
     SHEET_HEADERS.orderedAt,
@@ -130,6 +133,7 @@ function getProductSheetHeaders(product: ProductOrderProduct): string[] {
     ...(product.allowSizeSelection ? [SHEET_HEADERS.size] : []),
     SHEET_HEADERS.quantity,
     SHEET_HEADERS.total,
+    SHEET_HEADERS.pendingBalance,
     SHEET_HEADERS.status,
   ]
 }
@@ -217,6 +221,38 @@ async function setSheetHeader(
   if (!response.ok) throw new Error(`Google Sheets header update failed: ${await response.text()}`)
 }
 
+async function insertSheetColumn(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetId: number,
+  columnIndex: number,
+) {
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requests: [{
+          insertDimension: {
+            range: {
+              sheetId,
+              dimension: "COLUMNS",
+              startIndex: columnIndex,
+              endIndex: columnIndex + 1,
+            },
+            inheritFromBefore: columnIndex > 0,
+          },
+        }],
+      }),
+    },
+  )
+  if (!response.ok) throw new Error(`Google Sheets column insert failed: ${await response.text()}`)
+}
+
 async function ensureProductSheet(
   config: GoogleSheetsConfig,
   accessToken: string,
@@ -231,10 +267,28 @@ async function ensureProductSheet(
   if (sheetId === null) sheetId = await createSheet(config, accessToken, sheetName)
 
   const existingHeaders = await getSheetHeader(config, accessToken, sheetName)
-  const headers = existingHeaders.length > 0 ? existingHeaders : getProductSheetHeaders(product)
+  let headers = existingHeaders.length > 0 ? [...existingHeaders] : getProductSheetHeaders(product)
 
   if (existingHeaders.length === 0) {
     await setSheetHeader(config, accessToken, sheetName, headers)
+  } else {
+    let headersChanged = false
+
+    if (!headers.includes(SHEET_HEADERS.orderId)) {
+      await insertSheetColumn(config, accessToken, sheetId, 0)
+      headers.unshift(SHEET_HEADERS.orderId)
+      headersChanged = true
+    }
+
+    if (!headers.includes(SHEET_HEADERS.pendingBalance)) {
+      const totalColumn = headers.indexOf(SHEET_HEADERS.total)
+      const pendingBalanceColumn = totalColumn === -1 ? headers.length : totalColumn + 1
+      await insertSheetColumn(config, accessToken, sheetId, pendingBalanceColumn)
+      headers.splice(pendingBalanceColumn, 0, SHEET_HEADERS.pendingBalance)
+      headersChanged = true
+    }
+
+    if (headersChanged) await setSheetHeader(config, accessToken, sheetName, headers)
   }
 
   return { sheetId, sheetName, headers }
@@ -432,7 +486,7 @@ function validateOrderInput(product: ProductOrderProduct, input: ProductOrderInp
 
   let size: string | undefined
   if (product.allowSizeSelection) {
-    const allowedSizes = ["S", "M", "L", "XL"]
+    const allowedSizes = ["CH", "M", "G", "XG"]
     if (!input.size || !allowedSizes.includes(input.size)) {
       throw new Error("Selecciona una talla valida.")
     }
@@ -467,7 +521,12 @@ export async function createProductOrder(input: ProductOrderInput) {
 
   const name = sanitizeName(input.name)
   const phone = sanitizePhone(input.phone)
+  const orderId = crypto.randomUUID()
+  const pendingBalance = order.paymentType === "deposit"
+    ? Math.max(0, (product.price - order.unitPrice) * order.quantity)
+    : null
   const rowNumber = await appendOrder(config, accessToken, sheet.sheetName, sheet.headers, {
+    [SHEET_HEADERS.orderId]: orderId,
     [SHEET_HEADERS.name]: name,
     [SHEET_HEADERS.phone]: phone,
     [SHEET_HEADERS.orderedAt]: formatOrderDate(new Date()),
@@ -476,6 +535,7 @@ export async function createProductOrder(input: ProductOrderInput) {
     [SHEET_HEADERS.size]: order.size ?? "",
     [SHEET_HEADERS.quantity]: order.quantity,
     [SHEET_HEADERS.total]: (order.unitPrice * order.quantity).toFixed(2),
+    [SHEET_HEADERS.pendingBalance]: pendingBalance === null ? "" : pendingBalance.toFixed(2),
     [SHEET_HEADERS.status]: "PENDIENTE",
   })
   await formatPaymentType(config, accessToken, sheet.sheetId, rowNumber, sheet.headers, order.paymentType)

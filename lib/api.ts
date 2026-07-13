@@ -278,6 +278,7 @@ function mapEvent(raw: any, now: Date): Event {
   return {
     id: raw._id,
     title: raw.title,
+    city: typeof raw.city === "string" && raw.city.trim() ? raw.city.trim() : undefined,
     eventType: raw.eventType ?? "culto",
     recorridoActivityType: raw.recorridoActivityType ?? undefined,
     type: typeColor,
@@ -1289,6 +1290,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
             price,
             deposit,
             stock,
+            productType,
             allowSizeSelection,
             variantsEnabled,
             variants[]->{
@@ -1308,6 +1310,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
           ]{
             _key,
             title,
+            city,
             eventType,
             schedule{date, startTime, endTime},
             description,
@@ -1367,6 +1370,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
               photos: sanityImagesUrls(product.photos),
               deposit: typeof product.deposit === "number" ? product.deposit : undefined,
               stock: typeof product.stock === "number" ? product.stock : undefined,
+              productType: typeof product.productType === "string" ? product.productType : undefined,
               allowSizeSelection: Boolean(product.allowSizeSelection),
               variantsEnabled: Boolean(product.variantsEnabled),
               variants: (product.variants ?? []).filter(Boolean).map((variant: any) => ({

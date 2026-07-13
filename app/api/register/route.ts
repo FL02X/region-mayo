@@ -7,6 +7,7 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 const RATE_LIMIT_MAX = 5 // 5 requests per minute per IP
 const MIN_REQUEST_INTERVAL = 2000 // 2 seconds between requests
+const isTurnstileEnabled = false
 
 // Simple honeypot field name (bots will fill this)
 const HONEYPOT_FIELD = "website"
@@ -14,11 +15,39 @@ const ATTENDING_AS_VALUES = ["oyente", "varonDorca", "jovenMGR"] as const
 const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
 
 type RegistrationAttendingAs = (typeof ATTENDING_AS_VALUES)[number]
+type TurnstileResponse = {
+  success?: boolean
+}
 type GoogleSheetsConfig = {
   spreadsheetId: string
   sheetName: string
   clientEmail: string
   privateKey: string
+}
+
+async function verifyTurnstile(token: string, ip: string) {
+  const secret = process.env.TURNSTILE_SECRET_KEY
+
+  if (!secret) {
+    return process.env.NODE_ENV !== "production" && token === "dev-bypass"
+  }
+
+  try {
+    const body = new URLSearchParams({ secret, response: token })
+    if (ip && ip !== "unknown") body.set("remoteip", ip)
+
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    })
+    if (!response.ok) return false
+
+    const result = (await response.json()) as TurnstileResponse
+    return Boolean(result.success)
+  } catch {
+    return false
+  }
 }
 
 function getRegistrationAttendingAs(
@@ -423,6 +452,17 @@ export async function POST(req: NextRequest) {
     if (body[HONEYPOT_FIELD]) {
       // Return success to trick bots but don't actually save
       return NextResponse.json({ success: true, message: "Registro exitoso" })
+    }
+
+    if (isTurnstileEnabled) {
+      const turnstileToken = typeof body.turnstileToken === "string" ? body.turnstileToken.trim() : ""
+      const turnstileOk = await verifyTurnstile(turnstileToken, ip)
+      if (!turnstileOk) {
+        return NextResponse.json(
+          { error: "No pudimos verificar que eres una persona. Intenta de nuevo." },
+          { status: 400 },
+        )
+      }
     }
 
     // Timestamp check - request should have a reasonable timestamp

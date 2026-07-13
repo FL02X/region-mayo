@@ -80,6 +80,7 @@ export interface MoreInfoSection {
 export interface Event {
   id: string;
   title: string;
+  city?: string;
   eventType: EventType;
   /** Label used by activities that belong to a Recorrido. */
   recorridoActivityType?: string;
@@ -126,6 +127,7 @@ export interface Product {
   photos: string[];
   deposit?: number;
   stock?: number;
+  productType?: string;
   allowSizeSelection?: boolean;
   variantsEnabled?: boolean;
   variants?: ProductVariant[];

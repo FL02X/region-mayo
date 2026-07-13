@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef, type CSSProperties } from "react"
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from "react"
 import { createPortal } from "react-dom"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
+import Script from "next/script"
 import { z } from "zod"
 import { X, Check, ChevronRight, ChevronLeft, User, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,39 @@ interface RegistrationModalProps {
   regionPresident: RegionPresident | null
 }
 
+interface RegistrationFormState {
+  name: string
+  phone: string
+  needsLodging: boolean | null
+  needsTransport: boolean | null
+  attendingAs: RegistrationAttendingAs
+  isBaptized: boolean | null
+  isCoroMGR: boolean | null
+  isFromAnotherRegion: boolean | null
+}
+
 type ContactFieldErrors = Partial<Record<"name" | "phone", string>>
+const isTurnstileEnabled = false
+
+type TurnstileApi = {
+  render: (
+    container: HTMLElement,
+    options: {
+      sitekey: string
+      callback: (token: string) => void
+      "expired-callback": () => void
+      "error-callback": () => void
+    },
+  ) => string
+  reset: (widgetId?: string) => void
+  remove: (widgetId?: string) => void
+}
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi
+  }
+}
 
 const registrationCategoryLabels: Record<RegistrationAttendingAs, string> = {
   oyente: "Oyente",
@@ -136,6 +169,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const MIN_SUBMIT_LOADING_MS = 250
   const pathname = usePathname()
   const contentScrollRef = useRef<HTMLDivElement>(null)
+  const turnstileContainerRef = useRef<HTMLDivElement>(null)
+  const turnstileWidgetIdRef = useRef<string | null>(null)
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -143,17 +178,21 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const [formStartTime, setFormStartTime] = useState<number>(0)
   const [honeypot, setHoneypot] = useState("")
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState("")
   const { isOnline } = useConnectivity()
   const isOffline = !isOnline
-  const [formData, setFormData] = useState({
+  const totalSteps = 3
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""
+  const allowDevTurnstileBypass = process.env.NODE_ENV !== "production" && !turnstileSiteKey
+  const [formData, setFormData] = useState<RegistrationFormState>({
     name: "",
     phone: "",
-    needsLodging: false,
-    needsTransport: false,
+    needsLodging: null,
+    needsTransport: null,
     attendingAs: "oyente" as RegistrationAttendingAs,
-    isBaptized: false,
-    isCoroMGR: false,
-    isFromAnotherRegion: false,
+    isBaptized: null,
+    isCoroMGR: null,
+    isFromAnotherRegion: null,
   })
 
   useLockBodyScroll(isOpen)
@@ -167,26 +206,53 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     setSubmitError(null)
     setFieldErrors({})
     setSelectedPhotoIndex(null)
+    setTurnstileToken("")
+    setFormData((prev) => ({
+      ...prev,
+      needsLodging: null,
+      needsTransport: null,
+      isBaptized: null,
+      isCoroMGR: null,
+      isFromAnotherRegion: null,
+    }))
   }, [isOpen])
+
+  const renderTurnstile = useCallback(() => {
+    if (!turnstileSiteKey || !window.turnstile || !turnstileContainerRef.current) return
+    if (turnstileWidgetIdRef.current) return
+
+    turnstileWidgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
+      sitekey: turnstileSiteKey,
+      callback: (token) => {
+        setTurnstileToken(token)
+        setSubmitError(null)
+      },
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    })
+  }, [turnstileSiteKey])
+
+  useEffect(() => {
+    if (!isTurnstileEnabled || !isOpen || step !== totalSteps || isSubmitting) return
+
+    renderTurnstile()
+
+    return () => {
+      if (turnstileWidgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetIdRef.current)
+        turnstileWidgetIdRef.current = null
+      }
+      setTurnstileToken("")
+    }
+  }, [isOpen, isSubmitting, renderTurnstile, step, totalSteps])
 
   if (!isOpen) return null
 
-  const totalSteps = 3
   const photos = event.photos || []
   const maxPhotosToShow = 3
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => {
-      if (field === "isCoroMGR" && value === true) {
-        return { ...prev, isCoroMGR: true, isBaptized: true }
-      }
-
-      if (field === "isBaptized" && value === false && prev.isCoroMGR) {
-        return { ...prev, isBaptized: true }
-      }
-
-      return { ...prev, [field]: value }
-    })
+    setFormData((prev) => ({ ...prev, [field]: value }))
 
     if (field === "name" || field === "phone") {
       setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
@@ -222,8 +288,20 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     return null
   }
 
+  const hasCompletedLogistics = [
+    formData.needsLodging,
+    formData.needsTransport,
+    formData.isBaptized,
+    formData.isCoroMGR,
+    formData.isFromAnotherRegion,
+  ].every((value) => value !== null)
+
   const handleNext = () => {
     if (step === 1 && !validateContactStep()) {
+      return
+    }
+
+    if (step === 2 && !hasCompletedLogistics) {
       return
     }
 
@@ -258,6 +336,11 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
       setIsSubmitting(false)
       return
     }
+    if (isTurnstileEnabled && !allowDevTurnstileBypass && !turnstileToken) {
+      setSubmitError("Completa la verificacion de seguridad para continuar.")
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       const response = await fetch("/api/register", {
@@ -269,14 +352,18 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           name: contactData.name,
           phone: contactData.phone,
           eventId: event.id,
-          needsLodging: formData.needsLodging,
-          needsTransport: formData.needsTransport,
-          attendingAs: getRegistrationAttendingAs(formData),
-          isBaptized: formData.isBaptized || formData.isCoroMGR,
-          isCoroMGR: formData.isCoroMGR,
-          isFromAnotherRegion: formData.isFromAnotherRegion,
+          needsLodging: Boolean(formData.needsLodging),
+          needsTransport: Boolean(formData.needsTransport),
+          attendingAs: getRegistrationAttendingAs({
+            isBaptized: Boolean(formData.isBaptized),
+            isCoroMGR: Boolean(formData.isCoroMGR),
+          }),
+          isBaptized: Boolean(formData.isBaptized) || Boolean(formData.isCoroMGR),
+          isCoroMGR: Boolean(formData.isCoroMGR),
+          isFromAnotherRegion: Boolean(formData.isFromAnotherRegion),
           website: honeypot,
           _requestTime: formStartTime,
+          turnstileToken: turnstileToken || (allowDevTurnstileBypass ? "dev-bypass" : ""),
         }),
       })
 
@@ -324,7 +411,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     ? "bg-brand-green text-white hover:bg-brand-green-hover active:bg-brand-green-active"
     : "bg-primary hover:bg-primary/90 text-primary-foreground"
 
-  const ToggleQuestion = ({ label, value, field }: { label: string, value: boolean, field: string }) => (
+  const ToggleQuestion = ({ label, value, field }: { label: string, value: boolean | null, field: string }) => (
     <div className="flex items-center justify-between py-4 border-b border-border/50 last:border-0">
       <span className="text-sm font-medium text-foreground">{label}</span>
       <div className="flex bg-muted/30 border border-input">
@@ -332,7 +419,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           variant="ghost"
           size="sm"
           onClick={() => handleInputChange(field, true)}
-          className={`rounded-none h-10 px-5 text-sm ${value ? selectedToggleClassName : unselectedToggleClassName}`}
+          className={`rounded-none h-10 px-5 text-sm ${value === true ? selectedToggleClassName : unselectedToggleClassName}`}
         >
           Sí
         </Button>
@@ -341,7 +428,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           variant="ghost"
           size="sm"
           onClick={() => handleInputChange(field, false)}
-          className={`rounded-none h-10 px-5 text-sm ${!value ? selectedToggleClassName : unselectedToggleClassName}`}
+          className={`rounded-none h-10 px-5 text-sm ${value === false ? selectedToggleClassName : unselectedToggleClassName}`}
         >
           No
         </Button>
@@ -355,6 +442,13 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
         className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 overflow-hidden"
         style={modalAccentStyle}
       >
+        {isTurnstileEnabled && turnstileSiteKey && (
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+            strategy="afterInteractive"
+            onLoad={renderTurnstile}
+          />
+        )}
         {/* Backdrop */}
         <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={onClose} />
 
@@ -446,9 +540,9 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 <div className="border border-border/50 bg-background px-4">
                   <ToggleQuestion label="¿Necesitas hospedaje?" value={formData.needsLodging} field="needsLodging" />
                   <ToggleQuestion label="¿Necesitas transporte?" value={formData.needsTransport} field="needsTransport" />
-                  <ToggleQuestion label="¿Estás bautizado en nuestra iglesia?" value={formData.isBaptized} field="isBaptized" />
+                  <ToggleQuestion label="¿Estas bautizado en la Iglesia Gentil de Cristo?" value={formData.isBaptized} field="isBaptized" />
                   <ToggleQuestion label="¿Eres joven del coro MGR?" value={formData.isCoroMGR} field="isCoroMGR" />
-                  <ToggleQuestion label="¿Eres de otra región?" value={formData.isFromAnotherRegion} field="isFromAnotherRegion" />
+                  <ToggleQuestion label="¿Vienes de otra región?" value={formData.isFromAnotherRegion} field="isFromAnotherRegion" />
                 </div>
               </div>
             )}
@@ -507,9 +601,10 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 )}
 
                 {/* Summary */}
-                <div className="border border-border/50 bg-background p-5">
-                  <h4 className="font-bold text-xs text-foreground mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Resumen de tu registro</h4>
-                  <div className="space-y-3 text-sm">
+                <div className="space-y-4">
+                  <div className="border border-border/50 bg-background p-5">
+                    <h4 className="font-bold text-xs text-foreground mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Resumen de tu registro</h4>
+                    <div className="space-y-3 text-sm">
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Nombre y apellido:</span>
                       <span className="max-w-[60%] text-right text-foreground font-medium">{formData.name || "—"}</span>
@@ -540,9 +635,22 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Asistiré como:</span>
-                      <span className="text-foreground font-medium">{registrationCategoryLabels[getRegistrationAttendingAs(formData)]}</span>
+                      <span className="text-foreground font-medium">{registrationCategoryLabels[getRegistrationAttendingAs({
+                        isBaptized: Boolean(formData.isBaptized),
+                        isCoroMGR: Boolean(formData.isCoroMGR),
+                      })]}</span>
+                    </div>
                     </div>
                   </div>
+                  {isTurnstileEnabled && (allowDevTurnstileBypass ? (
+                    <p className="text-xs text-muted-foreground">Verificacion de seguridad no configurada en desarrollo.</p>
+                  ) : turnstileSiteKey ? (
+                    <div className="min-h-[65px] overflow-x-auto">
+                      <div ref={turnstileContainerRef} />
+                    </div>
+                  ) : (
+                    <p className="text-xs text-destructive">Falta configurar Turnstile para registrar asistencias.</p>
+                  ))}
                 </div>
                   </div>
                 )}
@@ -595,7 +703,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 )}
                 <Button
                   onClick={step === totalSteps ? handleSubmit : handleNext}
-                  disabled={isSubmitting || (step === totalSteps && isOffline)}
+                  disabled={isSubmitting || (step === 2 && !hasCompletedLogistics) || (step === totalSteps && (isOffline || (isTurnstileEnabled && !allowDevTurnstileBypass && !turnstileToken)))}
                   className={`min-w-0 flex-1 shrink rounded-none h-14 whitespace-normal px-3 text-center text-sm font-bold uppercase leading-tight tracking-wider ${primaryButtonClassName}`}
                 >
                   {isSubmitting ? (

@@ -36,6 +36,12 @@ export default defineType({
       validation: (Rule) => Rule.min(0).integer(),
     }),
     defineField({
+      name: 'productType',
+      title: '¿QUÉ TIPO DE PRODUCTO ES? (OPCIONAL)',
+      type: 'string',
+      description: 'Escribir, por ejemplo: "Camisetas, sueteres, corbatas..."',
+    }),
+    defineField({
       name: 'isDisabled',
       title: 'DESACTIVAR PRODUCTO',
       type: 'boolean',
