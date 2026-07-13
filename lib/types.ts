@@ -127,6 +127,7 @@ export interface Product {
   photos: string[];
   deposit?: number;
   stock?: number;
+  remainingStock?: number;
   productType?: string;
   allowSizeSelection?: boolean;
   variantsEnabled?: boolean;

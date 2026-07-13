@@ -1,19 +1,24 @@
 import { getSanityClient } from "@/lib/sanity/client"
+import { sanityMutate, sanityQueryNoStore } from "@/lib/sanity/write-client"
 
 const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
 const SHEET_HEADERS = {
   orderId: "ID",
   name: "Nombre",
-  phone: "Numero",
+  phone: "Teléfono",
   orderedAt: "Fecha y hora",
-  paymentType: "Tipo",
+  paymentType: "Modalidad de pago",
   variant: "Variante",
   size: "Talla",
   quantity: "Cantidad",
-  total: "Total (MXN)",
-  pendingBalance: "Saldo pendiente despues de pagar",
-  status: "Estado",
+  fullTotal: "Pago total (MXN)",
+  paymentExpected: "Pago esperado (MXN)",
+  paymentStatus: "Comprobante de pago",
+  balanceDue: "Saldo pendiente (MXN)",
 } as const
+
+const PAYMENT_STATUSES = ["PENDIENTE", "ANTICIPO RECIBIDO", "PAGADO", "CANCELADO"] as const
+const AUTOMATIC_COLUMNS_PROTECTION_DESCRIPTION = "Pedidos: columnas automáticas"
 
 type GoogleSheetsConfig = {
   spreadsheetId: string
@@ -48,6 +53,13 @@ export type ProductOrderInput = {
   variantId?: string | null
   size?: string | null
   quantity: number
+}
+
+export class ProductOrderUserError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "ProductOrderUserError"
+  }
 }
 
 type ProductOrderDetails = {
@@ -131,10 +143,11 @@ function getProductSheetHeaders(product: ProductOrderProduct): string[] {
     ...(typeof product.deposit === "number" ? [SHEET_HEADERS.paymentType] : []),
     ...(product.variantsEnabled ? [SHEET_HEADERS.variant] : []),
     ...(product.allowSizeSelection ? [SHEET_HEADERS.size] : []),
-    SHEET_HEADERS.quantity,
-    SHEET_HEADERS.total,
-    SHEET_HEADERS.pendingBalance,
-    SHEET_HEADERS.status,
+    ...(product.allowMultipleQuantity ? [SHEET_HEADERS.quantity] : []),
+    SHEET_HEADERS.fullTotal,
+    SHEET_HEADERS.paymentExpected,
+    SHEET_HEADERS.paymentStatus,
+    SHEET_HEADERS.balanceDue,
   ]
 }
 
@@ -253,6 +266,56 @@ async function insertSheetColumn(
   if (!response.ok) throw new Error(`Google Sheets column insert failed: ${await response.text()}`)
 }
 
+async function deleteSheetColumn(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetId: number,
+  columnIndex: number,
+) {
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requests: [{
+          deleteDimension: {
+            range: {
+              sheetId,
+              dimension: "COLUMNS",
+              startIndex: columnIndex,
+              endIndex: columnIndex + 1,
+            },
+          },
+        }],
+      }),
+    },
+  )
+  if (!response.ok) throw new Error(`Google Sheets column delete failed: ${await response.text()}`)
+}
+
+function migrateLegacyHeader(header: string) {
+  const legacyHeaders: Record<string, string> = {
+    Numero: SHEET_HEADERS.phone,
+    Número: SHEET_HEADERS.phone,
+    Tipo: SHEET_HEADERS.paymentType,
+    "Total (MXN)": SHEET_HEADERS.paymentExpected,
+    "Precio total (MXN)": SHEET_HEADERS.fullTotal,
+    "Pago por confirmar (MXN)": SHEET_HEADERS.paymentExpected,
+    "Saldo por cobrar (MXN)": SHEET_HEADERS.balanceDue,
+    "Estado del pago": SHEET_HEADERS.paymentStatus,
+    "Saldo total pendiente (MXN)": SHEET_HEADERS.balanceDue,
+    "Saldo pendiente despues de pagar": SHEET_HEADERS.balanceDue,
+    "Saldo pendiente después de pagar": SHEET_HEADERS.balanceDue,
+    Estado: SHEET_HEADERS.paymentStatus,
+  }
+
+  return legacyHeaders[header] ?? header
+}
+
 async function ensureProductSheet(
   config: GoogleSheetsConfig,
   accessToken: string,
@@ -267,31 +330,352 @@ async function ensureProductSheet(
   if (sheetId === null) sheetId = await createSheet(config, accessToken, sheetName)
 
   const existingHeaders = await getSheetHeader(config, accessToken, sheetName)
-  let headers = existingHeaders.length > 0 ? [...existingHeaders] : getProductSheetHeaders(product)
+  const expectedHeaders = getProductSheetHeaders(product)
+  let headers = existingHeaders.length > 0
+    ? existingHeaders.map(migrateLegacyHeader)
+    : expectedHeaders
+  let headersChanged = existingHeaders.some((header, index) => header !== headers[index])
 
   if (existingHeaders.length === 0) {
     await setSheetHeader(config, accessToken, sheetName, headers)
   } else {
-    let headersChanged = false
-
     if (!headers.includes(SHEET_HEADERS.orderId)) {
       await insertSheetColumn(config, accessToken, sheetId, 0)
       headers.unshift(SHEET_HEADERS.orderId)
       headersChanged = true
     }
 
-    if (!headers.includes(SHEET_HEADERS.pendingBalance)) {
-      const totalColumn = headers.indexOf(SHEET_HEADERS.total)
-      const pendingBalanceColumn = totalColumn === -1 ? headers.length : totalColumn + 1
-      await insertSheetColumn(config, accessToken, sheetId, pendingBalanceColumn)
-      headers.splice(pendingBalanceColumn, 0, SHEET_HEADERS.pendingBalance)
+    if (!headers.includes(SHEET_HEADERS.fullTotal)) {
+      const paymentExpectedColumn = headers.indexOf(SHEET_HEADERS.paymentExpected)
+      const fullTotalColumn = paymentExpectedColumn === -1 ? headers.length : paymentExpectedColumn
+      await insertSheetColumn(config, accessToken, sheetId, fullTotalColumn)
+      headers.splice(fullTotalColumn, 0, SHEET_HEADERS.fullTotal)
+      headersChanged = true
+    }
+
+    if (!headers.includes(SHEET_HEADERS.balanceDue)) {
+      const paymentStatusColumn = headers.indexOf(SHEET_HEADERS.paymentStatus)
+      const balanceDueColumn = paymentStatusColumn === -1 ? headers.length : paymentStatusColumn + 1
+      await insertSheetColumn(config, accessToken, sheetId, balanceDueColumn)
+      headers.splice(balanceDueColumn, 0, SHEET_HEADERS.balanceDue)
+      headersChanged = true
+    }
+
+    const deliveryStatusColumn = headers.indexOf("Estado de entrega")
+    if (deliveryStatusColumn >= 0) {
+      await deleteSheetColumn(config, accessToken, sheetId, deliveryStatusColumn)
+      headers.splice(deliveryStatusColumn, 1)
+      headersChanged = true
+    }
+
+    const optionalHeaders = [
+      SHEET_HEADERS.paymentType,
+      SHEET_HEADERS.variant,
+      SHEET_HEADERS.size,
+      SHEET_HEADERS.quantity,
+    ]
+    for (const header of optionalHeaders) {
+      const columnIndex = headers.indexOf(header)
+      if (!expectedHeaders.includes(header) && columnIndex >= 0) {
+        await deleteSheetColumn(config, accessToken, sheetId, columnIndex)
+        headers.splice(columnIndex, 1)
+        headersChanged = true
+      }
+    }
+    for (const header of optionalHeaders) {
+      if (!expectedHeaders.includes(header) || headers.includes(header)) continue
+      const expectedIndex = expectedHeaders.indexOf(header)
+      const nextExistingHeader = expectedHeaders.slice(expectedIndex + 1).find((candidate) => headers.includes(candidate))
+      const columnIndex = nextExistingHeader ? headers.indexOf(nextExistingHeader) : headers.length
+      await insertSheetColumn(config, accessToken, sheetId, columnIndex)
+      headers.splice(columnIndex, 0, header)
       headersChanged = true
     }
 
     if (headersChanged) await setSheetHeader(config, accessToken, sheetName, headers)
   }
 
-  return { sheetId, sheetName, headers }
+  return { sheetId, sheetName, headers, needsConfiguration: existingHeaders.length === 0 || headersChanged }
+}
+
+function getColumnLetter(columnIndex: number) {
+  let index = columnIndex + 1
+  let letter = ""
+
+  while (index > 0) {
+    const remainder = (index - 1) % 26
+    letter = String.fromCharCode(65 + remainder) + letter
+    index = Math.floor((index - 1) / 26)
+  }
+
+  return letter
+}
+
+function getPaymentConditionalFormatRequests(
+  sheetId: number,
+  headers: string[],
+): Array<Record<string, unknown>> {
+  const paymentStatusColumn = headers.indexOf(SHEET_HEADERS.paymentStatus)
+  if (paymentStatusColumn === -1) return []
+
+  const paymentStatusColumnLetter = getColumnLetter(paymentStatusColumn)
+  const rowRange = { sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: headers.length }
+  const conditionalFormats = [
+    { formula: `=$${paymentStatusColumnLetter}2="PENDIENTE"`, color: { red: 0.98, green: 0.95, blue: 0.82 } },
+    { formula: `=$${paymentStatusColumnLetter}2="PAGADO"`, color: { red: 0.85, green: 0.94, blue: 0.85 } },
+    { formula: `=$${paymentStatusColumnLetter}2="ANTICIPO RECIBIDO"`, color: { red: 0.93, green: 0.90, blue: 0.78 } },
+    { formula: `=$${paymentStatusColumnLetter}2="CANCELADO"`, color: { red: 0.90, green: 0.90, blue: 0.90 } },
+  ]
+
+  return conditionalFormats.map(({ formula, color }, index) => ({
+    addConditionalFormatRule: {
+      index,
+      rule: {
+        ranges: [rowRange],
+        booleanRule: {
+          condition: { type: "CUSTOM_FORMULA", values: [{ userEnteredValue: formula }] },
+          format: { backgroundColor: color },
+        },
+      },
+    },
+  }))
+}
+
+function getPaymentFilterViewRequests(
+  sheetId: number,
+  sheetName: string,
+  headers: string[],
+): Array<Record<string, unknown>> {
+  const paymentStatusColumn = headers.indexOf(SHEET_HEADERS.paymentStatus)
+  if (paymentStatusColumn === -1) return []
+
+  const filterViews = [
+    { title: "Pendientes de verificar", value: "PENDIENTE" },
+    { title: "Anticipos recibidos", value: "ANTICIPO RECIBIDO" },
+    { title: "Pagados", value: "PAGADO" },
+    { title: "Cancelados", value: "CANCELADO" },
+  ]
+
+  return filterViews.map(({ title, value }) => ({
+    addFilterView: {
+      filter: {
+        title: `${sheetName} - ${title}`,
+        range: { sheetId, startRowIndex: 0, startColumnIndex: 0, endColumnIndex: headers.length },
+        criteria: {
+          [paymentStatusColumn]: {
+            condition: { type: "TEXT_EQ", values: [{ userEnteredValue: value }] },
+          },
+        },
+      },
+    },
+  }))
+}
+
+async function configureProductSheet(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetId: number,
+  headers: string[],
+) {
+  const moneyColumns = [
+    headers.indexOf(SHEET_HEADERS.fullTotal),
+    headers.indexOf(SHEET_HEADERS.paymentExpected),
+    headers.indexOf(SHEET_HEADERS.balanceDue),
+  ].filter((column) => column >= 0)
+  const requests: Array<Record<string, unknown>> = [{
+    updateSheetProperties: {
+      properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
+      fields: "gridProperties.frozenRowCount",
+    },
+  }]
+
+  moneyColumns.forEach((column) => {
+    requests.push({
+      repeatCell: {
+        range: { sheetId, startRowIndex: 1, startColumnIndex: column, endColumnIndex: column + 1 },
+        cell: { userEnteredFormat: { numberFormat: { type: "CURRENCY", pattern: "$#,##0" } } },
+        fields: "userEnteredFormat.numberFormat",
+      },
+    })
+  })
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ requests }),
+    },
+  )
+  if (!response.ok) throw new Error(`Google Sheets configuration failed: ${await response.text()}`)
+}
+
+function getOrderRowValidationRequests(
+  sheetId: number,
+  headers: string[],
+  rowNumbers: number[],
+): Array<Record<string, unknown>> {
+  const validationColumns = [
+    { column: headers.indexOf(SHEET_HEADERS.paymentStatus), values: PAYMENT_STATUSES },
+  ].filter(({ column }) => column >= 0)
+
+  return rowNumbers.flatMap((rowNumber) => validationColumns.map(({ column, values }) => ({
+    setDataValidation: {
+      range: {
+        sheetId,
+        startRowIndex: rowNumber - 1,
+        endRowIndex: rowNumber,
+        startColumnIndex: column,
+        endColumnIndex: column + 1,
+      },
+      rule: {
+        condition: {
+          type: "ONE_OF_LIST",
+          values: values.map((status) => ({ userEnteredValue: status })),
+        },
+        strict: true,
+        showCustomUi: true,
+      },
+    },
+  })))
+}
+
+async function refreshProductSheetControls(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetId: number,
+  sheetName: string,
+  headers: string[],
+) {
+  const nameColumn = headers.indexOf(SHEET_HEADERS.name)
+  const validationColumns = [
+    headers.indexOf(SHEET_HEADERS.paymentStatus),
+  ].filter((column) => column >= 0)
+  const moneyColumns = [
+    headers.indexOf(SHEET_HEADERS.fullTotal),
+    headers.indexOf(SHEET_HEADERS.paymentExpected),
+    headers.indexOf(SHEET_HEADERS.balanceDue),
+  ].filter((column) => column >= 0)
+
+  const metadataResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}?fields=sheets(properties(sheetId),protectedRanges(protectedRangeId,description),conditionalFormats(booleanRule(condition(type,values))),filterViews(filterViewId,title))`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  )
+  if (!metadataResponse.ok) throw new Error(`Google Sheets controls metadata read failed: ${await metadataResponse.text()}`)
+
+  const metadata = await metadataResponse.json() as {
+    sheets?: Array<{
+      properties?: { sheetId?: number }
+      protectedRanges?: Array<{ protectedRangeId?: number; description?: string }>
+      conditionalFormats?: Array<{
+        booleanRule?: { condition?: { type?: string; values?: Array<{ userEnteredValue?: string }> } }
+      }>
+      filterViews?: Array<{ filterViewId?: number; title?: string }>
+    }>
+  }
+  const sheetMetadata = metadata.sheets?.find((sheet) => sheet.properties?.sheetId === sheetId)
+  const automaticProtectionIds = sheetMetadata?.protectedRanges
+    ?.filter(({ description }) => description?.startsWith(AUTOMATIC_COLUMNS_PROTECTION_DESCRIPTION))
+    .map(({ protectedRangeId }) => protectedRangeId)
+    .filter((protectedRangeId): protectedRangeId is number => typeof protectedRangeId === "number") ?? []
+  const automaticConditionalFormatIndexes = sheetMetadata?.conditionalFormats
+    ?.flatMap((rule, index) => {
+      const condition = rule.booleanRule?.condition
+      const formula = condition?.values?.[0]?.userEnteredValue ?? ""
+      const isPaymentRule = condition?.type === "CUSTOM_FORMULA"
+        && /^=\$[A-Z]+2="(?:PENDIENTE|ANTICIPO RECIBIDO|PAGADO COMPLETO|PAGADO|CANCELADO)"$/.test(formula)
+      const isLegacyDeliveryRule = condition?.type === "CUSTOM_FORMULA" && formula.endsWith('="ENTREGADO"')
+      return isPaymentRule || isLegacyDeliveryRule ? [index] : []
+    })
+    .sort((a, b) => b - a) ?? []
+  const automaticFilterViewTitles = new Set([
+    "Pendientes de verificar",
+    "Anticipos recibidos",
+    "Pagados completamente",
+    "Pagados",
+    "Cancelados",
+    "Pendientes de entregar",
+    "Entregados",
+  ].map((title) => `${sheetName} - ${title}`))
+  const automaticFilterViewIds = sheetMetadata?.filterViews
+    ?.filter(({ title }) => title && automaticFilterViewTitles.has(title))
+    .map(({ filterViewId }) => filterViewId)
+    .filter((filterViewId): filterViewId is number => typeof filterViewId === "number") ?? []
+
+  let activeRows: number[] = []
+  if (nameColumn >= 0) {
+    const nameColumnLetter = getColumnLetter(nameColumn)
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(getGoogleSheetRange(sheetName, `${nameColumnLetter}2:${nameColumnLetter}`))}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    )
+    if (!response.ok) throw new Error(`Google Sheets active rows read failed: ${await response.text()}`)
+
+    const rows = ((await response.json()) as { values?: Array<Array<string | number>> }).values ?? []
+    activeRows = rows.flatMap((row, index) => String(row[0] ?? "").trim() ? [index + 2] : [])
+  }
+
+  const requests: Array<Record<string, unknown>> = [
+    ...validationColumns.map((column) => ({
+      setDataValidation: {
+        range: { sheetId, startRowIndex: 1, startColumnIndex: column, endColumnIndex: column + 1 },
+      },
+    })),
+    ...moneyColumns.map((column) => ({
+      repeatCell: {
+        range: { sheetId, startRowIndex: 1, startColumnIndex: column, endColumnIndex: column + 1 },
+        cell: { userEnteredFormat: { numberFormat: { type: "CURRENCY", pattern: "$#,##0" } } },
+        fields: "userEnteredFormat.numberFormat",
+      },
+    })),
+    ...automaticProtectionIds.map((protectedRangeId) => ({ deleteProtectedRange: { protectedRangeId } })),
+    ...automaticConditionalFormatIndexes.map((index) => ({ deleteConditionalFormatRule: { sheetId, index } })),
+    ...automaticFilterViewIds.map((filterId) => ({ deleteFilterView: { filterId } })),
+    ...getPaymentConditionalFormatRequests(sheetId, headers),
+    ...getPaymentFilterViewRequests(sheetId, sheetName, headers),
+    ...getOrderRowValidationRequests(sheetId, headers, activeRows),
+  ]
+  if (requests.length === 0) return
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ requests }),
+    },
+  )
+  if (!response.ok) throw new Error(`Google Sheets controls refresh failed: ${await response.text()}`)
+}
+
+async function addOrderRowValidations(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetId: number,
+  headers: string[],
+  rowNumber: number,
+) {
+  const requests = getOrderRowValidationRequests(sheetId, headers, [rowNumber])
+  if (requests.length === 0) return
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ requests }),
+    },
+  )
+  if (!response.ok) throw new Error(`Google Sheets row validation failed: ${await response.text()}`)
 }
 
 function formatOrderDate(date: Date) {
@@ -308,13 +692,192 @@ function formatOrderDate(date: Date) {
   return `${values.day}/${values.month}/${values.year} ${values.hour}:${values.minute}`
 }
 
+function getBalanceFormula(headers: string[], rowNumber: number) {
+  const fullTotalColumn = headers.indexOf(SHEET_HEADERS.fullTotal)
+  const paymentExpectedColumn = headers.indexOf(SHEET_HEADERS.paymentExpected)
+  const paymentStatusColumn = headers.indexOf(SHEET_HEADERS.paymentStatus)
+  if (fullTotalColumn === -1 || paymentExpectedColumn === -1 || paymentStatusColumn === -1) return ""
+
+  const fullTotalCell = `$${getColumnLetter(fullTotalColumn)}${rowNumber}`
+  const paymentExpectedCell = `$${getColumnLetter(paymentExpectedColumn)}${rowNumber}`
+  const paymentStatusCell = `$${getColumnLetter(paymentStatusColumn)}${rowNumber}`
+  return `=(${paymentStatusCell}="ANTICIPO RECIBIDO")*(${fullTotalCell}-${paymentExpectedCell})`
+}
+
+function normalizePaymentStatus(value: unknown) {
+  const status = String(value ?? "").trim().toUpperCase()
+  if (status === "PAGADO COMPLETO") return "PAGADO"
+  if (status === "PEDIENTE") return "PENDIENTE"
+  return PAYMENT_STATUSES.includes(status as (typeof PAYMENT_STATUSES)[number]) ? status : "PENDIENTE"
+}
+
+function normalizePaymentType(value: unknown) {
+  return String(value ?? "").replace(/[()\"]/g, "").trim().toUpperCase()
+}
+
+function formatPaymentTypeValue(value: unknown) {
+  const paymentType = normalizePaymentType(value)
+  return paymentType === "ANTICIPO" || paymentType === "PAGO COMPLETO" ? `"${paymentType}"` : String(value ?? "")
+}
+
+async function updateSheetValues(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  data: Array<{ range: string; values: Array<Array<string | number>> }>,
+) {
+  if (data.length === 0) return
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ valueInputOption: "USER_ENTERED", data }),
+    },
+  )
+  if (!response.ok) throw new Error(`Google Sheets value update failed: ${await response.text()}`)
+}
+
+function parseSheetMoney(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null
+  const normalized = String(value ?? "").replace(/[^\d.-]/g, "")
+  if (!normalized) return null
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+async function migrateProductSheetRows(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetName: string,
+  headers: string[],
+  product: ProductOrderProduct,
+) {
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(getGoogleSheetRange(sheetName, "A2:Z"))}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  )
+  if (!response.ok) throw new Error(`Google Sheets row migration read failed: ${await response.text()}`)
+
+  const rows = ((await response.json()) as { values?: Array<Array<string | number>> }).values ?? []
+  const paymentTypeColumn = headers.indexOf(SHEET_HEADERS.paymentType)
+  const quantityColumn = headers.indexOf(SHEET_HEADERS.quantity)
+  const fullTotalColumn = headers.indexOf(SHEET_HEADERS.fullTotal)
+  const paymentExpectedColumn = headers.indexOf(SHEET_HEADERS.paymentExpected)
+  const paymentStatusColumn = headers.indexOf(SHEET_HEADERS.paymentStatus)
+  const balanceDueColumn = headers.indexOf(SHEET_HEADERS.balanceDue)
+  const updates: Array<{ range: string; values: Array<Array<string | number>> }> = []
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 2
+    const quantity = Number(row[quantityColumn])
+    const normalizedQuantity = Number.isInteger(quantity) && quantity > 0 ? quantity : 1
+    const existingFullTotal = parseSheetMoney(row[fullTotalColumn])
+    const paymentExpected = parseSheetMoney(row[paymentExpectedColumn])
+    const previousBalance = parseSheetMoney(row[balanceDueColumn])
+    const paymentType = paymentTypeColumn >= 0 ? formatPaymentTypeValue(row[paymentTypeColumn]) : ""
+    const isDeposit = normalizePaymentType(paymentType) === "ANTICIPO"
+    const historicalFullTotal = existingFullTotal
+      ?? (isDeposit && paymentExpected !== null && previousBalance !== null
+        ? paymentExpected + previousBalance
+        : paymentExpected)
+    const fullTotal = historicalFullTotal !== null && historicalFullTotal > 0
+      ? historicalFullTotal
+      : product.price * normalizedQuantity
+    const normalizedPaymentExpected = paymentExpected
+      ?? (isDeposit && typeof product.deposit === "number" ? product.deposit * normalizedQuantity : fullTotal)
+    const paymentStatus = normalizePaymentStatus(row[paymentStatusColumn])
+
+    updates.push(
+      ...(paymentTypeColumn >= 0 ? [{
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(paymentTypeColumn)}${rowNumber}`),
+        values: [[paymentType]],
+      }] : []),
+      {
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(fullTotalColumn)}${rowNumber}`),
+        values: [[fullTotal]],
+      },
+      {
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(paymentExpectedColumn)}${rowNumber}`),
+        values: [[normalizedPaymentExpected]],
+      },
+      {
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(paymentStatusColumn)}${rowNumber}`),
+        values: [[paymentStatus]],
+      },
+      {
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(balanceDueColumn)}${rowNumber}`),
+        values: [[getBalanceFormula(headers, rowNumber)]],
+      },
+    )
+  })
+
+  await updateSheetValues(config, accessToken, updates)
+}
+
+async function refreshBalanceFormulas(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetName: string,
+  headers: string[],
+) {
+  const nameColumn = headers.indexOf(SHEET_HEADERS.name)
+  const paymentTypeColumn = headers.indexOf(SHEET_HEADERS.paymentType)
+  const fullTotalColumn = headers.indexOf(SHEET_HEADERS.fullTotal)
+  const paymentExpectedColumn = headers.indexOf(SHEET_HEADERS.paymentExpected)
+  const paymentStatusColumn = headers.indexOf(SHEET_HEADERS.paymentStatus)
+  const balanceDueColumn = headers.indexOf(SHEET_HEADERS.balanceDue)
+  if ([nameColumn, fullTotalColumn, paymentExpectedColumn, paymentStatusColumn, balanceDueColumn].some((column) => column === -1)) return
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(getGoogleSheetRange(sheetName, "A2:Z"))}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  )
+  if (!response.ok) throw new Error(`Google Sheets balance refresh read failed: ${await response.text()}`)
+
+  const rows = ((await response.json()) as { values?: Array<Array<string | number>> }).values ?? []
+  const updates = rows.flatMap((row, index) => {
+    if (!String(row[nameColumn] ?? "").trim()) return []
+    const rowNumber = index + 2
+    const fullTotal = parseSheetMoney(row[fullTotalColumn])
+    const paymentExpected = parseSheetMoney(row[paymentExpectedColumn])
+    return [
+      ...(paymentTypeColumn < 0 ? [] : [{
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(paymentTypeColumn)}${rowNumber}`),
+        values: [[formatPaymentTypeValue(row[paymentTypeColumn])]],
+      }]),
+      ...(fullTotal === null ? [] : [{
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(fullTotalColumn)}${rowNumber}`),
+        values: [[fullTotal]],
+      }]),
+      ...(paymentExpected === null ? [] : [{
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(paymentExpectedColumn)}${rowNumber}`),
+        values: [[paymentExpected]],
+      }]),
+      {
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(paymentStatusColumn)}${rowNumber}`),
+        values: [[normalizePaymentStatus(row[paymentStatusColumn])]],
+      },
+      {
+        range: getGoogleSheetRange(sheetName, `${getColumnLetter(balanceDueColumn)}${rowNumber}`),
+        values: [[getBalanceFormula(headers, rowNumber)]],
+      },
+    ]
+  })
+
+  await updateSheetValues(config, accessToken, updates)
+}
+
 async function getPaidQuantity(
   config: GoogleSheetsConfig,
   accessToken: string,
   sheetName: string,
   headers: string[],
 ) {
-  const statusIndex = headers.indexOf(SHEET_HEADERS.status)
+  const statusIndex = headers.indexOf(SHEET_HEADERS.paymentStatus)
   if (statusIndex === -1) return 0
   const quantityIndex = headers.indexOf(SHEET_HEADERS.quantity)
 
@@ -327,7 +890,8 @@ async function getPaidQuantity(
 
   const data = await response.json() as { values?: string[][] }
   return (data.values ?? []).slice(1).reduce((total, row) => {
-    if (String(row[statusIndex] ?? "").trim().toUpperCase() !== "PAGADO") return total
+    const status = String(row[statusIndex] ?? "").trim().toUpperCase()
+    if (status !== "ANTICIPO RECIBIDO" && status !== "PAGADO" && status !== "PAGADO COMPLETO") return total
 
     const quantity = quantityIndex === -1 ? 1 : Number(row[quantityIndex])
     return total + (Number.isInteger(quantity) && quantity > 0 ? quantity : 1)
@@ -460,22 +1024,22 @@ export async function getProductOrderProduct(productId: string): Promise<Product
 function validateOrderInput(product: ProductOrderProduct, input: ProductOrderInput): ProductOrderDetails {
   const name = sanitizeName(input.name)
   const phone = sanitizePhone(input.phone)
-  if (name.length < 2) throw new Error("Escribe tu nombre completo.")
-  if (phone.length !== 10) throw new Error("Escribe los 10 digitos de tu celular.")
-  if (product.isDisabled) throw new Error("Este producto no esta disponible.")
+  if (name.length < 2) throw new ProductOrderUserError("Escribe tu nombre completo.")
+  if (phone.length !== 10) throw new ProductOrderUserError("Escribe los 10 digitos de tu celular.")
+  if (product.isDisabled) throw new ProductOrderUserError("Este producto no esta disponible.")
   if (!Number.isFinite(product.price) || product.price < 0) throw new Error("El precio del producto no es valido.")
 
   const quantity = Number(input.quantity)
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
-    throw new Error("La cantidad del producto no es valida.")
+    throw new ProductOrderUserError("La cantidad del producto no es valida.")
   }
   if (!product.allowMultipleQuantity && quantity !== 1) {
-    throw new Error("Este producto solo permite una unidad por pedido.")
+    throw new ProductOrderUserError("Este producto solo permite una unidad por pedido.")
   }
 
   const paymentType = input.paymentType === "deposit" ? "deposit" : "full"
   if (paymentType === "deposit" && typeof product.deposit !== "number") {
-    throw new Error("Este producto no tiene anticipo disponible.")
+    throw new ProductOrderUserError("Este producto no tiene anticipo disponible.")
   }
 
   let variantName: string | undefined
@@ -488,7 +1052,7 @@ function validateOrderInput(product: ProductOrderProduct, input: ProductOrderInp
   if (product.allowSizeSelection) {
     const allowedSizes = ["CH", "M", "G", "XG"]
     if (!input.size || !allowedSizes.includes(input.size)) {
-      throw new Error("Selecciona una talla valida.")
+      throw new ProductOrderUserError("Selecciona una talla valida.")
     }
     size = input.size
   }
@@ -505,39 +1069,50 @@ function validateOrderInput(product: ProductOrderProduct, input: ProductOrderInp
 
 export async function createProductOrder(input: ProductOrderInput) {
   const product = await getProductOrderProduct(input.productId)
-  if (!product) throw new Error("No se encontro el producto.")
+  if (!product) throw new ProductOrderUserError("No se encontro el producto.")
   const order = validateOrderInput(product, input)
   const config = getGoogleSheetsConfig()
   const accessToken = await getGoogleSheetsAccessToken(config)
   const sheet = await ensureProductSheet(config, accessToken, product)
+  if (sheet.needsConfiguration) {
+    await migrateProductSheetRows(config, accessToken, sheet.sheetName, sheet.headers, product)
+    await configureProductSheet(config, accessToken, sheet.sheetId, sheet.headers)
+  } else {
+    await refreshBalanceFormulas(config, accessToken, sheet.sheetName, sheet.headers)
+  }
+  await refreshProductSheetControls(config, accessToken, sheet.sheetId, sheet.sheetName, sheet.headers)
   const paidQuantity = typeof product.stock === "number"
     ? await getPaidQuantity(config, accessToken, sheet.sheetName, sheet.headers)
     : 0
   const remainingStock = typeof product.stock === "number" ? Math.max(0, product.stock - paidQuantity) : undefined
 
   if (typeof remainingStock === "number" && order.quantity > remainingStock) {
-    throw new Error(remainingStock === 0 ? "Este producto esta agotado." : `Solo quedan ${remainingStock} unidades disponibles.`)
+    throw new ProductOrderUserError(remainingStock === 0 ? "Este producto esta agotado." : `Solo quedan ${remainingStock} unidades disponibles.`)
   }
 
   const name = sanitizeName(input.name)
   const phone = sanitizePhone(input.phone)
   const orderId = crypto.randomUUID()
-  const pendingBalance = order.paymentType === "deposit"
-    ? Math.max(0, (product.price - order.unitPrice) * order.quantity)
-    : null
+  const fullTotal = product.price * order.quantity
   const rowNumber = await appendOrder(config, accessToken, sheet.sheetName, sheet.headers, {
     [SHEET_HEADERS.orderId]: orderId,
     [SHEET_HEADERS.name]: name,
     [SHEET_HEADERS.phone]: phone,
     [SHEET_HEADERS.orderedAt]: formatOrderDate(new Date()),
-    [SHEET_HEADERS.paymentType]: order.paymentType === "deposit" ? "ANTICIPO" : "PAGO COMPLETO",
+    [SHEET_HEADERS.paymentType]: order.paymentType === "deposit" ? '"ANTICIPO"' : '"PAGO COMPLETO"',
     [SHEET_HEADERS.variant]: order.variantName ?? "",
     [SHEET_HEADERS.size]: order.size ?? "",
     [SHEET_HEADERS.quantity]: order.quantity,
-    [SHEET_HEADERS.total]: (order.unitPrice * order.quantity).toFixed(2),
-    [SHEET_HEADERS.pendingBalance]: pendingBalance === null ? "" : pendingBalance.toFixed(2),
-    [SHEET_HEADERS.status]: "PENDIENTE",
+    [SHEET_HEADERS.fullTotal]: fullTotal,
+    [SHEET_HEADERS.paymentExpected]: order.unitPrice * order.quantity,
+    [SHEET_HEADERS.paymentStatus]: "PENDIENTE",
+    [SHEET_HEADERS.balanceDue]: 0,
   })
+  await updateSheetValues(config, accessToken, [{
+    range: getGoogleSheetRange(sheet.sheetName, `${getColumnLetter(sheet.headers.indexOf(SHEET_HEADERS.balanceDue))}${rowNumber}`),
+    values: [[getBalanceFormula(sheet.headers, rowNumber)]],
+  }])
+  await addOrderRowValidations(config, accessToken, sheet.sheetId, sheet.headers, rowNumber)
   await formatPaymentType(config, accessToken, sheet.sheetId, rowNumber, sheet.headers, order.paymentType)
 
   return { remainingStock, productName: product.name }
@@ -548,21 +1123,48 @@ export async function getProductStockAvailability(productIds: string[]) {
   if (ids.length === 0) return []
 
   const client = getSanityClient()
-  const products = await client.fetch<Array<{ _id: string; name: string; stock?: number }>>(
-    `*[_type == "product" && _id in $ids && !isDisabled]{_id, name, stock}`,
+  const products = await client.fetch<Array<{ _id: string; stock?: number; remainingStock?: number }>>(
+    `*[_type == "product" && _id in $ids && !isDisabled]{_id, stock, remainingStock}`,
     { ids },
   )
+
+  return (products ?? []).map((product) => ({
+    id: product._id,
+    remainingStock: typeof product.stock === "number"
+      ? (typeof product.remainingStock === "number" ? product.remainingStock : product.stock)
+      : null,
+  }))
+}
+
+export async function refreshProductStockAvailabilityCache() {
+  const products = await sanityQueryNoStore<Array<{
+    _id: string
+    name: string
+    stock: number
+    remainingStock?: number
+  }>>(
+    `*[_type == "product" && !isDisabled && defined(stock)]{_id, name, stock, remainingStock}`,
+  )
+  if (!products?.length) return { availability: [], changed: 0 }
+
   const config = getGoogleSheetsConfig()
   const accessToken = await getGoogleSheetsAccessToken(config)
 
-  return Promise.all((products ?? []).map(async (product) => {
-    if (typeof product.stock !== "number") return { id: product._id, remainingStock: null }
-
+  const availability = await Promise.all(products.map(async (product) => {
     const sheetId = await getSheetId(config, accessToken, product.name)
     if (sheetId === null) return { id: product._id, remainingStock: product.stock }
 
-    const headers = await getSheetHeader(config, accessToken, product.name)
+    const headers = (await getSheetHeader(config, accessToken, product.name)).map(migrateLegacyHeader)
     const paidQuantity = await getPaidQuantity(config, accessToken, product.name, headers)
     return { id: product._id, remainingStock: Math.max(0, product.stock - paidQuantity) }
   }))
+
+  const mutations = availability.flatMap((item) => {
+    const product = products.find((candidate) => candidate._id === item.id)
+    if (!product || product.remainingStock === item.remainingStock) return []
+    return [{ patch: { id: item.id, set: { remainingStock: item.remainingStock } } }]
+  })
+  if (mutations.length > 0) await sanityMutate(mutations)
+
+  return { availability, changed: mutations.length }
 }

@@ -29,7 +29,13 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
   const [galleryProductId, setGalleryProductId] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [shopProductId, setShopProductId] = useState<string | null>(null);
-  const [remainingStockByProductId, setRemainingStockByProductId] = useState<Record<string, number>>({});
+  const [remainingStockByProductId, setRemainingStockByProductId] = useState<Record<string, number>>(() =>
+    Object.fromEntries(
+      products
+        .filter((product) => typeof product.remainingStock === "number")
+        .map((product) => [product.id, product.remainingStock as number]),
+    ),
+  );
   const activeGalleryProduct = useMemo(
     () => products.find((product) => product.id === galleryProductId) ?? null,
     [galleryProductId, products],
@@ -46,31 +52,35 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
     if (productIds.length === 0) return;
 
     let isCurrent = true;
-    fetch("/api/product-stock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productIds }),
-    })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return response.json() as Promise<{ products?: Array<{ id: string; remainingStock: number | null }> }>;
+    const refreshCachedStock = () => {
+      fetch("/api/product-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds }),
       })
-      .then((data) => {
-        if (!isCurrent || !data?.products) return;
-        const availability = data.products;
-        setRemainingStockByProductId((current) => ({
-          ...current,
-          ...Object.fromEntries(
-            availability
-              .filter((product) => typeof product.remainingStock === "number")
-              .map((product) => [product.id, product.remainingStock as number]),
-          ),
-        }));
-      })
-      .catch(() => undefined);
+        .then(async (response) => {
+          if (!response.ok) return null;
+          return response.json() as Promise<{ products?: Array<{ id: string; remainingStock: number | null }> }>;
+        })
+        .then((data) => {
+          if (!isCurrent || !data?.products) return;
+          setRemainingStockByProductId((current) => ({
+            ...current,
+            ...Object.fromEntries(
+              data.products!
+                .filter((product) => typeof product.remainingStock === "number")
+                .map((product) => [product.id, product.remainingStock as number]),
+            ),
+          }));
+        })
+        .catch(() => undefined);
+    };
+
+    const intervalId = window.setInterval(refreshCachedStock, 60_000);
 
     return () => {
       isCurrent = false;
+      window.clearInterval(intervalId);
     };
   }, [products]);
 
@@ -89,7 +99,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
           });
           const canOpenGallery = product.photos.length > 0;
           const hasMultiplePhotos = product.photos.length > 1;
-          const remainingStock = remainingStockByProductId[product.id] ?? product.stock;
+          const remainingStock = remainingStockByProductId[product.id] ?? product.remainingStock ?? product.stock;
           const isSoldOut = typeof remainingStock === "number" && remainingStock <= 0;
           const hasDeposit = typeof product.deposit === "number";
           const stockLabel = product.productType?.trim().toLocaleLowerCase("es-MX") || "existencias";
@@ -101,7 +111,15 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
           };
 
           return (
-            <article key={product.id} className="p-3">
+            <article key={product.id} className={`relative p-3 ${isSoldOut ? "bg-muted/35" : ""}`}>
+              {isSoldOut && (
+                <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                  <span className="border border-border bg-paper/95 px-4 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground shadow-sm">
+                    Agotado
+                  </span>
+                </div>
+              )}
+              <div className={isSoldOut ? "pointer-events-none opacity-45 grayscale" : ""}>
               <button
                 type="button"
                 onClick={openGallery}
@@ -114,14 +132,9 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                   alt={product.name}
                   fill
                   sizes="(max-width: 767px) calc(100vw - 4rem), 360px"
-                  className={`object-contain transition-opacity ${isSoldOut ? "opacity-35 grayscale" : ""}`}
+                  className="object-contain transition-opacity"
                   unoptimized
                 />
-                {isSoldOut && (
-                  <span className={`absolute inset-x-3 top-3 border border-border bg-muted/90 px-3 py-2 text-center text-xl font-semibold text-muted-foreground ${editorialFont.className}`}>
-                    Agotado
-                  </span>
-                )}
                 {hasMultiplePhotos && (
                   <span className="absolute right-3 bottom-3 inline-flex min-h-9 items-center gap-2 bg-paper px-3 text-xs font-semibold text-ink shadow-sm transition-colors hover:bg-paper-dark">
                     <Images className="h-4 w-4" aria-hidden="true" />
@@ -156,6 +169,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                   <ShoppingBag className="h-4 w-4" aria-hidden="true" />
                   {isSoldOut ? "AGOTADO" : "HACER PEDIDO"}
                 </button>
+              </div>
               </div>
             </article>
           );

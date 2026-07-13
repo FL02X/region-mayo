@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createProductOrder } from "@/lib/product-order-sheets"
+import { createProductOrder, ProductOrderUserError } from "@/lib/product-order-sheets"
 
 const isTurnstileEnabled = false
 
@@ -63,7 +63,13 @@ export async function POST(request: NextRequest) {
     })
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo registrar el pedido."
-    return NextResponse.json({ error: message }, { status: 400 })
+    console.error("[product-order]", error)
+    if (error instanceof ProductOrderUserError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    return NextResponse.json(
+      { error: "No se pudo registrar el pedido. Intenta de nuevo." },
+      { status: 500 },
+    )
   }
 }

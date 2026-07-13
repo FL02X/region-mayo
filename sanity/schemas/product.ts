@@ -36,6 +36,13 @@ export default defineType({
       validation: (Rule) => Rule.min(0).integer(),
     }),
     defineField({
+      name: 'remainingStock',
+      title: 'EXISTENCIAS DISPONIBLES',
+      type: 'number',
+      readOnly: true,
+      hidden: true,
+    }),
+    defineField({
       name: 'productType',
       title: '¿QUÉ TIPO DE PRODUCTO ES? (OPCIONAL)',
       type: 'string',

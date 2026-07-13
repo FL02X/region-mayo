@@ -432,8 +432,8 @@ export function ShopModal({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-base font-semibold text-foreground">{option.title}</span>
-                      <span className="mt-1 block text-sm text-muted-foreground">{option.description}</span>
-                      <span className={`mt-3 block text-2xl font-semibold tracking-tight text-ink ${editorialFont.className}`}>
+                      {/* <span className="mt-1 block text-sm text-muted-foreground">{option.description}</span> */}
+                      <span className={`mt-1.5 block text-2xl font-semibold tracking-tight text-ink ${editorialFont.className}`}>
                         <PriceAmount value={option.amount} />
                       </span>
                       {typeof option.pendingAmount === "number" && (
@@ -616,8 +616,8 @@ export function ShopModal({
           {isComplete && (
             <div className="space-y-6">
               <div className="border border-brand bg-brand-soft/30 p-4">
-                <p className="text-sm font-bold uppercase tracking-wide text-brand">Pedido registrado</p>
-                <p className="mt-1 text-sm text-foreground">Completa estos dos pasos para enviar tu comprobante.</p>
+                <p className="text-sm font-bold uppercase tracking-wide text-brand">Solicitud registrada</p>
+                <p className="mt-1 text-sm text-foreground">Realiza la transferencia y envía tu comprobante para confirmar el pedido.</p>
               </div>
 
               <div className="space-y-7">
@@ -647,18 +647,18 @@ export function ShopModal({
                 <section>
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-brand bg-background text-sm font-bold text-brand">2</span>
-                    <p className="text-sm font-bold uppercase tracking-wider text-foreground">Envia tu comprobante</p>
+                    <p className="text-sm font-bold uppercase tracking-wider text-foreground">Envia captura de pantalla de tu comprobante</p>
                   </div>
                   {regionTreasurer && (
-                    <div className="mt-3 border border-border/50 bg-background p-4">
+                    <div className="mt-4.5 border border-border/50 bg-background p-4">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-brand-soft text-brand">
                           <User className="h-6 w-6" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-bold text-foreground">{regionTreasurer.fullName}</p>
-                          <p className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Tesorero</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{formatPhoneForDisplay(regionTreasurer.phone)}</p>
+                          <p className="mt-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Tesorero/a regional</p>
+                          <p className="mt-2 text-sm text-muted-foreground">{formatPhoneForDisplay(regionTreasurer.phone)}</p>
                         </div>
                       </div>
                     </div>
