@@ -5,7 +5,8 @@ import { Newsreader } from "next/font/google";
 import { MapPin } from "lucide-react";
 import type { Event } from "@/lib/types";
 import { getEventMapsUrl } from "@/lib/event-share-text";
-import { REGION_TIME_ZONE } from "@/lib/region-date";
+import { REGION_TIME_ZONE, getRegionDateTime } from "@/lib/region-date";
+import { useTime } from "@/lib/time-context";
 import { getRegionDateKey } from "@/components/sections/home/countdown-section/countdown-utils";
 
 const editorialFont = Newsreader({
@@ -31,6 +32,12 @@ type RecorridoDay = {
   date: Date;
   events: Event[];
 };
+
+type RecorridoEventStatus = "finished" | "active" | "upcoming";
+type TruckMode = "active" | "moving" | "sleeping";
+
+const DISABLED_ROOT_COLOR = "#c8c3ba";
+const DISABLED_BUD_COLOR = "#aaa49b";
 
 const recorridoRootPalettes = [
   { root: "#9c7b57", bud: "#b98a3e" },
@@ -69,6 +76,75 @@ function formatRecorridoTimeRange(event: Event) {
   return firstOccurrence.endTime
     ? `${formatRecorridoTime(firstOccurrence.time)} - ${formatRecorridoTime(firstOccurrence.endTime)}`
     : formatRecorridoTime(firstOccurrence.time);
+}
+
+function getRecorridoEventTiming(event: Event) {
+  const schedule = Array.isArray(event.schedule) && event.schedule.length > 0
+    ? [...event.schedule].sort((a, b) => a.date.getTime() - b.date.getTime())
+    : [{ date: event.date, time: event.time }];
+  const occurrence = schedule[0];
+  const start = occurrence?.date ?? event.date;
+  const parsedEnd = occurrence?.endTime
+    ? getRegionDateTime(getRegionDateKey(start), occurrence.endTime)
+    : null;
+  const end = parsedEnd && parsedEnd.getTime() >= start.getTime() ? parsedEnd : start;
+
+  return { start, end };
+}
+
+function getRecorridoEventStatus(event: Event, now: Date): RecorridoEventStatus {
+  const { start, end } = getRecorridoEventTiming(event);
+  if (now.getTime() >= end.getTime()) return "finished";
+  if (now.getTime() >= start.getTime()) return "active";
+  return "upcoming";
+}
+
+function RecorridoStatusLabel({ status, isLeft, isNext, isRouteStarted }: { status: RecorridoEventStatus; isLeft: boolean; isNext: boolean; isRouteStarted: boolean }) {
+  if (status === "active") {
+    return (
+      <span className={`mb-1.5 flex items-center gap-2 text-[0.88rem] font-bold uppercase tracking-[0.14em] text-[#3f7a4e] ${isLeft ? "md:justify-end" : ""}`}>
+        <span className="relative flex h-3 w-3 items-center justify-center" aria-hidden="true">
+          <span className="recorrido-active-pulse absolute h-2 w-2 rounded-full bg-[#3f7a4e]/65" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-[#3f7a4e] shadow-[0_0_0_2px_rgba(63,122,78,0.2)]" />
+        </span>
+        ACTIVO
+      </span>
+    );
+  }
+
+  if (status !== "upcoming" || !isNext || !isRouteStarted) return null;
+
+  return (
+    <span className={`mb-1.5 flex items-center gap-2 text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-[#9c7b36] ${isLeft ? "md:justify-end" : ""}`}>
+      <span className="h-1.5 w-1.5 rounded-full bg-[#9c7b36]" aria-hidden="true" />
+      PROXIMO EVENTO
+    </span>
+  );
+}
+
+function RecorridoBusIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M3 6C1.89 6 1 6.89 1 8v7h2a3 3 0 0 0 6 0h6a3 3 0 0 0 6 0h2V8c0-1.11-.89-2-2-2H3Zm-.5 1.5h4V10h-4V7.5Zm5.5 0h4V10H8V7.5Zm5.5 0h4V10h-4V7.5Zm5.5 0h2.5V13L19 11V7.5ZM6 13.5A1.5 1.5 0 1 1 6 16.5a1.5 1.5 0 0 1 0-3Zm12 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
+    </svg>
+  );
+}
+
+function RecorridoTruckMarker({ mode }: { mode: TruckMode }) {
+  return (
+    <span className="pointer-events-none relative z-30 flex h-20 w-20 items-center justify-center" role="img" aria-label={mode === "sleeping" ? "Recorrido en pausa hasta el siguiente día" : "Posición actual del recorrido"}>
+      <span className={mode === "moving" || mode === "active" ? "recorrido-truck-moving" : ""}>
+        <RecorridoBusIcon className="h-16 w-16 text-brand drop-shadow-[0_3px_1px_rgba(33,63,99,0.3)]" />
+      </span>
+      {mode === "sleeping" && (
+        <span className={`absolute -right-7 -top-7 h-12 w-12 font-bold italic text-[#3b2a1c] drop-shadow-[0_1px_0_rgba(255,247,230,0.9)] ${editorialFont.className}`} aria-hidden="true">
+          <span className="recorrido-sleep-z absolute bottom-0 left-0 text-[17px]">Z</span>
+          <span className="recorrido-sleep-z absolute bottom-3 left-3 text-[14px] [animation-delay:550ms]">Z</span>
+          <span className="recorrido-sleep-z absolute bottom-7 left-6 text-[11px] [animation-delay:1100ms]">Z</span>
+        </span>
+      )}
+    </span>
+  );
 }
 
 function getRecorridoDays(events: Event[]): RecorridoDay[] {
@@ -133,6 +209,7 @@ function RootLeaf({
 export function RecorridoRoute({ events }: { events: Event[] }) {
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
   const [grownEventIds, setGrownEventIds] = useState<Set<string>>(() => new Set());
+  const { currentTime } = useTime();
   const orderedEvents = useMemo(
     () => [...events].sort((a, b) => a.date.getTime() - b.date.getTime()),
     [events],
@@ -141,6 +218,23 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
     () => getRecorridoDays(orderedEvents),
     [orderedEvents],
   );
+  const eventStatuses = useMemo(
+    () => orderedEvents.map((event) => getRecorridoEventStatus(event, currentTime)),
+    [currentTime, orderedEvents],
+  );
+  const isRouteNotStarted = orderedEvents.length > 0 && eventStatuses.every((status) => status === "upcoming");
+  const activeEventIndex = eventStatuses.indexOf("active");
+  const nextEventIndex = eventStatuses.indexOf("upcoming");
+  const previousEventIndex = nextEventIndex > 0 ? nextEventIndex - 1 : -1;
+  const hasPreviousFinishedEvent = previousEventIndex >= 0 && eventStatuses[previousEventIndex] === "finished";
+  const isSleepingBetweenDays = hasPreviousFinishedEvent
+    && getRegionDateKey(orderedEvents[previousEventIndex].date) !== getRegionDateKey(orderedEvents[nextEventIndex].date);
+  const movingAfterEventIndex = hasPreviousFinishedEvent && !isSleepingBetweenDays
+    ? previousEventIndex
+    : -1;
+  const sleepingBeforeDayKey = isSleepingBetweenDays
+    ? getRegionDateKey(orderedEvents[nextEventIndex].date)
+    : null;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -174,6 +268,37 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
       className="mx-auto mt-8 w-full max-w-[1080px] touch-pan-y pb-24 pt-3 md:pb-40"
       aria-label="Ruta de actividades del Recorrido Regional 2026"
     >
+      <style>{`
+        @keyframes recorrido-truck-bob {
+          0%, 49% { transform: translateY(-1.5px); }
+          50%, 100% { transform: translateY(1.5px); }
+        }
+        @keyframes recorrido-active-pulse {
+          0% { opacity: 0.9; transform: scale(0.75); }
+          75%, 100% { opacity: 0; transform: scale(4.2); }
+        }
+        @keyframes recorrido-sleep-z {
+          0%, 12%, 100% { opacity: 0; transform: translate(0, 3px) scale(0.9); }
+          28%, 68% { opacity: 1; transform: translate(1px, -1px) scale(1); }
+          88% { opacity: 0; transform: translate(5px, -7px) scale(1.06); }
+        }
+        .recorrido-truck-moving {
+          display: inline-flex;
+          animation: recorrido-truck-bob 620ms steps(2, end) infinite;
+        }
+        .recorrido-active-pulse {
+          animation: recorrido-active-pulse 1.25s ease-out infinite;
+        }
+        .recorrido-sleep-z {
+          animation: recorrido-sleep-z 2.1s ease-in-out infinite;
+          opacity: 0;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .recorrido-truck-moving, .recorrido-sleep-z, .recorrido-active-pulse { animation: none; }
+          .recorrido-active-pulse { opacity: 0.35; transform: scale(1.5); }
+          .recorrido-sleep-z:first-child { opacity: 0.9; }
+        }
+      `}</style>
       <div className="mb-7">
         <p className="text-[14px] font-bold uppercase tracking-[0.16em] text-brand">
           Ruta del recorrido
@@ -187,6 +312,11 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
         const dividerPalette = recorridoRootPalettes[dayIndex % recorridoRootPalettes.length];
         const dividerWidth = 13 + Math.min(dayIndex, 3) * 2;
         const dividerPath = getTrunkPath(dayIndex * 17 + 5, 320);
+        const firstEventIndex = orderedEvents.indexOf(day.events[0]);
+        const firstEventStatus = eventStatuses[firstEventIndex];
+        const hasSleepingTruck = sleepingBeforeDayKey === day.key;
+        const dividerProgress = isRouteNotStarted ? 1 : hasSleepingTruck ? 0.5 : firstEventStatus === "upcoming" ? 0 : 1;
+        const dividerDash = dividerProgress === 1 ? "1 0" : `${dividerProgress} 1`;
 
         return (
           <div key={day.key}>
@@ -197,17 +327,28 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                 preserveAspectRatio="none"
                 aria-hidden="true"
               >
-                <path d={dividerPath} fill="none" stroke={dividerPalette.root} strokeWidth={dividerWidth} strokeLinecap="round" />
-                <path d={dividerPath} fill="none" stroke="rgba(255,247,230,0.35)" strokeWidth={dividerWidth * 0.24} strokeLinecap="round" />
+                <path d={dividerPath} fill="none" stroke={DISABLED_ROOT_COLOR} strokeWidth={dividerWidth} strokeLinecap="round" />
+                <path d={dividerPath} fill="none" stroke="rgba(255,255,255,0.38)" strokeWidth={dividerWidth * 0.24} strokeLinecap="round" />
+                {dividerProgress > 0 && <>
+                  <path d={dividerPath} pathLength="1" fill="none" stroke={dividerPalette.root} strokeWidth={dividerWidth} strokeLinecap="round" strokeDasharray={dividerDash} />
+                  <path d={dividerPath} pathLength="1" fill="none" stroke="rgba(255,247,230,0.35)" strokeWidth={dividerWidth * 0.24} strokeLinecap="round" strokeDasharray={dividerDash} />
+                </>}
               </svg>
               <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-[#3b2a1c]/25 to-transparent" />
+              {hasSleepingTruck && (
+                <span className="absolute top-1/2 left-[32px] z-20 -translate-x-1/2 -translate-y-1/2 md:left-1/2">
+                  <RecorridoTruckMarker mode="sleeping" />
+                </span>
+              )}
               <span className="relative col-start-2 justify-self-start border border-[#3b2a1c]/25 bg-paper px-3.5 py-1 text-[14px] text-foreground/80 font-bold uppercase tracking-[0.16em] md:col-start-2 md:justify-self-center md:whitespace-nowrap">
                 {formatRecorridoWeekday(day.date)}
               </span>
             </div>
 
-            {day.events.map((event, dayEventIndex) => {
+            {day.events.map((event) => {
               const eventIndex = orderedEvents.indexOf(event);
+              const eventStatus = eventStatuses[eventIndex];
+              const routeVisualStatus = isRouteNotStarted ? "finished" : eventStatus;
               const isLeft = eventIndex % 2 === 0;
               const isGrown = grownEventIds.has(event.id);
               const mapsUrl = getEventMapsUrl(event);
@@ -220,6 +361,13 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
               const lowerLeafAnchor = getTrunkLeafAnchor(eventIndex * 7 + 1, "lower");
               const upperLeafRotation = leafOneSide * 38 + Math.round((pseudoRandom(eventIndex * 7 + 21) - 0.5) * 24);
               const lowerLeafRotation = leafTwoSide * 38 + Math.round((pseudoRandom(eventIndex * 7 + 33) - 0.5) * 24);
+              const traveledFraction = routeVisualStatus === "finished" ? 1 : routeVisualStatus === "active" ? 0.5 : 0;
+              const traveledDash = traveledFraction === 1 ? "1 0" : `${traveledFraction} 1`;
+              const branchColor = routeVisualStatus === "upcoming" ? DISABLED_ROOT_COLOR : palette.root;
+              const upperLeafColor = routeVisualStatus === "upcoming" ? DISABLED_BUD_COLOR : palette.bud;
+              const lowerLeafColor = routeVisualStatus === "finished" ? palette.bud : DISABLED_BUD_COLOR;
+              const hasActiveTruck = activeEventIndex === eventIndex;
+              const hasMovingTruck = movingAfterEventIndex === eventIndex;
 
               return (
                 <div
@@ -231,8 +379,9 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                   data-recorrido-event-id={event.id}
                   className="grid min-h-[208px] grid-cols-[64px_80px_minmax(0,1fr)] items-center md:min-h-[210px] md:grid-cols-[minmax(0,1fr)_72px_64px_72px_minmax(0,1fr)]"
                 >
-                  <div className={`relative col-start-3 row-start-1 flex ${isLeft ? "justify-start md:col-start-1 md:justify-end" : "justify-start md:col-start-5"} ${dayEventIndex > 0 ? "pt-5" : ""}`}>
-                    <div className={`max-w-[320px] -translate-x-2.5 transform text-left transition-all duration-700 ease-out ${isLeft ? "md:text-right" : ""} ${isGrown ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0"}`}>
+                  <div className={`relative col-start-3 row-start-1 flex py-4 ${isLeft ? "justify-start md:col-start-1 md:justify-end" : "justify-start md:col-start-5"}`}>
+                    <div className={`max-w-[320px] -translate-x-4 transform text-left transition-all duration-700 ease-out md:-translate-x-2.5 ${isLeft ? "md:text-right" : ""} ${isGrown ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0"}`}>
+                      <RecorridoStatusLabel status={eventStatus} isLeft={isLeft} isNext={nextEventIndex === eventIndex} isRouteStarted={!isRouteNotStarted} />
                       <span className={`mb-2 flex items-center gap-2 text-[0.88rem] font-medium uppercase tracking-[0.1em] text-foreground/70 ${isLeft ? "md:justify-end" : ""}`}>
                         {formatRecorridoTimeRange(event)}
                       </span>
@@ -261,27 +410,38 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
 
                   <div className="relative col-start-1 row-start-1 flex h-full justify-center overflow-visible md:col-start-3">
                     <svg className="block h-full w-[46px] overflow-visible md:w-[46px]" viewBox="0 0 76 320" preserveAspectRatio="none" aria-hidden="true">
-                      <path d={trunkPath} fill="none" stroke={palette.root} strokeWidth={trunkWidth} strokeLinecap="round" style={{ strokeDasharray: 420, strokeDashoffset: isGrown ? 0 : 420, transition: "stroke-dashoffset 1500ms cubic-bezier(.2,.7,.2,1)" }} />
-                      <path d={trunkPath} fill="none" stroke="rgba(255,247,230,0.35)" strokeWidth={trunkWidth * 0.24} strokeLinecap="round" style={{ strokeDasharray: 420, strokeDashoffset: isGrown ? 0 : 420, transition: "stroke-dashoffset 1500ms cubic-bezier(.2,.7,.2,1)" }} />
+                      <path d={trunkPath} pathLength="1" fill="none" stroke={DISABLED_ROOT_COLOR} strokeWidth={trunkWidth} strokeLinecap="round" strokeDasharray="1 0" style={{ strokeDashoffset: isGrown ? 0 : 1, transition: "stroke-dashoffset 1500ms cubic-bezier(.2,.7,.2,1)" }} />
+                      <path d={trunkPath} pathLength="1" fill="none" stroke="rgba(255,255,255,0.38)" strokeWidth={trunkWidth * 0.24} strokeLinecap="round" strokeDasharray="1 0" style={{ strokeDashoffset: isGrown ? 0 : 1, transition: "stroke-dashoffset 1500ms cubic-bezier(.2,.7,.2,1)" }} />
+                      {traveledFraction > 0 && <>
+                        <path d={trunkPath} pathLength="1" fill="none" stroke={palette.root} strokeWidth={trunkWidth} strokeLinecap="round" strokeDasharray={traveledDash} style={{ strokeDashoffset: isGrown ? 0 : 1, transition: "stroke-dashoffset 1500ms cubic-bezier(.2,.7,.2,1)" }} />
+                        <path d={trunkPath} pathLength="1" fill="none" stroke="rgba(255,247,230,0.35)" strokeWidth={trunkWidth * 0.24} strokeLinecap="round" strokeDasharray={traveledDash} style={{ strokeDashoffset: isGrown ? 0 : 1, transition: "stroke-dashoffset 1500ms cubic-bezier(.2,.7,.2,1)" }} />
+                      </>}
                     </svg>
                     <div className={`pointer-events-none absolute top-1/4 left-1/2 h-[23px] w-[46px] -translate-x-1/2 transition-all duration-700 ease-out md:w-[46px] ${isGrown ? "opacity-100" : "opacity-0"}`}>
-                      <RootLeaf color={palette.bud} side={leafOneSide} anchorX={upperLeafAnchor} rotation={upperLeafRotation} />
+                      <RootLeaf color={upperLeafColor} side={leafOneSide} anchorX={upperLeafAnchor} rotation={upperLeafRotation} />
                     </div>
                     <div className={`pointer-events-none absolute top-3/4 left-1/2 h-[23px] w-[46px] -translate-x-1/2 transition-all duration-700 ease-out md:w-[46px] ${isGrown ? "opacity-100" : "opacity-0"}`}>
-                      <RootLeaf color={palette.bud} side={leafTwoSide} anchorX={lowerLeafAnchor} rotation={lowerLeafRotation} />
+                      <RootLeaf color={lowerLeafColor} side={leafTwoSide} anchorX={lowerLeafAnchor} rotation={lowerLeafRotation} />
                     </div>
-                    <span className={`absolute top-1/2 left-1/2 z-10 flex h-[34px] w-[34px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-paper shadow-[0_0_0_3px_rgba(59,42,28,0.18)] transition-all duration-700 ease-out ${isGrown ? "scale-100 opacity-100" : "scale-[0.2] opacity-0"}`}>
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: palette.bud }} />
-                    </span>
-                    <svg className={`pointer-events-none absolute top-1/2 left-[calc(50%+17px)] h-[72px] w-[80px] -translate-y-1/2 overflow-visible transition-opacity delay-500 duration-700 md:hidden ${isGrown ? "opacity-100" : "opacity-0"}`} viewBox="0 0 130 60" preserveAspectRatio="none" aria-hidden="true">
-                      <path d="M0 31C34 16 75 9 130 25 76 14 34 25 0 39Z" fill={palette.root} />
-                      <path d="M50 22C66 9 82 5 100 7 81 8 67 14 50 25Z" fill={palette.root} />
-                      <path d="M58 20C78 26 102 35 122 47 100 36 78 28 58 24Z" fill={palette.root} />
+                    {hasActiveTruck && (
+                      <span className="absolute top-1/2 left-1/2 z-30 -translate-x-1/2 -translate-y-[30%]">
+                        <RecorridoTruckMarker mode="active" />
+                      </span>
+                    )}
+                    {hasMovingTruck && (
+                      <span className="absolute bottom-0 left-1/2 z-30 -translate-x-1/2 translate-y-1/2">
+                        <RecorridoTruckMarker mode="moving" />
+                      </span>
+                    )}
+                    <svg className={`pointer-events-none absolute top-1/2 left-1/2 h-[72px] w-[80px] -translate-y-1/2 overflow-visible transition-opacity delay-500 duration-700 md:hidden ${isGrown ? "opacity-100" : "opacity-0"}`} viewBox="0 0 130 60" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M0 31C34 16 75 9 130 25 76 14 34 25 0 39Z" fill={branchColor} />
+                      <path d="M50 22C66 9 82 5 100 7 81 8 67 14 50 25Z" fill={branchColor} />
+                      <path d="M58 20C78 26 102 35 122 47 100 36 78 28 58 24Z" fill={branchColor} />
                     </svg>
-                    <svg className={`pointer-events-none absolute top-1/2 hidden h-[72px] w-[72px] -translate-y-1/2 overflow-visible transition-opacity delay-500 duration-700 md:block ${isLeft ? "right-[calc(50%+17px)]" : "left-[calc(50%+17px)]"} ${isGrown ? "opacity-100" : "opacity-0"}`} viewBox="0 0 130 60" preserveAspectRatio="none" aria-hidden="true">
-                      <path d={isLeft ? "M130 31C96 16 55 9 0 25 54 14 96 25 130 39Z" : "M0 31C34 16 75 9 130 25 76 14 34 25 0 39Z"} fill={palette.root} />
-                      <path d={isLeft ? "M80 22C64 9 48 5 30 7 49 8 63 14 80 25Z" : "M50 22C66 9 82 5 100 7 81 8 67 14 50 25Z"} fill={palette.root} />
-                      <path d={isLeft ? "M72 20C52 26 28 35 8 47 30 36 52 28 72 24Z" : "M58 20C78 26 102 35 122 47 100 36 78 28 58 24Z"} fill={palette.root} />
+                    <svg className={`pointer-events-none absolute top-1/2 hidden h-[72px] w-[72px] -translate-y-1/2 overflow-visible transition-opacity delay-500 duration-700 md:block ${isLeft ? "right-1/2" : "left-1/2"} ${isGrown ? "opacity-100" : "opacity-0"}`} viewBox="0 0 130 60" preserveAspectRatio="none" aria-hidden="true">
+                      <path d={isLeft ? "M130 31C96 16 55 9 0 25 54 14 96 25 130 39Z" : "M0 31C34 16 75 9 130 25 76 14 34 25 0 39Z"} fill={branchColor} />
+                      <path d={isLeft ? "M80 22C64 9 48 5 30 7 49 8 63 14 80 25Z" : "M50 22C66 9 82 5 100 7 81 8 67 14 50 25Z"} fill={branchColor} />
+                      <path d={isLeft ? "M72 20C52 26 28 35 8 47 30 36 52 28 72 24Z" : "M58 20C78 26 102 35 122 47 100 36 78 28 58 24Z"} fill={branchColor} />
                     </svg>
                   </div>
                 </div>

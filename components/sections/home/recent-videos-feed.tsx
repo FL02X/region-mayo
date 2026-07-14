@@ -40,7 +40,7 @@ function RecordingAlbumListItem({ album }: { album: Album }) {
       aria-label="Abrir grabacion"
     >
       <div className="flex flex-row gap-3 pt-4 pb-4 w-full h-auto items-center group-active:bg-brand-active">
-        <div className="relative w-24 min-h-20 aspect-video shrink-0 rounded-md overflow-hidden group-active:bg-transparent">
+        <div className="relative w-24 md:w-24 min-h-20 aspect-video shrink-0 overflow-hidden group-active:bg-transparent">
           {thumbnailUrl ? (
             <Image
               src={thumbnailUrl}
@@ -67,7 +67,7 @@ function RecordingAlbumListItem({ album }: { album: Album }) {
             {formatAlbumPreviewDate(album.startDate)}
           </p>
           <p
-            className={`${editorialFont.className} text-ink-white font-bold line-clamp-3 text-sm break-words`}
+            className={`${editorialFont.className} text-ink-white font-bold line-clamp-3 text-[18px] md:text-[16px] leading-normal break-words`}
           >
             {album.title}
           </p>
@@ -86,8 +86,8 @@ export function RecentVideosFeed({ album, className }: RecentVideosFeedProps) {
   const recentVideos = sortedVideos.slice(0, 3);
 
   return (
-    <div className={className ?? "md:hidden bg-[#050505] pt-10 pb-10 px-4"}>
-      <div className="mx-auto max-w bg-[#050505]">
+    <div className={className ?? "md:hidden bg-[#21252b] pt-10 pb-10 px-4"}>
+      <div className="mx-auto max-w bg-[#21252b]">
         <div className="flex flex-row mb-5 items-center justify-between w-full">
           <div>
             <h2

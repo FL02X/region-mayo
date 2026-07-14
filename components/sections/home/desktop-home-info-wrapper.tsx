@@ -128,10 +128,10 @@ export function DesktopHomeInfoWrapper({
       </div>
 
       
-      <div className="flex w-3/8 justify-center bg-[#050505]">
+      <div className="flex w-3/8 justify-center bg-[#21252b]">
         <RecentVideosFeed
           album={albums}
-          className="h-full w-[90%] min-w-0 bg-[#050505] pt-16"
+          className="h-full w-[90%] min-w-0 bg-[#21252b] pt-16"
         />
       </div>
 

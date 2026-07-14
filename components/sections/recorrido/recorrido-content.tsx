@@ -11,8 +11,6 @@ import { useTime } from "@/lib/time-context";
 import { REGION_TIME_ZONE } from "@/lib/region-date";
 import {
   getCountdownDisplay,
-  getRegionDateKey,
-  getRegionDayEndMs,
   getTimeUnits,
   MOBILE_FLOATING_BORDER_CLASS,
   type CountdownDisplay,
@@ -72,46 +70,14 @@ function getEventSchedule(event: Event): CountdownOccurrence[] {
   return [...schedule].sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
-function getNextRecorridoEvent(events: Event[], currentTime: Date) {
-  const nowMs = currentTime.getTime();
-  const currentDayKey = getRegionDateKey(currentTime);
-
-  return (
-    events
-      .filter((event) => event.eventType === "recorrido")
-      .map((event) => {
-        const schedule = getEventSchedule(event);
-        const nextCandidateMs = schedule.reduce<number | null>(
-          (closestMs, occurrence) => {
-            const occurrenceMs = occurrence.date.getTime();
-            const candidateMs =
-              occurrenceMs <= nowMs &&
-              getRegionDateKey(occurrence.date) === currentDayKey
-                ? getRegionDayEndMs(occurrence.date)
-                : occurrenceMs;
-
-            if (candidateMs < nowMs) return closestMs;
-            if (closestMs === null || candidateMs < closestMs) return candidateMs;
-            return closestMs;
-          },
-          null,
-        );
-
-        return nextCandidateMs === null
-          ? null
-          : { event, schedule, nextCandidateMs };
-      })
-      .filter(
-        (
-          item,
-        ): item is {
-          event: Event;
-          schedule: CountdownOccurrence[];
-          nextCandidateMs: number;
-        } => item !== null,
-      )
-      .sort((a, b) => a.nextCandidateMs - b.nextCandidateMs)[0] ?? null
-  );
+function getNextRecorridoEvent(events: Event[]) {
+  return events
+    .filter((event) => event.eventType === "recorrido")
+    .map((event) => {
+      const schedule = getEventSchedule(event);
+      return { event, schedule, nextCandidateMs: schedule[0]?.date.getTime() ?? Number.POSITIVE_INFINITY };
+    })
+    .sort((a, b) => a.nextCandidateMs - b.nextCandidateMs)[0] ?? null;
 }
 
 function getRecorridoCountdownDisplay(
@@ -120,20 +86,9 @@ function getRecorridoCountdownDisplay(
 ): CountdownDisplay {
   const nowMs = currentTime.getTime();
   const firstOccurrence = schedule[0];
-  const currentDayKey = getRegionDateKey(currentTime);
-  const todayOccurrences = schedule.filter(
-    (occurrence) => getRegionDateKey(occurrence.date) === currentDayKey,
-  );
-  const nextTodayOccurrence = todayOccurrences.find(
-    (occurrence) => occurrence.date.getTime() > nowMs,
-  );
 
   if (nowMs < firstOccurrence.date.getTime()) {
     return getCountdownDisplay(firstOccurrence.date, currentTime);
-  }
-
-  if (nextTodayOccurrence) {
-    return getCountdownDisplay(nextTodayOccurrence.date, currentTime);
   }
 
   return { days: 0, hours: 0, minutes: 0, seconds: 0, isDisabled: true };
@@ -165,8 +120,8 @@ export function RecorridoContent({
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const { currentTime } = useTime();
   const nextRecorridoEvent = useMemo(
-    () => getNextRecorridoEvent(events, currentTime),
-    [events, currentTime],
+    () => getNextRecorridoEvent(events),
+    [events],
   );
   const countdownDisplay = useMemo<CountdownDisplay | null>(() => {
     if (!nextRecorridoEvent || nextRecorridoEvent.schedule.length === 0) return null;

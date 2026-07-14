@@ -94,7 +94,7 @@ export function MobileHeroGpsButton({
       onClick={onClick}
       disabled={locationPhase === "loading"}
       data-loading={locationPhase === "loading"}
-      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-2.5 text-left text-[16px] font-bold text-ink-white transition-all duration-300 ease-in-out ${
+      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-3.5 text-left text-[16px] font-bold text-ink-white transition-all duration-300 ease-in-out ${
         locationPhase === "success"
           ? "btn-sucess border-[#4E7A68] text-ink shadow-none"
           : locationPhase === "loading"
@@ -116,10 +116,10 @@ export function MobileHeroGpsButton({
         />
         {locationPhase === "success" ? (
           <span className="flex min-w-0 flex-col items-start gap-1 transition-all duration-300 ease-in-out">
-            <span className="text-[13px] font-normal leading-none tracking-wide text-white/80">
+            <span className="text-[13px] mb-1 font-normal leading-none tracking-wide text-white/70">
               {MOBILE_HERO_COPY.nearestChurchLabel}
             </span>
-            <span className="min-w-0 text-[15px] font-extrabold leading-tight text-ink-white">
+            <span className="min-w-0 text-[16px] font-bold leading-normal tracking-normal">
               {nearestChurchName} · {nearestChurchDistanceKm ?? 0} km
             </span>
           </span>

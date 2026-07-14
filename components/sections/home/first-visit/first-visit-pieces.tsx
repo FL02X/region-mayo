@@ -13,7 +13,7 @@ import {
 export function FirstVisitHiddenNotice({
   isVisible,
   onRestore,
-  className = "md:hidden border-y bg-white px-[20px] py-3",
+  className = "md:hidden border-y border-border bg-white px-[20px] py-3",
 }: {
   isVisible: boolean;
   onRestore: () => void;
@@ -55,7 +55,7 @@ export function FirstVisitCard({
   transitionStyle,
   titleFontClassName,
   onOpen,
-  className = "md:hidden border-y bg-white px-[20px]",
+  className = "md:hidden border-y-2 border-border bg-white px-[20px]",
 }: {
   contentRef: RefObject<HTMLDivElement | null>;
   isHiding: boolean;
