@@ -20,6 +20,12 @@ const recorridoWeekdayFormatter = new Intl.DateTimeFormat("es-MX", {
   weekday: "long",
 });
 
+const recorridoDateFormatter = new Intl.DateTimeFormat("es-MX", {
+  timeZone: REGION_TIME_ZONE,
+  day: "numeric",
+  month: "long",
+});
+
 type RecorridoDay = {
   key: string;
   date: Date;
@@ -34,7 +40,23 @@ const recorridoRootPalettes = [
 ];
 
 function formatRecorridoWeekday(date: Date) {
-  return recorridoWeekdayFormatter.format(date).toUpperCase();
+  return `${recorridoWeekdayFormatter.format(date)} | ${recorridoDateFormatter.format(date)}`.toUpperCase();
+}
+
+function formatRecorridoTime(time: string) {
+  const match = time.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (!match) return time;
+
+  let hour = Number(match[1]);
+  const minutes = match[2] || "00";
+  const period = match[3]?.toUpperCase();
+
+  if (hour > (period ? 12 : 23) || Number(minutes) > 59) return time;
+
+  if (period === "PM" && hour < 12) hour += 12;
+  if (period === "AM" && hour === 12) hour = 0;
+
+  return `${String(hour).padStart(2, "0")}:${minutes}`;
 }
 
 function formatRecorridoTimeRange(event: Event) {
@@ -45,8 +67,8 @@ function formatRecorridoTimeRange(event: Event) {
 
   if (!firstOccurrence) return event.time;
   return firstOccurrence.endTime
-    ? `${firstOccurrence.time} - ${firstOccurrence.endTime}`
-    : firstOccurrence.time;
+    ? `${formatRecorridoTime(firstOccurrence.time)} - ${formatRecorridoTime(firstOccurrence.endTime)}`
+    : formatRecorridoTime(firstOccurrence.time);
 }
 
 function getRecorridoDays(events: Event[]): RecorridoDay[] {
@@ -179,7 +201,7 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                 <path d={dividerPath} fill="none" stroke="rgba(255,247,230,0.35)" strokeWidth={dividerWidth * 0.24} strokeLinecap="round" />
               </svg>
               <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-[#3b2a1c]/25 to-transparent" />
-              <span className="relative col-start-2 justify-self-start border border-[#3b2a1c]/25 bg-paper px-3.5 py-1 text-[16px] text-foreground/80 font-bold uppercase tracking-[0.16em] md:col-start-2 md:justify-self-center">
+              <span className="relative col-start-2 justify-self-start border border-[#3b2a1c]/25 bg-paper px-3.5 py-1 text-[14px] text-foreground/80 font-bold uppercase tracking-[0.16em] md:col-start-2 md:justify-self-center md:whitespace-nowrap">
                 {formatRecorridoWeekday(day.date)}
               </span>
             </div>
@@ -207,7 +229,7 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                     else rowRefs.current.delete(event.id);
                   }}
                   data-recorrido-event-id={event.id}
-                  className="grid min-h-[178px] grid-cols-[64px_80px_minmax(0,1fr)] items-center md:min-h-[210px] md:grid-cols-[minmax(0,1fr)_72px_64px_72px_minmax(0,1fr)]"
+                  className="grid min-h-[208px] grid-cols-[64px_80px_minmax(0,1fr)] items-center md:min-h-[210px] md:grid-cols-[minmax(0,1fr)_72px_64px_72px_minmax(0,1fr)]"
                 >
                   <div className={`relative col-start-3 row-start-1 flex ${isLeft ? "justify-start md:col-start-1 md:justify-end" : "justify-start md:col-start-5"} ${dayEventIndex > 0 ? "pt-5" : ""}`}>
                     <div className={`max-w-[320px] -translate-x-2.5 transform text-left transition-all duration-700 ease-out ${isLeft ? "md:text-right" : ""} ${isGrown ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0"}`}>
@@ -218,11 +240,11 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                         {event.title}
                       </span>
                       {event.city && (
-                        <span className={`mt-3 mb-3 block text-[16px] italic font-bold text-ink uppercase ${editorialFont.className}`}>
+                        <span className={`pt-0 mb-0 block text-[16px] italic font-bold text-ink uppercase ${editorialFont.className}`}>
                           {event.city}
                         </span>
                       )}
-                      {event.location && <span className="mt-1.5 block text-sm text-foreground/60">{event.location}</span>}
+                      {event.location && <span className="mt-0 block text-sm text-foreground/60">{event.location}</span>}
                       {mapsUrl ? (
                         <a href={mapsUrl} target="_blank" rel="noreferrer" className={`mt-3 inline-flex min-h-9 items-center gap-2 border px-3 text-xs font-semibold ${isLeft ? "md:ml-auto" : ""}`} style={{ borderColor: palette.root, color: palette.root }}>
                           <MapPin className="h-4 w-4" aria-hidden="true" />

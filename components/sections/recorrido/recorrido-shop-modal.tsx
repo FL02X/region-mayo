@@ -181,7 +181,13 @@ export function ShopModal({
   const allowDevTurnstileBypass = process.env.NODE_ENV !== "production" && !turnstileSiteKey
 
   useLockBodyScroll(isOpen)
-  useModalHistoryClose(isOpen, onClose)
+  useModalHistoryClose(isOpen, onClose, () => {
+    if (stepIndex === 0 || isComplete) return false
+    setSubmitError(null)
+    setStepIndex((current) => Math.max(current - 1, 0))
+    contentScrollRef.current?.scrollTo({ top: 0 })
+    return true
+  })
 
   useEffect(() => {
     if (!isOpen) return

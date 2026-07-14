@@ -16,7 +16,7 @@ import { ImageGalleryModal } from "@/components/shared/image-album-modal"
 import useLockBodyScroll from "@/hooks/use-lock-scroll"
 import { useModalHistoryClose } from "@/hooks/use-modal-history-close"
 import { useConnectivity } from "@/hooks/use-connectivity"
-import type { Event, RegionPresident, RegistrationAttendingAs } from "@/lib/types"
+import type { Event, RegionPresident, RegistrationAttendingAs, RegistrationLogisticsPreference } from "@/lib/types"
 
 interface RegistrationModalProps {
   event: Event
@@ -28,8 +28,8 @@ interface RegistrationModalProps {
 interface RegistrationFormState {
   name: string
   phone: string
-  needsLodging: boolean | null
-  needsTransport: boolean | null
+  needsLodging: RegistrationLogisticsPreference | null
+  needsTransport: RegistrationLogisticsPreference | null
   attendingAs: RegistrationAttendingAs
   isBaptized: boolean | null
   isCoroMGR: boolean | null
@@ -171,6 +171,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const contentScrollRef = useRef<HTMLDivElement>(null)
   const turnstileContainerRef = useRef<HTMLDivElement>(null)
   const turnstileWidgetIdRef = useRef<string | null>(null)
+  const previousBaptizedRef = useRef<boolean | null>(null)
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -196,7 +197,11 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   })
 
   useLockBodyScroll(isOpen)
-  useModalHistoryClose(isOpen, onClose)
+  useModalHistoryClose(isOpen, onClose, () => {
+    if (step <= 1 || step > totalSteps) return false
+    setStep((current) => current - 1)
+    return true
+  })
 
   useEffect(() => {
     if (!isOpen) return
@@ -207,6 +212,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     setFieldErrors({})
     setSelectedPhotoIndex(null)
     setTurnstileToken("")
+    previousBaptizedRef.current = null
     setFormData((prev) => ({
       ...prev,
       needsLodging: null,
@@ -252,7 +258,16 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const maxPhotosToShow = 3
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (field === "isCoroMGR" && value === true) {
+      previousBaptizedRef.current = formData.isBaptized
+      setFormData((prev) => ({ ...prev, isCoroMGR: true, isBaptized: true }))
+    } else if (field === "isCoroMGR" && value === false) {
+      const isBaptized = previousBaptizedRef.current
+      previousBaptizedRef.current = null
+      setFormData((prev) => ({ ...prev, isCoroMGR: false, isBaptized }))
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }))
+    }
 
     if (field === "name" || field === "phone") {
       setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
@@ -352,8 +367,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           name: contactData.name,
           phone: contactData.phone,
           eventId: event.id,
-          needsLodging: Boolean(formData.needsLodging),
-          needsTransport: Boolean(formData.needsTransport),
+          needsLodging: formData.needsLodging === "unknown" ? "unknown" : Boolean(formData.needsLodging),
+          needsTransport: formData.needsTransport === "unknown" ? "unknown" : Boolean(formData.needsTransport),
           attendingAs: getRegistrationAttendingAs({
             isBaptized: Boolean(formData.isBaptized),
             isCoroMGR: Boolean(formData.isCoroMGR),
@@ -411,27 +426,39 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     ? "bg-brand-green text-white hover:bg-brand-green-hover active:bg-brand-green-active"
     : "bg-primary hover:bg-primary/90 text-primary-foreground"
 
-  const ToggleQuestion = ({ label, value, field }: { label: string, value: boolean | null, field: string }) => (
-    <div className="flex items-center justify-between py-4 border-b border-border/50 last:border-0">
+  const ToggleQuestion = ({ label, value, field, allowUnknown = false, disabled = false }: { label: string, value: boolean | "unknown" | null, field: string, allowUnknown?: boolean, disabled?: boolean }) => (
+    <div className={`flex flex-wrap gap-3 pb-7 pt-5 border-b border-border/50 last:border-0 ${allowUnknown ? "flex-col items-start" : "items-center justify-between"}`}>
       <span className="text-sm font-medium text-foreground">{label}</span>
-      <div className="flex bg-muted/30 border border-input">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant="ghost"
           size="sm"
+          disabled={disabled}
           onClick={() => handleInputChange(field, true)}
-          className={`rounded-none h-10 px-5 text-sm ${value === true ? selectedToggleClassName : unselectedToggleClassName}`}
+          className={`rounded-none h-10 border border-foreground/25 px-5 text-sm ${value === true ? selectedToggleClassName : unselectedToggleClassName}`}
         >
           Sí
         </Button>
-        <div className="w-[1px] bg-input" />
         <Button
           variant="ghost"
           size="sm"
+          disabled={disabled}
           onClick={() => handleInputChange(field, false)}
-          className={`rounded-none h-10 px-5 text-sm ${value === false ? selectedToggleClassName : unselectedToggleClassName}`}
+          className={`rounded-none h-10 border border-foreground/25 px-5 text-sm ${value === false ? selectedToggleClassName : unselectedToggleClassName}`}
         >
           No
         </Button>
+        {allowUnknown && <>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={disabled}
+            onClick={() => handleInputChange(field, "unknown")}
+            className={`rounded-none h-10 border border-foreground/25 px-4 text-sm ${value === "unknown" ? selectedToggleClassName : unselectedToggleClassName}`}
+          >
+            Aún no lo sé
+          </Button>
+        </>}
       </div>
     </div>
   )
@@ -533,15 +560,15 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
             {/* Step 2: Logistics */}
             {step === 2 && (
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-6 mt-1">
                   Ayúdanos a preparar todo para tu llegada respondiendo estas preguntas:
                 </p>
 
                 <div className="border border-border/50 bg-background px-4">
-                  <ToggleQuestion label="¿Necesitas hospedaje?" value={formData.needsLodging} field="needsLodging" />
-                  <ToggleQuestion label="¿Necesitas transporte?" value={formData.needsTransport} field="needsTransport" />
-                  <ToggleQuestion label="¿Estas bautizado en la Iglesia Gentil de Cristo?" value={formData.isBaptized} field="isBaptized" />
-                  <ToggleQuestion label="¿Eres joven del coro MGR?" value={formData.isCoroMGR} field="isCoroMGR" />
+                  <ToggleQuestion label="¿Necesitas ayuda con el hospedaje?" value={formData.needsLodging} field="needsLodging" allowUnknown />
+                  <ToggleQuestion label="¿Necesitas ayuda con el transporte entre actividades?" value={formData.needsTransport} field="needsTransport" allowUnknown />
+                  <ToggleQuestion label="¿Estas bautizado en nuestra Iglesia Gentil de Cristo?" value={formData.isBaptized} field="isBaptized" disabled={formData.isCoroMGR === true} />
+                  <ToggleQuestion label="¿Eres joven del coro general? (Mensajeros del Gran Rey)" value={formData.isCoroMGR} field="isCoroMGR" />
                   <ToggleQuestion label="¿Vienes de otra región?" value={formData.isFromAnotherRegion} field="isFromAnotherRegion" />
                 </div>
               </div>
@@ -603,7 +630,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 {/* Summary */}
                 <div className="space-y-4">
                   <div className="border border-border/50 bg-background p-5">
-                    <h4 className="font-bold text-xs text-foreground mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Resumen de tu registro</h4>
+                    <h4 className="font-bold text-xs text-foreground mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Confirma tu registro:</h4>
                     <div className="space-y-3 text-sm">
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Nombre y apellido:</span>
@@ -614,24 +641,32 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                       <span className="text-foreground font-medium">{formData.phone ? `+52 ${formData.phone}` : "—"}</span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
-                      <span className="text-muted-foreground">Hospedaje:</span>
-                      <span className="text-foreground font-medium">{formData.needsLodging ? "Sí" : "No"}</span>
+                      <span className="text-muted-foreground">Necesita hospedaje:</span>
+                      <span className="font-medium">
+                        {formData.needsLodging === "unknown" ? <span>Aún no lo sé</span> : formData.needsLodging ? <Check className="h-6 w-6 text-emerald-600" aria-label="Sí" /> : <span className="text-red-700/60">No</span>}
+                      </span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
-                      <span className="text-muted-foreground">Transporte:</span>
-                      <span className="text-foreground font-medium">{formData.needsTransport ? "Sí" : "No"}</span>
+                      <span className="text-muted-foreground">Necesita transporte:</span>
+                      <span className="font-medium">
+                        {formData.needsTransport === "unknown" ? <span>Aún no lo sé</span> : formData.needsTransport ? <Check className="h-6 w-6 text-emerald-600" aria-label="Sí" /> : <span className="text-red-700/60">No</span>}
+                      </span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
-                      <span className="text-muted-foreground">Bautizado:</span>
-                      <span className="text-foreground font-medium">{formData.isBaptized ? "Sí" : "No"}</span>
+                      <span className="text-muted-foreground">Está bautizado:</span>
+                      <span className="font-medium">
+                        {formData.isBaptized ? <Check className="h-6 w-6 text-emerald-600" aria-label="Sí" /> : <span className="text-red-700/60">No</span>}
+                      </span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Coro MGR:</span>
-                      <span className="text-foreground font-medium">{formData.isCoroMGR ? "Sí" : "No"}</span>
+                      <span className="font-medium">
+                        {formData.isCoroMGR ? <Check className="h-6 w-6 text-emerald-600" aria-label="Sí" /> : <span className="text-red-700/60">No</span>}
+                      </span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Región:</span>
-                      <span className="text-foreground font-medium">{formData.isFromAnotherRegion ? "Otra región" : "Mayo"}</span>
+                      <span className="text-foreground font-medium">{formData.isFromAnotherRegion ? "Otra región" : "Región Mayo"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Asistiré como:</span>

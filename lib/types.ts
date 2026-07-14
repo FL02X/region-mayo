@@ -264,13 +264,14 @@ export interface DirectivaGeneration {
 }
 
 export type RegistrationAttendingAs = "oyente" | "varonDorca" | "jovenMGR";
+export type RegistrationLogisticsPreference = boolean | "unknown";
 
 // Registration form data
 export interface RegistrationFormData {
   name: string;
   phone: string;
-  needsLodging: boolean;
-  needsTransport: boolean;
+  needsLodging: RegistrationLogisticsPreference;
+  needsTransport: RegistrationLogisticsPreference;
   attendingAs: RegistrationAttendingAs;
   isBaptized: boolean;
   isCoroMGR: boolean;
@@ -322,8 +323,8 @@ export interface RegistrationSubmission {
   name: string;
   phone: string;
   eventId: string;
-  needsLodging: boolean;
-  needsTransport: boolean;
+  needsLodging: RegistrationLogisticsPreference;
+  needsTransport: RegistrationLogisticsPreference;
   attendingAs: RegistrationAttendingAs;
   isBaptized: boolean;
   isCoroMGR: boolean;

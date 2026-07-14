@@ -245,8 +245,8 @@ async function appendRegistrationToGoogleSheets(
   registrationData: {
     name: string
     phone: string
-    needsLodging: boolean
-    needsTransport: boolean
+    needsLodging: boolean | "unknown"
+    needsTransport: boolean | "unknown"
     attendingAs: RegistrationAttendingAs
     isBaptized: boolean
     isCoroMGR: boolean
@@ -262,7 +262,7 @@ async function appendRegistrationToGoogleSheets(
 
   await ensureGoogleSheetsHeaders(config, accessToken)
 
-  const yesNo = (value: boolean) => (value ? "SÍ" : "NO")
+  const yesNo = (value: boolean | "unknown") => value === "unknown" ? "Aún no lo sé" : value ? "SÍ" : "NO"
   const range = getGoogleSheetRange(config.sheetName, "A:H")
   const appendResponse = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
@@ -392,6 +392,10 @@ function sanitizePhone(input: unknown): string {
   return input.replace(/[^\d]/g, "").slice(0, 15)
 }
 
+function normalizeLogisticsPreference(input: unknown): boolean | "unknown" {
+  return input === "unknown" ? "unknown" : Boolean(input)
+}
+
 function validateRegistration(data: Record<string, unknown>): { valid: boolean; errors: string[] } {
   const errors: string[] = []
 
@@ -489,14 +493,14 @@ export async function POST(req: NextRequest) {
 
     // Prepare sanitized data
     const isCoroMGR = Boolean(body.isCoroMGR)
-    const isBaptized = Boolean(body.isBaptized) || isCoroMGR
+    const isBaptized = isCoroMGR ? true : Boolean(body.isBaptized)
     const isFromAnotherRegion = Boolean(body.isFromAnotherRegion)
     const attendingAs = getRegistrationAttendingAs(isBaptized, isCoroMGR)
     const registrationData = {
       name: sanitizeString(body.name),
       phone: sanitizePhone(body.phone),
-      needsLodging: Boolean(body.needsLodging),
-      needsTransport: Boolean(body.needsTransport),
+      needsLodging: normalizeLogisticsPreference(body.needsLodging),
+      needsTransport: normalizeLogisticsPreference(body.needsTransport),
       attendingAs,
       isBaptized,
       isCoroMGR,

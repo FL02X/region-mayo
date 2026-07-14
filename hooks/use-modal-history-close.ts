@@ -2,15 +2,17 @@
 
 import { useEffect, useRef } from "react";
 
-export function useModalHistoryClose(isOpen: boolean, onClose: () => void) {
+export function useModalHistoryClose(isOpen: boolean, onClose: () => void, onBack?: () => boolean) {
   const onCloseRef = useRef(onClose);
+  const onBackRef = useRef(onBack);
   const didPushStateRef = useRef(false);
   const didCloseFromPopRef = useRef(false);
   const cleanupBackTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     onCloseRef.current = onClose;
-  }, [onClose]);
+    onBackRef.current = onBack;
+  }, [onBack, onClose]);
 
   useEffect(() => {
     if (!isOpen || typeof window === "undefined") return;
@@ -20,16 +22,20 @@ export function useModalHistoryClose(isOpen: boolean, onClose: () => void) {
       cleanupBackTimerRef.current = null;
     }
 
-    const currentState = window.history.state;
-    const nextState =
-      currentState && typeof currentState === "object"
-        ? { ...currentState, rmModalOpen: true }
-        : { rmModalOpen: true };
+    const pushModalState = () => {
+      const currentState = window.history.state;
+      const nextState =
+        currentState && typeof currentState === "object"
+          ? { ...currentState, rmModalOpen: true }
+          : { rmModalOpen: true };
 
-    try {
       window.history.pushState(nextState, "", window.location.href);
       didPushStateRef.current = true;
       didCloseFromPopRef.current = false;
+    };
+
+    try {
+      pushModalState();
     } catch {
       didPushStateRef.current = false;
       return;
@@ -37,6 +43,15 @@ export function useModalHistoryClose(isOpen: boolean, onClose: () => void) {
 
     const handlePopState = () => {
       if (!didPushStateRef.current) return;
+
+      if (onBackRef.current?.()) {
+        try {
+          pushModalState();
+          return;
+        } catch {
+          // Fall through and close the modal if history cannot be restored.
+        }
+      }
 
       didCloseFromPopRef.current = true;
       didPushStateRef.current = false;

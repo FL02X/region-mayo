@@ -207,7 +207,7 @@ export function RecorridoContent({
           </div>
         </div>
         <div className="max-w mx-auto md:px-12 lg:px-62 md:pt-5">
-          <p className="text-[20px] font-semibold tracking-tight text-brand">Te invitamos al:</p>
+          <p className="text-[20px] font-semibold tracking-tight text-brand">Los invitamos al:</p>
           <p className={`mt-5 text-[3.425rem] md:text-[1.825rem] font-semibold tracking-tight leading-14 md:leading-normal text-ink ${editorialFont.className}`}>
             <span className="block md:inline">Recorrido</span><span className="hidden md:inline"> </span><span className="block md:inline">Regional</span><span className="hidden md:inline"> </span><span className="block md:inline">2026</span>
           </p>
@@ -221,7 +221,7 @@ export function RecorridoContent({
               </div>
             </div>
           )}
-          <div className="mt-0 w-full px-0 pt-3 pb-7">
+          <div className="mt-0 w-full px-0 pt-3 pb-8">
             <p className="mt-2 text-[14px] font-bold uppercase tracking-[0.16em] text-brand">TEMA</p>
             <p className={`mt-2 text-[24px] font-semibold tracking-tight leading-snug text-ink ${editorialFont.className}`}>Conociendo nuestras raices</p>
             <p className="mt-3.5 text-[16px] italic leading-7 text-foreground/80"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
@@ -238,7 +238,7 @@ export function RecorridoContent({
             </div>
           </div>
           <div className="mt-5 ml-0.5 italic mr-4 text-[14px] font-medium text-muted-foreground">
-            Entrada gratuita • El registro es opcional y nos ayuda a preparar la atención de los asistentes.
+            Entrada gratuita • El registro es opcional y nos ayuda a preparar la organización de los asistentes.
           </div>
           <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
           <div className="mt-5.5 w-full px-0 pt-3">

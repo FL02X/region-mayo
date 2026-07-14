@@ -17,7 +17,7 @@ const SHEET_HEADERS = {
   balanceDue: "Saldo pendiente (MXN)",
 } as const
 
-const PAYMENT_STATUSES = ["PENDIENTE", "ANTICIPO RECIBIDO", "PAGADO", "CANCELADO"] as const
+const PAYMENT_STATUSES = ["PENDIENTE", "ANTICIPO RECIBIDO", "PAGO COMPLETO", "CANCELADO"] as const
 const AUTOMATIC_COLUMNS_PROTECTION_DESCRIPTION = "Pedidos: columnas automáticas"
 
 type GoogleSheetsConfig = {
@@ -422,7 +422,7 @@ function getPaymentConditionalFormatRequests(
   const rowRange = { sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: headers.length }
   const conditionalFormats = [
     { formula: `=$${paymentStatusColumnLetter}2="PENDIENTE"`, color: { red: 0.98, green: 0.95, blue: 0.82 } },
-    { formula: `=$${paymentStatusColumnLetter}2="PAGADO"`, color: { red: 0.85, green: 0.94, blue: 0.85 } },
+    { formula: `=$${paymentStatusColumnLetter}2="PAGO COMPLETO"`, color: { red: 0.85, green: 0.94, blue: 0.85 } },
     { formula: `=$${paymentStatusColumnLetter}2="ANTICIPO RECIBIDO"`, color: { red: 0.93, green: 0.90, blue: 0.78 } },
     { formula: `=$${paymentStatusColumnLetter}2="CANCELADO"`, color: { red: 0.90, green: 0.90, blue: 0.90 } },
   ]
@@ -452,7 +452,7 @@ function getPaymentFilterViewRequests(
   const filterViews = [
     { title: "Pendientes de verificar", value: "PENDIENTE" },
     { title: "Anticipos recibidos", value: "ANTICIPO RECIBIDO" },
-    { title: "Pagados", value: "PAGADO" },
+    { title: "Pagos completos", value: "PAGO COMPLETO" },
     { title: "Cancelados", value: "CANCELADO" },
   ]
 
@@ -586,7 +586,7 @@ async function refreshProductSheetControls(
       const condition = rule.booleanRule?.condition
       const formula = condition?.values?.[0]?.userEnteredValue ?? ""
       const isPaymentRule = condition?.type === "CUSTOM_FORMULA"
-        && /^=\$[A-Z]+2="(?:PENDIENTE|ANTICIPO RECIBIDO|PAGADO COMPLETO|PAGADO|CANCELADO)"$/.test(formula)
+        && /^=\$[A-Z]+2="(?:PENDIENTE|ANTICIPO RECIBIDO|PAGO COMPLETO|PAGADO COMPLETO|PAGADO|CANCELADO)"$/.test(formula)
       const isLegacyDeliveryRule = condition?.type === "CUSTOM_FORMULA" && formula.endsWith('="ENTREGADO"')
       return isPaymentRule || isLegacyDeliveryRule ? [index] : []
     })
@@ -594,6 +594,7 @@ async function refreshProductSheetControls(
   const automaticFilterViewTitles = new Set([
     "Pendientes de verificar",
     "Anticipos recibidos",
+    "Pagos completos",
     "Pagados completamente",
     "Pagados",
     "Cancelados",
@@ -706,7 +707,7 @@ function getBalanceFormula(headers: string[], rowNumber: number) {
 
 function normalizePaymentStatus(value: unknown) {
   const status = String(value ?? "").trim().toUpperCase()
-  if (status === "PAGADO COMPLETO") return "PAGADO"
+  if (status === "PAGADO" || status === "PAGADO COMPLETO") return "PAGO COMPLETO"
   if (status === "PEDIENTE") return "PENDIENTE"
   return PAYMENT_STATUSES.includes(status as (typeof PAYMENT_STATUSES)[number]) ? status : "PENDIENTE"
 }
@@ -891,7 +892,7 @@ async function getPaidQuantity(
   const data = await response.json() as { values?: string[][] }
   return (data.values ?? []).slice(1).reduce((total, row) => {
     const status = String(row[statusIndex] ?? "").trim().toUpperCase()
-    if (status !== "ANTICIPO RECIBIDO" && status !== "PAGADO" && status !== "PAGADO COMPLETO") return total
+    if (status !== "ANTICIPO RECIBIDO" && status !== "PAGO COMPLETO" && status !== "PAGADO" && status !== "PAGADO COMPLETO") return total
 
     const quantity = quantityIndex === -1 ? 1 : Number(row[quantityIndex])
     return total + (Number.isInteger(quantity) && quantity > 0 ? quantity : 1)
