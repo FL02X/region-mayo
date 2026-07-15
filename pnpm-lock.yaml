@@ -122,6 +122,9 @@ dependencies:
   framer-motion:
     specifier: ^12.38.0
     version: 12.38.0(react-dom@19.2.4)(react@19.2.4)
+  griddy-icons:
+    specifier: ^0.2.0
+    version: 0.2.0(react@19.2.4)
   input-otp:
     specifier: 1.4.2
     version: 1.4.2(react-dom@19.2.4)(react@19.2.4)
@@ -7985,6 +7988,13 @@ packages:
   /graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
     dev: true
+
+  /griddy-icons@0.2.0(react@19.2.4):
+    resolution: {integrity: sha512-gWvJVw/RBHK8yP3DCqniCZROCBAPmBMqjrojBoxogai0fKkIb1HcP3w5roL7CzQUIGTFzn1S2o5nuONqnoX8ig==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      react: '>=16.8.0'
+    dev: false
 
   /groq-js@1.29.0:
     resolution: {integrity: sha512-LP/O1GwdCpKk4X/+GtUNafOLvPMf8oU+kLbe6QdqUQQl/lOOirHcpS/Br6HRrb0VeVl9QKJzmS/dK7lHO1LYsg==}
