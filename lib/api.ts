@@ -1250,6 +1250,7 @@ export async function getDirectiva(
 type RecorridoData = {
   events: Event[];
   products: Product[];
+  productsEnabled: boolean;
   startDate: Date | null;
   endDate: Date | null;
 };
@@ -1260,6 +1261,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
     return {
       events,
       products: [],
+      productsEnabled: false,
       startDate: events[0]?.date ?? null,
       endDate: events.at(-1)?.date ?? null,
     };
@@ -1272,6 +1274,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
       return {
         events,
         products: [],
+        productsEnabled: false,
         startDate: events[0]?.date ?? null,
         endDate: events.at(-1)?.date ?? null,
       };
@@ -1386,6 +1389,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
               recipientName: product.recipientName ?? undefined,
             }))
           : [],
+        productsEnabled: Boolean(recorrido?.productsEnabled),
         startDate: parseDate(recorrido?.startDate),
         endDate: parseDate(recorrido?.endDate),
       };

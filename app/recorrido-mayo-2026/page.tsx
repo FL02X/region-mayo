@@ -40,6 +40,7 @@ export default async function RecorridoMayo2026Page() {
       <RecorridoContent
         events={events.events}
         products={events.products}
+        productsEnabled={events.productsEnabled}
         startDate={events.startDate}
         endDate={events.endDate}
         templos={templos}

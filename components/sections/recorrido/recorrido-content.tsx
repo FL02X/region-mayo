@@ -4,13 +4,15 @@ import { useMemo, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import { Newsreader } from "next/font/google";
 import { ChevronRight, ClipboardList } from "lucide-react";
+import { ArrowCircleDown } from "griddy-icons";
 import type { Album, Event, Product, RegionPresident, Templo } from "@/lib/types";
 import { SectionNavBar } from "@/components/layout/album-section-nav-bar";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { useTime } from "@/lib/time-context";
-import { REGION_TIME_ZONE } from "@/lib/region-date";
+import { REGION_TIME_ZONE, getRegionDateTime } from "@/lib/region-date";
 import {
   getCountdownDisplay,
+  getRegionDateKey,
   getTimeUnits,
   MOBILE_FLOATING_BORDER_CLASS,
   type CountdownDisplay,
@@ -53,6 +55,7 @@ const recorridoBrandStyle = {
 interface RecorridoContentProps {
   events: Event[];
   products: Product[];
+  productsEnabled: boolean;
   startDate: Date | null;
   endDate: Date | null;
   albums: Album[];
@@ -94,6 +97,20 @@ function getRecorridoCountdownDisplay(
   return { days: 0, hours: 0, minutes: 0, seconds: 0, isDisabled: true };
 }
 
+function getRecorridoEventEnd(event: Event) {
+  const schedule = Array.isArray(event.schedule) && event.schedule.length > 0
+    ? event.schedule
+    : [{ date: event.date, time: event.time }];
+
+  return schedule.reduce((latest, occurrence) => {
+    const parsedEnd = occurrence.endTime
+      ? getRegionDateTime(getRegionDateKey(occurrence.date), occurrence.endTime)
+      : null;
+    const end = parsedEnd && parsedEnd.getTime() >= occurrence.date.getTime() ? parsedEnd : occurrence.date;
+    return end.getTime() > latest.getTime() ? end : latest;
+  }, event.date);
+}
+
 function formatRecorridoDayMonth(date: Date) {
   const parts = Object.fromEntries(
     recorridoDateFormatter
@@ -107,6 +124,7 @@ function formatRecorridoDayMonth(date: Date) {
 export function RecorridoContent({
   events,
   products,
+  productsEnabled,
   startDate,
   endDate,
   albums,
@@ -129,6 +147,16 @@ export function RecorridoContent({
     return getRecorridoCountdownDisplay(nextRecorridoEvent.schedule, currentTime);
   }, [nextRecorridoEvent, currentTime]);
   const countdownIsDisabled = countdownDisplay?.isDisabled ?? false;
+  const isRecorridoEnded = useMemo(() => {
+    const lastEventEnd = events
+      .filter((event) => event.eventType === "recorrido")
+      .reduce<Date | null>((latest, event) => {
+        const end = getRecorridoEventEnd(event);
+        return !latest || end.getTime() > latest.getTime() ? end : latest;
+      }, null);
+
+    return !!lastEventEnd && currentTime.getTime() >= lastEventEnd.getTime();
+  }, [currentTime, events]);
   const countdownGridClassName = countdownIsDisabled ? "opacity-60 saturate-0" : "";
   const recorridoRegistrationEvent = nextRecorridoEvent
     ? { ...nextRecorridoEvent.event, title: "Recorrido Mayo 2026" }
@@ -146,6 +174,11 @@ export function RecorridoContent({
   const handleCloseRegistration = () => {
     setIsRegisterModalOpen(false);
     setSelectedEvent(null);
+  };
+
+  const handleFollowRecorrido = () => {
+    const target = document.getElementById("recorrido-current-position") ?? document.getElementById("recorrido-route");
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   return (
@@ -170,10 +203,23 @@ export function RecorridoContent({
             <p className="mt-6.5 text-[16px]"><span className="text-bold">Del </span><span className="text-brand">{formatRecorridoDayMonth(startDate)}</span><span className="text-normal"> al </span><span className="text-brand">{formatRecorridoDayMonth(endDate)}</span> del 2026.</p>
           )}
           {countdownDisplay && (
-            <div className="my-5 border border-border bg-paper-highlight">
-              <div className={`grid grid-cols-4 border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS} ${countdownGridClassName}`} role="timer" aria-label="Tiempo restante para el recorrido" aria-disabled={countdownIsDisabled}>
-                {getTimeUnits(countdownDisplay).map((unit) => <FlipCountdownCell key={unit.label} value={unit.value} label={unit.label} editorialFontClassName={editorialFont.className} disabled={countdownIsDisabled} />)}
+            <div className="my-5">
+              <div className="border border-border bg-paper-highlight">
+                <div className={`grid grid-cols-4 border divide-x divide-border ${MOBILE_FLOATING_BORDER_CLASS} ${countdownGridClassName}`} role="timer" aria-label="Tiempo restante para el recorrido" aria-disabled={countdownIsDisabled}>
+                  {getTimeUnits(countdownDisplay).map((unit) => <FlipCountdownCell key={unit.label} value={unit.value} label={unit.label} editorialFontClassName={editorialFont.className} disabled={countdownIsDisabled} />)}
+                </div>
               </div>
+              {countdownIsDisabled && (
+                <div className="border border-t-0 border-border bg-paper-dark p-2">
+                  {isRecorridoEnded ? (
+                    <p className={`py-1 text-center text-[20px] font-bold text-brand-text tracking-wide ${editorialFont.className}`}>¡Gracias por asistir!</p>
+                  ) : (
+                    <button type="button" onClick={handleFollowRecorrido} className="flex min-h-17 w-full items-center justify-center gap-1.5 bg-brand px-3 py-3 font-semibold uppercase text-white transition-colors hover:bg-brand-hover active:bg-brand-hover/90">
+                      Sigue el recorrido <ArrowCircleDown className="ml-2 mb-0.5 h-10 w-10" size={28} />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
           <div className="mt-0 w-full px-0 pt-3 pb-8">
@@ -182,25 +228,29 @@ export function RecorridoContent({
             <p className="mt-3.5 text-[16px] italic leading-7 text-foreground/80"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
             <p className="mt-2 ml-1 text-sm font-medium text-ink">Hebreos 13:7</p>
           </div>
-          <div className="mt-2 w-fit border border-border bg-paper-dark px-2 pr-4 py-4">
-            <div className="flex items-center gap-4">
-              <div className="flex shrink-0 items-center justify-center"><ClipboardList className="h-12 w-12 text-foreground/75" strokeWidth={1.35} aria-hidden="true" /></div>
-              <div className="flex min-w-0 flex-1 flex-col items-start gap-2 uppercase">
-                <button type="button" onClick={handleOpenRegistration} disabled={!canOpenRegistration} className="inline-flex min-h-10 items-center justify-center gap-1.5 bg-brand px-2 py-3 text-bg font-semibold uppercase leading-tight whitespace-normal text-white transition-colors hover:bg-brand-hover active:bg-brand-hover/90 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand">
-                  Registrar asistencia <ChevronRight className="h-5.5 w-5.5 shrink-0" aria-hidden="true" />
-                </button>
+          {!countdownIsDisabled && <>
+            <div className="mt-2 w-fit border border-border bg-paper-dark px-2 pr-4 py-4">
+              <div className="flex items-center gap-4">
+                <div className="flex shrink-0 items-center justify-center"><ClipboardList className="h-12 w-12 text-foreground/75" strokeWidth={1.35} aria-hidden="true" /></div>
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-2 uppercase">
+                  <button type="button" onClick={handleOpenRegistration} disabled={!canOpenRegistration} className="inline-flex min-h-10 items-center justify-center gap-1.5 bg-brand px-2 py-3 text-bg font-semibold uppercase leading-tight whitespace-normal text-white transition-colors hover:bg-brand active:bg-brand-hover/90 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand">
+                    Registrar asistencia <ChevronRight className="h-5.5 w-5.5 shrink-0" aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="mt-5 ml-0.5 italic mr-4 text-[14px] font-medium text-muted-foreground">
-            Entrada gratuita • El registro es opcional y nos ayuda a preparar la organización de los asistentes.
-          </div>
-          <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
-          <div className="mt-5.5 w-full px-0 pt-3">
-            <p className="text-[14px] font-bold uppercase tracking-[0.16em] text-brand">Recuerdos</p>
-            <p className={`mt-1 text-[24px] font-semibold tracking-tight leading-snug text-ink mb-7 ${editorialFont.className}`}>Llevate un recuerdo</p>
-            <RecorridoProductCards products={products} regionTreasurer={regionTreasurer} />
-          </div>
+            <div className="mt-5 ml-0.5 italic mr-4 text-[14px] font-medium text-muted-foreground">
+              Entrada gratuita • El registro es opcional y nos ayuda con la organización.
+            </div>
+          </>}
+          {productsEnabled && !countdownIsDisabled && <>
+            <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
+            <div className="mt-5.5 w-full px-0 pt-3">
+              <p className="text-[14px] font-bold uppercase tracking-[0.16em] text-brand">Recuerdos</p>
+              <p className={`mt-1 text-[24px] font-semibold tracking-tight leading-snug text-ink mb-7 ${editorialFont.className}`}>Llevate un recuerdo</p>
+              <RecorridoProductCards products={products} regionTreasurer={regionTreasurer} />
+            </div>
+          </>}
           <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
           <RecorridoRoute events={events} />
         </div>
