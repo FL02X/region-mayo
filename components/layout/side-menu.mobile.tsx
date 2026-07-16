@@ -3,7 +3,8 @@
 // Donde: menu hamburguesa del header. 
 // Viewports: mobile. 
 // Funcion: muestra enlaces, ayuda, instalacion PWA y redes.
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -47,6 +48,23 @@ const MENU_CLOSE_DELAY_MS = 120;
 const HELP_CHATBOT_DELAY_MS = 160;
 const TOUCH_FEEDBACK_MS = 220;
 
+const recorridoBrandStyle = {
+  "--brand": "var(--brand-green)",
+  "--brand-hover": "var(--brand-green-hover)",
+  "--brand-active": "var(--brand-green-active)",
+  "--brand-soft": "var(--brand-green-soft)",
+  "--brand-border": "var(--brand-green-border)",
+  "--brand-text": "var(--brand-green-text)",
+  "--border": "var(--brand-green-border)",
+  "--color-brand": "var(--brand-green)",
+  "--color-brand-hover": "var(--brand-green-hover)",
+  "--color-brand-active": "var(--brand-green-active)",
+  "--color-brand-soft": "var(--brand-green-soft)",
+  "--color-brand-border": "var(--brand-green-border)",
+  "--color-brand-text": "var(--brand-green-text)",
+  "--color-border": "var(--brand-green-border)",
+} as CSSProperties;
+
 export function MobileMenu({
   instagramUrl = DEFAULT_INSTAGRAM_URL,
   facebookUrl = DEFAULT_FACEBOOK_URL,
@@ -60,6 +78,7 @@ export function MobileMenu({
   const [iglesiasOpen, setIglesiasOpen] = useState(false);
   const [helpTouchFeedback, setHelpTouchFeedback] = useState(false);
   const isMobile = useIsMobile();
+  const isRecorridoRoute = usePathname() === "/recorrido-mayo-2026";
   const { isInstalled } = useInstallPrompt();
   const openChatbotTimerRef = useRef<number | null>(null);
 
@@ -201,7 +220,8 @@ export function MobileMenu({
           className="w-[85vw] sm:w-[350px] p-0 flex flex-col pt-[54px] bg-background border-l-0"
           style={{
             height: "100dvh",
-            boxShadow: "-10px 0 20px -10px rgba(0,0,0,0.2)"
+            boxShadow: "-10px 0 20px -10px rgba(0,0,0,0.2)",
+            ...(isRecorridoRoute ? recorridoBrandStyle : {}),
           }}
           hideCloseButton
         >

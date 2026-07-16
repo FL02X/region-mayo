@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createProductOrder, ProductOrderUserError } from "@/lib/product-order-sheets"
+import { cancelProductOrder, createProductOrder, ProductOrderUserError } from "@/lib/product-order-sheets"
 
 const isTurnstileEnabled = false
 
@@ -69,6 +69,25 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "No se pudo registrar el pedido. Intenta de nuevo." },
+      { status: 500 },
+    )
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const productId = typeof body.productId === "string" ? body.productId.trim() : ""
+    const orderId = typeof body.orderId === "string" ? body.orderId.trim() : ""
+    await cancelProductOrder(productId, orderId)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("[product-order-cancel]", error)
+    if (error instanceof ProductOrderUserError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    return NextResponse.json(
+      { error: "No se pudo cancelar el pedido. Intenta de nuevo." },
       { status: 500 },
     )
   }

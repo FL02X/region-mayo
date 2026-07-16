@@ -5,9 +5,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const productIds = Array.isArray(body.productIds)
-      ? body.productIds.filter((id: unknown): id is string => typeof id === "string")
+      ? body.productIds.filter((id: unknown): id is string => typeof id === "string" && id.length <= 200)
       : []
-    const products = await getProductStockAvailability(productIds)
+    const orderIds = Array.isArray(body.orderIds)
+      ? body.orderIds.filter((id: unknown): id is string => typeof id === "string" && id.length <= 100)
+      : []
+    const products = await getProductStockAvailability(productIds, orderIds)
     return NextResponse.json({ products })
   } catch (error) {
     console.error("[product-stock]", error)

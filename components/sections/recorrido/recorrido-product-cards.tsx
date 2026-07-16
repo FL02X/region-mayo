@@ -3,11 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Newsreader } from "next/font/google";
-import { Images, ShoppingBag } from "lucide-react";
+import { ChevronDown, Images, ShoppingBag } from "lucide-react";
+import { ShoppingBagCancel } from "griddy-icons";
 import type { Product, RegionPresident } from "@/lib/types";
 import { ImageGalleryModal } from "@/components/shared/image-album-modal";
+import {
+  addStoredProductOrder,
+  parseStoredProductOrders,
+  RECORRIDO_ORDERS_STORAGE_KEY,
+  removeStoredProductOrder,
+  type StoredProductOrder,
+} from "@/lib/recorrido-orders";
 import { sanityImageVariantUrl } from "@/lib/sanity/image";
-import { ShopModal } from "./recorrido-shop-modal";
+import { RecorridoCancelOrderModal } from "./recorrido-cancel-order-modal";
+import { PaymentReceiptButton, ShopModal } from "./recorrido-shop-modal";
 
 const editorialFont = Newsreader({
   subsets: ["latin"],
@@ -29,6 +38,11 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
   const [galleryProductId, setGalleryProductId] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [shopProductId, setShopProductId] = useState<string | null>(null);
+  const [storedOrders, setStoredOrders] = useState<StoredProductOrder[]>([]);
+  const [orderToCancel, setOrderToCancel] = useState<StoredProductOrder | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [remainingStockByProductId, setRemainingStockByProductId] = useState<Record<string, number>>(() =>
     Object.fromEntries(
       products
@@ -46,8 +60,29 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
   );
 
   useEffect(() => {
+    try {
+      const orders = parseStoredProductOrders(window.localStorage.getItem(RECORRIDO_ORDERS_STORAGE_KEY));
+      const migratedOrders = orders.map((order) => Number.isFinite(Date.parse(order.createdAt ?? ""))
+        ? order
+        : { ...order, createdAt: new Date(0).toISOString() });
+      if (migratedOrders.some((order, index) => order !== orders[index])) {
+        try {
+          window.localStorage.setItem(RECORRIDO_ORDERS_STORAGE_KEY, JSON.stringify(migratedOrders));
+        } catch {
+          // The migrated orders remain available for this session if storage is unavailable.
+        }
+      }
+      setStoredOrders(migratedOrders);
+    } catch {
+      setStoredOrders([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    const orderIds = storedOrders.map((order) => order.id);
+    const orderedProductIds = new Set(storedOrders.map((order) => order.productId));
     const productIds = products
-      .filter((product) => typeof product.stock === "number")
+      .filter((product) => typeof product.stock === "number" || orderedProductIds.has(product.id))
       .map((product) => product.id);
     if (productIds.length === 0) return;
 
@@ -56,14 +91,44 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
       fetch("/api/product-stock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productIds }),
+        body: JSON.stringify({ productIds, orderIds }),
       })
         .then(async (response) => {
           if (!response.ok) return null;
-          return response.json() as Promise<{ products?: Array<{ id: string; remainingStock: number | null }> }>;
+          return response.json() as Promise<{ products?: Array<{
+            id: string;
+            remainingStock: number | null;
+            acceptedOrderIds?: string[];
+            activeOrderIds?: string[];
+            orderStatusSyncedAt?: string | null;
+          }> }>;
         })
         .then((data) => {
           if (!isCurrent || !data?.products) return;
+          const statusByProductId = new Map(data.products.map((product) => [product.id, product]));
+          setStoredOrders((current) => {
+            const next = current.filter((order) => {
+              const product = statusByProductId.get(order.productId);
+              if (!product) return true;
+              if (product.acceptedOrderIds?.includes(order.id)) return false;
+              if (product.activeOrderIds?.includes(order.id)) return true;
+              const syncedAt = Date.parse(product.orderStatusSyncedAt ?? "");
+              const createdAt = Date.parse(order.createdAt ?? "");
+              return !Number.isFinite(syncedAt) || !Number.isFinite(createdAt) || syncedAt < createdAt;
+            });
+            if (next.length !== current.length) {
+              try {
+                if (next.length > 0) {
+                  window.localStorage.setItem(RECORRIDO_ORDERS_STORAGE_KEY, JSON.stringify(next));
+                } else {
+                  window.localStorage.removeItem(RECORRIDO_ORDERS_STORAGE_KEY);
+                }
+              } catch {
+                // The synced orders stay hidden for this session if storage is unavailable.
+              }
+            }
+            return next;
+          });
           setRemainingStockByProductId((current) => ({
             ...current,
             ...Object.fromEntries(
@@ -76,13 +141,48 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
         .catch(() => undefined);
     };
 
+    refreshCachedStock();
     const intervalId = window.setInterval(refreshCachedStock, 60_000);
 
     return () => {
       isCurrent = false;
       window.clearInterval(intervalId);
     };
-  }, [products]);
+  }, [products, storedOrders]);
+
+  const handleCancelOrder = async () => {
+    if (!orderToCancel) return;
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      const response = await fetch("/api/product-order", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: orderToCancel.productId, orderId: orderToCancel.id }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "No se pudo cancelar el pedido.");
+
+      setStoredOrders((current) => {
+        const next = removeStoredProductOrder(current, orderToCancel.id);
+        try {
+          if (next.length > 0) {
+            window.localStorage.setItem(RECORRIDO_ORDERS_STORAGE_KEY, JSON.stringify(next));
+          } else {
+            window.localStorage.removeItem(RECORRIDO_ORDERS_STORAGE_KEY);
+          }
+        } catch {
+          // The canceled order stays hidden for this session if storage is unavailable.
+        }
+        return next;
+      });
+      setOrderToCancel(null);
+    } catch (error) {
+      setCancelError(error instanceof Error ? error.message : "No se pudo cancelar el pedido.");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   if (products.length === 0) return null;
 
@@ -103,6 +203,10 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
           const isSoldOut = typeof remainingStock === "number" && remainingStock <= 0;
           const hasDeposit = typeof product.deposit === "number";
           const stockLabel = product.productType?.trim().toLocaleLowerCase("es-MX") || "existencias";
+          const pendingOrders = storedOrders.filter(
+            (order) => order.productId === product.id,
+          );
+          const isExpanded = expandedProductId === product.id;
 
           const openGallery = () => {
             if (!canOpenGallery) return;
@@ -171,6 +275,94 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                 </button>
               </div>
               </div>
+              {pendingOrders.length > 0 && (
+                <div className="relative z-30 mt-7 flex flex-col">
+                  <div className={`-mx-3 border-t border-border pt-2 ${isExpanded ? "mb-2" : ""}`}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedProductId(isExpanded ? null : product.id)}
+                      className="flex min-h-10 w-full items-center justify-between gap-2 px-3 py-3 text-sm font-medium leading-tight text-foreground transition-colors hover:text-foreground/70"
+                      aria-expanded={isExpanded}
+                      aria-controls={`pending-orders-${product.id}`}
+                    >
+                      <span className="flex min-w-0 items-center gap-4 text-[0.88rem] font-bold uppercase tracking-[0.14em] text-ink/80">
+                        <span className="relative flex h-3 w-3 items-center justify-center" aria-hidden="true">
+                          <span className="recorrido-active-pulse absolute h-2 w-2 rounded-full bg-[#c96a16]/65" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-[#c96a16] shadow-[0_0_0_2px_rgba(201,106,22,0.2)]" />
+                        </span>
+                        {isExpanded ? "Ocultar" : "Ver pedidos pendientes"}
+                      </span>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </div>
+
+                  <div
+                    id={`pending-orders-${product.id}`}
+                    inert={!isExpanded}
+                    className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out ${
+                      isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="min-h-0 overflow-hidden">
+                      <div className="-mx-3 space-y-9 border-t border-border px-3 pb-3 pt-7">
+                        {pendingOrders.map((order) => {
+                            const variant = product.variants?.find((item) => item.id === order.variantId);
+                            const orderImage = sanityImageVariantUrl(
+                              variant?.photos[0] || product.photos[0] || "/placeholder.svg",
+                              { width: 240, quality: 75, format: "webp", fit: "max" },
+                            );
+
+                            return (
+                              <div key={order.id}>
+                                <div className="flex gap-3">
+                                  <div className="relative  h-20 w-20 shrink-0 overflow-hidden bg-muted/30">
+                                    <Image src={orderImage} alt={product.name} fill sizes="80px" unoptimized className="object-contain" />
+                                  </div>
+                                  <div className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground">
+                                    <p className="font-semibold text-foreground">{product.name}</p>
+                                    {product.variantsEnabled && order.variantName && <p>Variante: {order.variantName}</p>}
+                                    {product.allowSizeSelection && order.size && <p>Talla: {order.size}</p>}
+                                    <p>{order.paymentType === "deposit" ? "Anticipo" : "Total"}: ${priceFormatter.format(order.paymentAmount)} MXN</p>
+                                    {product.allowMultipleQuantity && <p>Cantidad: {order.quantity}</p>}
+                                    {hasDeposit && <p>Modalidad: {order.paymentType === "deposit" ? "Anticipo" : "Pago completo"}</p>}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCancelError(null);
+                                      setOrderToCancel(order);
+                                    }}
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-destructive"
+                                    aria-label="Cancelar pedido"
+                                    title="Cancelar pedido"
+                                  >
+                                    <ShoppingBagCancel size={20} aria-hidden="true" />
+                                  </button>
+                                </div>
+                                {regionTreasurer?.phone ? (
+                                  <PaymentReceiptButton
+                                    phone={regionTreasurer.phone}
+                                    customerName={order.customerName}
+                                    productName={product.name}
+                                    variantName={product.variantsEnabled ? order.variantName : undefined}
+                                    size={product.allowSizeSelection ? order.size : undefined}
+                                    quantity={product.allowMultipleQuantity ? order.quantity : undefined}
+                                    compact
+                                  />
+                                ) : (
+                                  <p className="mt-2 text-xs text-muted-foreground">Aún no hay un tesorero con teléfono configurado.</p>
+                                )}
+                              </div>
+                            );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </article>
           );
         })}
@@ -191,12 +383,32 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
           isOpen
           onClose={() => setShopProductId(null)}
           regionTreasurer={regionTreasurer}
-          onOrderSuccess={(remainingStock) => {
-            if (remainingStock === null) return;
-            setRemainingStockByProductId((current) => ({ ...current, [shopProduct.id]: remainingStock }));
+          onOrderSuccess={(order, remainingStock) => {
+            setStoredOrders((current) => {
+              const next = addStoredProductOrder(current, order);
+              try {
+                window.localStorage.setItem(RECORRIDO_ORDERS_STORAGE_KEY, JSON.stringify(next));
+              } catch {
+                // The order remains visible for this session if storage is unavailable.
+              }
+              return next;
+            });
+            if (remainingStock !== null) {
+              setRemainingStockByProductId((current) => ({ ...current, [shopProduct.id]: remainingStock }));
+            }
           }}
         />
       )}
+      <RecorridoCancelOrderModal
+        isOpen={Boolean(orderToCancel)}
+        isCancelling={isCancelling}
+        error={cancelError}
+        onClose={() => {
+          setOrderToCancel(null);
+          setCancelError(null);
+        }}
+        onConfirm={() => void handleCancelOrder()}
+      />
     </>
   );
 }

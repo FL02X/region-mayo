@@ -1,4 +1,5 @@
 import { getSanityClient } from "@/lib/sanity/client"
+import { isAcceptedPaymentStatus, isCancellablePaymentStatus } from "@/lib/recorrido-orders"
 import { sanityMutate, sanityQueryNoStore } from "@/lib/sanity/write-client"
 
 const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
@@ -872,16 +873,37 @@ async function refreshBalanceFormulas(
   await updateSheetValues(config, accessToken, updates)
 }
 
-async function getPaidQuantity(
+async function getAcceptedPayments(
   config: GoogleSheetsConfig,
   accessToken: string,
   sheetName: string,
   headers: string[],
 ) {
   const statusIndex = headers.indexOf(SHEET_HEADERS.paymentStatus)
-  if (statusIndex === -1) return 0
+  if (statusIndex === -1) return { quantity: 0, orderIds: [] as string[], pendingOrderIds: [] as string[] }
+  const orderIdIndex = headers.indexOf(SHEET_HEADERS.orderId)
   const quantityIndex = headers.indexOf(SHEET_HEADERS.quantity)
 
+  const rows = await getProductSheetRows(config, accessToken, sheetName)
+  return rows.slice(1).reduce((result, row) => {
+    const orderId = orderIdIndex === -1 ? "" : String(row[orderIdIndex] ?? "").trim()
+    if (!isAcceptedPaymentStatus(row[statusIndex])) {
+      if (normalizePaymentStatus(row[statusIndex]) === "PENDIENTE" && orderId) result.pendingOrderIds.push(orderId)
+      return result
+    }
+
+    const quantity = quantityIndex === -1 ? 1 : Number(row[quantityIndex])
+    result.quantity += Number.isInteger(quantity) && quantity > 0 ? quantity : 1
+    if (orderId) result.orderIds.push(orderId)
+    return result
+  }, { quantity: 0, orderIds: [] as string[], pendingOrderIds: [] as string[] })
+}
+
+async function getProductSheetRows(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetName: string,
+) {
   const range = getGoogleSheetRange(sheetName, "A:Z")
   const response = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}`,
@@ -890,13 +912,7 @@ async function getPaidQuantity(
   if (!response.ok) throw new Error(`Google Sheets order read failed: ${await response.text()}`)
 
   const data = await response.json() as { values?: string[][] }
-  return (data.values ?? []).slice(1).reduce((total, row) => {
-    const status = String(row[statusIndex] ?? "").trim().toUpperCase()
-    if (status !== "ANTICIPO RECIBIDO" && status !== "PAGO COMPLETO" && status !== "PAGADO" && status !== "PAGADO COMPLETO") return total
-
-    const quantity = quantityIndex === -1 ? 1 : Number(row[quantityIndex])
-    return total + (Number.isInteger(quantity) && quantity > 0 ? quantity : 1)
-  }, 0)
+  return data.values ?? []
 }
 
 async function appendOrder(
@@ -1082,10 +1098,10 @@ export async function createProductOrder(input: ProductOrderInput) {
     await refreshBalanceFormulas(config, accessToken, sheet.sheetName, sheet.headers)
   }
   await refreshProductSheetControls(config, accessToken, sheet.sheetId, sheet.sheetName, sheet.headers)
-  const paidQuantity = typeof product.stock === "number"
-    ? await getPaidQuantity(config, accessToken, sheet.sheetName, sheet.headers)
-    : 0
-  const remainingStock = typeof product.stock === "number" ? Math.max(0, product.stock - paidQuantity) : undefined
+  const acceptedPayments = typeof product.stock === "number"
+    ? await getAcceptedPayments(config, accessToken, sheet.sheetName, sheet.headers)
+    : { quantity: 0 }
+  const remainingStock = typeof product.stock === "number" ? Math.max(0, product.stock - acceptedPayments.quantity) : undefined
 
   if (typeof remainingStock === "number" && order.quantity > remainingStock) {
     throw new ProductOrderUserError(remainingStock === 0 ? "Este producto esta agotado." : `Solo quedan ${remainingStock} unidades disponibles.`)
@@ -1116,16 +1132,60 @@ export async function createProductOrder(input: ProductOrderInput) {
   await addOrderRowValidations(config, accessToken, sheet.sheetId, sheet.headers, rowNumber)
   await formatPaymentType(config, accessToken, sheet.sheetId, rowNumber, sheet.headers, order.paymentType)
 
-  return { remainingStock, productName: product.name }
+  return { orderId, remainingStock, productName: product.name }
 }
 
-export async function getProductStockAvailability(productIds: string[]) {
+export async function cancelProductOrder(productId: string, orderId: string) {
+  if (!productId || productId.length > 200 || !orderId || orderId.length > 100) {
+    throw new ProductOrderUserError("El pedido no es valido.")
+  }
+
+  const product = await getProductOrderProduct(productId)
+  if (!product) return false
+
+  const config = getGoogleSheetsConfig()
+  const accessToken = await getGoogleSheetsAccessToken(config)
+  if (await getSheetId(config, accessToken, product.name) === null) return false
+
+  const headers = (await getSheetHeader(config, accessToken, product.name)).map(migrateLegacyHeader)
+  const orderIdColumn = headers.indexOf(SHEET_HEADERS.orderId)
+  const statusColumn = headers.indexOf(SHEET_HEADERS.paymentStatus)
+  if (orderIdColumn === -1 || statusColumn === -1) throw new Error("La hoja de pedidos esta incompleta.")
+
+  const rows = await getProductSheetRows(config, accessToken, product.name)
+  const rowIndex = rows.slice(1).findIndex((row) => String(row[orderIdColumn] ?? "").trim() === orderId)
+  if (rowIndex === -1) return false
+
+  const status = normalizePaymentStatus(rows[rowIndex + 1][statusColumn])
+  if (status === "CANCELADO") return true
+  if (!isCancellablePaymentStatus(status)) {
+    throw new ProductOrderUserError("Este pedido ya tiene un pago confirmado y no se puede cancelar.")
+  }
+
+  // ponytail: Sheets has no conditional cell update; use transactional storage if edit races become common.
+  const rowNumber = rowIndex + 2
+  await updateSheetValues(config, accessToken, [{
+    range: getGoogleSheetRange(product.name, `${getColumnLetter(statusColumn)}${rowNumber}`),
+    values: [["CANCELADO"]],
+  }])
+  return true
+}
+
+export async function getProductStockAvailability(productIds: string[], orderIds: string[] = []) {
   const ids = Array.from(new Set(productIds.filter(Boolean))).slice(0, 50)
   if (ids.length === 0) return []
+  const requestedOrderIds = new Set(orderIds.filter(Boolean).slice(0, 100))
 
   const client = getSanityClient()
-  const products = await client.fetch<Array<{ _id: string; stock?: number; remainingStock?: number }>>(
-    `*[_type == "product" && _id in $ids && !isDisabled]{_id, stock, remainingStock}`,
+  const products = await client.fetch<Array<{
+    _id: string
+    stock?: number
+    remainingStock?: number
+    acceptedPaymentOrderIds?: string[]
+    pendingOrderIds?: string[]
+    orderStatusSyncedAt?: string
+  }>>(
+    `*[_type == "product" && _id in $ids && !isDisabled]{_id, stock, remainingStock, acceptedPaymentOrderIds, pendingOrderIds, orderStatusSyncedAt}`,
     { ids },
   )
 
@@ -1134,6 +1194,9 @@ export async function getProductStockAvailability(productIds: string[]) {
     remainingStock: typeof product.stock === "number"
       ? (typeof product.remainingStock === "number" ? product.remainingStock : product.stock)
       : null,
+    acceptedOrderIds: (product.acceptedPaymentOrderIds ?? []).filter((id) => requestedOrderIds.has(id)),
+    activeOrderIds: (product.pendingOrderIds ?? []).filter((id) => requestedOrderIds.has(id)),
+    orderStatusSyncedAt: product.orderStatusSyncedAt ?? null,
   }))
 }
 
@@ -1141,29 +1204,59 @@ export async function refreshProductStockAvailabilityCache() {
   const products = await sanityQueryNoStore<Array<{
     _id: string
     name: string
-    stock: number
+    stock?: number
     remainingStock?: number
+    acceptedPaymentOrderIds?: string[]
+    pendingOrderIds?: string[]
+    orderStatusSyncedAt?: string
   }>>(
-    `*[_type == "product" && !isDisabled && defined(stock)]{_id, name, stock, remainingStock}`,
+    `*[_type == "product" && !isDisabled]{_id, name, stock, remainingStock, acceptedPaymentOrderIds, pendingOrderIds, orderStatusSyncedAt}`,
   )
   if (!products?.length) return { availability: [], changed: 0 }
 
   const config = getGoogleSheetsConfig()
   const accessToken = await getGoogleSheetsAccessToken(config)
+  const syncedAt = new Date().toISOString()
 
   const availability = await Promise.all(products.map(async (product) => {
     const sheetId = await getSheetId(config, accessToken, product.name)
-    if (sheetId === null) return { id: product._id, remainingStock: product.stock }
+    if (sheetId === null) return {
+      id: product._id,
+      remainingStock: product.stock,
+      acceptedOrderIds: [] as string[],
+      pendingOrderIds: [] as string[],
+    }
 
     const headers = (await getSheetHeader(config, accessToken, product.name)).map(migrateLegacyHeader)
-    const paidQuantity = await getPaidQuantity(config, accessToken, product.name, headers)
-    return { id: product._id, remainingStock: Math.max(0, product.stock - paidQuantity) }
+    const acceptedPayments = await getAcceptedPayments(config, accessToken, product.name, headers)
+    return {
+      id: product._id,
+      remainingStock: typeof product.stock === "number"
+        ? Math.max(0, product.stock - acceptedPayments.quantity)
+        : undefined,
+      // ponytail: event-order volume is small; use a dedicated cache if this array becomes large.
+      acceptedOrderIds: acceptedPayments.orderIds,
+      pendingOrderIds: acceptedPayments.pendingOrderIds,
+    }
   }))
 
   const mutations = availability.flatMap((item) => {
     const product = products.find((candidate) => candidate._id === item.id)
-    if (!product || product.remainingStock === item.remainingStock) return []
-    return [{ patch: { id: item.id, set: { remainingStock: item.remainingStock } } }]
+    if (!product) return []
+    const cachedOrderIds = product.acceptedPaymentOrderIds ?? []
+    const cachedPendingOrderIds = product.pendingOrderIds ?? []
+    const ordersChanged = cachedOrderIds.length !== item.acceptedOrderIds.length
+      || cachedOrderIds.some((id, index) => id !== item.acceptedOrderIds[index])
+      || cachedPendingOrderIds.length !== item.pendingOrderIds.length
+      || cachedPendingOrderIds.some((id, index) => id !== item.pendingOrderIds[index])
+    const stockChanged = typeof item.remainingStock === "number" && product.remainingStock !== item.remainingStock
+    if (!ordersChanged && !stockChanged && product.orderStatusSyncedAt) return []
+    return [{ patch: { id: item.id, set: {
+      ...(typeof item.remainingStock === "number" ? { remainingStock: item.remainingStock } : {}),
+      acceptedPaymentOrderIds: item.acceptedOrderIds,
+      pendingOrderIds: item.pendingOrderIds,
+      orderStatusSyncedAt: syncedAt,
+    } } }]
   })
   if (mutations.length > 0) await sanityMutate(mutations)
 

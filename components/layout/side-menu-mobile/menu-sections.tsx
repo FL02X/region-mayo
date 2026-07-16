@@ -44,12 +44,12 @@ export function MainMenuLink({
       onTouchStart={() => onTouchStart(item.href)}
       className={cn(
         "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
-        showLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
+        showLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-brand",
         isActive
           ? "bg-gray-200"
           : isTouchFeedback
-            ? "bg-[#e8f1ff] shadow-[inset_0_0_0_1px_rgba(63,109,181,0.2)]"
-            : "hover:bg-gray-100 active:bg-[#e8f1ff]"
+            ? "bg-brand-soft ring-1 ring-inset ring-brand/20"
+            : "hover:bg-gray-100 active:bg-brand-soft"
       )}
       aria-current={isActive ? "page" : undefined}
     >
@@ -60,11 +60,11 @@ export function MainMenuLink({
         absoluteStrokeWidth
       />
       <div className="min-w-0">
-        <p className={cn("text-[16px] leading-tight uppercase", isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
+        <p className={cn("text-[16px] leading-tight uppercase text-brand", isActive ? "font-bold" : "font-normal")}>
           {item.label}
         </p>
         {item.description && (
-          <p className={cn("text-[14px] leading-tight mt-0.5 uppercase", isActive ? "text-[#00508F]/80 font-bold" : "text-[#00508F]/80 font-normal")}>
+          <p className={cn("text-[14px] leading-tight mt-0.5 uppercase text-brand/80", isActive ? "font-bold" : "font-normal")}>
             {item.description}
           </p>
         )}
@@ -98,14 +98,14 @@ export function IglesiasMenuSection({
         onTouchStart={() => onTouchStart("/iglesias")}
         className={cn(
           "relative flex w-full items-center gap-3 border-b border-[#cfd4db] px-5 py-4 pr-16 text-left [border-bottom-style:dotted] transition-colors duration-150",
-          iglesiasOpen ? "bg-[#eeeeea]" : "hover:bg-gray-100 active:bg-[#e8f1ff]"
+          iglesiasOpen ? "bg-[#eeeeea]" : "hover:bg-gray-100 active:bg-brand-soft"
         )}
         aria-expanded={iglesiasOpen}
         aria-controls="mobile-iglesias-submenu"
       >
         <Church className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
         <div className="min-w-0 flex-1">
-          <p className="text-[16px] font-normal leading-tight uppercase text-[#00508F]">
+          <p className="text-[16px] font-normal leading-tight uppercase text-brand">
             Iglesias
           </p>
         </div>
@@ -136,14 +136,14 @@ export function IglesiasMenuSection({
                 onTouchStart={() => onTouchStart(iglesiaItem.href)}
                 className={cn(
                   "relative flex items-center gap-3 border-b border-[#cfd4db] px-9 py-3.5 [border-bottom-style:dotted] transition-colors duration-150",
-                  iglesiaItemActive && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
-                  iglesiaItemActive ? "bg-[#d8d8d8]" : "hover:bg-gray-100 active:bg-[#e8f1ff]"
+                  iglesiaItemActive && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-brand",
+                  iglesiaItemActive ? "bg-[#d8d8d8]" : "hover:bg-gray-100 active:bg-brand-soft"
                 )}
                 aria-current={iglesiaItemActive ? "page" : undefined}
               >
                 <IglesiaIcon className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
                 <div className="min-w-0">
-                  <p className={cn("text-[17px] leading-tight", iglesiaItemActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]")}>
+                  <p className={cn("text-[17px] leading-tight text-brand", iglesiaItemActive ? "font-bold" : "font-normal")}>
                     {iglesiaItem.label}
                   </p>
                   {iglesiaItem.description && (
@@ -179,19 +179,19 @@ export function HelpMenuButton({
       onTouchStart={onTouchStart}
       className={cn(
         "relative flex w-full items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] text-left transition-colors duration-150",
-        helpTouchFeedback && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-[#3f6db5]",
+        helpTouchFeedback && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-brand",
         helpTouchFeedback
-          ? "bg-[#e8f1ff] shadow-[inset_0_0_0_1px_rgba(63,109,181,0.2)]"
-          : "hover:bg-gray-100 active:bg-[#e8f1ff]"
+          ? "bg-brand-soft ring-1 ring-inset ring-brand/20"
+          : "hover:bg-gray-100 active:bg-brand-soft"
       )}
       aria-label="Abrir ayuda"
     >
       <MessageSquare className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
       <div className="min-w-0">
-        <p className="text-[16px] leading-tight uppercase font-normal text-[#00508F]">
+        <p className="text-[16px] leading-tight uppercase font-normal text-brand">
           Ayuda
         </p>
-        <p className="mt-0.5 text-[14px] leading-tight uppercase font-normal text-[#00508F]/80">
+        <p className="mt-0.5 text-[14px] leading-tight uppercase font-normal text-brand/80">
           Asistente virtual
         </p>
       </div>
@@ -222,7 +222,7 @@ export function PwaMenuLink({
       onTouchStart={onTouchStart}
       className={cn(
         "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
-        isActive ? "bg-gray-200" : "hover:bg-gray-100 active:bg-[#e8f1ff]",
+        isActive ? "bg-gray-200" : "hover:bg-gray-100 active:bg-brand-soft",
       )}
       aria-current={isActive ? "page" : undefined}
     >
@@ -231,7 +231,8 @@ export function PwaMenuLink({
         <p
           className={cn(
             "text-[16px] leading-tight uppercase",
-            isActive ? "font-bold text-[#00508F]" : "font-normal text-[#00508F]",
+            "text-brand",
+            isActive ? "font-bold" : "font-normal",
           )}
         >
           {item.label}
@@ -260,7 +261,7 @@ export function MobileMenuSocialFooter({
           href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2.5 text-[16px] font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
+          className="flex items-center gap-2.5 text-[16px] font-normal text-brand hover:text-brand-hover transition-colors"
           aria-label="Síguenos en Instagram"
         >
           <Instagram className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
@@ -270,7 +271,7 @@ export function MobileMenuSocialFooter({
           href={facebookUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2.5 text-[16px] font-normal text-[#00508F] hover:text-[#003B6D] transition-colors"
+          className="flex items-center gap-2.5 text-[16px] font-normal text-brand hover:text-brand-hover transition-colors"
           aria-label="Síguenos en Facebook"
         >
           <Facebook className="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />

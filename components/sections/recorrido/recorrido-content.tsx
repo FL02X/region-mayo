@@ -195,7 +195,7 @@ export function RecorridoContent({
           </div>
         </div>
         <div className="max-w mx-auto md:px-12 lg:px-62 md:pt-5">
-          <p className="text-[20px] font-semibold tracking-tight text-brand">Los invitamos al:</p>
+          <p className="text-[20px] font-semibold tracking-tight text-brand">Los invitamos a nuestro:</p>
           <p className={`mt-5 text-[3.425rem] md:text-[1.825rem] font-semibold tracking-tight leading-14 md:leading-normal text-ink ${editorialFont.className}`}>
             <span className="block md:inline">Recorrido</span><span className="hidden md:inline"> </span><span className="block md:inline">Regional</span><span className="hidden md:inline"> </span><span className="block md:inline">2026</span>
           </p>
@@ -245,13 +245,13 @@ export function RecorridoContent({
           </>}
           {productsEnabled && !countdownIsDisabled && <>
             <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
-            <div className="mt-5.5 w-full px-0 pt-3">
+            <div className="w-full px-0 py-8.5">
               <p className="text-[14px] font-bold uppercase tracking-[0.16em] text-brand">Recuerdos</p>
               <p className={`mt-1 text-[24px] font-semibold tracking-tight leading-snug text-ink mb-7 ${editorialFont.className}`}>Llevate un recuerdo</p>
               <RecorridoProductCards products={products} regionTreasurer={regionTreasurer} />
             </div>
           </>}
-          <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
+          <div className="h-px w-full bg-brand" aria-hidden="true" />
           <RecorridoRoute events={events} />
         </div>
       </div>

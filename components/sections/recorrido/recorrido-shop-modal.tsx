@@ -15,6 +15,7 @@ import { useConnectivity } from "@/hooks/use-connectivity"
 import useLockBodyScroll from "@/hooks/use-lock-scroll"
 import { useModalHistoryClose } from "@/hooks/use-modal-history-close"
 import { formatPhoneForDisplay, getWhatsAppLink } from "@/lib/phone-utils"
+import type { StoredProductOrder } from "@/lib/recorrido-orders"
 import { sanityImageVariantUrl } from "@/lib/sanity/image"
 import type { Product, ProductVariant, RegionPresident } from "@/lib/types"
 
@@ -87,7 +88,7 @@ interface ShopModalProps {
   isOpen: boolean
   onClose: () => void
   regionTreasurer: RegionPresident | null
-  onOrderSuccess?: (remainingStock: number | null) => void
+  onOrderSuccess?: (order: StoredProductOrder, remainingStock: number | null) => void
 }
 
 const normalizeName = (value: string) => value.trim().replace(/\s+/g, " ")
@@ -105,6 +106,45 @@ function formatPrice(value: number) {
 
 function PriceAmount({ value }: { value: number }) {
   return <><span className="mr-0.5 align-super font-sans text-[0.52em] font-semibold leading-none">$</span>{formatPrice(value)} MXN</>
+}
+
+export function PaymentReceiptButton({
+  phone,
+  customerName,
+  productName,
+  variantName,
+  size,
+  quantity,
+  compact = false,
+}: {
+  phone: string
+  customerName: string
+  productName: string
+  variantName?: string
+  size?: string
+  quantity?: number
+  compact?: boolean
+}) {
+  const details = [
+    variantName && `Variante: *${variantName}*`,
+    size && `Talla: *${size}*`,
+    quantity && `Cantidad: *${quantity}*`,
+  ].filter(Boolean).join("\n")
+  const message = `Paz de Cristo, comprobante de pago de: *${customerName}*, para: *${productName}*${details ? `\n${details}` : ""}`
+
+  return (
+    <a
+      href={getWhatsAppLink(phone, message)}
+      target="_blank"
+      rel="noreferrer"
+      className={compact
+        ? "mt-4 flex min-h-10 w-full items-center justify-center gap-2 bg-[#21b758] px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#20ba5d]"
+        : "mb-4 mt-6 flex h-auto min-h-18 items-center justify-center gap-4 bg-[#21b758] px-4 py-3 text-center text-[16px] font-bold uppercase leading-tight tracking-wide text-white transition-colors hover:bg-[#20ba5d]"}
+    >
+      <MessageCircle className={compact ? "h-4 w-4 shrink-0" : "h-9 w-9 shrink-0"} aria-hidden="true" />
+      <span className="whitespace-normal break-words">{compact ? "Enviar comprobante" : "Enviar comprobante de pago"}</span>
+    </a>
+  )
 }
 
 function QuantityFlip({ value, children }: { value: number; children: ReactNode }) {
@@ -325,7 +365,21 @@ export function ShopModal({
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || "No se pudo registrar el pedido.")
 
-      onOrderSuccess?.(typeof data.remainingStock === "number" ? data.remainingStock : null)
+      if (typeof data.orderId !== "string" || !data.orderId) {
+        throw new Error("El pedido se registro, pero no recibimos su identificador.")
+      }
+      onOrderSuccess?.({
+        id: data.orderId,
+        productId: product.id,
+        customerName: contact.name,
+        variantId: selectedVariantId ?? undefined,
+        variantName: selectedVariantName,
+        size: product.allowSizeSelection ? selectedSize : undefined,
+        paymentType,
+        paymentAmount: totalPrice,
+        quantity,
+        createdAt: new Date().toISOString(),
+      }, typeof data.remainingStock === "number" ? data.remainingStock : null)
       setIsComplete(true)
       contentScrollRef.current?.scrollTo({ top: 0 })
     } catch (error) {
@@ -354,10 +408,6 @@ export function ShopModal({
     options: "Personalizar",
     confirm: "Confirmar pedido",
   }
-  const whatsappMessage = `Paz de Cristo, comprobante de pago de: *${name}*, para: *${product.name}*`
-  const whatsappHref = regionTreasurer?.phone
-    ? getWhatsAppLink(regionTreasurer.phone, whatsappMessage)
-    : undefined
   const modalAccentStyle = pathname === "/recorrido-mayo-2026" ? recorridoShopBrandStyle : undefined
 
   const modal = (
@@ -669,11 +719,15 @@ export function ShopModal({
                       </div>
                     </div>
                   )}
-                  {whatsappHref ? (
-                    <a href={whatsappHref} target="_blank" rel="noreferrer" className="mb-4 mt-6 flex h-auto min-h-18 items-center justify-center gap-4 bg-[#21b758] px-4 py-3 text-center text-[16px] font-bold uppercase leading-tight tracking-wide text-white transition-colors hover:bg-[#20ba5d]">
-                      <MessageCircle className="h-9 w-9 shrink-0" />
-                      <span className="whitespace-normal break-words">Enviar comprobante de pago</span>
-                    </a>
+                  {regionTreasurer?.phone ? (
+                    <PaymentReceiptButton
+                      phone={regionTreasurer.phone}
+                      customerName={name}
+                      productName={product.name}
+                      variantName={product.variantsEnabled ? selectedVariantName : undefined}
+                      size={product.allowSizeSelection ? selectedSize : undefined}
+                      quantity={product.allowMultipleQuantity ? quantity : undefined}
+                    />
                   ) : (
                     <p className="mt-3 border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">Aun no hay un tesorero con telefono configurado en la directiva actual.</p>
                   )}
