@@ -658,7 +658,7 @@ export function EventsFeed({
             hasFirstVisitDivider ? "" : "border-t md:border-t-0"
           }`}
         >
-          <div className="mt-4 max-w mx-auto w-full">
+          <div className="max-w mx-auto w-full">
 
             <div className="mb-9">
               <h2

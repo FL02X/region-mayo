@@ -59,29 +59,39 @@ export function RecorridoCancelOrderModal({
         </div>
 
         <div className="p-5">
-          <p className="text-base font-semibold leading-snug text-foreground">¿Estás seguro que quieres cancelar este pedido?</p>
-          <p className={`mt-2 text-sm ${error ? "text-destructive" : "text-muted-foreground"}`}>
-            {error || "El pedido se marcará como CANCELADO y se eliminará de este dispositivo."}
-          </p>
+          {isCancelling ? (
+            <div className="flex min-h-[180px] flex-col items-center justify-center py-6">
+              <div
+                className={`h-20 w-20 animate-spin rounded-full border-4 ${isRecorrido ? "border-brand-green/20 border-t-brand-green" : "border-primary/20 border-t-primary"}`}
+                aria-hidden="true"
+              />
+              <p className="mt-5 text-sm font-medium text-muted-foreground">Cancelando pedido...</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-base font-semibold leading-snug text-foreground">¿Estás seguro que quieres cancelar este pedido?</p>
+              <p className={`mt-2 text-sm ${error ? "text-destructive" : "text-muted-foreground"}`}>
+                {error || "El pedido se marcará como CANCELADO y se eliminará de este dispositivo."}
+              </p>
 
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={close}
-              disabled={isCancelling}
-              className={`min-h-11 border bg-white px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${isRecorrido ? "border-brand-green text-brand-green-active hover:bg-brand-green-soft" : "border-black text-foreground hover:bg-[#f1f1f1]"}`}
-            >
-              No
-            </button>
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={isCancelling}
-              className={`min-h-11 px-5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${isRecorrido ? "bg-brand-green hover:bg-brand-green-hover" : "bg-[#434343] hover:bg-[#2f2f2f]"}`}
-            >
-              {isCancelling ? "Cancelando..." : "Sí"}
-            </button>
-          </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={close}
+                  className={`min-h-11 border bg-white px-5 text-sm font-semibold transition-colors ${isRecorrido ? "border-brand-green text-brand-green-active hover:bg-brand-green-soft" : "border-black text-foreground hover:bg-[#f1f1f1]"}`}
+                >
+                  No
+                </button>
+                <button
+                  type="button"
+                  onClick={onConfirm}
+                  className={`min-h-11 px-5 text-sm font-semibold text-white transition-colors ${isRecorrido ? "bg-brand-green hover:bg-brand-green-hover" : "bg-[#434343] hover:bg-[#2f2f2f]"}`}
+                >
+                  Sí
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>,

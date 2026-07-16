@@ -116,16 +116,15 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
               const createdAt = Date.parse(order.createdAt ?? "");
               return !Number.isFinite(syncedAt) || !Number.isFinite(createdAt) || syncedAt < createdAt;
             });
-            if (next.length !== current.length) {
-              try {
-                if (next.length > 0) {
-                  window.localStorage.setItem(RECORRIDO_ORDERS_STORAGE_KEY, JSON.stringify(next));
-                } else {
-                  window.localStorage.removeItem(RECORRIDO_ORDERS_STORAGE_KEY);
-                }
-              } catch {
-                // The synced orders stay hidden for this session if storage is unavailable.
+            if (next.length === current.length) return current;
+            try {
+              if (next.length > 0) {
+                window.localStorage.setItem(RECORRIDO_ORDERS_STORAGE_KEY, JSON.stringify(next));
+              } else {
+                window.localStorage.removeItem(RECORRIDO_ORDERS_STORAGE_KEY);
               }
+            } catch {
+              // The synced orders stay hidden for this session if storage is unavailable.
             }
             return next;
           });

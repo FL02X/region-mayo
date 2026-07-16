@@ -429,7 +429,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const ToggleQuestion = ({ label, value, field, allowUnknown = false, disabled = false }: { label: string, value: boolean | "unknown" | null, field: string, allowUnknown?: boolean, disabled?: boolean }) => (
     <div className={`flex flex-wrap gap-5 pb-7 pt-5 border-b border-border/50 last:border-0 ${allowUnknown ? "flex-col items-start" : "items-center justify-between"}`}>
       <span className="text-sm font-medium text-foreground">{label}</span>
-      <div className="flex flex-wrap gap-2">
+      <div className={`flex flex-wrap gap-2 ${disabled ? "[&_button:disabled]:opacity-80" : ""}`}>
         <Button
           variant="ghost"
           size="sm"

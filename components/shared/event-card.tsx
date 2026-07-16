@@ -800,11 +800,11 @@ export function EventCard({
         onTouchStart={
           shouldScrollSchedule ? handleScheduleTouchStart : undefined
         }
-        onWheel={shouldScrollSchedule ? handleScheduleWheel : undefined}
+        onWheel={!isMobile && shouldScrollSchedule ? handleScheduleWheel : undefined}
         className={[
           "flex w-full",
           shouldScrollSchedule
-            ? "touch-auto overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            ? "touch-auto overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             : "overflow-hidden",
         ]
           .filter(Boolean)
