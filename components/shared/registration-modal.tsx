@@ -16,7 +16,14 @@ import { ImageGalleryModal } from "@/components/shared/image-album-modal"
 import useLockBodyScroll from "@/hooks/use-lock-scroll"
 import { useModalHistoryClose } from "@/hooks/use-modal-history-close"
 import { useConnectivity } from "@/hooks/use-connectivity"
-import type { Event, RegionPresident, RegistrationAttendingAs, RegistrationLogisticsPreference } from "@/lib/types"
+import {
+  REGISTRATION_REGIONS,
+  type Event,
+  type RegionPresident,
+  type RegistrationAttendingAs,
+  type RegistrationLogisticsPreference,
+  type RegistrationRegion,
+} from "@/lib/types"
 
 interface RegistrationModalProps {
   event: Event
@@ -34,6 +41,7 @@ interface RegistrationFormState {
   isBaptized: boolean | null
   isCoroMGR: boolean | null
   isFromAnotherRegion: boolean | null
+  region: RegistrationRegion | null
 }
 
 type ContactFieldErrors = Partial<Record<"name" | "phone", string>>
@@ -194,6 +202,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     isBaptized: null,
     isCoroMGR: null,
     isFromAnotherRegion: null,
+    region: null,
   })
 
   useLockBodyScroll(isOpen)
@@ -220,6 +229,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
       isBaptized: null,
       isCoroMGR: null,
       isFromAnotherRegion: null,
+      region: null,
     }))
   }, [isOpen])
 
@@ -258,7 +268,13 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const maxPhotosToShow = 3
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    if (field === "isCoroMGR" && value === true) {
+    if (field === "isFromAnotherRegion") {
+      setFormData((prev) => ({
+        ...prev,
+        isFromAnotherRegion: value === true,
+        region: value === true ? (prev.region === "Mayo" ? null : prev.region) : "Mayo",
+      }))
+    } else if (field === "isCoroMGR" && value === true) {
       previousBaptizedRef.current = formData.isBaptized
       setFormData((prev) => ({ ...prev, isCoroMGR: true, isBaptized: true }))
     } else if (field === "isCoroMGR" && value === false) {
@@ -309,7 +325,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     formData.isBaptized,
     formData.isCoroMGR,
     formData.isFromAnotherRegion,
-  ].every((value) => value !== null)
+  ].every((value) => value !== null) && (!formData.isFromAnotherRegion || formData.region !== null)
 
   const handleNext = () => {
     if (step === 1 && !validateContactStep()) {
@@ -336,6 +352,11 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
 
     if (!contactData) {
       setStep(1)
+      return
+    }
+
+    if (!hasCompletedLogistics) {
+      setStep(2)
       return
     }
 
@@ -376,6 +397,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           isBaptized: Boolean(formData.isBaptized) || Boolean(formData.isCoroMGR),
           isCoroMGR: Boolean(formData.isCoroMGR),
           isFromAnotherRegion: Boolean(formData.isFromAnotherRegion),
+          region: formData.region,
           website: honeypot,
           _requestTime: formStartTime,
           turnstileToken: turnstileToken || (allowDevTurnstileBypass ? "dev-bypass" : ""),
@@ -427,7 +449,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     : "bg-primary hover:bg-primary/90 text-primary-foreground"
 
   const ToggleQuestion = ({ label, value, field, allowUnknown = false, disabled = false }: { label: string, value: boolean | "unknown" | null, field: string, allowUnknown?: boolean, disabled?: boolean }) => (
-    <div className={`flex flex-wrap gap-5 pb-7 pt-5 border-b border-border/50 last:border-0 ${allowUnknown ? "flex-col items-start" : "items-center justify-between"}`}>
+    <div className="flex flex-col items-start gap-5 pb-7 pt-5 border-b border-border/50 last:border-0">
       <span className="text-sm font-medium text-foreground">{label}</span>
       <div className={`flex flex-wrap gap-2 ${disabled ? "[&_button:disabled]:opacity-80" : ""}`}>
         <Button
@@ -570,6 +592,24 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                   <ToggleQuestion label="¿Estas bautizado en nuestra Iglesia Gentil de Cristo?" value={formData.isBaptized} field="isBaptized" disabled={formData.isCoroMGR === true} />
                   <ToggleQuestion label="¿Eres joven del coro general? (Mensajeros del Gran Rey)" value={formData.isCoroMGR} field="isCoroMGR" />
                   <ToggleQuestion label="¿Vienes de otra región?" value={formData.isFromAnotherRegion} field="isFromAnotherRegion" />
+                  {formData.isFromAnotherRegion && (
+                    <div className="pb-7 pt-5">
+                      <Label htmlFor="registration-region" className="mb-3 block text-sm font-medium">
+                        ¿De qué región vienes?
+                      </Label>
+                      <select
+                        id="registration-region"
+                        value={formData.region ?? ""}
+                        onChange={(event) => handleInputChange("region", event.target.value)}
+                        className="h-11 w-full border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <option value="" disabled>Selecciona tu región</option>
+                        {REGISTRATION_REGIONS.slice(1).map((region) => (
+                          <option key={region} value={region}>{region}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -586,51 +626,12 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                     <p className="mt-5 text-sm font-medium text-muted-foreground">Procesando tu registro...</p>
                   </div>
                 ) : (
-                  <div className="md:grid md:grid-cols-2 md:gap-5 md:items-start">
-                {/* Event Photos */}
-                {photos.length > 0 && (
-                  <div>
-                    <p className="text-xs font-bold text-foreground mb-3 uppercase tracking-wider">
-                      Momentos de eventos pasados
-                    </p>
-                    <div className="relative">
-                      <div className="grid grid-cols-3 gap-1">
-                        {photos.slice(0, maxPhotosToShow).map((photo, index) => (
-                          <button
-                            key={index}
-                            onClick={() => openPhotoViewer(index)}
-                            className="relative aspect-square rounded-none overflow-hidden group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                          >
-                            <Image 
-                              src={photo} 
-                              alt={`Foto de evento ${index + 1}`} 
-                              fill 
-                              className="object-cover" 
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <span className="text-white text-xs font-bold uppercase">Ver</span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                      {/* Indicator for more photos */}
-                      {photos.length > maxPhotosToShow && (
-                        <button
-                          onClick={() => openPhotoViewer(0)}
-                          className="mt-3 text-xs text-primary font-bold uppercase tracking-wider flex items-center gap-1 hover:underline"
-                        >
-                          <span>+ {photos.length - maxPhotosToShow} fotos más</span>
-                          <ChevronRight className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div> 
-                  </div>
-                )}
+                  <div className="md:my-2 md:items-start">
 
                 {/* Summary */}
                 <div className="space-y-4">
                   <div className="border border-border/50 bg-background p-5">
-                    <h4 className="font-bold text-xs text-foreground mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Confirma tu registro:</h4>
+                    <h4 className="font-bold text-xs md:text-lg text-foreground/90 text-ink mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Confirma tu registro:</h4>
                     <div className="space-y-3 text-sm">
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Nombre y apellido:</span>
@@ -666,7 +667,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Región:</span>
-                      <span className="text-foreground font-medium">{formData.isFromAnotherRegion ? "Otra región" : "Región Mayo"}</span>
+                      <span className="max-w-[60%] text-right text-foreground font-medium">{formData.region ?? "—"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Asistiré como:</span>

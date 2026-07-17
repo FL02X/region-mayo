@@ -265,6 +265,19 @@ export interface DirectivaGeneration {
 
 export type RegistrationAttendingAs = "oyente" | "varonDorca" | "jovenMGR";
 export type RegistrationLogisticsPreference = boolean | "unknown";
+export const REGISTRATION_REGIONS = [
+  "Mayo",
+  "Yaqui",
+  "Centro de Sinaloa",
+  "Noroeste",
+  "Centro de Sonora",
+  "Norte",
+  "EUA",
+  "Baja California",
+  "Chihuahua",
+  "Occidente / Norte / Sur de México",
+] as const;
+export type RegistrationRegion = (typeof REGISTRATION_REGIONS)[number];
 
 // Registration form data
 export interface RegistrationFormData {
@@ -276,6 +289,7 @@ export interface RegistrationFormData {
   isBaptized: boolean;
   isCoroMGR: boolean;
   isFromAnotherRegion: boolean;
+  region: RegistrationRegion;
 }
 
 // Countdown data
@@ -329,6 +343,7 @@ export interface RegistrationSubmission {
   isBaptized: boolean;
   isCoroMGR: boolean;
   isFromAnotherRegion: boolean;
+  region: RegistrationRegion;
 }
 
 // Pastor shown inline inside a Templo card

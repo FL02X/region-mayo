@@ -1,4 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
+import {
+  REGISTRATION_FOLLOW_UP_VALUES,
+  formatRegistrationDate,
+  getInternationalPhone,
+  getRegistrationFollowUp,
+  getWhatsappUrl,
+  normalizeMexicanPhone,
+} from "@/lib/registration-sheet"
+import { REGISTRATION_REGIONS, type RegistrationRegion } from "@/lib/types"
 
 // Rate limiting store (in production, use Redis or similar)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
@@ -65,11 +74,43 @@ const registrationTypeLabels: Record<RegistrationAttendingAs, string> = {
   jovenMGR: "Joven MGR",
 }
 
-const registrationTypeCellColors: Record<RegistrationAttendingAs, { red: number; green: number; blue: number }> = {
-  jovenMGR: { red: 0.184, green: 0.369, blue: 0.576 },
-  varonDorca: { red: 0.294, green: 0.204, blue: 0.149 },
-  oyente: { red: 0.31, green: 0.435, blue: 0.271 },
-}
+const SHEET_HEADERS = [
+  "ID",
+  "Nombre",
+  "Teléfono",
+  "Fecha y hora",
+  "Tipo",
+  "Región",
+  "Hospedaje",
+  "Transporte",
+  "Seguimiento",
+  "Nota",
+] as const
+const PREVIOUS_SHEET_HEADERS = [
+  "ID",
+  "Nombre",
+  "Teléfono",
+  "Fecha y hora",
+  "Tipo",
+  "Región",
+  "Hospedaje",
+  "Transporte",
+  "Bautizado",
+  "Seguimiento",
+  "Nota",
+] as const
+const LEGACY_SHEET_HEADERS = [
+  "Nombre",
+  "Telefono",
+  "Tipo",
+  "Necesita Transporte",
+  "Necesita Hospedaje",
+  "Hermano bautizado",
+  "Joven MGR",
+  "Region",
+] as const
+const TABLE_HEADER_ROW_NUMBER = 3
+const TABLE_DATA_ROW_NUMBER = TABLE_HEADER_ROW_NUMBER + 1
 
 function getGoogleSheetsConfig(): GoogleSheetsConfig | null {
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID?.trim()
@@ -201,44 +242,529 @@ async function getGoogleSheetId(config: GoogleSheetsConfig, accessToken: string)
   return createdSheetId
 }
 
+const headersMatch = (current: string[], expected: readonly string[]) =>
+  current.length === expected.length && expected.every((header, index) => current[index] === header)
+
+const yesNo = (value: boolean | "unknown") => value === "unknown" ? "AÚN NO LO SÉ" : value ? "SÍ" : "NO"
+
+const normalizeSheetPreference = (value: unknown) => {
+  const normalized = String(value ?? "").trim().toLocaleUpperCase("es-MX")
+  if (normalized === "SÍ" || normalized === "SI") return "SÍ"
+  if (normalized === "NO") return "NO"
+  return "AÚN NO LO SÉ"
+}
+
 async function ensureGoogleSheetsHeaders(config: GoogleSheetsConfig, accessToken: string) {
-  const headers = [
-    "Nombre",
-    "Telefono",
-    "Tipo",
-    "Necesita Transporte",
-    "Necesita Hospedaje",
-    "Hermano bautizado",
-    "Joven MGR",
-    "Region",
-  ]
-  const range = getGoogleSheetRange(config.sheetName, "A1:H1")
+  const range = getGoogleSheetRange(config.sheetName, "A:K")
   const getResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=FORMULA`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   )
 
-  if (getResponse.ok) {
-    const data = (await getResponse.json()) as { values?: string[][] }
-    const currentHeaders = data.values?.[0] ?? []
-    if (headers.every((header, index) => currentHeaders[index] === header)) return
+  if (!getResponse.ok) {
+    throw new Error(`Google Sheets values read failed: ${await getResponse.text()}`)
   }
 
+  const rows = ((await getResponse.json()) as { values?: string[][] }).values ?? []
+  const tableHeaders = rows[TABLE_HEADER_ROW_NUMBER - 1] ?? []
+  if (headersMatch(tableHeaders, SHEET_HEADERS)) {
+    return { rows: rows.slice(TABLE_DATA_ROW_NUMBER - 1), needsSheetSetup: false }
+  }
+
+  const dashboardHeaders = rows[3] ?? []
+  const isDashboardSheet = headersMatch(dashboardHeaders, SHEET_HEADERS)
+  const currentHeaders = rows[0] ?? []
+  const isCurrentSheet = headersMatch(currentHeaders, SHEET_HEADERS)
+  const isPreviousSheet = headersMatch(currentHeaders, PREVIOUS_SHEET_HEADERS)
+  const isLegacySheet = headersMatch(currentHeaders, LEGACY_SHEET_HEADERS)
+  if (!isDashboardSheet && currentHeaders.length && !isCurrentSheet && !isPreviousSheet && !isLegacySheet) {
+    throw new Error("Google Sheets headers do not match the registration table")
+  }
+
+  const sourceRows = isDashboardSheet ? rows.slice(4) : currentHeaders.length ? rows.slice(1) : []
+  const migratedRows = sourceRows
+    .filter((row) => row.some((value) => String(value ?? "").trim()))
+    .map((row) => {
+    if (isDashboardSheet || isCurrentSheet) {
+      const lodging = normalizeSheetPreference(row[6])
+      const transport = normalizeSheetPreference(row[7])
+      const followUp = String(row[8] ?? "").trim()
+      return [
+        row[0] || crypto.randomUUID(),
+        row[1] ?? "",
+        getInternationalPhone(row[2]),
+        row[3] ?? "",
+        row[4] ?? "",
+        row[5] ?? "",
+        lodging,
+        transport,
+        followUp === "RESUELTO" ? "CONTACTADO" : followUp || getRegistrationFollowUp(lodging, transport),
+        row[9] ?? "",
+      ]
+    }
+
+    if (isPreviousSheet) {
+      const lodging = normalizeSheetPreference(row[6])
+      const transport = normalizeSheetPreference(row[7])
+      const followUp = String(row[9] ?? "").trim()
+      return [
+        row[0] || crypto.randomUUID(),
+        row[1] ?? "",
+        getInternationalPhone(row[2]),
+        row[3] ?? "",
+        row[4] ?? "",
+        row[5] ?? "",
+        lodging,
+        transport,
+        followUp === "RESUELTO" ? "CONTACTADO" : followUp || getRegistrationFollowUp(lodging, transport),
+        row[10] ?? "",
+      ]
+    }
+
+    const lodging = normalizeSheetPreference(row[4])
+    const transport = normalizeSheetPreference(row[3])
+    const legacyRegion = String(row[7] ?? "").trim()
+    return [
+      crypto.randomUUID(),
+      row[0] ?? "",
+      getInternationalPhone(row[1]),
+      "",
+      row[2] ?? "",
+      legacyRegion.toLocaleUpperCase("es-MX") === "MAYO" ? "Mayo" : legacyRegion || "Otra región (sin especificar)",
+      lodging,
+      transport,
+      getRegistrationFollowUp(lodging, transport),
+      "",
+    ]
+  })
+  const sheetValues = [
+    ["", "Total de registrados", "", "Pendientes por contactar", "", "Contactados", ""],
+    ["", "Necesitan hospedaje", "", "Necesitan transporte", ""],
+    [...SHEET_HEADERS],
+    ...migratedRows,
+  ]
+  const updateRange = getGoogleSheetRange(config.sheetName, `A1:J${migratedRows.length + TABLE_HEADER_ROW_NUMBER}`)
   const updateResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(updateRange)}?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ values: [headers] }),
+      body: JSON.stringify({ values: sheetValues }),
     },
   )
 
   if (!updateResponse.ok) {
-    throw new Error(`Google Sheets header update failed: ${await updateResponse.text()}`)
+    throw new Error(`Google Sheets migration failed: ${await updateResponse.text()}`)
   }
+
+  if (isPreviousSheet) {
+    const staleColumnRange = getGoogleSheetRange(config.sheetName, "K:K")
+    const clearResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(staleColumnRange)}:clear`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      },
+    )
+    if (!clearResponse.ok) console.warn(`[register] Google Sheets stale column clear failed: ${await clearResponse.text()}`)
+  }
+
+  if (isDashboardSheet) {
+    const staleRowRange = getGoogleSheetRange(config.sheetName, `A${migratedRows.length + 4}:J${migratedRows.length + 4}`)
+    const clearResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(staleRowRange)}:clear`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      },
+    )
+    if (!clearResponse.ok) console.warn(`[register] Google Sheets stale row clear failed: ${await clearResponse.text()}`)
+  }
+
+  return { rows: migratedRows, needsSheetSetup: true }
+}
+
+async function getRegistrationSheetMetadata(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetId: number,
+) {
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}?fields=sheets(properties(sheetId),conditionalFormats,filterViews(filterViewId,title),protectedRanges(protectedRangeId,description))`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  )
+  if (!response.ok) {
+    console.warn(`[register] Google Sheets metadata read failed: ${await response.text()}`)
+    return { conditionalFormatCount: 0, filterViewIds: [], protectedRangeIds: [] }
+  }
+
+  const data = (await response.json()) as {
+    sheets?: Array<{
+      properties?: { sheetId?: number }
+      conditionalFormats?: unknown[]
+      filterViews?: Array<{ filterViewId?: number; title?: string }>
+      protectedRanges?: Array<{ protectedRangeId?: number; description?: string }>
+    }>
+  }
+  const sheet = data.sheets?.find((item) => item.properties?.sheetId === sheetId)
+  const oldFilterTitles = new Set([
+    "REGISTROS INVALIDOS",
+    "CANCELADOS / REGISTROS INVALIDOS",
+    "POR CONTACTAR",
+    "NECESITAN HOSPEDAJE",
+    "NECESITAN TRANSPORTE",
+  ])
+  return {
+    conditionalFormatCount: sheet?.conditionalFormats?.length ?? 0,
+    filterViewIds: sheet?.filterViews
+      ?.filter((view) => view.filterViewId !== undefined && oldFilterTitles.has(view.title ?? ""))
+      .map((view) => view.filterViewId as number) ?? [],
+    protectedRangeIds: sheet?.protectedRanges
+      ?.filter((range) => range.protectedRangeId !== undefined && range.description === "REGISTRATION_LOCKED_COLUMNS")
+      .map((range) => range.protectedRangeId as number) ?? [],
+  }
+}
+
+async function formatRegistrationSheet(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetId: number,
+  rows: Array<{ rowNumber: number; values: string[] }>,
+  needsSheetSetup: boolean,
+) {
+  const lastRowNumber = Math.max(TABLE_DATA_ROW_NUMBER, ...rows.map((row) => row.rowNumber))
+  const columnWidths = [34, 190, 150, 150, 120, 205, 120, 120, 190, 260]
+  const orange = { red: 0.96, green: 0.78, blue: 0.62 }
+  const yellow = { red: 1, green: 0.93, blue: 0.58 }
+  const blue = { red: 0.78, green: 0.88, blue: 0.97 }
+  const white = { red: 1, green: 1, blue: 1 }
+  const darkText = { red: 0.12, green: 0.12, blue: 0.12 }
+  const darkGreen = { red: 0.12, green: 0.36, blue: 0.2 }
+  const subtleGreen = { red: 0.87, green: 0.95, blue: 0.87 }
+  const subtleYellow = { red: 1, green: 0.96, blue: 0.76 }
+  const subtleRed = { red: 0.96, green: 0.87, blue: 0.87 }
+  const metadata = needsSheetSetup
+    ? await getRegistrationSheetMetadata(config, accessToken, sheetId)
+    : { conditionalFormatCount: 0, filterViewIds: [], protectedRangeIds: [] }
+  const requests: Array<Record<string, unknown>> = [
+    ...Array.from({ length: metadata.conditionalFormatCount }, (_, index) => ({
+      deleteConditionalFormatRule: { sheetId, index: metadata.conditionalFormatCount - index - 1 },
+    })),
+    ...metadata.filterViewIds.map((filterId) => ({ deleteFilterView: { filterId } })),
+    ...metadata.protectedRangeIds.map((protectedRangeId) => ({ deleteProtectedRange: { protectedRangeId } })),
+    { clearBasicFilter: { sheetId } },
+    {
+      updateCells: {
+        range: { sheetId, startRowIndex: 0, endRowIndex: 2, startColumnIndex: 1, endColumnIndex: 7 },
+        rows: [
+          { values: [
+            { userEnteredValue: { stringValue: "Total de registrados" } },
+            { userEnteredValue: { formulaValue: '=COUNTA($B$4:$B)-COUNTIF($I$4:$I;"CANCELADO / REGISTRO INVALIDO")' } },
+            { userEnteredValue: { stringValue: "Pendientes por contactar" } },
+            { userEnteredValue: { formulaValue: '=COUNTIF($I$4:$I;"POR CONTACTAR")' } },
+            { userEnteredValue: { stringValue: "Contactados" } },
+            { userEnteredValue: { formulaValue: '=COUNTIF($I$4:$I;"CONTACTADO")' } },
+          ] },
+          { values: [
+            { userEnteredValue: { stringValue: "Necesitan hospedaje" } },
+            { userEnteredValue: { formulaValue: '=COUNTIFS($G$4:$G;"SÍ";$I$4:$I;"<>CANCELADO / REGISTRO INVALIDO")' } },
+            { userEnteredValue: { stringValue: "Necesitan transporte" } },
+            { userEnteredValue: { formulaValue: '=COUNTIFS($H$4:$H;"SÍ";$I$4:$I;"<>CANCELADO / REGISTRO INVALIDO")' } },
+            { userEnteredValue: { stringValue: "" } },
+            { userEnteredValue: { stringValue: "" } },
+          ] },
+        ],
+        fields: "userEnteredValue",
+      },
+    },
+    {
+      updateSheetProperties: {
+        properties: { sheetId, gridProperties: { frozenRowCount: TABLE_HEADER_ROW_NUMBER } },
+        fields: "gridProperties.frozenRowCount",
+      },
+    },
+    {
+      repeatCell: {
+        range: { sheetId, startRowIndex: 0, endRowIndex: 2, startColumnIndex: 1, endColumnIndex: 7 },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: white,
+            verticalAlignment: "MIDDLE",
+            wrapStrategy: "WRAP",
+            textFormat: { foregroundColor: darkText, fontFamily: "Arial", fontSize: 10 },
+          },
+        },
+        fields: "userEnteredFormat",
+      },
+    },
+    ...[[0, 1], [0, 3], [0, 5], [1, 1], [1, 3]].map(([row, column]) => ({
+      repeatCell: {
+        range: { sheetId, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: column, endColumnIndex: column + 1 },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: { red: 0.9, green: 0.91, blue: 0.92 },
+            horizontalAlignment: "LEFT",
+            textFormat: { foregroundColor: darkText, fontFamily: "Arial", fontSize: 9, bold: true },
+          },
+        },
+        fields: "userEnteredFormat",
+      },
+    })),
+    ...[[0, 2], [0, 4], [0, 6], [1, 2], [1, 4]].map(([row, column]) => ({
+      repeatCell: {
+        range: { sheetId, startRowIndex: row, endRowIndex: row + 1, startColumnIndex: column, endColumnIndex: column + 1 },
+        cell: {
+          userEnteredFormat: {
+            horizontalAlignment: "CENTER",
+            textFormat: { foregroundColor: darkText, fontFamily: "Arial", fontSize: 14, bold: true },
+          },
+        },
+        fields: "userEnteredFormat",
+      },
+    })),
+    ...[
+      { row: 0, column: 4, backgroundColor: subtleYellow },
+      { row: 0, column: 6, backgroundColor: subtleGreen },
+      { row: 1, column: 2, backgroundColor: orange },
+      { row: 1, column: 4, backgroundColor: orange },
+    ].map(({ row, column, backgroundColor }) => ({
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: row,
+          endRowIndex: row + 1,
+          startColumnIndex: column,
+          endColumnIndex: column + 1,
+        },
+        cell: { userEnteredFormat: { backgroundColor } },
+        fields: "userEnteredFormat.backgroundColor",
+      },
+    })),
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: TABLE_HEADER_ROW_NUMBER - 1,
+          endRowIndex: TABLE_HEADER_ROW_NUMBER,
+          startColumnIndex: 0,
+          endColumnIndex: SHEET_HEADERS.length,
+        },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: { red: 0.22, green: 0.22, blue: 0.22 },
+            horizontalAlignment: "CENTER",
+            verticalAlignment: "MIDDLE",
+            wrapStrategy: "WRAP",
+            textFormat: { foregroundColor: white, fontFamily: "Arial", fontSize: 10, bold: true },
+          },
+        },
+        fields: "userEnteredFormat",
+      },
+    },
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: TABLE_DATA_ROW_NUMBER - 1,
+          endRowIndex: lastRowNumber,
+          startColumnIndex: 0,
+          endColumnIndex: SHEET_HEADERS.length,
+        },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: white,
+            horizontalAlignment: "CENTER",
+            verticalAlignment: "MIDDLE",
+            wrapStrategy: "WRAP",
+            textFormat: { foregroundColor: darkText, fontFamily: "Arial", fontSize: 10, bold: false },
+          },
+        },
+        fields: "userEnteredFormat",
+      },
+    },
+    {
+      setDataValidation: {
+        range: { sheetId, startRowIndex: TABLE_DATA_ROW_NUMBER - 1, startColumnIndex: 9, endColumnIndex: 10 },
+        filteredRowsIncluded: true,
+      },
+    },
+    {
+      setDataValidation: {
+        range: { sheetId, startRowIndex: TABLE_DATA_ROW_NUMBER - 1, startColumnIndex: 8, endColumnIndex: 9 },
+        filteredRowsIncluded: true,
+        rule: {
+          condition: {
+            type: "ONE_OF_LIST",
+            values: REGISTRATION_FOLLOW_UP_VALUES.map((value) => ({ userEnteredValue: value })),
+          },
+          strict: true,
+          showCustomUi: true,
+        },
+      },
+    },
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: "ROWS", startIndex: 0, endIndex: 2 },
+        properties: { pixelSize: 30 },
+        fields: "pixelSize",
+      },
+    },
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: "ROWS", startIndex: 2, endIndex: 3 },
+        properties: { pixelSize: 38 },
+        fields: "pixelSize",
+      },
+    },
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: "ROWS", startIndex: 3, endIndex: lastRowNumber },
+        properties: { pixelSize: 34 },
+        fields: "pixelSize",
+      },
+    },
+    ...columnWidths.map((pixelSize, column) => ({
+      updateDimensionProperties: {
+        range: { sheetId, dimension: "COLUMNS", startIndex: column, endIndex: column + 1 },
+        properties: { pixelSize },
+        fields: "pixelSize",
+      },
+    })),
+    ...[1, 9].map((column) => ({
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: TABLE_DATA_ROW_NUMBER - 1,
+          endRowIndex: lastRowNumber,
+          startColumnIndex: column,
+          endColumnIndex: column + 1,
+        },
+        cell: { userEnteredFormat: { horizontalAlignment: "LEFT" } },
+        fields: "userEnteredFormat.horizontalAlignment",
+      },
+    })),
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: TABLE_DATA_ROW_NUMBER - 1,
+          endRowIndex: lastRowNumber,
+          startColumnIndex: 0,
+          endColumnIndex: 1,
+        },
+        cell: { userEnteredFormat: { wrapStrategy: "CLIP" } },
+        fields: "userEnteredFormat.wrapStrategy",
+      },
+    },
+  ]
+
+  if (needsSheetSetup) {
+    const cellRule = (
+      column: number,
+      condition: Record<string, unknown>,
+      format: Record<string, unknown>,
+    ) => ({
+      ranges: [{ sheetId, startRowIndex: TABLE_DATA_ROW_NUMBER - 1, startColumnIndex: column, endColumnIndex: column + 1 }],
+      booleanRule: { condition, format },
+    })
+    const conditionalRules = [
+      cellRule(4, { type: "TEXT_EQ", values: [{ userEnteredValue: "Oyente" }] }, {
+        backgroundColor: darkGreen,
+        textFormat: { foregroundColor: white, bold: true },
+      }),
+      cellRule(5, { type: "CUSTOM_FORMULA", values: [{ userEnteredValue: '=($F4<>"")*($F4<>"Mayo")' }] }, { backgroundColor: blue }),
+      cellRule(6, { type: "TEXT_EQ", values: [{ userEnteredValue: "SÍ" }] }, { backgroundColor: orange }),
+      cellRule(6, { type: "TEXT_EQ", values: [{ userEnteredValue: "AÚN NO LO SÉ" }] }, { backgroundColor: yellow }),
+      cellRule(7, { type: "TEXT_EQ", values: [{ userEnteredValue: "SÍ" }] }, { backgroundColor: orange }),
+      cellRule(7, { type: "TEXT_EQ", values: [{ userEnteredValue: "AÚN NO LO SÉ" }] }, { backgroundColor: yellow }),
+      cellRule(8, { type: "TEXT_EQ", values: [{ userEnteredValue: "NO REQUIERE" }] }, { backgroundColor: subtleGreen }),
+      cellRule(8, { type: "TEXT_EQ", values: [{ userEnteredValue: "CONTACTADO" }] }, { backgroundColor: subtleGreen }),
+      cellRule(8, { type: "TEXT_EQ", values: [{ userEnteredValue: "POR CONTACTAR" }] }, { backgroundColor: subtleYellow }),
+      cellRule(8, { type: "TEXT_EQ", values: [{ userEnteredValue: "CANCELADO / REGISTRO INVALIDO" }] }, { backgroundColor: subtleRed }),
+    ]
+    const filterRange = {
+      sheetId,
+      startRowIndex: TABLE_HEADER_ROW_NUMBER - 1,
+      startColumnIndex: 8,
+      endColumnIndex: 9,
+    }
+
+    requests.push(
+      ...conditionalRules.map((rule, index) => ({ addConditionalFormatRule: { rule, index } })),
+      {
+        addProtectedRange: {
+          protectedRange: {
+            range: { sheetId },
+            description: "REGISTRATION_LOCKED_COLUMNS",
+            warningOnly: false,
+            unprotectedRanges: [{
+              sheetId,
+              startRowIndex: TABLE_DATA_ROW_NUMBER - 1,
+              startColumnIndex: 8,
+              endColumnIndex: 10,
+            }],
+          },
+        },
+      },
+      {
+        addFilterView: {
+          filter: {
+            title: "CANCELADOS / REGISTROS INVALIDOS",
+            range: filterRange,
+            filterSpecs: [{
+              columnIndex: 8,
+              filterCriteria: {
+                condition: {
+                  type: "TEXT_CONTAINS",
+                  values: [{ userEnteredValue: "CANCELADO / REGISTRO INVALIDO" }],
+                },
+              },
+            }],
+          },
+        },
+      },
+    )
+  }
+
+  rows.forEach(({ rowNumber, values }) => {
+    const whatsappUrl = getWhatsappUrl(values[2])
+    if (whatsappUrl) {
+      requests.push({
+        updateCells: {
+          range: { sheetId, startRowIndex: rowNumber - 1, endRowIndex: rowNumber, startColumnIndex: 2, endColumnIndex: 3 },
+          rows: [{ values: [{
+            userEnteredValue: { stringValue: getInternationalPhone(values[2]) },
+            userEnteredFormat: { textFormat: { link: { uri: whatsappUrl } } },
+          }] }],
+          fields: "userEnteredValue,userEnteredFormat.textFormat.link",
+        },
+      })
+    }
+  })
+
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ requests }),
+    },
+  )
+  if (!response.ok) console.warn(`[register] Google Sheets format failed: ${await response.text()}`)
 }
 
 async function appendRegistrationToGoogleSheets(
@@ -249,21 +775,31 @@ async function appendRegistrationToGoogleSheets(
     needsTransport: boolean | "unknown"
     attendingAs: RegistrationAttendingAs
     isBaptized: boolean
-    isCoroMGR: boolean
-    isFromAnotherRegion: boolean
+    region: RegistrationRegion
+    registeredAt: string
   },
 ) {
   const config = getGoogleSheetsConfig()
-
   if (!config) return
 
   const accessToken = await getGoogleSheetsAccessToken(config)
   const sheetId = await getGoogleSheetId(config, accessToken)
-
-  await ensureGoogleSheetsHeaders(config, accessToken)
-
-  const yesNo = (value: boolean | "unknown") => value === "unknown" ? "Aún no lo sé" : value ? "SÍ" : "NO"
-  const range = getGoogleSheetRange(config.sheetName, "A:H")
+  const { rows: existingRows, needsSheetSetup } = await ensureGoogleSheetsHeaders(config, accessToken)
+  const lodging = yesNo(registrationData.needsLodging)
+  const transport = yesNo(registrationData.needsTransport)
+  const row = [
+    crypto.randomUUID(),
+    registrationData.name,
+    getInternationalPhone(registrationData.phone),
+    formatRegistrationDate(new Date(registrationData.registeredAt)),
+    registrationTypeLabels[registrationData.attendingAs],
+    registrationData.region,
+    lodging,
+    transport,
+    getRegistrationFollowUp(lodging, transport),
+    "",
+  ]
+  const range = getGoogleSheetRange(config.sheetName, `A${TABLE_HEADER_ROW_NUMBER}:J`)
   const appendResponse = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     {
@@ -272,69 +808,20 @@ async function appendRegistrationToGoogleSheets(
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        values: [[
-          registrationData.name,
-          registrationData.phone,
-          registrationTypeLabels[registrationData.attendingAs],
-          yesNo(registrationData.needsTransport),
-          yesNo(registrationData.needsLodging),
-          yesNo(registrationData.isBaptized),
-          yesNo(registrationData.isCoroMGR),
-          registrationData.isFromAnotherRegion ? "OTRA REGIÓN" : "MAYO",
-        ]],
-      }),
+      body: JSON.stringify({ values: [row] }),
     },
   )
 
-  if (!appendResponse.ok) {
-    throw new Error(`Google Sheets append failed: ${await appendResponse.text()}`)
-  }
+  if (!appendResponse.ok) throw new Error(`Google Sheets append failed: ${await appendResponse.text()}`)
 
   const appendData = (await appendResponse.json()) as { updates?: { updatedRange?: string } }
   const rowNumber = Number(appendData.updates?.updatedRange?.match(/![A-Z]+(\d+):/)?.[1])
-
   if (!rowNumber) return
 
-  const formatResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        requests: [
-          {
-            repeatCell: {
-              range: {
-                sheetId,
-                startRowIndex: rowNumber - 1,
-                endRowIndex: rowNumber,
-                startColumnIndex: 2,
-                endColumnIndex: 3,
-              },
-              cell: {
-                userEnteredFormat: {
-                  backgroundColor: registrationTypeCellColors[registrationData.attendingAs],
-                  textFormat: {
-                    foregroundColor: { red: 1, green: 1, blue: 1 },
-                    bold: true,
-                  },
-                },
-              },
-              fields: "userEnteredFormat(backgroundColor,textFormat)",
-            },
-          },
-        ],
-      }),
-    },
-  )
-
-  if (!formatResponse.ok) {
-    console.warn(`[register] Google Sheets format failed: ${await formatResponse.text()}`)
-  }
+  await formatRegistrationSheet(config, accessToken, sheetId, [
+    ...existingRows.map((values, index) => ({ rowNumber: index + TABLE_DATA_ROW_NUMBER, values })),
+    { rowNumber, values: row },
+  ], needsSheetSetup)
 }
 
 function getClientIP(req: NextRequest): string {
@@ -388,8 +875,7 @@ function sanitizeString(input: unknown): string {
 }
 
 function sanitizePhone(input: unknown): string {
-  if (typeof input !== "string") return ""
-  return input.replace(/[^\d]/g, "").slice(0, 15)
+  return normalizeMexicanPhone(input)
 }
 
 function normalizeLogisticsPreference(input: unknown): boolean | "unknown" {
@@ -404,12 +890,35 @@ function validateRegistration(data: Record<string, unknown>): { valid: boolean; 
     errors.push("Nombre es requerido (mínimo 2 caracteres)")
   }
 
-  if (!data.phone || typeof data.phone !== "string" || data.phone.replace(/\D/g, "").length < 10) {
-    errors.push("Teléfono válido es requerido (mínimo 10 dígitos)")
+  if (normalizeMexicanPhone(data.phone).length !== 10) {
+    errors.push("Teléfono válido es requerido (10 dígitos)")
   }
 
   if (!data.eventId || typeof data.eventId !== "string") {
     errors.push("Evento es requerido")
+  }
+
+  if (![true, false, "unknown"].includes(data.needsLodging as boolean | string)) {
+    errors.push("Hospedaje inválido")
+  }
+
+  if (![true, false, "unknown"].includes(data.needsTransport as boolean | string)) {
+    errors.push("Transporte inválido")
+  }
+
+  if (typeof data.isBaptized !== "boolean" || typeof data.isCoroMGR !== "boolean") {
+    errors.push("Datos de asistencia inválidos")
+  }
+
+  if (!REGISTRATION_REGIONS.includes(String(data.region) as RegistrationRegion)) {
+    errors.push("Región inválida")
+  }
+
+  if (
+    typeof data.isFromAnotherRegion !== "boolean" ||
+    (data.isFromAnotherRegion ? data.region === "Mayo" : data.region !== "Mayo")
+  ) {
+    errors.push("La región no coincide con la selección")
   }
 
   // Validate attendingAs
@@ -494,7 +1003,6 @@ export async function POST(req: NextRequest) {
     // Prepare sanitized data
     const isCoroMGR = Boolean(body.isCoroMGR)
     const isBaptized = isCoroMGR ? true : Boolean(body.isBaptized)
-    const isFromAnotherRegion = Boolean(body.isFromAnotherRegion)
     const attendingAs = getRegistrationAttendingAs(isBaptized, isCoroMGR)
     const registrationData = {
       name: sanitizeString(body.name),
@@ -503,8 +1011,7 @@ export async function POST(req: NextRequest) {
       needsTransport: normalizeLogisticsPreference(body.needsTransport),
       attendingAs,
       isBaptized,
-      isCoroMGR,
-      isFromAnotherRegion,
+      region: String(body.region) as RegistrationRegion,
       registeredAt: new Date().toISOString(),
       ipAddress: ip,
       userAgent: userAgent.slice(0, 500),
