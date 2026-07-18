@@ -32,6 +32,8 @@ const priceFormatter = new Intl.NumberFormat("es-MX", {
 
 const SIZE_OPTIONS = ["CH", "M", "G", "XG"] as const
 const isTurnstileEnabled = false
+const OBVIOUS_PLACEHOLDER_NAMES = new Set(["test", "prueba", "asdf", "qwerty", "nombre", "nombre completo"])
+const OBVIOUS_PHONE_NUMBERS = new Set(["0123456789", "1234567890", "9876543210"])
 
 const recorridoShopBrandStyle = {
   "--primary": "var(--brand-green)",
@@ -208,6 +210,8 @@ export function ShopModal({
   const [paymentType, setPaymentType] = useState<"deposit" | "full">(hasDeposit ? "deposit" : "full")
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
+  const [honeypot, setHoneypot] = useState("")
+  const [formStartTime, setFormStartTime] = useState(0)
   const [fieldErrors, setFieldErrors] = useState<ContactFieldErrors>({})
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<(typeof SIZE_OPTIONS)[number]>("CH")
@@ -236,6 +240,8 @@ export function ShopModal({
     setPaymentType(hasDeposit ? "deposit" : "full")
     setName("")
     setPhone("")
+    setHoneypot("")
+    setFormStartTime(Date.now())
     setFieldErrors({})
     setSelectedVariantId(null)
     setSelectedSize("CH")
@@ -297,11 +303,15 @@ export function ShopModal({
 
     if (normalizedName.length < 2 || (normalizedName.match(/\p{L}/gu) ?? []).length < 2) {
       nextErrors.name = "Escribe tu nombre completo."
+    } else if (normalizedName.split(" ").length < 2) {
+      nextErrors.name = "Escribe tu nombre y apellido."
     } else if (normalizedName.length > 80 || !/^[\p{L}\p{M}\s.'’-]+$/u.test(normalizedName)) {
       nextErrors.name = "Usa solo letras y espacios."
+    } else if (normalizedName.toLocaleLowerCase("es-MX").split(" ").some((part) => OBVIOUS_PLACEHOLDER_NAMES.has(part))) {
+      nextErrors.name = "Escribe tu nombre completo real."
     }
 
-    if (normalizedPhone.length !== 10 || /^(\d)\1{9}$/.test(normalizedPhone)) {
+    if (normalizedPhone.length !== 10 || /^(\d)\1{9}$/.test(normalizedPhone) || OBVIOUS_PHONE_NUMBERS.has(normalizedPhone)) {
       nextErrors.phone = "Escribe los 10 digitos de tu celular."
     }
 
@@ -359,6 +369,8 @@ export function ShopModal({
           variantId: selectedVariantId,
           size: product.allowSizeSelection ? selectedSize : null,
           quantity,
+          website: honeypot,
+          _requestTime: formStartTime,
           turnstileToken: turnstileToken || (allowDevTurnstileBypass ? "dev-bypass" : ""),
         }),
       })
@@ -419,6 +431,16 @@ export function ShopModal({
           onLoad={renderTurnstile}
         />
       )}
+      <input
+        type="text"
+        name="website"
+        value={honeypot}
+        onChange={(event) => setHoneypot(event.target.value)}
+        className="absolute -left-[9999px] h-0 w-0 opacity-0"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+      />
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <section
         className="absolute inset-0 flex w-full flex-col bg-background shadow-2xl animate-in fade-in sm:relative sm:inset-auto sm:max-h-[88vh] sm:max-w-2xl sm:zoom-in-95"

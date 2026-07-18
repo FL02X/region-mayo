@@ -13,15 +13,17 @@ import { REGISTRATION_REGIONS, type RegistrationRegion } from "@/lib/types"
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
 // Configuration
-const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
-const RATE_LIMIT_MAX = 5 // 5 requests per minute per IP
-const MIN_REQUEST_INTERVAL = 2000 // 2 seconds between requests
+const RATE_LIMIT_WINDOW = 2 * 60 * 1000 // 2 minutes
+const RATE_LIMIT_MAX = 5 // 5 requests per 2 minutes per IP
+const MIN_REQUEST_INTERVAL = 10 * 1000 // 10 seconds with the form open
 const isTurnstileEnabled = false
 
 // Simple honeypot field name (bots will fill this)
 const HONEYPOT_FIELD = "website"
 const ATTENDING_AS_VALUES = ["oyente", "varonDorca", "jovenMGR"] as const
 const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
+const OBVIOUS_PLACEHOLDER_NAMES = new Set(["test", "prueba", "asdf", "qwerty", "nombre", "nombre completo"])
+const OBVIOUS_PHONE_NUMBERS = new Set(["0123456789", "1234567890", "9876543210"])
 
 type RegistrationAttendingAs = (typeof ATTENDING_AS_VALUES)[number]
 type TurnstileResponse = {
@@ -454,14 +456,12 @@ async function formatRegistrationSheet(
   const subtleGreen = { red: 0.87, green: 0.95, blue: 0.87 }
   const subtleYellow = { red: 1, green: 0.96, blue: 0.76 }
   const subtleRed = { red: 0.96, green: 0.87, blue: 0.87 }
-  const metadata = needsSheetSetup
-    ? await getRegistrationSheetMetadata(config, accessToken, sheetId)
-    : { conditionalFormatCount: 0, filterViewIds: [], protectedRangeIds: [] }
+  const metadata = await getRegistrationSheetMetadata(config, accessToken, sheetId)
   const requests: Array<Record<string, unknown>> = [
-    ...Array.from({ length: metadata.conditionalFormatCount }, (_, index) => ({
+    ...Array.from({ length: needsSheetSetup ? metadata.conditionalFormatCount : 0 }, (_, index) => ({
       deleteConditionalFormatRule: { sheetId, index: metadata.conditionalFormatCount - index - 1 },
     })),
-    ...metadata.filterViewIds.map((filterId) => ({ deleteFilterView: { filterId } })),
+    ...(needsSheetSetup ? metadata.filterViewIds : []).map((filterId) => ({ deleteFilterView: { filterId } })),
     ...metadata.protectedRangeIds.map((protectedRangeId) => ({ deleteProtectedRange: { protectedRangeId } })),
     { clearBasicFilter: { sheetId } },
     {
@@ -703,21 +703,6 @@ async function formatRegistrationSheet(
     requests.push(
       ...conditionalRules.map((rule, index) => ({ addConditionalFormatRule: { rule, index } })),
       {
-        addProtectedRange: {
-          protectedRange: {
-            range: { sheetId },
-            description: "REGISTRATION_LOCKED_COLUMNS",
-            warningOnly: false,
-            unprotectedRanges: [{
-              sheetId,
-              startRowIndex: TABLE_DATA_ROW_NUMBER - 1,
-              startColumnIndex: 8,
-              endColumnIndex: 10,
-            }],
-          },
-        },
-      },
-      {
         addFilterView: {
           filter: {
             title: "CANCELADOS / REGISTROS INVALIDOS",
@@ -736,6 +721,16 @@ async function formatRegistrationSheet(
       },
     )
   }
+
+  requests.push({
+    addProtectedRange: {
+      protectedRange: {
+        range: { sheetId, startRowIndex: 0, endRowIndex: TABLE_HEADER_ROW_NUMBER },
+        description: "REGISTRATION_LOCKED_COLUMNS",
+        warningOnly: false,
+      },
+    },
+  })
 
   rows.forEach(({ rowNumber, values }) => {
     const whatsappUrl = getWhatsappUrl(values[2])
@@ -878,6 +873,27 @@ function sanitizePhone(input: unknown): string {
   return normalizeMexicanPhone(input)
 }
 
+function getNameValidationError(input: unknown): string | null {
+  if (typeof input !== "string") return "Nombre es requerido"
+
+  const name = input.trim().replace(/\s+/g, " ")
+  const letterCount = (name.match(/\p{L}/gu) ?? []).length
+  if (name.length < 2 || letterCount < 2) return "Nombre es requerido"
+  if (name.length > 80) return "El nombre no puede exceder 80 caracteres"
+  if (name.split(" ").length < 2) return "Escribe tu nombre y apellido"
+  if (!/^[\p{L}\p{M}\s.'’-]+$/u.test(name)) return "El nombre contiene caracteres no validos"
+  if (name.toLocaleLowerCase("es-MX").split(" ").some((part) => OBVIOUS_PLACEHOLDER_NAMES.has(part))) {
+    return "Escribe tu nombre completo real"
+  }
+
+  return null
+}
+
+function isValidRegistrationPhone(input: unknown) {
+  const phone = normalizeMexicanPhone(input)
+  return phone.length === 10 && !/^(\d)\1{9}$/.test(phone) && !OBVIOUS_PHONE_NUMBERS.has(phone)
+}
+
 function normalizeLogisticsPreference(input: unknown): boolean | "unknown" {
   return input === "unknown" ? "unknown" : Boolean(input)
 }
@@ -886,11 +902,12 @@ function validateRegistration(data: Record<string, unknown>): { valid: boolean; 
   const errors: string[] = []
 
   // Required fields
-  if (!data.name || typeof data.name !== "string" || data.name.trim().length < 2) {
-    errors.push("Nombre es requerido (mínimo 2 caracteres)")
+  const nameError = getNameValidationError(data.name)
+  if (nameError) {
+    errors.push(nameError)
   }
 
-  if (normalizeMexicanPhone(data.phone).length !== 10) {
+  if (!isValidRegistrationPhone(data.phone)) {
     errors.push("Teléfono válido es requerido (10 dígitos)")
   }
 
@@ -979,16 +996,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Timestamp check - request should have a reasonable timestamp
-    const requestTime = body._requestTime
-    if (requestTime) {
-      const timeDiff = Date.now() - Number(requestTime)
-      if (timeDiff < MIN_REQUEST_INTERVAL) {
-        // Form was submitted too fast, likely a bot
-        return NextResponse.json(
-          { error: "Por favor, completa el formulario con calma." },
-          { status: 400 }
-        )
-      }
+    const requestTime = Number(body._requestTime)
+    const timeDiff = Date.now() - requestTime
+    if (!Number.isFinite(requestTime) || timeDiff < MIN_REQUEST_INTERVAL) {
+      return NextResponse.json(
+        { error: "Por favor, completa el formulario con calma." },
+        { status: 400 }
+      )
     }
 
     // Validate input

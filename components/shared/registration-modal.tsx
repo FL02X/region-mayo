@@ -86,6 +86,8 @@ function getRegistrationAttendingAs({
 }
 
 const normalizeName = (name: string) => name.trim().replace(/\s+/g, " ")
+const OBVIOUS_PLACEHOLDER_NAMES = new Set(["test", "prueba", "asdf", "qwerty", "nombre", "nombre completo"])
+const OBVIOUS_PHONE_NUMBERS = new Set(["0123456789", "1234567890", "9876543210"])
 
 const getLocalMexicanPhoneDigits = (phone: string) => {
   const digits = phone.replace(/\D/g, "")
@@ -121,10 +123,26 @@ const contactSchema = z.object({
       return
     }
 
+    if (name.split(" ").length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Escribe tu nombre y apellido.",
+      })
+      return
+    }
+
     if (!/^[\p{L}\p{M}\s.'’-]+$/u.test(name)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Usa solo letras y espacios.",
+      })
+      return
+    }
+
+    if (name.toLocaleLowerCase("es-MX").split(" ").some((part) => OBVIOUS_PLACEHOLDER_NAMES.has(part))) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Escribe tu nombre completo real.",
       })
     }
   }),
@@ -137,7 +155,7 @@ const contactSchema = z.object({
       return
     }
 
-    if (/^(\d)\1{9}$/.test(phone)) {
+    if (/^(\d)\1{9}$/.test(phone) || OBVIOUS_PHONE_NUMBERS.has(phone)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Ese numero no parece valido.",
@@ -177,6 +195,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const MIN_SUBMIT_LOADING_MS = 250
   const pathname = usePathname()
   const contentScrollRef = useRef<HTMLDivElement>(null)
+  const regionSelectRef = useRef<HTMLSelectElement>(null)
+  const logisticsQuestionRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const turnstileContainerRef = useRef<HTMLDivElement>(null)
   const turnstileWidgetIdRef = useRef<string | null>(null)
   const previousBaptizedRef = useRef<boolean | null>(null)
@@ -184,6 +204,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<ContactFieldErrors>({})
+  const [missingLogisticsFields, setMissingLogisticsFields] = useState<string[]>([])
+  const [showLogisticsHighlight, setShowLogisticsHighlight] = useState(false)
   const [formStartTime, setFormStartTime] = useState<number>(0)
   const [honeypot, setHoneypot] = useState("")
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null)
@@ -219,6 +241,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     setStep(1)
     setSubmitError(null)
     setFieldErrors({})
+    setMissingLogisticsFields([])
+    setShowLogisticsHighlight(false)
     setSelectedPhotoIndex(null)
     setTurnstileToken("")
     previousBaptizedRef.current = null
@@ -268,19 +292,28 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const maxPhotosToShow = 3
 
   const handleInputChange = (field: string, value: string | boolean) => {
+    setMissingLogisticsFields((current) => current.filter(
+      (pendingField) => pendingField !== field && (field !== "isFromAnotherRegion" || pendingField !== "region"),
+    ))
+
     if (field === "isFromAnotherRegion") {
       setFormData((prev) => ({
         ...prev,
         isFromAnotherRegion: value === true,
         region: value === true ? (prev.region === "Mayo" ? null : prev.region) : "Mayo",
       }))
+      if (value === true) requestAnimationFrame(() => regionSelectRef.current?.focus())
     } else if (field === "isCoroMGR" && value === true) {
-      previousBaptizedRef.current = formData.isBaptized
+      if (formData.isCoroMGR !== true) previousBaptizedRef.current = formData.isBaptized
       setFormData((prev) => ({ ...prev, isCoroMGR: true, isBaptized: true }))
     } else if (field === "isCoroMGR" && value === false) {
-      const isBaptized = previousBaptizedRef.current
-      previousBaptizedRef.current = null
-      setFormData((prev) => ({ ...prev, isCoroMGR: false, isBaptized }))
+      if (formData.isCoroMGR === true) {
+        const isBaptized = previousBaptizedRef.current
+        previousBaptizedRef.current = null
+        setFormData((prev) => ({ ...prev, isCoroMGR: false, isBaptized }))
+      } else {
+        setFormData((prev) => ({ ...prev, isCoroMGR: false }))
+      }
     } else {
       setFormData((prev) => ({ ...prev, [field]: value }))
     }
@@ -333,8 +366,29 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     }
 
     if (step === 2 && !hasCompletedLogistics) {
+      const pendingFields = [
+        formData.needsLodging === null && "needsLodging",
+        formData.needsTransport === null && "needsTransport",
+        formData.isBaptized === null && "isBaptized",
+        formData.isCoroMGR === null && "isCoroMGR",
+        formData.isFromAnotherRegion === null && "isFromAnotherRegion",
+        formData.isFromAnotherRegion === true && formData.region === null && "region",
+      ].filter((field): field is string => Boolean(field))
+      setMissingLogisticsFields(pendingFields)
+      setShowLogisticsHighlight(true)
+      window.setTimeout(() => setShowLogisticsHighlight(false), 700)
+      requestAnimationFrame(() => {
+        const firstPendingField = pendingFields[0]
+        if (firstPendingField === "region") {
+          regionSelectRef.current?.focus()
+        } else if (firstPendingField) {
+          logisticsQuestionRefs.current[firstPendingField]?.focus()
+        }
+      })
       return
     }
+
+    if (step === 2) setMissingLogisticsFields([])
 
     if (step < totalSteps) {
       setStep(step + 1)
@@ -448,9 +502,21 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     ? "bg-brand-green text-white hover:bg-brand-green-hover active:bg-brand-green-active"
     : "bg-primary hover:bg-primary/90 text-primary-foreground"
 
-  const ToggleQuestion = ({ label, value, field, allowUnknown = false, disabled = false }: { label: string, value: boolean | "unknown" | null, field: string, allowUnknown?: boolean, disabled?: boolean }) => (
-    <div className="flex flex-col items-start gap-5 pb-7 pt-5 border-b border-border/50 last:border-0">
-      <span className="text-sm font-medium text-foreground">{label}</span>
+  const renderToggleQuestion = ({ label, value, field, allowUnknown = false, disabled = false }: { label: string, value: boolean | "unknown" | null, field: string, allowUnknown?: boolean, disabled?: boolean }) => {
+    const isMissing = missingLogisticsFields.includes(field)
+    const isHighlighted = showLogisticsHighlight && isMissing
+
+    return (
+    <div
+      ref={(element) => { logisticsQuestionRefs.current[field] = element }}
+      tabIndex={-1}
+      className={`flex flex-col items-start gap-5 border-b border-border/50 pb-7 pt-5 outline-none transition-colors duration-150 last:border-0 ${isHighlighted ? "bg-destructive/10" : "bg-transparent"}`}
+      aria-invalid={isMissing}
+    >
+      <span className="text-sm font-medium text-foreground">
+        {isMissing && <span className="mr-1 text-destructive">*</span>}
+        {label}
+      </span>
       <div className={`flex flex-wrap gap-2 ${disabled ? "[&_button:disabled]:opacity-80" : ""}`}>
         <Button
           variant="ghost"
@@ -483,7 +549,8 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
         </>}
       </div>
     </div>
-  )
+    )
+  }
 
   const modalContent = (
     <>
@@ -587,18 +654,20 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 </p>
 
                 <div className="border border-border/50 bg-background px-4">
-                  <ToggleQuestion label="¿Necesitas ayuda con el hospedaje?" value={formData.needsLodging} field="needsLodging" allowUnknown />
-                  <ToggleQuestion label="¿Necesitas ayuda con el transporte entre actividades?" value={formData.needsTransport} field="needsTransport" allowUnknown />
-                  <ToggleQuestion label="¿Estas bautizado en nuestra Iglesia Gentil de Cristo?" value={formData.isBaptized} field="isBaptized" disabled={formData.isCoroMGR === true} />
-                  <ToggleQuestion label="¿Eres joven del coro general? (Mensajeros del Gran Rey)" value={formData.isCoroMGR} field="isCoroMGR" />
-                  <ToggleQuestion label="¿Vienes de otra región?" value={formData.isFromAnotherRegion} field="isFromAnotherRegion" />
+                  {renderToggleQuestion({ label: "¿Necesitas ayuda con el hospedaje?", value: formData.needsLodging, field: "needsLodging", allowUnknown: true })}
+                  {renderToggleQuestion({ label: "¿Necesitas ayuda con el transporte entre actividades?", value: formData.needsTransport, field: "needsTransport", allowUnknown: true })}
+                  {renderToggleQuestion({ label: "¿Estas bautizado en nuestra Iglesia Gentil de Cristo?", value: formData.isBaptized, field: "isBaptized", disabled: formData.isCoroMGR === true })}
+                  {renderToggleQuestion({ label: "¿Eres joven del coro general? (Mensajeros del Gran Rey)", value: formData.isCoroMGR, field: "isCoroMGR" })}
+                  {renderToggleQuestion({ label: "¿Vienes de otra región?", value: formData.isFromAnotherRegion, field: "isFromAnotherRegion" })}
                   {formData.isFromAnotherRegion && (
-                    <div className="pb-7 pt-5">
+                    <div className={`pb-7 pt-5 transition-colors duration-150 ${showLogisticsHighlight && missingLogisticsFields.includes("region") ? "bg-destructive/10" : "bg-transparent"}`}>
                       <Label htmlFor="registration-region" className="mb-3 block text-sm font-medium">
+                        {missingLogisticsFields.includes("region") && <span className="mr-1 text-destructive">*</span>}
                         ¿De qué región vienes?
                       </Label>
                       <select
                         id="registration-region"
+                        ref={regionSelectRef}
                         value={formData.region ?? ""}
                         onChange={(event) => handleInputChange("region", event.target.value)}
                         className="h-11 w-full border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -634,7 +703,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                     <h4 className="font-bold text-xs md:text-lg text-foreground/90 text-ink mb-4 uppercase tracking-wider border-b border-border/50 pb-3">Confirma tu registro:</h4>
                     <div className="space-y-3 text-sm">
                     <div className="flex justify-between border-b border-border/20 pb-2">
-                      <span className="text-muted-foreground">Nombre y apellido:</span>
+                      <span className="text-muted-foreground">Nombre completo:</span>
                       <span className="max-w-[60%] text-right text-foreground font-medium">{formData.name || "—"}</span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
@@ -739,7 +808,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                 )}
                 <Button
                   onClick={step === totalSteps ? handleSubmit : handleNext}
-                  disabled={isSubmitting || (step === 2 && !hasCompletedLogistics) || (step === totalSteps && (isOffline || (isTurnstileEnabled && !allowDevTurnstileBypass && !turnstileToken)))}
+                  disabled={isSubmitting || (step === totalSteps && (isOffline || (isTurnstileEnabled && !allowDevTurnstileBypass && !turnstileToken)))}
                   className={`min-w-0 flex-1 shrink rounded-none h-14 whitespace-normal px-3 text-center text-sm font-bold uppercase leading-tight tracking-wider ${primaryButtonClassName}`}
                 >
                   {isSubmitting ? (
@@ -803,15 +872,15 @@ function ConfirmationStep({
 
   return (
     <div className="py-6">
-      <div className={`w-12 h-12 flex items-center justify-center mx-auto mb-3 rounded-none ${successIconClassName}`}>
+      <div className={`w-12 h-12 flex items-center justify-center mx-auto mb-5 rounded-none ${successIconClassName}`}>
         <Check className="h-6 w-6" />
       </div>
-      <h3 className="text-base sm:text-lg font-bold text-foreground mb-5 uppercase tracking-wide whitespace-nowrap text-center">¡Registro Exitoso!</h3>
+      <h3 className="text-base sm:text-lg font-bold text-foreground mb-5 uppercase tracking-wide whitespace-nowrap text-center">Gracias por registrarte</h3>
       <p className="text-sm mb-8 text-center">
-          El staff ha sido notificado de tu asistencia. ¡Pronto estaremos en contacto!
+          Hemos guardado tu asistencia. ¡Pronto estaremos en contacto!
       </p>
       <p className="text-sm text-muted-foreground mb-4 text-baseline">
-        Si tienes dudas o necesitas ayuda, puedes contactar al presidente regional:
+        Si tienes dudas o necesitas ayuda, por favor, contacta a este numero de WhatsApp:
       </p>
       
       <div className="space-y-4">

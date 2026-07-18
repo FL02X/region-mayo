@@ -8,6 +8,7 @@ interface RecorridoCancelOrderModalProps {
   isOpen: boolean
   isCancelling: boolean
   error: string | null
+  alreadyPaidNotice: boolean
   onClose: () => void
   onConfirm: () => void
 }
@@ -16,6 +17,7 @@ export function RecorridoCancelOrderModal({
   isOpen,
   isCancelling,
   error,
+  alreadyPaidNotice,
   onClose,
   onConfirm,
 }: RecorridoCancelOrderModalProps) {
@@ -35,18 +37,23 @@ export function RecorridoCancelOrderModal({
       aria-modal="true"
       aria-labelledby="cancel-order-title"
     >
+      {!alreadyPaidNotice && (
       <button
         type="button"
         className="absolute inset-0"
         aria-label="Cerrar confirmación de cancelación"
         onClick={close}
       />
+      )}
       <div
         className="relative w-full max-w-md overflow-hidden border border-black bg-white shadow-[0_18px_48px_rgba(0,0,0,0.45)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex h-14 items-center justify-between bg-[#757575] pl-5">
-          <h3 id="cancel-order-title" className="text-[17px] font-bold text-white">Cancelar pedido</h3>
+          <h3 id="cancel-order-title" className="text-[17px] font-bold text-white">
+            {alreadyPaidNotice ? "Pedido actualizado" : "Cancelar pedido"}
+          </h3>
+          {!alreadyPaidNotice && (
           <button
             type="button"
             onClick={close}
@@ -56,6 +63,7 @@ export function RecorridoCancelOrderModal({
           >
             <X className="h-6 w-6" aria-hidden="true" />
           </button>
+          )}
         </div>
 
         <div className="p-5">
@@ -67,6 +75,22 @@ export function RecorridoCancelOrderModal({
               />
               <p className="mt-5 text-sm font-medium text-muted-foreground">Cancelando pedido...</p>
             </div>
+          ) : alreadyPaidNotice ? (
+            <>
+              <p className="text-base font-semibold leading-snug text-foreground">
+                {"\u00a1Este pedido ya est\u00e1 marcado como pagado! Eliminaremos este aviso."}
+              </p>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className={`min-h-11 px-5 text-sm font-semibold text-white transition-colors ${isRecorrido ? "bg-brand-green hover:bg-brand-green-hover" : "bg-[#434343] hover:bg-[#2f2f2f]"}`}
+                >
+                  Entendido
+                </button>
+              </div>
+            </>
           ) : (
             <>
               <p className="text-base font-semibold leading-snug text-foreground">¿Estás seguro que quieres cancelar este pedido?</p>

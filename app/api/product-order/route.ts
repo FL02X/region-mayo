@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { cancelProductOrder, createProductOrder, ProductOrderUserError } from "@/lib/product-order-sheets"
 
 const isTurnstileEnabled = false
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
+const RATE_LIMIT_WINDOW = 2 * 60 * 1000
+const RATE_LIMIT_MAX = 5
+const MIN_REQUEST_INTERVAL = 5 * 1000
+const HONEYPOT_FIELD = "website"
 
 type TurnstileResponse = {
   success?: boolean
@@ -11,6 +16,21 @@ function getClientIp(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for")
   if (forwardedFor) return forwardedFor.split(",")[0].trim()
   return request.headers.get("x-real-ip") || ""
+}
+
+function checkRateLimit(ip: string) {
+  const now = Date.now()
+  const current = rateLimitStore.get(ip)
+  if (!current || now > current.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW })
+    return { allowed: true }
+  }
+  if (current.count >= RATE_LIMIT_MAX) {
+    return { allowed: false, retryAfter: Math.ceil((current.resetTime - now) / 1000) }
+  }
+
+  current.count++
+  return { allowed: true }
 }
 
 async function verifyTurnstile(token: string, ip: string) {
@@ -40,10 +60,29 @@ async function verifyTurnstile(token: string, ip: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request) || "unknown"
+    const rateLimit = checkRateLimit(ip)
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Demasiados pedidos. Intenta de nuevo en unos minutos." },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfter) } },
+      )
+    }
+
     const body = await request.json()
+    if (body[HONEYPOT_FIELD]) return NextResponse.json({ success: true })
+
+    const requestTime = Number(body._requestTime)
+    if (!Number.isFinite(requestTime) || Date.now() - requestTime < MIN_REQUEST_INTERVAL) {
+      return NextResponse.json(
+        { error: "Por favor, completa el pedido con calma." },
+        { status: 400 },
+      )
+    }
+
     if (isTurnstileEnabled) {
       const turnstileToken = typeof body.turnstileToken === "string" ? body.turnstileToken.trim() : ""
-      const turnstileOk = await verifyTurnstile(turnstileToken, getClientIp(request))
+      const turnstileOk = await verifyTurnstile(turnstileToken, ip)
       if (!turnstileOk) {
         return NextResponse.json(
           { error: "No pudimos verificar que eres una persona. Intenta de nuevo." },
@@ -84,6 +123,9 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error("[product-order-cancel]", error)
     if (error instanceof ProductOrderUserError) {
+      if (error.code === "ORDER_ALREADY_PAID") {
+        return NextResponse.json({ code: error.code, error: error.message }, { status: 409 })
+      }
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
     return NextResponse.json(

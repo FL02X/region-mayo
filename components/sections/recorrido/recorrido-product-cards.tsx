@@ -42,6 +42,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
   const [orderToCancel, setOrderToCancel] = useState<StoredProductOrder | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [alreadyPaidNotice, setAlreadyPaidNotice] = useState(false);
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [remainingStockByProductId, setRemainingStockByProductId] = useState<Record<string, number>>(() =>
     Object.fromEntries(
@@ -160,7 +161,26 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
         body: JSON.stringify({ productId: orderToCancel.productId, orderId: orderToCancel.id }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "No se pudo cancelar el pedido.");
+      if (!response.ok) {
+        if (data.code === "ORDER_ALREADY_PAID") {
+          setStoredOrders((current) => {
+            const next = removeStoredProductOrder(current, orderToCancel.id);
+            try {
+              if (next.length > 0) {
+                window.localStorage.setItem(RECORRIDO_ORDERS_STORAGE_KEY, JSON.stringify(next));
+              } else {
+                window.localStorage.removeItem(RECORRIDO_ORDERS_STORAGE_KEY);
+              }
+            } catch {
+              // The paid order stays hidden for this session if storage is unavailable.
+            }
+            return next;
+          });
+          setAlreadyPaidNotice(true);
+          return;
+        }
+        throw new Error(data.error || "No se pudo cancelar el pedido.");
+      }
 
       setStoredOrders((current) => {
         const next = removeStoredProductOrder(current, orderToCancel.id);
@@ -239,7 +259,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                   unoptimized
                 />
                 {hasMultiplePhotos && (
-                  <span className="absolute right-3 bottom-3 inline-flex min-h-9 items-center gap-2 bg-paper px-3 text-xs font-semibold text-ink shadow-sm transition-colors hover:bg-paper-dark">
+                  <span className="absolute right-3 bottom-3 inline-flex min-h-9 items-center gap-2 bg-paper-highlight px-3 text-xs font-semibold text-ink shadow-sm transition-colors hover:bg-paper-dark">
                     <Images className="h-4 w-4" aria-hidden="true" />
                     {product.photos.length} FOTOS
                   </span>
@@ -332,6 +352,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                                     type="button"
                                     onClick={() => {
                                       setCancelError(null);
+                                      setAlreadyPaidNotice(false);
                                       setOrderToCancel(order);
                                     }}
                                     className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-destructive"
@@ -402,9 +423,11 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
         isOpen={Boolean(orderToCancel)}
         isCancelling={isCancelling}
         error={cancelError}
+        alreadyPaidNotice={alreadyPaidNotice}
         onClose={() => {
           setOrderToCancel(null);
           setCancelError(null);
+          setAlreadyPaidNotice(false);
         }}
         onConfirm={() => void handleCancelOrder()}
       />

@@ -13,7 +13,7 @@ const SHEET_HEADERS = {
   variant: "Variante",
   size: "Talla",
   quantity: "Cantidad",
-  fullTotal: "Pago total (MXN)",
+  fullTotal: "Precio total (MXN)",
   paymentExpected: "Pago esperado (MXN)",
   paymentStatus: "Comprobante de pago",
   balanceDue: "Saldo pendiente (MXN)",
@@ -65,7 +65,7 @@ export type ProductOrderInput = {
 }
 
 export class ProductOrderUserError extends Error {
-  constructor(message: string) {
+  constructor(message: string, readonly code?: string) {
     super(message)
     this.name = "ProductOrderUserError"
   }
@@ -312,6 +312,7 @@ function migrateLegacyHeader(header: string) {
     Número: SHEET_HEADERS.phone,
     Tipo: SHEET_HEADERS.paymentType,
     "Total (MXN)": SHEET_HEADERS.paymentExpected,
+    "Pago total (MXN)": SHEET_HEADERS.fullTotal,
     "Precio total (MXN)": SHEET_HEADERS.fullTotal,
     "Pago por confirmar (MXN)": SHEET_HEADERS.paymentExpected,
     "Saldo por cobrar (MXN)": SHEET_HEADERS.balanceDue,
@@ -473,6 +474,7 @@ async function configureProductSheet(
 ) {
   const orderIdColumn = headers.indexOf(SHEET_HEADERS.orderId)
   const paymentExpectedColumn = headers.indexOf(SHEET_HEADERS.paymentExpected)
+  const paymentStatusColumn = headers.indexOf(SHEET_HEADERS.paymentStatus)
   const moneyColumns = [
     headers.indexOf(SHEET_HEADERS.fullTotal),
     paymentExpectedColumn,
@@ -504,7 +506,7 @@ async function configureProductSheet(
         range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: headers.length },
         cell: {
           userEnteredFormat: {
-            backgroundColor: { red: 1, green: 1, blue: 1 },
+            backgroundColor: { red: 0.22, green: 0.22, blue: 0.22 },
             horizontalAlignment: "CENTER",
             verticalAlignment: "MIDDLE",
             wrapStrategy: "WRAP",
@@ -512,7 +514,7 @@ async function configureProductSheet(
               fontFamily: "Arial",
               fontSize: 10,
               bold: true,
-              foregroundColor: { red: 0.12, green: 0.12, blue: 0.12 },
+              foregroundColor: { red: 1, green: 1, blue: 1 },
             },
           },
         },
@@ -561,6 +563,26 @@ async function configureProductSheet(
         range: { sheetId, startRowIndex: 1, startColumnIndex: orderIdColumn, endColumnIndex: orderIdColumn + 1 },
         cell: { userEnteredFormat: { wrapStrategy: "CLIP" } },
         fields: "userEnteredFormat.wrapStrategy",
+      },
+    })
+  }
+
+  if (paymentExpectedColumn >= 0) {
+    requests.push({
+      repeatCell: {
+        range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: paymentExpectedColumn, endColumnIndex: paymentExpectedColumn + 1 },
+        cell: { userEnteredFormat: { backgroundColor: { red: 0.18, green: 0.43, blue: 0.62 } } },
+        fields: "userEnteredFormat.backgroundColor",
+      },
+    })
+  }
+
+  if (paymentStatusColumn >= 0) {
+    requests.push({
+      repeatCell: {
+        range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: paymentStatusColumn, endColumnIndex: paymentStatusColumn + 1 },
+        cell: { userEnteredFormat: { backgroundColor: { red: 0.65, green: 0.30, blue: 0.47 } } },
+        fields: "userEnteredFormat.backgroundColor",
       },
     })
   }
@@ -1214,7 +1236,7 @@ async function appendOrder(
 
 function sanitizeName(input: unknown) {
   return typeof input === "string"
-    ? input.trim().replace(/\s+/g, " ").slice(0, 80).replace(/<[^>]*>/g, "")
+    ? input.trim().replace(/\s+/g, " ").replace(/<[^>]*>/g, "")
     : ""
 }
 
@@ -1222,6 +1244,9 @@ function sanitizePhone(input: unknown) {
   const digits = typeof input === "string" ? input.replace(/\D/g, "") : ""
   return digits.startsWith("52") && digits.length === 12 ? digits.slice(2) : digits.slice(0, 10)
 }
+
+const OBVIOUS_PLACEHOLDER_NAMES = new Set(["test", "prueba", "asdf", "qwerty", "nombre", "nombre completo"])
+const OBVIOUS_PHONE_NUMBERS = new Set(["0123456789", "1234567890", "9876543210"])
 
 export async function getProductOrderProduct(productId: string): Promise<ProductOrderProduct | null> {
   const client = getSanityClient()
@@ -1264,7 +1289,15 @@ function validateOrderInput(product: ProductOrderProduct, input: ProductOrderInp
   const name = sanitizeName(input.name)
   const phone = sanitizePhone(input.phone)
   if (name.length < 2) throw new ProductOrderUserError("Escribe tu nombre completo.")
-  if (phone.length !== 10) throw new ProductOrderUserError("Escribe los 10 digitos de tu celular.")
+  if (name.length > 80) throw new ProductOrderUserError("Usa 80 caracteres o menos.")
+  if (name.split(" ").length < 2) throw new ProductOrderUserError("Escribe tu nombre y apellido.")
+  if (!/^[\p{L}\p{M}\s.'’-]+$/u.test(name)) throw new ProductOrderUserError("Usa solo letras y espacios.")
+  if (name.toLocaleLowerCase("es-MX").split(" ").some((part) => OBVIOUS_PLACEHOLDER_NAMES.has(part))) {
+    throw new ProductOrderUserError("Escribe tu nombre completo real.")
+  }
+  if (phone.length !== 10 || /^(\d)\1{9}$/.test(phone) || OBVIOUS_PHONE_NUMBERS.has(phone)) {
+    throw new ProductOrderUserError("Escribe los 10 digitos de tu celular.")
+  }
   if (product.isDisabled) throw new ProductOrderUserError("Este producto no esta disponible.")
   if (!Number.isFinite(product.price) || product.price < 0) throw new Error("El precio del producto no es valido.")
 
@@ -1390,7 +1423,10 @@ export async function cancelProductOrder(productId: string, orderId: string) {
   const status = normalizePaymentStatus(rows[rowIndex + 1][statusColumn])
   if (status === "CANCELADO") return true
   if (!isCancellablePaymentStatus(status)) {
-    throw new ProductOrderUserError("Este pedido ya tiene un pago confirmado y no se puede cancelar.")
+    throw new ProductOrderUserError(
+      "Este pedido ya tiene un pago confirmado y no se puede cancelar.",
+      "ORDER_ALREADY_PAID",
+    )
   }
 
   // ponytail: Sheets has no conditional cell update; use transactional storage if edit races become common.
