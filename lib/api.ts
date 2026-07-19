@@ -1290,6 +1290,7 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
           products[]->{
             _id,
             name,
+            "originalVariantName": photos[0].alt,
             price,
             deposit,
             stock,
@@ -1300,6 +1301,8 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
             variants[]->{
               _id,
               name,
+              hasDifferentPrice,
+              price,
               photos[]{asset->{url}}
             },
             allowMultipleQuantity,
@@ -1370,6 +1373,9 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
           ? (recorrido.products ?? []).filter((product: any) => product && !product.isDisabled).map((product: any) => ({
               id: product._id,
               name: product.name,
+              originalVariantName: typeof product.originalVariantName === "string" && product.originalVariantName.trim()
+                ? product.originalVariantName.trim()
+                : undefined,
               price: product.price,
               photos: sanityImagesUrls(product.photos),
               deposit: typeof product.deposit === "number" ? product.deposit : undefined,
@@ -1382,6 +1388,9 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
                 id: variant._id,
                 name: variant.name,
                 photos: sanityImagesUrls(variant.photos),
+                price: variant.hasDifferentPrice && Number.isFinite(Number(variant.price)) && Number(variant.price) >= 0
+                  ? Number(variant.price)
+                  : undefined,
               })),
               allowMultipleQuantity: Boolean(product.allowMultipleQuantity),
               clabe: product.clabe ?? undefined,

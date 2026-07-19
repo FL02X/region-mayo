@@ -123,6 +123,7 @@ export interface Event {
 export interface Product {
   id: string;
   name: string;
+  originalVariantName?: string;
   price: number;
   photos: string[];
   deposit?: number;
@@ -142,6 +143,7 @@ export interface ProductVariant {
   id: string;
   name: string;
   photos: string[];
+  price?: number;
 }
 
 export interface AlbumImage {

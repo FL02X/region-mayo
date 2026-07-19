@@ -258,11 +258,14 @@ export function ShopModal({
     ? product.variants?.find((variant) => variant.id === selectedVariantId)
     : undefined
   const selectedImage = selectedVariant?.photos[0] || product.photos[0] || "/placeholder.svg"
-  const unitPrice = paymentType === "deposit" && hasDeposit ? product.deposit! : product.price
+  const fullUnitPrice = selectedVariant?.price ?? product.price
+  const unitPrice = paymentType === "deposit" && hasDeposit
+    ? Math.max(0, product.deposit! + fullUnitPrice - product.price)
+    : fullUnitPrice
   const totalPrice = unitPrice * quantity
-  const pendingBalance = paymentType === "deposit" ? Math.max(0, product.price * quantity - totalPrice) : 0
+  const pendingBalance = paymentType === "deposit" ? Math.max(0, fullUnitPrice * quantity - totalPrice) : 0
   const selectedVariantName = product.variantsEnabled
-    ? selectedVariant?.name || product.name
+    ? selectedVariant?.name || product.originalVariantName || product.name
     : undefined
   const canProvidePaymentDetails = Boolean(product.clabe && product.recipientBank && product.recipientName)
   const canSubmitOrder = !isTurnstileEnabled || allowDevTurnstileBypass || Boolean(turnstileToken)
@@ -568,9 +571,10 @@ export function ShopModal({
                 <div>
                   <p className="text-sm font-bold uppercase tracking-wider text-foreground">Elige una variante</p>
                   <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {[{ id: null, name: product.name, photos: product.photos }, ...(product.variants ?? [])].map((variant) => {
+                    {[{ id: null, name: product.originalVariantName || product.name, photos: product.photos, price: product.price }, ...(product.variants ?? [])].map((variant) => {
                       const isSelected = selectedVariantId === variant.id
                       const image = variant.photos[0] || "/placeholder.svg"
+                      const priceDifference = (variant.price ?? product.price) - product.price
                       return (
                         <button
                           key={variant.id ?? "original"}
@@ -583,6 +587,11 @@ export function ShopModal({
                             <Image src={sanityImageVariantUrl(image, { width: 440, quality: 72, format: "webp", fit: "max" })} alt={variant.name} fill unoptimized className="object-contain" />
                           </span>
                           <span className="block border-t px-3 py-2 text-sm font-medium text-foreground">{variant.name}</span>
+                          {priceDifference !== 0 && (
+                            <span className={`block px-3 pb-2 text-xs text-muted-foreground ${editorialFont.className}`}>
+                              {priceDifference > 0 ? "+" : "-"}<span className="mr-0.5 align-super font-sans text-[0.72em] font-semibold leading-none">$</span>{formatPrice(Math.abs(priceDifference))} MXN
+                            </span>
+                          )}
                         </button>
                       )
                     })}

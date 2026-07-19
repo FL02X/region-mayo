@@ -22,7 +22,7 @@ const SHEET_HEADERS = {
 const PAYMENT_STATUSES = ["PENDIENTE", "ANTICIPO RECIBIDO", "PAGO COMPLETO", "CANCELADO"] as const
 const PAYMENT_ROW_COLORS = {
   PENDIENTE: { red: 0.98, green: 0.95, blue: 0.82 },
-  "ANTICIPO RECIBIDO": { red: 0.93, green: 0.90, blue: 0.78 },
+  "ANTICIPO RECIBIDO": { red: 0.98, green: 0.80, blue: 0.61 },
   "PAGO COMPLETO": { red: 0.85, green: 0.94, blue: 0.85 },
   CANCELADO: { red: 0.90, green: 0.90, blue: 0.90 },
 } as const
@@ -39,11 +39,13 @@ type ProductOrderVariant = {
   id: string
   name: string
   photos: string[]
+  price?: number
 }
 
 export type ProductOrderProduct = {
   id: string
   name: string
+  originalVariantName?: string
   price: number
   deposit?: number
   stock?: number
@@ -74,6 +76,7 @@ export class ProductOrderUserError extends Error {
 type ProductOrderDetails = {
   product: ProductOrderProduct
   variantName?: string
+  variantUnitPrice: number
   size?: string
   paymentType: "deposit" | "full"
   unitPrice: number
@@ -669,8 +672,10 @@ async function refreshProductSheetControls(
   sheetName: string,
   headers: string[],
   hasDeposit: boolean,
+  newRow?: { rowNumber: number; allowsDepositStatus: boolean },
 ) {
   const nameColumn = headers.indexOf(SHEET_HEADERS.name)
+  const paymentTypeColumn = headers.indexOf(SHEET_HEADERS.paymentType)
   const validationColumns = [
     headers.indexOf(SHEET_HEADERS.paymentStatus),
   ].filter((column) => column >= 0)
@@ -728,6 +733,16 @@ async function refreshProductSheetControls(
 
   const rows = nameColumn < 0 ? [] : (await getProductSheetRows(config, accessToken, sheetName)).slice(1)
   const activeRows = rows.flatMap((row, index) => String(row[nameColumn] ?? "").trim() ? [index + 2] : [])
+  const rowValidationRequests = rows.flatMap((row, index) => {
+    if (!String(row[nameColumn] ?? "").trim()) return []
+    const paymentType = paymentTypeColumn < 0 ? "" : normalizePaymentType(row[paymentTypeColumn])
+    const allowsDepositStatus = paymentType === "ANTICIPO"
+      ? true
+      : paymentType === "PAGO COMPLETO"
+        ? false
+        : hasDeposit
+    return getOrderRowValidationRequests(sheetId, headers, [index + 2], allowsDepositStatus)
+  })
 
   const requests: Array<Record<string, unknown>> = [
     ...validationColumns.map((column) => ({
@@ -747,7 +762,8 @@ async function refreshProductSheetControls(
     ...automaticFilterViewIds.map((filterId) => ({ deleteFilterView: { filterId } })),
     ...getPaymentConditionalFormatRequests(sheetId, headers),
     ...getPaymentFilterViewRequests(sheetId, sheetName, headers),
-    ...getOrderRowValidationRequests(sheetId, headers, activeRows, hasDeposit),
+    ...rowValidationRequests,
+    ...(newRow ? getOrderRowValidationRequests(sheetId, headers, [newRow.rowNumber], newRow.allowsDepositStatus) : []),
     ...activeRows.map((rowNumber) => ({
       updateDimensionProperties: {
         range: { sheetId, dimension: "ROWS", startIndex: rowNumber - 1, endIndex: rowNumber },
@@ -837,6 +853,22 @@ async function updateSheetValues(
     },
   )
   if (!response.ok) throw new Error(`Google Sheets value update failed: ${await response.text()}`)
+}
+
+async function clearSheetValues(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetName: string,
+) {
+  const range = getGoogleSheetRange(sheetName, "A1:Z1000")
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}:clear`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
+  if (!response.ok) throw new Error(`Google Sheets value clear failed: ${await response.text()}`)
 }
 
 function parseSheetMoney(value: unknown): number | null {
@@ -983,11 +1015,29 @@ function getSummaryColumnRange(sheetName: string, headers: string[], header: str
   return column < 0 ? null : `${getGoogleSheetRange(sheetName, `$${getColumnLetter(column)}$2:$${getColumnLetter(column)}`)}`
 }
 
-export function getSummaryValues(sheetName: string, headers: string[]) {
+type SummaryLayout = {
+  values: string[][]
+  columnCount: number
+  matrixColumnCount: number
+  matrixTitleRow: number
+  matrixHeaderRow: number
+  matrixStartRow: number
+  matrixEndRow: number
+  matrixTotalRow: number
+  matrixHasSizes: boolean
+  paymentTitleRow: number
+  paymentHeaderRow: number
+  paymentValueRow: number
+  moneyHeaderRow: number
+  moneyValueRow: number
+}
+
+function getSummaryLayout(sheetName: string, headers: string[], product?: ProductOrderProduct): SummaryLayout {
   const nameRange = getSummaryColumnRange(sheetName, headers, SHEET_HEADERS.name)!
   const statusRange = getSummaryColumnRange(sheetName, headers, SHEET_HEADERS.paymentStatus)!
   const quantityRange = getSummaryColumnRange(sheetName, headers, SHEET_HEADERS.quantity)
   const sizeRange = getSummaryColumnRange(sheetName, headers, SHEET_HEADERS.size)
+  const variantRange = getSummaryColumnRange(sheetName, headers, SHEET_HEADERS.variant)
   const fullTotalRange = getSummaryColumnRange(sheetName, headers, SHEET_HEADERS.fullTotal)!
   const paymentExpectedRange = getSummaryColumnRange(sheetName, headers, SHEET_HEADERS.paymentExpected)!
   const balanceDueRange = getSummaryColumnRange(sheetName, headers, SHEET_HEADERS.balanceDue)
@@ -997,55 +1047,143 @@ export function getSummaryValues(sheetName: string, headers: string[]) {
   const quantityFormula = (conditions: string[]) => (
     `=${sumProduct([`${nameRange}<>""`, ...conditions], quantityRange)}`
   )
-  const sizeFormula = (size: string, status: string) => sizeRange
-    ? quantityFormula([`${statusRange}="${status}"`, `${sizeRange}="${size}"`])
-    : "=0"
+  const hasSizes = Boolean(sizeRange)
+  const hasVariants = Boolean(product?.variantsEnabled && variantRange)
+  const originalVariantName = product?.originalVariantName || product?.name || "Original"
+  const variants = hasVariants ? [
+    { label: originalVariantName, value: originalVariantName },
+    ...(product?.variants ?? [])
+      .filter((variant) => variant.name.trim() && variant.name !== originalVariantName)
+      .map((variant) => ({ label: variant.name, value: variant.name })),
+  ] : []
+  const quoteFormulaValue = (value: string) => `"${value.replace(/"/g, '""')}"`
+  const confirmedFormula = (variant?: string, size?: string) => quantityFormula([
+    `(${statusRange}="ANTICIPO RECIBIDO")+(${statusRange}="PAGO COMPLETO")`,
+    ...(variant && variantRange ? [`${variantRange}=${quoteFormulaValue(variant)}`] : []),
+    ...(size ? [`${sizeRange}="${size}"`] : []),
+  ])
+  const matrixColumnCount = hasVariants && hasSizes ? variants.length + 1 : 2
+  const columnCount = Math.max(3, matrixColumnCount)
+  const padRow = (cells: string[]) => [...cells, ...Array.from({ length: columnCount - cells.length }, () => "")]
+  const values: string[][] = []
 
-  return [
-    ["SOLICITADAS", "CON ANTICIPO", "PAGADAS COMPLETAS", "TOTAL A PEDIR"],
-    [
-      quantityFormula([`${statusRange}<>"CANCELADO"`]),
-      quantityFormula([`${statusRange}="ANTICIPO RECIBIDO"`]),
-      quantityFormula([`${statusRange}="PAGO COMPLETO"`]),
-      "=B2+C2",
-    ],
-    ["", "", "", ""],
-    ["Camisetas a pedir por talla", "", "", ""],
-    ["Talla", "Con anticipo", "Pago completo", "Total a pedir"],
-    ...SUMMARY_SIZES.map((size, index) => [
-      size,
-      sizeFormula(size, "ANTICIPO RECIBIDO"),
-      sizeFormula(size, "PAGO COMPLETO"),
-      `=B${index + 6}+C${index + 6}`,
-    ]),
-    ["TOTAL", "=SUM(B6:B9)", "=SUM(C6:C9)", "=SUM(D6:D9)"],
-    ["", "", "", ""],
-    ["Resumen de dinero", "", "", ""],
-    ["DINERO RECIBIDO", "SALDO POR COBRAR", "VALOR DE LAS CAMISETAS A PEDIR", ""],
-    [
-      `=${sumProduct([`${statusRange}="ANTICIPO RECIBIDO"`], paymentExpectedRange)}+${sumProduct([`${statusRange}="PAGO COMPLETO"`], fullTotalRange)}`,
-      balanceDueRange ? `=${sumProduct([`${statusRange}="ANTICIPO RECIBIDO"`], balanceDueRange)}` : "=0",
-      `=${sumProduct([`${statusRange}="ANTICIPO RECIBIDO"`], fullTotalRange)}+${sumProduct([`${statusRange}="PAGO COMPLETO"`], fullTotalRange)}`,
-      "",
-    ],
-    ["", "", "", ""],
-  ]
+  const paymentTitleRow = values.length
+  values.push(padRow(["CONTROL DE PAGOS"]))
+  const paymentHeaderRow = values.length
+  values.push(padRow(["PAGADAS CON ANTICIPO", "PAGADAS COMPLETAS"]))
+  const paymentValueRow = values.length
+  values.push(padRow([
+    quantityFormula([`${statusRange}="ANTICIPO RECIBIDO"`]),
+    quantityFormula([`${statusRange}="PAGO COMPLETO"`]),
+  ]))
+  values.push(padRow([]))
+
+  const moneyHeaderRow = values.length
+  values.push(padRow(["DINERO RECIBIDO", "SALDO DE ANTICIPOS PENDIENTES POR COBRAR", "VALOR DE TODOS LOS PRODUCTOS A PEDIR"]))
+  const moneyValueRow = values.length
+  values.push(padRow([
+    `=${sumProduct([`${statusRange}="ANTICIPO RECIBIDO"`], paymentExpectedRange)}+${sumProduct([`${statusRange}="PAGO COMPLETO"`], fullTotalRange)}`,
+    balanceDueRange ? `=${sumProduct([`${statusRange}="ANTICIPO RECIBIDO"`], balanceDueRange)}` : "=0",
+    `=${sumProduct([`${statusRange}="ANTICIPO RECIBIDO"`], fullTotalRange)}+${sumProduct([`${statusRange}="PAGO COMPLETO"`], fullTotalRange)}`,
+  ]))
+  values.push(padRow([]))
+
+  const matrixTitleRow = values.length
+  values.push(padRow(["PEDIDOS CONFIRMADOS"]))
+  const matrixHeaderRow = values.length
+
+  if (hasVariants && hasSizes) {
+    values.push(padRow(["Talla", ...variants.map((variant) => variant.label)]))
+    const matrixTotalRow = values.length
+    values.push(padRow(["TOTAL", ...variants.map((variant) => confirmedFormula(variant.value))]))
+    const matrixStartRow = values.length
+    for (const size of SUMMARY_SIZES) {
+      values.push(padRow([
+        size,
+        ...variants.map((variant) => confirmedFormula(variant.value, size)),
+      ]))
+    }
+    const matrixEndRow = values.length
+    values.push(padRow([]))
+    return {
+      values,
+      columnCount,
+      matrixColumnCount,
+      matrixTitleRow,
+      matrixHeaderRow,
+      matrixStartRow,
+      matrixEndRow,
+      matrixTotalRow,
+      matrixHasSizes: true,
+      paymentTitleRow,
+      paymentHeaderRow,
+      paymentValueRow,
+      moneyHeaderRow,
+      moneyValueRow,
+    }
+  } else if (hasVariants) {
+    values.push(padRow(["Variante", "Total a pedir"]))
+    const matrixStartRow = values.length
+    for (const variant of variants) values.push(padRow([variant.label, confirmedFormula(variant.value)]))
+    const matrixEndRow = values.length
+    const matrixTotalRow = values.length
+    values.push(padRow(["TOTAL", confirmedFormula()]))
+    values.push(padRow([]))
+    return {
+      values, columnCount, matrixColumnCount, matrixTitleRow, matrixHeaderRow,
+      matrixStartRow, matrixEndRow, matrixTotalRow,
+      matrixHasSizes: false,
+      paymentTitleRow, paymentHeaderRow, paymentValueRow, moneyHeaderRow, moneyValueRow,
+    }
+  } else if (hasSizes) {
+    values.push(padRow(["Talla", "Total a pedir"]))
+    const matrixTotalRow = values.length
+    values.push(padRow(["TOTAL", confirmedFormula()]))
+    const matrixStartRow = values.length
+    for (const size of SUMMARY_SIZES) values.push(padRow([size, confirmedFormula(undefined, size)]))
+    const matrixEndRow = values.length
+    values.push(padRow([]))
+    return {
+      values, columnCount, matrixColumnCount, matrixTitleRow, matrixHeaderRow,
+      matrixStartRow, matrixEndRow, matrixTotalRow,
+      matrixHasSizes: true,
+      paymentTitleRow, paymentHeaderRow, paymentValueRow, moneyHeaderRow, moneyValueRow,
+    }
+  } else {
+    values.push(padRow(["Producto", "Total a pedir"]))
+    const matrixTotalRow = values.length
+    values.push(padRow(["TOTAL", confirmedFormula()]))
+    values.push(padRow([]))
+    return {
+      values, columnCount, matrixColumnCount, matrixTitleRow, matrixHeaderRow,
+      matrixStartRow: matrixTotalRow, matrixEndRow: matrixTotalRow,
+      matrixTotalRow,
+      matrixHasSizes: false,
+      paymentTitleRow, paymentHeaderRow, paymentValueRow, moneyHeaderRow, moneyValueRow,
+    }
+  }
+}
+
+export function getSummaryValues(sheetName: string, headers: string[], product?: ProductOrderProduct) {
+  return getSummaryLayout(sheetName, headers, product).values
 }
 
 async function ensureProductSummarySheet(
   config: GoogleSheetsConfig,
   accessToken: string,
-  productName: string,
+  product: ProductOrderProduct,
   sourceSheetName: string,
   headers: string[],
 ) {
-  const summarySheetName = getProductSummarySheetName(productName)
+  const summarySheetName = getProductSummarySheetName(product.name)
   let sheetId = await getSheetId(config, accessToken, summarySheetName)
   if (sheetId === null) sheetId = await createSheet(config, accessToken, summarySheetName)
 
+  const layout = getSummaryLayout(sourceSheetName, headers, product)
+  await clearSheetValues(config, accessToken, summarySheetName)
   await updateSheetValues(config, accessToken, [{
-    range: getGoogleSheetRange(summarySheetName, "A1:D15"),
-    values: getSummaryValues(sourceSheetName, headers),
+    range: getGoogleSheetRange(summarySheetName, `A1:${getColumnLetter(layout.columnCount - 1)}${layout.values.length}`),
+    values: layout.values,
   }])
 
   const metadataResponse = await fetch(
@@ -1066,8 +1204,8 @@ async function ensureProductSummarySheet(
     .flatMap(({ protectedRangeId }) => typeof protectedRangeId === "number" ? [protectedRangeId] : []) ?? []
 
   const dark = { red: 0.20, green: 0.20, blue: 0.20 }
+  const darkGreen = { red: 0.31, green: 0.44, blue: 0.32 }
   const lightGray = { red: 0.90, green: 0.91, blue: 0.92 }
-  const lightBlue = { red: 0.85, green: 0.91, blue: 0.98 }
   const white = { red: 1, green: 1, blue: 1 }
   const formatRange = (
     startRowIndex: number,
@@ -1088,52 +1226,85 @@ async function ensureProductSummarySheet(
         fields: "gridProperties(frozenRowCount,hideGridlines)",
       },
     },
-    formatRange(0, 15, 0, 4, {
+    formatRange(0, layout.values.length, 0, layout.columnCount, {
       backgroundColor: white,
       horizontalAlignment: "CENTER",
       verticalAlignment: "MIDDLE",
       wrapStrategy: "WRAP",
       textFormat: { fontFamily: "Arial", fontSize: 10, foregroundColor: dark },
     }, "backgroundColor,horizontalAlignment,verticalAlignment,wrapStrategy,textFormat"),
-    ...[3, 11].map((row) => formatRange(row, row + 1, 0, 4, {
-      backgroundColor: dark,
-      textFormat: { foregroundColor: white, bold: true, fontSize: 11 },
-    }, "backgroundColor,textFormat")),
-    ...[0, 4, 12].map((row) => formatRange(row, row + 1, 0, row === 12 ? 3 : 4, {
+    ...[layout.paymentTitleRow, layout.matrixTitleRow].map((row) => formatRange(row, row + 1, 0, layout.columnCount, {
+      horizontalAlignment: "LEFT",
+      textFormat: { foregroundColor: dark, bold: true, fontSize: 14 },
+    }, "horizontalAlignment,textFormat")),
+    ...[
+      { row: layout.matrixHeaderRow, endColumn: layout.matrixColumnCount },
+      { row: layout.paymentHeaderRow, endColumn: 2 },
+      { row: layout.moneyHeaderRow, endColumn: 3 },
+    ].map(({ row, endColumn }) => formatRange(row, row + 1, 0, endColumn, {
       backgroundColor: lightGray,
       textFormat: { bold: true, foregroundColor: dark },
     }, "backgroundColor,textFormat")),
-    formatRange(1, 2, 0, 4, {
+    ...(layout.matrixEndRow > layout.matrixStartRow ? [formatRange(layout.matrixStartRow, layout.matrixEndRow, 1, layout.matrixColumnCount, {
+      numberFormat: { type: "NUMBER", pattern: layout.matrixHasSizes ? "0;-0;\"\"" : "0 \"PIEZAS\";-0 \"PIEZAS\";\"\"" },
+      textFormat: { bold: true, fontSize: 18, foregroundColor: dark },
+    }, "numberFormat,textFormat")] : []),
+    formatRange(layout.matrixTotalRow, layout.matrixTotalRow + 1, 0, layout.matrixColumnCount, {
+      numberFormat: { type: "NUMBER", pattern: "0 \"PIEZAS\";-0 \"PIEZAS\";\"\"" },
+      textFormat: { bold: true, fontSize: 16, foregroundColor: darkGreen },
+    }, "numberFormat,textFormat"),
+    formatRange(layout.matrixTotalRow, layout.matrixTotalRow + 1, 0, 1, {
+      backgroundColor: lightGray,
+      textFormat: { bold: true, fontSize: 11, foregroundColor: dark },
+    }, "backgroundColor,textFormat"),
+    formatRange(layout.paymentValueRow, layout.paymentValueRow + 1, 0, 2, {
       numberFormat: { type: "NUMBER", pattern: "0" },
       textFormat: { bold: true, fontSize: 14, foregroundColor: dark },
     }, "numberFormat,textFormat"),
-    formatRange(1, 2, 1, 2, { backgroundColor: PAYMENT_ROW_COLORS["ANTICIPO RECIBIDO"] }, "backgroundColor"),
-    formatRange(1, 2, 2, 3, { backgroundColor: PAYMENT_ROW_COLORS["PAGO COMPLETO"] }, "backgroundColor"),
-    formatRange(9, 10, 0, 4, { textFormat: { bold: true, foregroundColor: dark } }, "textFormat"),
-    formatRange(5, 10, 3, 4, {
-      backgroundColor: lightBlue,
-      textFormat: { bold: true, foregroundColor: dark },
-    }, "backgroundColor,textFormat"),
-    formatRange(5, 10, 1, 4, { numberFormat: { type: "NUMBER", pattern: "0" } }, "numberFormat"),
-    formatRange(13, 14, 0, 3, {
+    formatRange(layout.paymentValueRow, layout.paymentValueRow + 1, 0, 1, {
+      backgroundColor: PAYMENT_ROW_COLORS["ANTICIPO RECIBIDO"],
+    }, "backgroundColor"),
+    formatRange(layout.paymentValueRow, layout.paymentValueRow + 1, 1, 2, {
+      backgroundColor: PAYMENT_ROW_COLORS["PAGO COMPLETO"],
+    }, "backgroundColor"),
+    formatRange(layout.moneyValueRow, layout.moneyValueRow + 1, 0, 3, {
       numberFormat: { type: "CURRENCY", pattern: "$#,##0" },
       textFormat: { bold: true, fontSize: 14, foregroundColor: dark },
     }, "numberFormat,textFormat"),
+    formatRange(layout.moneyValueRow, layout.moneyValueRow + 1, 0, 1, { backgroundColor: PAYMENT_ROW_COLORS["PAGO COMPLETO"] }, "backgroundColor"),
+    formatRange(layout.moneyValueRow, layout.moneyValueRow + 1, 1, 2, { backgroundColor: PAYMENT_ROW_COLORS.PENDIENTE }, "backgroundColor"),
+    formatRange(layout.moneyValueRow, layout.moneyValueRow + 1, 2, 3, { backgroundColor: lightGray }, "backgroundColor"),
     {
       updateDimensionProperties: {
-        range: { sheetId, dimension: "COLUMNS", startIndex: 0, endIndex: 4 },
+        range: { sheetId, dimension: "COLUMNS", startIndex: 0, endIndex: layout.columnCount },
         properties: { pixelSize: 180 },
         fields: "pixelSize",
       },
     },
     {
       updateDimensionProperties: {
-        range: { sheetId, dimension: "ROWS", startIndex: 0, endIndex: 15 },
+        range: { sheetId, dimension: "COLUMNS", startIndex: 0, endIndex: 1 },
+        properties: { pixelSize: 245 },
+        fields: "pixelSize",
+      },
+    },
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: "ROWS", startIndex: 0, endIndex: layout.values.length },
         properties: { pixelSize: 34 },
         fields: "pixelSize",
       },
     },
-    ...[{ row: 1, pixelSize: 44 }, { row: 12, pixelSize: 44 }, { row: 13, pixelSize: 44 }].map(({ row, pixelSize }) => ({
+    ...[
+      { row: layout.paymentTitleRow, pixelSize: 52 },
+      { row: layout.matrixHeaderRow, pixelSize: 44 },
+      { row: layout.matrixTotalRow, pixelSize: 48 },
+      { row: layout.matrixTitleRow, pixelSize: 52 },
+      { row: layout.paymentHeaderRow, pixelSize: 44 },
+      { row: layout.paymentValueRow, pixelSize: 44 },
+      { row: layout.moneyHeaderRow, pixelSize: 60 },
+      { row: layout.moneyValueRow, pixelSize: 44 },
+    ].map(({ row, pixelSize }) => ({
       updateDimensionProperties: {
         range: { sheetId, dimension: "ROWS", startIndex: row, endIndex: row + 1 },
         properties: { pixelSize },
@@ -1254,12 +1425,13 @@ export async function getProductOrderProduct(productId: string): Promise<Product
     `*[_type == "product" && _id == $productId][0]{
       _id,
       name,
+      "originalVariantName": photos[0].alt,
       price,
       deposit,
       stock,
       allowSizeSelection,
       variantsEnabled,
-      variants[]->{_id, name, "photos": photos[]{asset->{url}}},
+      variants[]->{_id, name, hasDifferentPrice, price, "photos": photos[]{asset->{url}}},
       allowMultipleQuantity,
       isDisabled
     }`,
@@ -1270,6 +1442,9 @@ export async function getProductOrderProduct(productId: string): Promise<Product
   return {
     id: product._id,
     name: String(product.name ?? ""),
+    originalVariantName: typeof product.originalVariantName === "string" && product.originalVariantName.trim()
+      ? product.originalVariantName.trim()
+      : undefined,
     price: Number(product.price),
     deposit: typeof product.deposit === "number" ? product.deposit : undefined,
     stock: typeof product.stock === "number" ? product.stock : undefined,
@@ -1279,6 +1454,9 @@ export async function getProductOrderProduct(productId: string): Promise<Product
       id: variant._id,
       name: String(variant.name ?? ""),
       photos: (variant.photos ?? []).map((photo: any) => String(photo?.asset?.url ?? photo?.url ?? "")).filter(Boolean),
+      price: variant.hasDifferentPrice && Number.isFinite(Number(variant.price)) && Number(variant.price) >= 0
+        ? Number(variant.price)
+        : undefined,
     })),
     allowMultipleQuantity: Boolean(product.allowMultipleQuantity),
     isDisabled: Boolean(product.isDisabled),
@@ -1315,9 +1493,11 @@ function validateOrderInput(product: ProductOrderProduct, input: ProductOrderInp
   }
 
   let variantName: string | undefined
+  let variantUnitPrice = product.price
   if (product.variantsEnabled) {
     const variant = input.variantId ? product.variants.find((item) => item.id === input.variantId) : undefined
-    variantName = variant?.name || product.name
+    variantName = variant?.name || product.originalVariantName || product.name
+    variantUnitPrice = variant?.price ?? product.price
   }
 
   let size: string | undefined
@@ -1332,9 +1512,12 @@ function validateOrderInput(product: ProductOrderProduct, input: ProductOrderInp
   return {
     product,
     variantName,
+    variantUnitPrice,
     size,
     paymentType,
-    unitPrice: paymentType === "deposit" ? product.deposit! : product.price,
+    unitPrice: paymentType === "deposit"
+      ? Math.max(0, product.deposit! + variantUnitPrice - product.price)
+      : variantUnitPrice,
     quantity,
   }
 }
@@ -1360,11 +1543,10 @@ export async function createProductOrder(input: ProductOrderInput) {
     throw new ProductOrderUserError(remainingStock === 0 ? "Este producto esta agotado." : `Solo quedan ${remainingStock} unidades disponibles.`)
   }
 
-  await ensureProductSummarySheet(config, accessToken, product.name, sheet.sheetName, sheet.headers)
   const name = sanitizeName(input.name)
   const phone = sanitizePhone(input.phone)
   const orderId = crypto.randomUUID()
-  const fullTotal = product.price * order.quantity
+  const fullTotal = order.variantUnitPrice * order.quantity
   const rowNumber = await appendOrder(config, accessToken, sheet.sheetName, sheet.headers, {
     [SHEET_HEADERS.orderId]: orderId,
     [SHEET_HEADERS.name]: name,
@@ -1394,7 +1576,9 @@ export async function createProductOrder(input: ProductOrderInput) {
     sheet.sheetName,
     sheet.headers,
     typeof product.deposit === "number",
+    { rowNumber, allowsDepositStatus: order.paymentType === "deposit" },
   )
+  await ensureProductSummarySheet(config, accessToken, product, sheet.sheetName, sheet.headers)
 
   return { orderId, remainingStock, productName: product.name }
 }
