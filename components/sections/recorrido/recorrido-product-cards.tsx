@@ -247,7 +247,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                 type="button"
                 onClick={openGallery}
                 disabled={!canOpenGallery || isSoldOut}
-                className="relative block h-64 w-full overflow-hidden text-left disabled:cursor-default"
+                className="relative block h-64 w-full overflow-hidden text-left disabled:cursor-default hover:bg-brand/5"
                 aria-label={canOpenGallery ? `Ver fotos de ${product.name}` : undefined}
               >
                 <Image
@@ -259,7 +259,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                   unoptimized
                 />
                 {hasMultiplePhotos && (
-                  <span className="absolute right-3 bottom-3 inline-flex min-h-9 items-center gap-2 bg-paper-highlight px-3 text-xs font-semibold text-ink shadow-sm transition-colors hover:bg-paper-dark">
+                  <span className="absolute right-3 bottom-3 inline-flex min-h-9 items-center gap-2 bg-paper px-3 text-xs font-semibold text-ink shadow-sm transition-colors">
                     <Images className="h-4 w-4" aria-hidden="true" />
                     {product.photos.length} FOTOS
                   </span>
@@ -287,9 +287,9 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                   type="button"
                   onClick={() => setShopProductId(product.id)}
                   disabled={isSoldOut}
-                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-55"
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-brand px-4 text-md font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-55"
                 >
-                  <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+                  <ShoppingBag className="h-5 w-5 mr-1" aria-hidden="true" />
                   {isSoldOut ? "AGOTADO" : "HACER PEDIDO"}
                 </button>
               </div>
@@ -300,7 +300,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                     <button
                       type="button"
                       onClick={() => setExpandedProductId(isExpanded ? null : product.id)}
-                      className="flex min-h-10 w-full items-center justify-between gap-2 px-3 py-3 text-sm font-medium leading-tight text-foreground transition-colors hover:text-foreground/70"
+                      className="flex min-h-10 w-full items-center justify-between gap-2 px-3 py-3 text-sm font-medium leading-tight text-foreground transition-colors hover:text-foreground/70 hover:bg-brand/20"
                       aria-expanded={isExpanded}
                       aria-controls={`pending-orders-${product.id}`}
                     >
@@ -355,7 +355,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                                       setAlreadyPaidNotice(false);
                                       setOrderToCancel(order);
                                     }}
-                                    className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-destructive"
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-destructive hover:bg-brand/20"
                                     aria-label="Cancelar pedido"
                                     title="Cancelar pedido"
                                   >

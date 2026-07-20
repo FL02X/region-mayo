@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
-import { Analytics } from "@vercel/analytics/next";
 import { TimeProvider } from "@/lib/time-context";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME, SITE_NAME, getSiteUrl, SITE_OFFICIAL_TITLE } from "@/lib/seo";
+import { VercelAnalytics } from "@/components/analytics/vercel-analytics";
 import { HighlightClearer } from "@/components/layout/highlight-removal";
 import { RouteBodyFlags } from "@/components/layout/connection-route-body-flags";
 import { DesktopBrandNavBar } from "@/components/layout/desktop-brand-nav-bar";
@@ -171,7 +171,7 @@ export default async function RootLayout({
         <InstallAppBanner />
         <OfflineBanner />
         <PwaBootstrap />
-        <Analytics />
+        <VercelAnalytics />
       </body>
     </html>
   );

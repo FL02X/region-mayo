@@ -415,7 +415,7 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                       )}
                       {event.location && <span className="mt-0 block text-sm text-foreground/60">{event.location}</span>}
                       {mapsUrl ? (
-                        <a href={mapsUrl} target="_blank" rel="noreferrer" className={`mt-3 inline-flex min-h-9 items-center gap-2 border px-3 text-xs font-semibold ${isLeft ? "md:ml-auto" : ""}`} style={{ borderColor: palette.root, color: palette.root }}>
+                        <a href={mapsUrl} target="_blank" rel="noreferrer" className={`mt-3 inline-flex min-h-9 items-center gap-2 border px-3 text-xs font-semibold hover:bg-brand hover:!text-white ${isLeft ? "md:ml-auto" : ""}`} style={{ borderColor: palette.root, color: palette.root }}>
                           <MapPin className="h-4 w-4" aria-hidden="true" />
                           VER UBICACION
                         </a>

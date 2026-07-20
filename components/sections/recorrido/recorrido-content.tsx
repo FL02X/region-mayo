@@ -194,13 +194,13 @@ export function RecorridoContent({
             <Image src="/images/recorrido5.jpg" alt="Recorrido Regional 2026" fill priority quality={82} sizes="(max-width: 767px) 100vw, 1150px" className="object-cover object-center" />
           </div>
         </div>
-        <div className="max-w mx-auto md:px-12 lg:px-62 md:pt-5">
-          <p className="text-[20px] font-semibold tracking-tight text-brand">Los invitamos a nuestro:</p>
-          <p className={`mt-5 text-[3.425rem] md:text-[1.825rem] font-semibold tracking-tight leading-14 md:leading-normal text-ink ${editorialFont.className}`}>
+        <div className="max-w mx-auto md:px-12 lg:px-58 md:pt-5">
+          <p className="text-[20px] md:text-[24px] font-semibold tracking-tight text-brand">Los invitamos a nuestro:</p>
+          <p className={`mt-5 text-[3.425rem] md:text-[2.425rem] font-semibold tracking-tight leading-14 md:leading-normal text-ink ${editorialFont.className}`}>
             <span className="block md:inline">Recorrido</span><span className="hidden md:inline"> </span><span className="block md:inline">Regional</span><span className="hidden md:inline"> </span><span className="block md:inline">2026</span>
           </p>
           {startDate && endDate && (
-            <p className="mt-6.5 text-[16px]"><span className="text-bold">Del </span><span className="text-brand">{formatRecorridoDayMonth(startDate)}</span><span className="text-normal"> al </span><span className="text-brand">{formatRecorridoDayMonth(endDate)}</span> del 2026.</p>
+            <p className="mt-6.5 text-[16px] md:text-[19px]"><span className="text-bold">Del </span><span className="text-brand">{formatRecorridoDayMonth(startDate)}</span><span className="text-normal"> al </span><span className="text-brand">{formatRecorridoDayMonth(endDate)}</span> del 2026.</p>
           )}
           {countdownDisplay && (
             <div className="my-5">
@@ -222,24 +222,24 @@ export function RecorridoContent({
               )}
             </div>
           )}
-          <div className="mt-0 w-full px-0 pt-3 pb-8">
-            <p className="mt-2 text-[14px] font-bold uppercase tracking-[0.16em] text-brand">TEMA</p>
-            <p className={`mt-2 text-[24px] font-semibold tracking-tight leading-snug text-ink ${editorialFont.className}`}>Conociendo nuestras raices</p>
-            <p className="mt-3.5 text-[16px] italic leading-7 text-foreground/80"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
-            <p className="mt-2 ml-1 text-sm font-medium text-ink">Hebreos 13:7</p>
+          <div className="mt-0 w-full px-0 pt-3 pb-8.5 md:pb-11">
+            <p className="mt-2 text-[14px] md:text-[18px] font-bold uppercase tracking-[0.16em] text-brand">TEMA</p>
+            <p className={`mt-2 text-[24px] md:text-[28px] font-semibold tracking-tight leading-snug text-ink ${editorialFont.className}`}>Conociendo nuestras raices</p>
+            <p className="mt-5.5 text-[16px] md:text-[18px] italic leading-7 text-foreground/80"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
+            <p className="mt-2.5 md:mt-3 ml-1 text-sm md:text-[18px] font-medium text-ink">Hebreos 13:7</p>
           </div>
           {!countdownIsDisabled && <>
             <div className="mt-2 w-fit border border-border bg-paper-dark px-2 pr-4 py-4">
               <div className="flex items-center gap-4">
                 <div className="flex shrink-0 items-center justify-center"><ClipboardList className="h-12 w-12 text-foreground/75" strokeWidth={1.35} aria-hidden="true" /></div>
                 <div className="flex min-w-0 flex-1 flex-col items-start gap-2 uppercase">
-                  <button type="button" onClick={handleOpenRegistration} disabled={!canOpenRegistration} className="inline-flex min-h-10 items-center justify-center gap-1.5 bg-brand px-2 py-3 text-bg font-semibold uppercase leading-tight whitespace-normal text-white transition-colors hover:bg-brand active:bg-brand-hover/90 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand">
-                    Registrar asistencia <ChevronRight className="h-5.5 w-5.5 shrink-0" aria-hidden="true" />
+                  <button type="button" onClick={handleOpenRegistration} disabled={!canOpenRegistration} className="inline-flex min-h-10 items-center justify-center gap-1.5 bg-brand px-6 md:pr-4 md:pl-5  py-3 text-lg font-semibold uppercase leading-tight whitespace-normal text-white transition-colors hover:bg-brand-hover active:bg-brand-hover/90 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand">
+                    REGISTRARSE <ChevronRight className="h-5.5 w-5.5 shrink-0" aria-hidden="true" />
                   </button>
                 </div>
               </div>
             </div>
-            <div className="mt-5 ml-0.5 italic mr-4 text-[14px] font-medium text-muted-foreground">
+            <div className="mt-5 ml-0.5 italic mr-4 text-[14px] md:text-[16px] font-medium text-muted-foreground">
               Entrada gratuita • El registro es opcional y nos ayuda con la organización.
             </div>
           </>}

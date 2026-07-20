@@ -140,7 +140,7 @@ export function PaymentReceiptButton({
       target="_blank"
       rel="noreferrer"
       className={compact
-        ? "mt-4 flex min-h-10 w-full items-center justify-center gap-2 bg-[#21b758] px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#20ba5d]"
+        ? "mt-4 flex min-h-10 w-full items-center justify-center gap-2 bg-[#21b758] hover:bg-[#177f3d] px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#20ba5d]"
         : "mb-4 mt-6 flex h-auto min-h-18 items-center justify-center gap-4 bg-[#21b758] px-4 py-3 text-center text-[16px] font-bold uppercase leading-tight tracking-wide text-white transition-colors hover:bg-[#20ba5d]"}
     >
       <MessageCircle className={compact ? "h-4 w-4 shrink-0" : "h-9 w-9 shrink-0"} aria-hidden="true" />
@@ -463,13 +463,13 @@ export function ShopModal({
 
         {!isComplete && (
           <div className="shrink-0 border-b bg-muted/20 px-5 py-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-brand">
+            <p className="text-xs md:text-md font-bold uppercase tracking-wider text-brand">
               Paso {stepIndex + 1} de {stages.length} <span className="mx-1 font-normal text-muted-foreground">|</span> {stepLabels[stage]}
             </p>
           </div>
         )}
 
-        <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-5 py-5 md:px-6">
+        <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-5 py-5 md:px-6 md:pb-12 md:pt-5">
           {!isComplete && !isOnline && (
             <div className="mb-5 border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
               Sin conexion. Necesitas internet para registrar el pedido.
@@ -580,7 +580,7 @@ export function ShopModal({
                           key={variant.id ?? "original"}
                           type="button"
                           onClick={() => setSelectedVariantId(variant.id)}
-                          className={`overflow-hidden border text-left transition-colors ${isSelected ? "border-brand ring-1 ring-brand" : "border-border hover:border-brand/50"}`}
+                          className={`overflow-hidden border hover:bg-brand/10 text-left transition-colors ${isSelected ? "border-brand ring-1 ring-brand" : "border-border hover:border-brand/50"}`}
                           aria-pressed={isSelected}
                         >
                           <span className="relative block aspect-square bg-muted/30">
@@ -608,7 +608,7 @@ export function ShopModal({
                         key={size}
                         type="button"
                         onClick={() => setSelectedSize(size)}
-                        className={`min-h-12 border text-sm font-bold ${selectedSize === size ? "border-brand bg-brand text-white" : "border-border bg-background text-foreground hover:border-brand"}`}
+                        className={`min-h-12 border text-sm font-bold ${selectedSize === size ? "border-brand bg-brand text-white hover:bg-brand-hover" : "border-border bg-background text-foreground hover:bg-brand/10 hover:border-brand"}`}
                         aria-pressed={selectedSize === size}
                       >
                         {size}
@@ -680,7 +680,7 @@ export function ShopModal({
                     )}
                   </div>
                   {product.allowSizeSelection && (
-                    <p className="ml-2 text-xs leading-relaxed text-muted-foreground">
+                    <p className="ml-2 text-[16px] leading-relaxed text-muted-foreground">
                       <span className="font-bold">NOTA:</span>
                       <br />
                       - Los productos seran entregados durante el transcurso de la actividad.
