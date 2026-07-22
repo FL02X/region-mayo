@@ -1,6 +1,6 @@
 import { revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
-import { SANITY_CACHE_TAG } from "@/lib/sanity/client"
+import { SANITY_CACHE_TAG } from "@/sanity/lib/client"
 import { refreshProductStockAvailabilityCache } from "@/lib/product-order-sheets"
 
 export const maxDuration = 60

@@ -1,7 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { SANITY_CACHE_TAG } from "@/lib/sanity/client";
-import { sanityQueryNoStore } from "@/lib/sanity/write-client";
+import { SANITY_CACHE_TAG } from "@/sanity/lib/client";
+import { sanityQueryNoStore } from "@/sanity/lib/write-client";
 
 // Secret token to verify webhook requests from Sanity
 const REVALIDATION_TOKEN = process.env.SANITY_REVALIDATION_TOKEN;

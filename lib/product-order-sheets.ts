@@ -1,7 +1,7 @@
-import { getSanityClient } from "@/lib/sanity/client"
+import { getSanityClient } from "@/sanity/lib/client"
 import { isAcceptedPaymentStatus, isCancellablePaymentStatus } from "@/lib/recorrido-orders"
 import { getInternationalPhone, getWhatsappUrl } from "@/lib/registration-sheet"
-import { sanityMutate, sanityQueryNoStore } from "@/lib/sanity/write-client"
+import { sanityMutate, sanityQueryNoStore } from "@/sanity/lib/write-client"
 
 const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
 const SHEET_HEADERS = {

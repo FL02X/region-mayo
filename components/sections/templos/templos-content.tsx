@@ -34,7 +34,7 @@ import { SearchBar } from "@/components/shared/search-bar-sections";
 import { HighlightedText } from "@/components/shared/highlighted-text";
 import { findNearestChurches } from "@/lib/location-service";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import { searchItems, SEARCH_CONFIGS } from "@/lib/search-utils";
 import {
   formatTempleServiceLine,

@@ -1,3 +1,5 @@
+import "server-only";
+
 type SanityEnv = {
   projectId: string
   dataset: string
@@ -14,10 +16,10 @@ function getSanityEnv(): SanityEnv {
   const token = process.env.SANITY_READ_TOKEN
 
   if (!projectId) {
-    throw new Error("Missing env var SANITY_PROJECT_ID")
+    throw new Error("Missing .env var = SANITY_PROJECT_ID")
   }
   if (!dataset) {
-    throw new Error("Missing env var SANITY_DATASET")
+    throw new Error("Missing .env var = SANITY_DATASET")
   }
 
   return {

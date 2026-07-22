@@ -5,7 +5,7 @@ import {
   ALBUM_SUBMISSION_MAX_DAILY_PHOTOS,
   ALBUM_SUBMISSION_RATE_WINDOW_MS,
 } from '@/lib/album-submission-constants'
-import { sanityQueryNoStore } from '@/lib/sanity/write-client'
+import { sanityQueryNoStore } from '@/sanity/lib/write-client'
 
 export type AlbumUploadStatus = 'valid' | 'invalid' | 'closed' | 'disabled'
 

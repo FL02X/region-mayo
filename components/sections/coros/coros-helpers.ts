@@ -1,6 +1,6 @@
 // Donde: no renderiza UI directo. Viewports: afecta /coros en desktop y mobile. Funcion: centraliza imagenes, orden y texto copiable de coros.
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import type { Coro } from "@/lib/types";
 
 const CORO_THUMB_IMAGE_OPTIONS = {

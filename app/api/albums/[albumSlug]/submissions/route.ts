@@ -13,7 +13,7 @@ import {
   ALBUM_SUBMISSION_MAX_FILE_SIZE,
   ALBUM_SUBMISSION_MAX_FILES,
 } from '@/lib/album-submission-constants'
-import { hasSanityWriteConfig, sanityMutate, uploadSanityImageAsset } from '@/lib/sanity/write-client'
+import { hasSanityWriteConfig, sanityMutate, uploadSanityImageAsset } from '@/sanity/lib/write-client'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

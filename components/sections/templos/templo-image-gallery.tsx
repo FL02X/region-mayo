@@ -5,7 +5,7 @@ import { useState } from "react"
 import Image from "next/image"
 import { Images } from "lucide-react"
 import { ImageGalleryModal } from "@/components/shared/image-album-modal"
-import { sanityImageVariantUrl } from "@/lib/sanity/image"
+import { sanityImageVariantUrl } from "@/sanity/lib/image"
 
 interface TemploImageGalleryProps {
   images: string[]

@@ -27,8 +27,8 @@ import type {
   Product,
 } from "./types";
 import { formatRegionDateInput, getRegionDateTime } from "./region-date";
-import { getSanityClient, isSanityNetworkError, SANITY_CACHE_TAG } from "./sanity/client";
-import { sanityImageUrl, sanityImagesUrls } from "./sanity/image";
+import { getSanityClient, isSanityNetworkError, SANITY_CACHE_TAG } from "../sanity/lib/client";
+import { sanityImageUrl, sanityImagesUrls } from "../sanity/lib/image";
 import {
   regionMayo,
   eventsData,

@@ -61,7 +61,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
 import { formatRegionDayMonth } from "@/lib/region-date";
 import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import type { Event, Vestimenta, EventType } from "@/lib/types";
 
 interface EventCardProps {

@@ -14,7 +14,7 @@ import {
   removeStoredProductOrder,
   type StoredProductOrder,
 } from "@/lib/recorrido-orders";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import { RecorridoCancelOrderModal } from "./recorrido-cancel-order-modal";
 import { PaymentReceiptButton, ShopModal } from "./recorrido-shop-modal";
 

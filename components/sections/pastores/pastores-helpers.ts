@@ -1,6 +1,6 @@
 // Donde: no renderiza UI directo. Viewports: afecta /pastores en desktop y mobile. Funcion: centraliza imagenes y texto copiable de pastores.
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import type { Pastor } from "@/lib/types";
 
 const PASTOR_THUMB_IMAGE_OPTIONS = {

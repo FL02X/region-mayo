@@ -1,7 +1,7 @@
 import { defineConfig } from 'sanity'
 import { esESLocale } from '@sanity/locale-es-es'
 import { structureTool } from 'sanity/structure'
-import { schemaTypes } from './sanity/schemas'
+import { schemaTypes } from './sanity/schemaTypes'
 import { auditBeforeCreate, auditBeforeCommit } from './sanity/auditHooks'
 import { coroBeforeCommit, eventBeforeCommit } from './sanity/denormalizationHooks'
 import { AlbumPhotoSubmissionReviewList } from './sanity/components/inputs/album-photo-submission-review-list'

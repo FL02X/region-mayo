@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Calendar, Play, PlayCircle } from "lucide-react";
 import { OfflineImagePlaceholder } from "@/components/shared/offline-image-placeholder";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import { CATEGORY_LABELS } from "@/components/sections/album/shared/album-copy";
 import { markAlbumTransition } from "@/components/sections/album/shared/album-transition";
 import {

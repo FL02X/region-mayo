@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Images, Play, PlayCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import type { Album } from "@/lib/types";
 import {
   formatAlbumPreviewDate,

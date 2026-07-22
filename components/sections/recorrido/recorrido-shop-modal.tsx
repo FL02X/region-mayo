@@ -16,7 +16,7 @@ import useLockBodyScroll from "@/hooks/use-lock-scroll"
 import { useModalHistoryClose } from "@/hooks/use-modal-history-close"
 import { formatPhoneForDisplay, getWhatsAppLink } from "@/lib/phone-utils"
 import type { StoredProductOrder } from "@/lib/recorrido-orders"
-import { sanityImageVariantUrl } from "@/lib/sanity/image"
+import { sanityImageVariantUrl } from "@/sanity/lib/image"
 import type { Product, ProductVariant, RegionPresident } from "@/lib/types"
 
 const editorialFont = Newsreader({

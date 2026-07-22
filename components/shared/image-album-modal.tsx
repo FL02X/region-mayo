@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { useConnectivity } from "@/hooks/use-connectivity"
 import { useInstallPrompt } from "@/hooks/use-install-prompt"
 import useLockBodyScroll from "@/hooks/use-lock-scroll"
-import { sanityImageVariantUrl } from "@/lib/sanity/image"
+import { sanityImageVariantUrl } from "@/sanity/lib/image"
 
 export type GalleryModalItem =
   | {

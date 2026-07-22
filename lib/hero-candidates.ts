@@ -11,7 +11,7 @@
  * 4. Social Posts (cached de Meta API)
  */
 
-import { getSanityClient, isSanityNetworkError } from '@/lib/sanity/client'
+import { getSanityClient, isSanityNetworkError } from '@/sanity/lib/client'
 import type { HeroCandidate } from '@/lib/ranker'
 import { getRegionDateTime } from '@/lib/region-date'
 import type { HeroCard, PrayerWallConfig, Prayer, SocialPost } from '@/lib/types'

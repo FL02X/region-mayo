@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { formatPhoneForDisplay } from "@/lib/phone-utils";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import type { DirectivaMember } from "@/lib/types";
 
 export const DIRECTIVA_ROLE_META: Record<string, { label: string; order: number }> = {

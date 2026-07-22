@@ -19,7 +19,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ImageGalleryModal } from "@/components/shared/image-album-modal";
 import { NativeYoutubePlayer } from "@/components/shared/native-youtube-player";
-import { sanityImageVariantUrl } from "@/lib/sanity/image";
+import { sanityImageVariantUrl } from "@/sanity/lib/image";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Album } from "@/lib/types";
 import {

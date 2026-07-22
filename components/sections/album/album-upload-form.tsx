@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import Script from "next/script"
 import { Newsreader } from "next/font/google"
-import { sanityImageVariantUrl } from "@/lib/sanity/image"
+import { sanityImageVariantUrl } from "@/sanity/lib/image"
 import {
   ALBUM_SUBMISSION_MAX_FILES,
 } from "@/lib/album-submission-constants"
