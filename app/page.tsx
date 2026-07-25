@@ -23,6 +23,7 @@ import {
   getLatestSocialPosts,
   getTemplos,
   getAlbums,
+  getCurrentRecorridoHeroAnnouncement,
 } from "@/lib/api";
 import { buildPageMetadata, SITE_OFFICIAL_TITLE } from "@/lib/seo";
 
@@ -46,7 +47,7 @@ export default async function Home() {
   ]);
   const now = Date.now();
 
-  const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts, templos, albums] =
+  const [region, events, regionPresident, siteSettings, heroCard, prayerWall, socialPosts, templos, albums, recorridoHeroAnnouncement] =
     await Promise.all([
       getRegionConfig("region-mayo"),
       getEvents("region-mayo"),
@@ -57,6 +58,7 @@ export default async function Home() {
       getLatestSocialPosts(6),
       getTemplos("region-mayo"),
       getAlbums("region-mayo"),
+      getCurrentRecorridoHeroAnnouncement(),
     ]);
 
   const nextUpcomingEvent =
@@ -95,6 +97,7 @@ export default async function Home() {
           src={siteSettings?.mobileHeroImage?.url || "/images/event-conference.jpg"}
           alt={siteSettings?.mobileHeroImage?.alt || "Conferencia Regional"}
           templos={templos}
+          announcement={recorridoHeroAnnouncement}
         />
 
         {/* Desktop only: ActionDeck below hero — keep tight to hero, decorative bottom rules in component */}

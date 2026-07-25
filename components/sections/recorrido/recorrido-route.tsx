@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Newsreader } from "next/font/google";
 import { MapPin } from "lucide-react";
 import type { Event } from "@/lib/types";
@@ -38,6 +38,17 @@ type TruckMode = "active" | "moving" | "sleeping";
 
 const DISABLED_ROOT_COLOR = "#c8c3ba";
 const DISABLED_BUD_COLOR = "#aaa49b";
+
+// AJUSTE: reduce estos valores para acortar las ramas y acercar el texto al árbol; auméntalos para separarlo.
+const MOBILE_BRANCH_LENGTH = "75px";
+const DESKTOP_BRANCH_LENGTH = "72px";
+// AJUSTE: aumenta este valor para pegar más el texto al árbol; redúcelo para devolverle espacio.
+const TEXT_TREE_NUDGE = "4px";
+const recorridoRouteStyle = {
+  "--recorrido-mobile-branch-length": MOBILE_BRANCH_LENGTH,
+  "--recorrido-desktop-branch-length": DESKTOP_BRANCH_LENGTH,
+  "--recorrido-text-tree-nudge": TEXT_TREE_NUDGE,
+} as CSSProperties;
 
 const recorridoRootPalettes = [
   { root: "#9c7b57", bud: "#b98a3e" },
@@ -274,6 +285,7 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
     <section
       id="recorrido-route"
       className="mx-auto mt-8 w-full max-w-[1080px] touch-pan-y pb-24 pt-3 md:pb-40"
+      style={recorridoRouteStyle}
       aria-label="Ruta de actividades del Recorrido Regional 2026"
     >
       <style>{`
@@ -339,7 +351,7 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
 
         return (
           <div key={day.key}>
-            <div id={hasSleepingTruck ? "recorrido-current-position" : undefined} className="relative grid h-20 grid-cols-[64px_1fr] items-center md:grid-cols-[1fr_64px_1fr]">
+            <div id={hasSleepingTruck ? "recorrido-current-position" : undefined} className="relative grid h-20 grid-cols-[59px_1fr] items-center md:grid-cols-[1fr_64px_1fr]">
               <svg
                 className="absolute top-0 left-[9px] h-full w-[46px] overflow-visible md:left-1/2 md:w-[46px] md:-translate-x-1/2"
                 viewBox="0 0 76 320"
@@ -397,10 +409,10 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                     else dayRefs.current.delete(day.key);
                   } : undefined}
                   data-recorrido-day-key={eventIndex === firstEventIndex ? day.key : undefined}
-                  className="grid min-h-[208px] grid-cols-[64px_80px_minmax(0,1fr)] items-center md:min-h-[210px] md:grid-cols-[minmax(0,1fr)_72px_64px_72px_minmax(0,1fr)]"
+                  className="grid min-h-[208px] grid-cols-[64px_var(--recorrido-mobile-branch-length)_minmax(0,1fr)] items-center md:min-h-[210px] md:grid-cols-[minmax(0,1fr)_var(--recorrido-desktop-branch-length)_64px_var(--recorrido-desktop-branch-length)_minmax(0,1fr)]"
                 >
                   <div className={`relative col-start-3 row-start-1 flex py-4 ${isLeft ? "justify-start md:col-start-1 md:justify-end" : "justify-start md:col-start-5"}`}>
-                    <div id={hasActiveTruck ? "recorrido-current-position" : undefined} className={`max-w-[320px] -translate-x-4 transform text-left md:-translate-x-2.5 ${revealTransition} ${isLeft ? "md:text-right" : ""} ${isGrown ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0"}`}>
+                    <div id={hasActiveTruck ? "recorrido-current-position" : undefined} className={`relative right-[var(--recorrido-text-tree-nudge)] max-w-[320px] -translate-x-4 transform text-left md:-translate-x-2.5 ${revealTransition} ${isLeft ? "md:left-[var(--recorrido-text-tree-nudge)] md:right-auto md:text-right" : ""} ${isGrown ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0"}`}>
                       <RecorridoStatusLabel status={eventStatus} isLeft={isLeft} isNext={nextEventIndex === eventIndex} isRouteStarted={!isRouteNotStarted} />
                       <span className={`mb-2 flex items-center gap-2 text-[0.88rem] font-medium uppercase tracking-[0.1em] text-foreground/70 ${isLeft ? "md:justify-end" : ""}`}>
                         {formatRecorridoTimeRange(event)}
@@ -408,11 +420,11 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                       <span className={`mb-3 block text-[1.52rem] font-semibold leading-tight text-ink ${editorialFont.className}`}>
                         {event.title}
                       </span>
-                      {event.city && (
+                      {/* {event.city && (
                         <span className={`pt-0 mb-0 block text-[16px] italic font-bold text-ink uppercase ${editorialFont.className}`}>
                           {event.city}
                         </span>
-                      )}
+                      )} */}
                       {event.location && <span className="mt-0 block text-sm text-foreground/60">{event.location}</span>}
                       {mapsUrl ? (
                         <a href={mapsUrl} target="_blank" rel="noreferrer" className={`mt-3 inline-flex min-h-9 items-center gap-2 border px-3 text-xs font-semibold hover:bg-brand hover:!text-white ${isLeft ? "md:ml-auto" : ""}`} style={{ borderColor: palette.root, color: palette.root }}>
@@ -453,12 +465,12 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                         <RecorridoTruckMarker mode="moving" />
                       </span>
                     )}
-                    <svg className={`pointer-events-none absolute top-1/2 left-1/2 h-[72px] w-[80px] -translate-y-1/2 overflow-visible md:hidden ${branchRevealTransition} ${isGrown ? "opacity-100" : "opacity-0"}`} viewBox="0 0 130 60" preserveAspectRatio="none" aria-hidden="true">
+                    <svg className={`pointer-events-none absolute top-1/2 left-1/2 h-[72px] w-[var(--recorrido-mobile-branch-length)] -translate-y-1/2 overflow-visible md:hidden ${branchRevealTransition} ${isGrown ? "opacity-100" : "opacity-0"}`} viewBox="0 0 130 60" preserveAspectRatio="none" aria-hidden="true">
                       <path d="M0 31C34 16 75 9 130 25 76 14 34 25 0 39Z" fill={branchColor} />
                       <path d="M50 22C66 9 82 5 100 7 81 8 67 14 50 25Z" fill={branchColor} />
                       <path d="M58 20C78 26 102 35 122 47 100 36 78 28 58 24Z" fill={branchColor} />
                     </svg>
-                    <svg className={`pointer-events-none absolute top-1/2 hidden h-[72px] w-[72px] -translate-y-1/2 overflow-visible md:block ${branchRevealTransition} ${isLeft ? "right-1/2" : "left-1/2"} ${isGrown ? "opacity-100" : "opacity-0"}`} viewBox="0 0 130 60" preserveAspectRatio="none" aria-hidden="true">
+                    <svg className={`pointer-events-none absolute top-1/2 hidden h-[72px] w-[var(--recorrido-desktop-branch-length)] -translate-y-1/2 overflow-visible md:block ${branchRevealTransition} ${isLeft ? "right-1/2" : "left-1/2"} ${isGrown ? "opacity-100" : "opacity-0"}`} viewBox="0 0 130 60" preserveAspectRatio="none" aria-hidden="true">
                       <path d={isLeft ? "M130 31C96 16 55 9 0 25 54 14 96 25 130 39Z" : "M0 31C34 16 75 9 130 25 76 14 34 25 0 39Z"} fill={branchColor} />
                       <path d={isLeft ? "M80 22C64 9 48 5 30 7 49 8 63 14 80 25Z" : "M50 22C66 9 82 5 100 7 81 8 67 14 50 25Z"} fill={branchColor} />
                       <path d={isLeft ? "M72 20C52 26 28 35 8 47 30 36 52 28 72 24Z" : "M58 20C78 26 102 35 122 47 100 36 78 28 58 24Z"} fill={branchColor} />

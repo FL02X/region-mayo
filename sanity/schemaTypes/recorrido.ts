@@ -180,6 +180,25 @@ export default defineType({
       description: 'Marca el recorrido que debe aparecer en la carpeta Actual.',
     }),
     defineField({
+      name: 'heroAnnouncementEnabled',
+      title: 'ACTIVAR ANUNCIO EN EL HERO',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'heroAnnouncementImage',
+      title: 'IMAGEN DEL ANUNCIO EN EL HERO',
+      type: 'image',
+      options: { hotspot: true },
+      hidden: ({ document }) => !document?.heroAnnouncementEnabled,
+      validation: (Rule) =>
+        Rule.custom((value, context) =>
+          context.document?.heroAnnouncementEnabled && !value
+            ? 'La imagen es obligatoria mientras el anuncio está activo.'
+            : true,
+        ),
+    }),
+    defineField({
       name: 'startDate',
       title: 'FECHA DE INICIO',
       type: 'date',

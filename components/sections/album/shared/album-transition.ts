@@ -2,6 +2,10 @@
 // Viewports: mobile. 
 // Funcion: marca transiciones decorativas entre selector y detalle.
 export const ALBUM_TRANSITION_STORAGE_KEY = "rm-album-transition-next";
+export const albumMobileSlideTransition = {
+  duration: 0.28,
+  ease: [0.22, 1, 0.36, 1] as const,
+};
 
 export function markAlbumTransition() {
   try {

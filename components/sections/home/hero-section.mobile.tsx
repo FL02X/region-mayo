@@ -2,8 +2,10 @@
 
 // Donde: home, hero superior mobile. 
 // Viewports: mobile.
-//  Funcion: muestra imagen principal, texto oficial y CTA GPS hacia templo cercano.
+// Funcion: muestra el hero oficial o el anuncio del recorrido actual.
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { ChevronRightSmall } from "griddy-icons";
 import { useGeolocationState } from "@/hooks/use-geolocation-state";
 import { findNearestChurch } from "@/lib/location-service";
 import type { Templo } from "@/lib/types";
@@ -25,19 +27,25 @@ import {
   MobileHeroTitleBand,
 } from "@/components/sections/home/hero-section/mobile-hero-frontend";
 import { getMobileHeroImageSrc } from "@/components/sections/home/hero-section/mobile-hero-image-utils";
+import { markAlbumTransition } from "@/components/sections/album/shared/album-transition";
 
 interface MobileHeroProps {
   src?: string;
   alt?: string;
   templos: Templo[];
+  announcement?: {
+    year: number;
+    imageUrl: string;
+  } | null;
 }
 
 export function MobileHero({
   src = MOBILE_HERO_FALLBACK_SRC,
   alt = MOBILE_HERO_COPY.fallbackAlt,
   templos,
+  announcement,
 }: MobileHeroProps) {
-  const safeInitialSrc = getMobileHeroImageSrc(src);
+  const safeInitialSrc = getMobileHeroImageSrc(announcement?.imageUrl ?? src);
   const [displaySrc, setDisplaySrc] = useState(safeInitialSrc);
   const geolocation = useGeolocationState();
   const [locationPhase, setLocationPhase] = useState<
@@ -215,7 +223,11 @@ export function MobileHero({
     {/* mobile-hero-print-image */}
       <MobileHeroImage
         src={displaySrc}
-        alt={alt}
+        alt={
+          announcement
+            ? `Recorrido Regional Anual ${announcement.year}`
+            : alt
+        }
         onFallback={() => {
           if (displaySrc !== MOBILE_HERO_FALLBACK_SRC) {
             setDisplaySrc(MOBILE_HERO_FALLBACK_SRC);
@@ -223,21 +235,37 @@ export function MobileHero({
         }}
       />
 
-      <MobileHeroTitleBand>
+      <MobileHeroTitleBand announcementYear={announcement?.year}>
         <div className="mt-5 mb-1 flex w-full flex-col items-start">
           <div className="relative w-fit">
-            <MobileHeroGpsButton
-              locationPhase={locationPhase}
-              nearestChurchName={nearestChurchName}
-              nearestChurchDistanceKm={nearestChurchDistanceKm}
-              onClick={handleActivateGps}
-            />
+            {announcement ? (
+              <Link
+                href={`/recorrido-mayo-${announcement.year}`}
+                onClick={markAlbumTransition}
+                className="relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-brand-green px-5 py-2.5 text-left text-[16px] font-bold tracking-wide text-white transition-colors bg-brand-green hover:bg-brand-green-hover active:bg-brand-green-active"
+              >
+                QUIERO ASISTIR
+                <ChevronRightSmall
+                  className="h-[1em] w-[1em] shrink-0"
+                  aria-hidden="true"
+                />
+              </Link>
+            ) : (
+              <MobileHeroGpsButton
+                locationPhase={locationPhase}
+                nearestChurchName={nearestChurchName}
+                nearestChurchDistanceKm={nearestChurchDistanceKm}
+                onClick={handleActivateGps}
+              />
+            )}
           </div>
 
-          <MobileHeroGpsError
-            message={getLocationErrorMessage(locationErrorKind, locationError)}
-            isVisible={locationErrorVisible}
-          />
+          {!announcement && (
+            <MobileHeroGpsError
+              message={getLocationErrorMessage(locationErrorKind, locationError)}
+              isVisible={locationErrorVisible}
+            />
+          )}
         </div>
       </MobileHeroTitleBand>
     </section>

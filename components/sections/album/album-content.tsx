@@ -38,7 +38,10 @@ import {
   getGalleryItemPreviewUrl,
   getRecentAlbums,
 } from "@/components/sections/album/shared/album-utils";
-import { consumeAlbumTransition } from "@/components/sections/album/shared/album-transition";
+import {
+  albumMobileSlideTransition,
+  consumeAlbumTransition,
+} from "@/components/sections/album/shared/album-transition";
 import {
   AlbumHubEntryCard,
   AlbumRecentItem,
@@ -67,10 +70,6 @@ const editorialFont = Newsreader({
   display: "swap",
   preload: false,
 });
-const albumMobileSlideTransition = {
-  duration: 0.28,
-  ease: [0.22, 1, 0.36, 1] as const,
-};
 type VideoOrientation = "portrait" | "landscape";
 
 export function AlbumHubContent({ albums = [] }: { albums?: Album[] }) {

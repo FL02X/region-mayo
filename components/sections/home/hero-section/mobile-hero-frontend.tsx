@@ -1,6 +1,7 @@
 // Donde: hero mobile de home. Viewports: mobile. Funcion: piezas visuales para imagen, banda de titulo, GPS y estilos del boton.
 import type { ReactNode } from "react";
 import { ArrowRight, MapPin } from "lucide-react";
+import { ArrowDown } from "griddy-icons";
 import {
   HERO_WATERMARK_LAYER_HEIGHT,
   HERO_WATERMARK_LEFT,
@@ -42,8 +43,10 @@ export function MobileHeroImage({
 
 export function MobileHeroTitleBand({
   children,
+  announcementYear,
 }: {
   children: ReactNode;
+  announcementYear?: number;
 }) {
   return (
     <div
@@ -60,14 +63,26 @@ export function MobileHeroTitleBand({
             {MOBILE_HERO_COPY.eyebrow}
           </p>
           <p
-            className="mt-2.5 mb-1.5 text-[34px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white"
+            className="mt-2.5 mb-3.5 text-[34px] pr-[-5px] font-bold text-4xl leading-[1.125] tracking-tight text-white"
             style={{ fontFamily: '"Canela", Georgia, serif' }}
           >
-            {MOBILE_HERO_COPY.titlePrefix}{" "}
-            <span className="block font-normal">{MOBILE_HERO_COPY.titleRegion}</span>
+            {announcementYear ? (
+              <>Recorrido Regional Anual {announcementYear}</>
+            ) : (
+              <>
+                {MOBILE_HERO_COPY.titlePrefix}{" "}
+                <span className="block font-normal">{MOBILE_HERO_COPY.titleRegion}</span>
+              </>
+            )}
           </p>
           <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">
-            {MOBILE_HERO_COPY.description}
+            {announcementYear ? (
+              <>
+                ¡Están todos invitados! Del 6 al 9 de agosto. Registra tu asistencia.
+              </>
+            ) : (
+              MOBILE_HERO_COPY.description
+            )}
           </p>
         </div>
       </div>
@@ -94,14 +109,14 @@ export function MobileHeroGpsButton({
       onClick={onClick}
       disabled={locationPhase === "loading"}
       data-loading={locationPhase === "loading"}
-      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-2.5 text-left text-[16px] tracking-wide font-bold text-ink-white transition-all duration-300 ease-in-out ${
+      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 pr-4 pl-2.5 py-2.5 text-left text-[16px] tracking-wide font-bold text-ink-white transition-all duration-300 ease-in-out ${
         locationPhase === "success"
           ? "btn-sucess border-[#4E7A68] text-ink shadow-none"
           : locationPhase === "loading"
             ? "border-transparent bg-brand-active text-ink shadow-none"
             : "bg-brand hover:bg-brand-hover active:bg-brand-active"
       }`}
-      style={{ fontFamily: '"Switzer", Arial, sans-serif' }}
+      /* style={{ fontFamily: '"Switzer", Arial, sans-serif' }} */
       aria-label={
         locationPhase === "success"
           ? `Ir a ${nearestChurchName}`
@@ -110,7 +125,7 @@ export function MobileHeroGpsButton({
     >
       <span className="relative flex min-w-0 items-center gap-2 ">
         <MapPin
-          className="h-5 w-5 shrink-0 text-white transition-colors duration-300"
+          className="h-5.5 w-5.5 mb-0.5 mr-1 shrink-0 text-white transition-colors duration-300"
           aria-hidden="true"
           strokeWidth={2}
         />

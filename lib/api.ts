@@ -1255,6 +1255,38 @@ type RecorridoData = {
   endDate: Date | null;
 };
 
+export async function getCurrentRecorridoHeroAnnouncement(): Promise<{
+  year: number;
+  imageUrl: string;
+} | null> {
+  if (!SANITY_ENABLED) return null;
+
+  return readWithDevSanityFallback(
+    "getCurrentRecorridoHeroAnnouncement",
+    () => null,
+    async () => {
+      const client = getSanityClient();
+      const announcement = await client.fetch(
+        `*[
+          _type == "recorrido" &&
+          isCurrent == true &&
+          heroAnnouncementEnabled == true &&
+          defined(heroAnnouncementImage.asset) &&
+          !defined(deletedAt)
+        ] | order(year desc, _updatedAt desc)[0]{
+          year,
+          "imageUrl": heroAnnouncementImage.asset->url
+        }`,
+      );
+
+      return Number.isInteger(announcement?.year) &&
+        typeof announcement?.imageUrl === "string"
+        ? announcement
+        : null;
+    },
+  );
+}
+
 export async function getRecorrido(regionSlug: string = "mayo"): Promise<RecorridoData> {
   if (!SANITY_ENABLED) {
     const events = getEvents(regionSlug).filter((event) => event.eventType === "recorrido");
