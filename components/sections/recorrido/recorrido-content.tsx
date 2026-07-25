@@ -195,7 +195,7 @@ export function RecorridoContent({
           </div>
         </div>
         <div className="max-w mx-auto md:px-12 lg:px-58 md:pt-5">
-          <p className="text-[20px] md:text-[24px] font-semibold tracking-tight text-brand">Los invitamos a nuestro:</p>
+          <p className="text-[20px] md:text-[24px] font-semibold tracking-tight text-brand">Los invitamos al:</p>
           <p className={`mt-5 text-[3.425rem] md:text-[2.425rem] font-semibold tracking-tight leading-14 md:leading-normal text-ink ${editorialFont.className}`}>
             <span className="block md:inline">Recorrido</span><span className="hidden md:inline"> </span><span className="block md:inline">Regional</span><span className="hidden md:inline"> </span><span className="block md:inline">2026</span>
           </p>

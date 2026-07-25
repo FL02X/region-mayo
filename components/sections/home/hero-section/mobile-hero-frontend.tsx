@@ -94,7 +94,7 @@ export function MobileHeroGpsButton({
       onClick={onClick}
       disabled={locationPhase === "loading"}
       data-loading={locationPhase === "loading"}
-      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-3.5 text-left text-[16px] font-bold text-ink-white transition-all duration-300 ease-in-out ${
+      className={`gps-gps-button relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 px-5 py-2.5 text-left text-[16px] tracking-wide font-bold text-ink-white transition-all duration-300 ease-in-out ${
         locationPhase === "success"
           ? "btn-sucess border-[#4E7A68] text-ink shadow-none"
           : locationPhase === "loading"

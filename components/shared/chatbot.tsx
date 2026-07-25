@@ -39,6 +39,7 @@ Styling conventions used in this file:
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
+import { ArrowLeft, BookOpen, CircleHelp, History, MessageCircle } from "lucide-react";
 import useLockBodyScroll from "@/hooks/use-lock-scroll";
 import { useModalHistoryClose } from "@/hooks/use-modal-history-close";
 
@@ -46,6 +47,29 @@ type Mensaje = {
   rol: "bot" | "usuario";
   texto: React.ReactNode;
   opciones?: string[]; 
+};
+
+const OPCIONES_INICIO = [
+  "Historia de la Iglesia",
+  "Dudas sobre la página",
+  "Dudas doctrinales",
+  "Otra consulta (WhatsApp)",
+];
+
+const esMenuInicio = (opciones?: string[]) =>
+  opciones?.length === OPCIONES_INICIO.length &&
+  OPCIONES_INICIO.every((opcion) => opciones.includes(opcion));
+
+const IconoOpcion = ({ opcion }: { opcion: string }) => {
+  const iconProps = { size: 19, strokeWidth: 1.8, "aria-hidden": true as const };
+
+  if (opcion === "Historia de la Iglesia") return <History {...iconProps} />;
+  if (opcion === "Dudas sobre la página") return <CircleHelp {...iconProps} />;
+  if (opcion === "Dudas doctrinales") return <BookOpen {...iconProps} />;
+  if (opcion === "Otra consulta (WhatsApp)") return <MessageCircle {...iconProps} />;
+  if (opcion === "Volver al inicio") return <ArrowLeft {...iconProps} />;
+
+  return null;
 };
 
 const LinkBiblico = ({ cita }: { cita: string }) => {
@@ -67,12 +91,11 @@ export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [mensaje, setMensaje] = useState("");
   
-  // AÑADIDO: "Historia de la Iglesia" como opción principal
   const mensajeInicial: Mensaje[] = [
     { 
       rol: "bot", 
       texto: "¡Paz de Cristo! Bienvenido a la plataforma. Para darte un mejor servicio, por favor selecciona una de las siguientes opciones:",
-      opciones: ["Historia de la Iglesia", "Dudas sobre la página", "Dudas doctrinales", "Otra consulta (WhatsApp)"]
+      opciones: OPCIONES_INICIO
     },
   ];
 
@@ -80,6 +103,9 @@ export default function Chatbot() {
   const [mostrarAyuda, setMostrarAyuda] = useState(false);
   
   const [isClearing, setIsClearing] = useState(false);
+  const [isChangingResponse, setIsChangingResponse] = useState(false);
+  const changeResponseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showResponseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const pathname = usePathname();
   const rutasPermitidas = [
@@ -100,6 +126,9 @@ export default function Chatbot() {
   }
 
   const limpiarChat = () => {
+    if (changeResponseTimeoutRef.current) clearTimeout(changeResponseTimeoutRef.current);
+    if (showResponseTimeoutRef.current) clearTimeout(showResponseTimeoutRef.current);
+    setIsChangingResponse(false);
     setIsClearing(true); 
     
     setTimeout(() => {
@@ -134,6 +163,13 @@ export default function Chatbot() {
     const handleOpen = () => setIsOpen(true);
     window.addEventListener('open-chatbot', handleOpen as EventListener);
     return () => window.removeEventListener('open-chatbot', handleOpen as EventListener);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (changeResponseTimeoutRef.current) clearTimeout(changeResponseTimeoutRef.current);
+      if (showResponseTimeoutRef.current) clearTimeout(showResponseTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -180,7 +216,9 @@ export default function Chatbot() {
   }, [isOpen]);
 
   const procesarEntrada = (textoUsuario: string) => {
-    setHistorial((prev) => [...prev, { rol: "usuario", texto: textoUsuario }]);
+    if (changeResponseTimeoutRef.current) clearTimeout(changeResponseTimeoutRef.current);
+    if (showResponseTimeoutRef.current) clearTimeout(showResponseTimeoutRef.current);
+    setIsChangingResponse(true);
     
     const textoMinusculas = textoUsuario.toLowerCase();
     
@@ -411,9 +449,17 @@ export default function Chatbot() {
       };
     }
 
-    setTimeout(() => {
-      setHistorial((prev) => [...prev, respuesta]);
-    }, 600);
+    changeResponseTimeoutRef.current = setTimeout(() => {
+      setHistorial([{ rol: "usuario", texto: textoUsuario }]);
+    }, 420);
+
+    showResponseTimeoutRef.current = setTimeout(() => {
+      setHistorial([
+        { rol: "usuario", texto: textoUsuario },
+        respuesta,
+      ]);
+      setIsChangingResponse(false);
+    }, 650);
   };
 
   const enviarMensajeForm = (e: React.FormEvent) => {
@@ -448,6 +494,29 @@ export default function Chatbot() {
           0% { width: 0%; }
           100% { width: 100%; }
         }
+
+        @keyframes chatResponseExit {
+          0%, 35% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-6px);
+          }
+        }
+
+        .chat-response-exit {
+          animation: chatResponseExit 420ms ease-in forwards;
+          pointer-events: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .chat-response-exit {
+            animation: none;
+            opacity: 0;
+          }
+        }
       `}</style>
 
       {!isOpen ? (
@@ -478,7 +547,7 @@ export default function Chatbot() {
                 <h3 id="chatbot-title" style={{ margin: 0, color: '#fff', fontSize: 16, fontWeight: 700, textTransform: 'uppercase' }}>ASISTENCIA VIRTUAL</h3>
                 
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  {historial.length > 1 && !isClearing && (
+                  {historial.length > 1 && !isClearing && !isChangingResponse && (
                     <button 
                       onClick={limpiarChat} 
                       aria-label="Limpiar chat" 
@@ -513,7 +582,11 @@ export default function Chatbot() {
               ) : (
                 <div ref={messagesContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '14px', textAlign: 'left', color: '#111827', fontSize: isMobile ? 17 : 15 }}>
                   {historial.map((msg, index) => (
-                    <div key={index} style={{ alignSelf: 'stretch', marginBottom: 16 }}>
+                    <div
+                      key={index}
+                      className={msg.rol === 'bot' && isChangingResponse ? 'chat-response-exit' : undefined}
+                      style={{ alignSelf: 'stretch', marginBottom: 16 }}
+                    >
                       <div style={{
                         backgroundColor: msg.rol === 'usuario' ? '#2b4c7e' : '#f3f4f6',
                         color: msg.rol === 'usuario' ? '#fff' : '#374151',
@@ -525,25 +598,64 @@ export default function Chatbot() {
                         {msg.texto}
                       </div>
 
-                      {msg.opciones && msg.opciones.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
-                          {msg.opciones.map((opcion, i) => (
-                            <button
-                              key={i}
-                              onClick={() => handleOpcionClick(opcion)}
-                              style={{
-                                backgroundColor: '#fff', border: '1px solid #2b4c7e', color: '#2b4c7e',
-                                padding: '6px 12px', borderRadius: '16px', fontSize: '14px', fontWeight: 500,
-                                cursor: 'pointer', transition: 'all 0.2s'
-                              }}
-                              onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#2b4c7e'; e.currentTarget.style.color = '#fff'; }}
-                              onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.color = '#2b4c7e'; }}
-                            >
-                              {opcion}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      {msg.opciones && msg.opciones.length > 0 && (() => {
+                        const menuInicio = esMenuInicio(msg.opciones);
+
+                        return (
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: menuInicio ? 'column' : 'row',
+                            flexWrap: menuInicio ? 'nowrap' : 'wrap',
+                            gap: menuInicio ? '10px' : '8px',
+                            marginTop: '12px',
+                            width: menuInicio ? '100%' : 'auto'
+                          }}>
+                            {msg.opciones.map((opcion, i) => {
+                              const volverAlInicio = opcion === "Volver al inicio";
+                              const backgroundColor = volverAlInicio ? '#fff7ed' : '#fff';
+                              const borderColor = volverAlInicio ? '#f59e0b' : '#2b4c7e';
+                              const color = volverAlInicio ? '#9a3412' : '#2b4c7e';
+
+                              return (
+                                <button
+                                  key={i}
+                                  onClick={() => handleOpcionClick(opcion)}
+                                  disabled={isChangingResponse}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: menuInicio ? 'flex-start' : 'center',
+                                    gap: '9px',
+                                    width: menuInicio ? '100%' : 'auto',
+                                    minHeight: menuInicio ? '46px' : '38px',
+                                    backgroundColor,
+                                    border: `1px solid ${borderColor}`,
+                                    color,
+                                    padding: menuInicio ? '11px 14px' : '8px 12px',
+                                    borderRadius: '6px',
+                                    fontSize: menuInicio ? '15px' : '14px',
+                                    fontWeight: 600,
+                                    cursor: isChangingResponse ? 'default' : 'pointer',
+                                    transition: 'background-color 0.2s, color 0.2s, border-color 0.2s'
+                                  }}
+                                  onMouseOver={(e) => {
+                                    const hoverBackground = volverAlInicio ? '#ffedd5' : '#2b4c7e';
+                                    e.currentTarget.style.backgroundColor = hoverBackground;
+                                    e.currentTarget.style.color = volverAlInicio ? '#9a3412' : '#fff';
+                                  }}
+                                  onMouseOut={(e) => {
+                                    e.currentTarget.style.backgroundColor = backgroundColor;
+                                    e.currentTarget.style.color = color;
+                                  }}
+                                >
+                                  <IconoOpcion opcion={opcion} />
+                                  <span>{opcion}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
                   <div ref={messagesEndRef} />
@@ -555,11 +667,11 @@ export default function Chatbot() {
                   type="text"
                   value={mensaje}
                   onChange={(e) => setMensaje(e.target.value)}
-                  disabled={isClearing}
+                  disabled={isClearing || isChangingResponse}
                   placeholder={isClearing ? "Borrando chat..." : "Escribe tu duda aquí..."}
-                  style={{ flex: 1, padding: '10px 12px', borderRadius: 4, border: '1px solid #d1d5db', outline: 'none', fontSize: isMobile ? 17 : 15, opacity: isClearing ? 0.6 : 1 }}
+                  style={{ flex: 1, padding: '10px 12px', borderRadius: 4, border: '1px solid #d1d5db', outline: 'none', fontSize: isMobile ? 17 : 15, opacity: isClearing || isChangingResponse ? 0.6 : 1 }}
                 />
-                <button type="submit" disabled={isClearing} aria-label="Enviar mensaje" style={{ width: 44, height: 40, backgroundColor: '#2b4c7e', color: '#fff', border: 'none', borderRadius: 4, cursor: isClearing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isClearing ? 0.6 : 1 }}>
+                <button type="submit" disabled={isClearing || isChangingResponse} aria-label="Enviar mensaje" style={{ width: 44, height: 40, backgroundColor: '#2b4c7e', color: '#fff', border: 'none', borderRadius: 4, cursor: isClearing || isChangingResponse ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isClearing || isChangingResponse ? 0.6 : 1 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                     <path d="M22 2L11 13" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />

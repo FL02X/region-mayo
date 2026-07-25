@@ -1,3 +1,5 @@
+import "server-only";
+
 type SanityWriteEnv = {
   projectId: string
   dataset: string

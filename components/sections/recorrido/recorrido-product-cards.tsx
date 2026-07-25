@@ -29,6 +29,19 @@ const priceFormatter = new Intl.NumberFormat("es-MX", {
   maximumFractionDigits: 0,
 });
 
+// TEMPORAL: cuando está activa, "HACER PEDIDO" muestra las imágenes de public/images/recorrido-venta/ en vez del modal de compra.
+const CHANGE_BUTTON_ACTION_TO_SHOW_IMAGE: boolean = true;
+
+const RECORRIDO_VENTA_IMAGES = [
+  "/images/recorrido-venta/precios_venta_camisetas_recorrido.jpg",
+];
+
+const getProductGalleryImages = (product: Product) =>
+  Array.from(new Set([
+    ...product.photos,
+    ...(product.variants ?? []).flatMap((variant) => variant.photos),
+  ]));
+
 interface RecorridoProductCardsProps {
   products: Product[];
   regionTreasurer: RegionPresident | null;
@@ -37,6 +50,8 @@ interface RecorridoProductCardsProps {
 export function RecorridoProductCards({ products, regionTreasurer }: RecorridoProductCardsProps) {
   const [galleryProductId, setGalleryProductId] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [isRecorridoVentaGalleryOpen, setIsRecorridoVentaGalleryOpen] = useState(false);
+  const [recorridoVentaGalleryIndex, setRecorridoVentaGalleryIndex] = useState(0);
   const [shopProductId, setShopProductId] = useState<string | null>(null);
   const [storedOrders, setStoredOrders] = useState<StoredProductOrder[]>([]);
   const [orderToCancel, setOrderToCancel] = useState<StoredProductOrder | null>(null);
@@ -54,6 +69,10 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
   const activeGalleryProduct = useMemo(
     () => products.find((product) => product.id === galleryProductId) ?? null,
     [galleryProductId, products],
+  );
+  const activeGalleryImages = useMemo(
+    () => activeGalleryProduct ? getProductGalleryImages(activeGalleryProduct) : [],
+    [activeGalleryProduct],
   );
   const shopProduct = useMemo(
     () => products.find((product) => product.id === shopProductId) ?? null,
@@ -209,6 +228,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
     <>
       <div className="grid gap-5 md:grid-cols-2">
         {products.map((product) => {
+          const galleryImages = getProductGalleryImages(product);
           const primaryImage = product.photos[0] || "/placeholder.svg";
           const productImageUrl = sanityImageVariantUrl(primaryImage, {
             width: 960,
@@ -216,8 +236,8 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
             format: "webp",
             fit: "max",
           });
-          const canOpenGallery = product.photos.length > 0;
-          const hasMultiplePhotos = product.photos.length > 1;
+          const canOpenGallery = galleryImages.length > 0;
+          const hasMultiplePhotos = galleryImages.length > 1;
           const remainingStock = remainingStockByProductId[product.id] ?? product.remainingStock ?? product.stock;
           const isSoldOut = typeof remainingStock === "number" && remainingStock <= 0;
           const hasDeposit = typeof product.deposit === "number";
@@ -261,7 +281,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                 {hasMultiplePhotos && (
                   <span className="absolute right-3 bottom-3 inline-flex min-h-9 items-center gap-2 bg-paper px-3 text-xs font-semibold text-ink shadow-sm transition-colors">
                     <Images className="h-4 w-4" aria-hidden="true" />
-                    {product.photos.length} FOTOS
+                    {galleryImages.length} FOTOS
                   </span>
                 )}
               </button>
@@ -285,12 +305,25 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                 </p>
                 <button
                   type="button"
-                  onClick={() => setShopProductId(product.id)}
+                  onClick={() => {
+                    // TEMPORAL: ignora el producto y su configuración en Sanity para mostrar el álbum de public/images/recorrido-venta/.
+                    if (CHANGE_BUTTON_ACTION_TO_SHOW_IMAGE) {
+                      setRecorridoVentaGalleryIndex(0);
+                      setIsRecorridoVentaGalleryOpen(true);
+                      return;
+                    }
+
+                    setShopProductId(product.id);
+                  }}
                   disabled={isSoldOut}
                   className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-brand px-4 text-md font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-55"
                 >
                   <ShoppingBag className="h-5 w-5 mr-1" aria-hidden="true" />
-                  {isSoldOut ? "AGOTADO" : "HACER PEDIDO"}
+                  {isSoldOut
+                    ? "AGOTADO"
+                    : CHANGE_BUTTON_ACTION_TO_SHOW_IMAGE
+                      ? "MÁS INFORMACIÓN"
+                      : "HACER PEDIDO"}
                 </button>
               </div>
               </div>
@@ -390,14 +423,23 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
 
       {activeGalleryProduct && (
         <ImageGalleryModal
-          images={activeGalleryProduct.photos}
+          images={activeGalleryImages}
           currentIndex={galleryIndex}
           onClose={() => setGalleryProductId(null)}
           onNavigate={setGalleryIndex}
           alt={activeGalleryProduct.name}
         />
       )}
-      {shopProduct && (
+      {isRecorridoVentaGalleryOpen && (
+        <ImageGalleryModal
+          images={RECORRIDO_VENTA_IMAGES}
+          currentIndex={recorridoVentaGalleryIndex}
+          onClose={() => setIsRecorridoVentaGalleryOpen(false)}
+          onNavigate={setRecorridoVentaGalleryIndex}
+          alt="Precios de venta del recorrido"
+        />
+      )}
+      {!CHANGE_BUTTON_ACTION_TO_SHOW_IMAGE && shopProduct && (
         <ShopModal
           product={shopProduct}
           isOpen
