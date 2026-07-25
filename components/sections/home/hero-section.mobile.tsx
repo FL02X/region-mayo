@@ -225,7 +225,7 @@ export function MobileHero({
         src={displaySrc}
         alt={
           announcement
-            ? `Recorrido Regional Anual ${announcement.year}`
+            ? `Recorrido Regional ${announcement.year}`
             : alt
         }
         onFallback={() => {

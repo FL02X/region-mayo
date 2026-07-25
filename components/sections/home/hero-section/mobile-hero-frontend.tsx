@@ -67,7 +67,7 @@ export function MobileHeroTitleBand({
             style={{ fontFamily: '"Canela", Georgia, serif' }}
           >
             {announcementYear ? (
-              <>Recorrido Regional Anual {announcementYear}</>
+              <>Recorrido Regional {announcementYear}</>
             ) : (
               <>
                 {MOBILE_HERO_COPY.titlePrefix}{" "}

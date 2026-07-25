@@ -232,11 +232,11 @@ export function RecorridoContent({
         </div>
         <div className="max-w mx-auto md:px-12 lg:px-58 md:pt-5">
           <p className="text-[21px] md:text-[25px] font-semibold tracking-tight text-brand">Los invitamos a nuestro:</p>
-          <p className={`mt-5 text-[3.425rem] md:text-[2.425rem] font-semibold tracking-tight leading-14 md:leading-normal text-ink ${editorialFont.className}`}>
+          <p className={`mt-5 text-[3.425rem] md:text-[2.825rem] font-semibold tracking-tight leading-14 md:leading-normal text-ink ${editorialFont.className}`}>
             <span className="block md:inline">Recorrido</span><span className="hidden md:inline"> </span><span className="block md:inline">Regional</span><span className="hidden md:inline"> </span><span className="block md:inline">2026</span>
           </p>
           {startDateParts && endDateParts && (
-            <p className="mt-6.5 mb-4 text-[18px] md:text-[21px]"><span className="text-bold">Del </span><span className="text-brand">{startDateParts.day}</span><span className="text-normal"> al </span><span className="text-brand">{endDateParts.day}</span> de <span className="text-brand">{endDateParts.month}</span> del <span className="text-brand">{endDateParts.year}</span>.</p>
+            <p className="mt-6.5 mb-4 text-[18px] md:text-[20px]"><span className="text-bold">Del </span><span className="text-brand">{startDateParts.day}</span><span className="text-normal"> al </span><span className="text-brand">{endDateParts.day}</span> de <span className="text-brand">{endDateParts.month}</span> del <span className="text-brand">{endDateParts.year}</span>.</p>
           )}
           {countdownDisplay && (
             <div className="my-5">
@@ -264,7 +264,7 @@ export function RecorridoContent({
             <p className="mt-5.5 text-[16px] md:text-[18px] italic leading-7 text-foreground/95"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
             <p className="mt-2.5 md:mt-3 ml-1 text-sm md:text-[18px] font-medium text-ink">Hebreos 13:7</p>
           </div>
-          <div className="w-full border-t border-brand/35 px-0 pt-6 pb-9.5 md:py-11">
+          <div className="w-full border-t border-brand/35 px-0 pt-6 pb-9.5 md:py-7">
             {/* <p className="mt-2 text-[15px] md:text-[18px] font-extrabold uppercase tracking-[0.16em] text-brand">¿QUÉ ES EL RECORRIDO?</p> */}
             <p className={`mt-4 text-[17.5px] leading-7 md:text-[22px] ${editorialFont.className}`}>Durante cuatro días, las iglesias de la Región Mayo nos reuniremos en distintas congregaciones para convivir y alabar a Dios. Cada parada tendrá sus propios cultos y actividades.</p>
           </div>
