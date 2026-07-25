@@ -27,7 +27,6 @@ import {
   MobileHeroTitleBand,
 } from "@/components/sections/home/hero-section/mobile-hero-frontend";
 import { getMobileHeroImageSrc } from "@/components/sections/home/hero-section/mobile-hero-image-utils";
-import { markAlbumTransition } from "@/components/sections/album/shared/album-transition";
 
 interface MobileHeroProps {
   src?: string;
@@ -241,7 +240,6 @@ export function MobileHero({
             {announcement ? (
               <Link
                 href={`/recorrido-mayo-${announcement.year}`}
-                onClick={markAlbumTransition}
                 className="relative z-10 inline-flex w-fit items-center gap-2 rounded-[2px] border-2 border-brand-green px-5 py-2.5 text-left text-[16px] font-bold tracking-wide text-white transition-colors bg-brand-green hover:bg-brand-green-hover active:bg-brand-green-active"
               >
                 QUIERO ASISTIR

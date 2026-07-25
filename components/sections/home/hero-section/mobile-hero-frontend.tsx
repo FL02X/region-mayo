@@ -75,7 +75,7 @@ export function MobileHeroTitleBand({
               </>
             )}
           </p>
-          <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2">
+          <p className="max-w-[30ch] text-[13px] leading-snug text-white/70 mt-2 mb-1">
             {announcementYear ? (
               <>
                 ¡Están todos invitados! Del 6 al 9 de agosto. Registra tu asistencia.

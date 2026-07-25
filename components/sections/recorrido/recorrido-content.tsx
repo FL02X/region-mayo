@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import { Newsreader } from "next/font/google";
 import { ChevronRight } from "lucide-react";
 import { ArrowCircleDown, ClipboardEdit } from "griddy-icons";
-import { motion } from "framer-motion";
 import type { Album, Event, Product, RegionPresident, Templo } from "@/lib/types";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { SectionNavBar } from "@/components/layout/album-section-nav-bar";
-import {
-  albumMobileSlideTransition,
-  consumeAlbumTransition,
-} from "@/components/sections/album/shared/album-transition";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { useTime } from "@/lib/time-context";
 import { REGION_TIME_ZONE, getRegionDateTime } from "@/lib/region-date";
@@ -139,33 +133,9 @@ export function RecorridoContent({
 }: RecorridoContentProps) {
   void albums;
   void templos;
-  const isMobile = useIsMobile();
-  const [shouldAnimatePage, setShouldAnimatePage] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const { currentTime } = useTime();
-
-  useEffect(() => {
-    if (isMobile && consumeAlbumTransition()) {
-      setShouldAnimatePage(true);
-    }
-  }, [isMobile]);
-
-  const shouldAnimate = shouldAnimatePage && isMobile;
-  const pageMotionProps = shouldAnimate
-    ? {
-        initial: { opacity: 0, x: 16 },
-        animate: { opacity: 1, x: 0, y: 0 },
-        exit: { opacity: 0, x: -16 },
-        transition: albumMobileSlideTransition,
-        onAnimationComplete: () => setShouldAnimatePage(false),
-      }
-    : {
-        initial: false,
-        animate: { opacity: 1 },
-        exit: undefined,
-        transition: { duration: 0 },
-      };
 
   const nextRecorridoEvent = useMemo(
     () => getNextRecorridoEvent(events),
@@ -220,11 +190,7 @@ export function RecorridoContent({
       style={recorridoBrandStyle}
     >
       <SectionNavBar currentLabel="Recorrido Regional 2026" parentHref="/" parentLabel="Inicio" />
-      <motion.div
-        key={`recorrido-${shouldAnimate ? "mobile" : "static"}`}
-        className="desktop-content-pane mx-auto min-h-screen w-full max-w-[1150px] overflow-x-hidden border-border bg-paper px-4 py-8 pb-16 md:px-4 pt-[32px] focus:outline-none md:overflow-x-visible md:border-x md:px-0 md:pt-[44px]"
-        {...pageMotionProps}
-      >
+      <div className="desktop-content-pane mx-auto min-h-screen w-full max-w-[1150px] overflow-x-hidden border-border bg-paper px-4 py-8 pb-16 md:px-4 pt-[32px] focus:outline-none md:overflow-x-visible md:border-x md:px-0 md:pt-[44px]">
         <div className="-mx-5 -mt-[32px] mb-6 h-[210px] overflow-hidden md:-mx-4 md:-mt-[44px] md:h-[520px]">
           <div className="relative h-full w-full border-b">
             <Image src="/images/recorrido5.jpg" alt="Recorrido Regional 2026" fill priority quality={82} sizes="(max-width: 767px) 100vw, 1150px" className="object-cover object-center" />
@@ -236,7 +202,7 @@ export function RecorridoContent({
             <span className="block md:inline">Recorrido</span><span className="hidden md:inline"> </span><span className="block md:inline">Regional</span><span className="hidden md:inline"> </span><span className="block md:inline">2026</span>
           </p>
           {startDateParts && endDateParts && (
-            <p className="mt-6.5 mb-4 text-[18px] md:text-[20px]"><span className="text-bold">Del </span><span className="text-brand">{startDateParts.day}</span><span className="text-normal"> al </span><span className="text-brand">{endDateParts.day}</span> de <span className="text-brand">{endDateParts.month}</span> del <span className="text-brand">{endDateParts.year}</span>.</p>
+            <p className="mt-6.5 mb-4 text-[17px] md:text-[20px]"><span className="text-bold">Del </span><span className="text-brand">{startDateParts.day}</span><span className="text-normal"> al </span><span className="text-brand">{endDateParts.day}</span> de <span className="text-brand">{endDateParts.month}</span> del <span className="text-brand">{endDateParts.year}</span>.</p>
           )}
           {countdownDisplay && (
             <div className="my-5">
@@ -261,12 +227,12 @@ export function RecorridoContent({
           <div className="mt-0 w-full px-0 pt-3 pb-8.5 md:pb-11">
             <p className="mt-2 text-[14px] md:text-[18px] font-bold uppercase tracking-[0.16em] text-brand">TEMA</p>
             <p className={`mt-2 text-[24px] md:text-[28px] font-semibold tracking-tight leading-snug text-ink ${editorialFont.className}`}>Conociendo nuestras raices</p>
-            <p className="mt-5.5 text-[16px] md:text-[18px] italic leading-7 text-foreground/95"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
-            <p className="mt-2.5 md:mt-3 ml-1 text-sm md:text-[18px] font-medium text-ink">Hebreos 13:7</p>
+            <p className="mt-5.5 text-[17px] md:text-[18px] italic leading-7 text-foreground/95"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
+            <p className="mt-4.5 md:mt-3 ml-1 text-[17px] md:text-[18px] font-medium text-ink">- Hebreos 13:7</p>
           </div>
-          <div className="w-full border-t border-brand/35 px-0 pt-6 pb-9.5 md:py-7">
+          <div className="w-full border-t border-brand/35 px-1 pt-6 pb-9.5 md:py-7">
             {/* <p className="mt-2 text-[15px] md:text-[18px] font-extrabold uppercase tracking-[0.16em] text-brand">¿QUÉ ES EL RECORRIDO?</p> */}
-            <p className={`mt-4 text-[17.5px] leading-7 md:text-[22px] ${editorialFont.className}`}>Durante cuatro días, las iglesias de la Región Mayo nos reuniremos en distintas congregaciones para convivir y alabar a Dios. Cada parada tendrá sus propios cultos y actividades.</p>
+            <p className={`mt-4 text-[17.5px] leading-7 tracking-wide md:text-[22px] ${editorialFont.className}`}>Durante cuatro días, las iglesias de la Región Mayo nos reuniremos en distintas congregaciones para convivir y alabar a Dios. Cada parada tendrá sus propios cultos y actividades!</p>
           </div>
           {!countdownIsDisabled && <>
             <div className="mt-2 w-fit border border-border bg-paper-dark px-2 pr-4 py-4">
@@ -286,7 +252,7 @@ export function RecorridoContent({
           {productsEnabled && !countdownIsDisabled && <>
             <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
             <div className="w-full px-0 py-8.5">
-              <p className="text-[14px] font-bold uppercase tracking-[0.16em] text-brand">Recuerdos</p>
+              <p className="text-[14px] font-bold uppercase tracking-[0.16em] text-brand">Venta de camisetas</p>
               <p className={`mt-1 text-[24px] font-semibold tracking-tight leading-snug text-ink mb-7 ${editorialFont.className}`}>Llevate un recuerdo</p>
               <RecorridoProductCards products={products} regionTreasurer={regionTreasurer} />
             </div>
@@ -294,7 +260,7 @@ export function RecorridoContent({
           <div className="h-px w-full bg-brand" aria-hidden="true" />
           <RecorridoRoute events={events} />
         </div>
-      </motion.div>
+      </div>
       {selectedEvent && <RegistrationModal event={selectedEvent} isOpen={isRegisterModalOpen} onClose={handleCloseRegistration} regionPresident={regionPresident} />}
     </div>
   );
