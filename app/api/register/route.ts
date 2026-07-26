@@ -423,7 +423,7 @@ async function getRegistrationSheetMetadata(
   )
   if (!response.ok) {
     console.warn(`[register] Google Sheets metadata read failed: ${await response.text()}`)
-    return { conditionalFormatCount: 0, filterViewIds: [], protectedRangeIds: [] }
+    return { conditionalFormatCount: null, filterViewIds: [], protectedRangeIds: [] }
   }
 
   const data = (await response.json()) as {
@@ -473,9 +473,6 @@ async function formatRegistrationSheet(
   const subtleRed = { red: 0.96, green: 0.87, blue: 0.87 }
   const metadata = await getRegistrationSheetMetadata(config, accessToken, sheetId)
   const requests: Array<Record<string, unknown>> = [
-    ...Array.from({ length: needsSheetSetup ? metadata.conditionalFormatCount : 0 }, (_, index) => ({
-      deleteConditionalFormatRule: { sheetId, index: metadata.conditionalFormatCount - index - 1 },
-    })),
     ...(needsSheetSetup ? metadata.filterViewIds : []).map((filterId) => ({ deleteFilterView: { filterId } })),
     ...metadata.protectedRangeIds.map((protectedRangeId) => ({ deleteProtectedRange: { protectedRangeId } })),
     { clearBasicFilter: { sheetId } },
@@ -684,7 +681,7 @@ async function formatRegistrationSheet(
     },
   ]
 
-  if (needsSheetSetup) {
+  if (needsSheetSetup || metadata.conditionalFormatCount === 0) {
     const cellRule = (
       column: number,
       condition: Record<string, unknown>,
@@ -716,8 +713,10 @@ async function formatRegistrationSheet(
     }
 
     requests.push(
-      ...conditionalRules.map((rule, index) => ({ addConditionalFormatRule: { rule, index } })),
-      {
+      ...(metadata.conditionalFormatCount === 0
+        ? conditionalRules.map((rule, index) => ({ addConditionalFormatRule: { rule, index } }))
+        : []),
+      ...(needsSheetSetup ? [{
         addFilterView: {
           filter: {
             title: "CANCELADOS / REGISTROS INVALIDOS",
@@ -733,7 +732,7 @@ async function formatRegistrationSheet(
             }],
           },
         },
-      },
+      }] : []),
     )
   }
 
@@ -969,9 +968,11 @@ export async function POST(req: NextRequest) {
     // Get client info
     const ip = getClientIP(req)
     const userAgent = req.headers.get("user-agent") || "unknown"
+    const isLocalDevelopment = process.env.NODE_ENV === "development"
+      && ["localhost", "127.0.0.1", "[::1]"].includes(req.nextUrl.hostname)
 
     // Rate limiting
-    const rateLimit = checkRateLimit(ip)
+    const rateLimit = isLocalDevelopment ? { allowed: true } : checkRateLimit(ip)
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Demasiadas solicitudes. Intenta de nuevo más tarde." },
