@@ -371,7 +371,7 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                   <RecorridoTruckMarker mode="sleeping" />
                 </span>
               )}
-              <span className="relative col-start-2 justify-self-start border border-[#3b2a1c]/25 bg-paper px-3.5 py-1 text-[15px] font-bold uppercase tracking-[0.16em] md:col-start-2 md:justify-self-center md:whitespace-nowrap">
+              <span className="relative col-start-2 justify-self-start border border-[#3b2a1c]/25 bg-paper pl-3.5 pr-2.5 py-1 text-[15px] font-bold uppercase tracking-[0.16em] md:col-start-2 md:justify-self-center md:whitespace-nowrap">
                 {formatRecorridoWeekday(day.date)}
               </span>
             </div>
@@ -412,12 +412,12 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
                   className="grid min-h-[208px] grid-cols-[64px_var(--recorrido-mobile-branch-length)_minmax(0,1fr)] items-center md:min-h-[210px] md:grid-cols-[minmax(0,1fr)_var(--recorrido-desktop-branch-length)_64px_var(--recorrido-desktop-branch-length)_minmax(0,1fr)]"
                 >
                   <div className={`relative col-start-3 row-start-1 flex py-4 ${isLeft ? "justify-start md:col-start-1 md:justify-end" : "justify-start md:col-start-5"}`}>
-                    <div id={hasActiveTruck ? "recorrido-current-position" : undefined} className={`relative right-[var(--recorrido-text-tree-nudge)] max-w-[320px] -translate-x-4 transform text-left md:-translate-x-2.5 ${revealTransition} ${isLeft ? "md:left-[var(--recorrido-text-tree-nudge)] md:right-auto md:text-right" : ""} ${isGrown ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0"}`}>
+                    <div id={hasActiveTruck ? "recorrido-current-position" : undefined} className={`relative right-[var(--recorrido-text-tree-nudge)] min-w-0 w-full max-w-[320px] -translate-x-4 transform text-left md:-translate-x-2.5 ${revealTransition} ${isLeft ? "md:left-[var(--recorrido-text-tree-nudge)] md:right-auto md:text-right" : ""} ${isGrown ? "translate-y-0 opacity-100" : "translate-y-3.5 opacity-0"}`}>
                       <RecorridoStatusLabel status={eventStatus} isLeft={isLeft} isNext={nextEventIndex === eventIndex} isRouteStarted={!isRouteNotStarted} />
                       <span className={`mb-2 flex items-center gap-2 text-[0.88rem] font-medium uppercase tracking-[0.1em] text-foreground/70 ${isLeft ? "md:justify-end" : ""}`}>
                         {formatRecorridoTimeRange(event)}
                       </span>
-                      <span className={`mb-3 block text-[1.52rem] font-semibold leading-tight text-ink ${editorialFont.className}`}>
+                      <span className={`mb-3 block break-words text-[1.52rem] font-semibold leading-tight text-ink ${editorialFont.className}`}>
                         {event.title}
                       </span>
                       {/* {event.city && (

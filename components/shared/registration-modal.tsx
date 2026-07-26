@@ -597,7 +597,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
           )}
 
           {/* Content */}
-          <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-5 py-5 md:px-6 md:py-4">
+          <div ref={contentScrollRef} className="flex-1 overflow-y-auto px-3 py-5 md:px-6 md:py-4">
             {isOffline && step <= totalSteps && (
               <div className="mb-4 border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                 Sin conexion. Esta seccion requiere internet para registrar tu asistencia.
@@ -653,7 +653,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                   Ayúdanos a preparar todo para tu llegada respondiendo estas preguntas:
                 </p>
 
-                <div className="border border-border/50 bg-background px-4">
+                <div className="border border-border/50 bg-paper-highlight px-3">
                   {renderToggleQuestion({ label: "¿Necesitas ayuda con el hospedaje?", value: formData.needsLodging, field: "needsLodging", allowUnknown: true })}
                   {renderToggleQuestion({ label: "¿Necesitas ayuda con el transporte entre actividades?", value: formData.needsTransport, field: "needsTransport", allowUnknown: true })}
                   {renderToggleQuestion({ label: "¿Estas bautizado en nuestra Iglesia Gentil de Cristo?", value: formData.isBaptized, field: "isBaptized", disabled: formData.isCoroMGR === true })}
@@ -708,7 +708,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Teléfono:</span>
-                      <span className="text-foreground font-medium">{formData.phone ? `+52 ${formData.phone}` : "—"}</span>
+                      <span className="max-w-[60%] text-right text-foreground font-medium">{formData.phone ? `+52 ${formData.phone}` : "—"}</span>
                     </div>
                     <div className="flex justify-between border-b border-border/20 pb-2">
                       <span className="text-muted-foreground">Necesita hospedaje:</span>

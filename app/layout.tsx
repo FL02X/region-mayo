@@ -125,31 +125,6 @@ export default async function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function () {
-                try {
-                  var ua = navigator.userAgent || "";
-                  var isInAppBrowser =
-                    /Instagram|FBAN|FBAV|FB_IAB|FB4A|Facebook/i.test(ua) ||
-                    /; wv\\)/i.test(ua);
-
-                  if (isInAppBrowser) {
-                    document.documentElement.dataset.inAppBrowser = "true";
-                  }
-                } catch (error) {}
-              })();
-            `,
-          }}
-        />
-        <style>{`
-          html,
-          body {
-            -webkit-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-          }
-        `}</style>
         <link rel="preconnect" href="https://cdn.sanity.io" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

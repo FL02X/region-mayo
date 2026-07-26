@@ -254,6 +254,12 @@ radial-gradient(circle at 12% 18%, rgba(80, 67, 46, 0.028) 0 0.5px, transparent 
 }
 
 @layer base {
+  html,
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   html {
     --app-zoom: 1;
     overflow-x: hidden;
@@ -284,17 +290,6 @@ radial-gradient(circle at 12% 18%, rgba(80, 67, 46, 0.028) 0 0.5px, transparent 
     word-break: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  html[data-in-app-browser="true"],
-  html[data-in-app-browser="true"] body {
-    -webkit-text-size-adjust: none;
-    text-size-adjust: none;
-  }
-
-  html[data-in-app-browser="true"] body {
-    font-size: calc(16px * var(--app-font-scale, 1));
-    line-height: 1.52;
   }
 
   body {
