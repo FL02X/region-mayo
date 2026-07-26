@@ -83,6 +83,18 @@ const SHEET_HEADERS = [
   "Fecha y hora",
   "Tipo",
   "Región",
+  "Necesita Hospedaje",
+  "Necesita Transporte",
+  "Seguimiento",
+  "Nota",
+] as const
+const FORMER_SHEET_HEADERS = [
+  "ID",
+  "Nombre",
+  "Teléfono",
+  "Fecha y hora",
+  "Tipo",
+  "Región",
   "Hospedaje",
   "Transporte",
   "Seguimiento",
@@ -273,21 +285,24 @@ async function ensureGoogleSheetsHeaders(config: GoogleSheetsConfig, accessToken
     return { rows: rows.slice(TABLE_DATA_ROW_NUMBER - 1), needsSheetSetup: false }
   }
 
+  const isFormerTable = headersMatch(tableHeaders, FORMER_SHEET_HEADERS)
   const dashboardHeaders = rows[3] ?? []
   const isDashboardSheet = headersMatch(dashboardHeaders, SHEET_HEADERS)
+    || headersMatch(dashboardHeaders, FORMER_SHEET_HEADERS)
   const currentHeaders = rows[0] ?? []
   const isCurrentSheet = headersMatch(currentHeaders, SHEET_HEADERS)
+    || headersMatch(currentHeaders, FORMER_SHEET_HEADERS)
   const isPreviousSheet = headersMatch(currentHeaders, PREVIOUS_SHEET_HEADERS)
   const isLegacySheet = headersMatch(currentHeaders, LEGACY_SHEET_HEADERS)
-  if (!isDashboardSheet && currentHeaders.length && !isCurrentSheet && !isPreviousSheet && !isLegacySheet) {
+  if (!isFormerTable && !isDashboardSheet && currentHeaders.length && !isCurrentSheet && !isPreviousSheet && !isLegacySheet) {
     throw new Error("Google Sheets headers do not match the registration table")
   }
 
-  const sourceRows = isDashboardSheet ? rows.slice(4) : currentHeaders.length ? rows.slice(1) : []
+  const sourceRows = isFormerTable ? rows.slice(TABLE_DATA_ROW_NUMBER - 1) : isDashboardSheet ? rows.slice(4) : currentHeaders.length ? rows.slice(1) : []
   const migratedRows = sourceRows
     .filter((row) => row.some((value) => String(value ?? "").trim()))
     .map((row) => {
-    if (isDashboardSheet || isCurrentSheet) {
+    if (isFormerTable || isDashboardSheet || isCurrentSheet) {
       const lodging = normalizeSheetPreference(row[6])
       const transport = normalizeSheetPreference(row[7])
       const followUp = String(row[8] ?? "").trim()
@@ -446,7 +461,7 @@ async function formatRegistrationSheet(
   needsSheetSetup: boolean,
 ) {
   const lastRowNumber = Math.max(TABLE_DATA_ROW_NUMBER, ...rows.map((row) => row.rowNumber))
-  const columnWidths = [34, 190, 150, 150, 120, 205, 120, 120, 190, 260]
+  const columnWidths = [34, 190, 150, 150, 120, 180, 120, 120, 190, 260]
   const orange = { red: 0.96, green: 0.78, blue: 0.62 }
   const yellow = { red: 1, green: 0.93, blue: 0.58 }
   const blue = { red: 0.78, green: 0.88, blue: 0.97 }
@@ -630,7 +645,7 @@ async function formatRegistrationSheet(
     {
       updateDimensionProperties: {
         range: { sheetId, dimension: "ROWS", startIndex: 3, endIndex: lastRowNumber },
-        properties: { pixelSize: 34 },
+        properties: { pixelSize: 21 },
         fields: "pixelSize",
       },
     },

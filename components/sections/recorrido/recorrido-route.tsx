@@ -332,7 +332,8 @@ export function RecorridoRoute({ events }: { events: Event[] }) {
               <RecorridoBusIcon className="h-10 w-10 text-brand" />
             </span>
             <span>
-              Una vez empezado el recorrido, la ruta se irá actualizando en <span className="text-brand">tiempo real</span>.
+              {/* Una vez empezado el recorrido, la ruta se irá actualizando en <span className="text-brand">tiempo real</span>. */}
+              Una vez empezado el recorrido, la ruta se irá actualizando.
             </span>
           </p>
         )}

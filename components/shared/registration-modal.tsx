@@ -877,7 +877,7 @@ function ConfirmationStep({
       </div>
       <h3 className="text-base sm:text-lg font-bold text-foreground mb-5 uppercase tracking-wide whitespace-nowrap text-center">Gracias por registrarte</h3>
       <p className="text-sm mb-8 text-center">
-          Hemos guardado tu asistencia. ¡Pronto estaremos en contacto!
+          Hemos guardado tu asistencia.
       </p>
       <p className="text-sm text-muted-foreground mb-4 text-baseline">
         Si tienes dudas o necesitas ayuda, por favor, contacta a este numero de WhatsApp:
