@@ -8,6 +8,10 @@ export const REGISTRATION_FOLLOW_UP_VALUES = [
 export const getRegistrationFollowUp = (lodging: string, transport: string) =>
   lodging === "NO" && transport === "NO" ? "NO REQUIERE" : "POR CONTACTAR"
 
+export const isValidSubmissionId = (value: unknown) =>
+  typeof value === "string"
+  && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+
 export function formatRegistrationDate(date: Date) {
   const parts = new Intl.DateTimeFormat("es-MX", {
     timeZone: "America/Chihuahua",

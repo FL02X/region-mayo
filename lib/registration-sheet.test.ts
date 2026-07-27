@@ -5,6 +5,7 @@ import {
   getInternationalPhone,
   getRegistrationFollowUp,
   getWhatsappUrl,
+  isValidSubmissionId,
 } from "./registration-sheet"
 
 test("registration sheet workflow defaults", () => {
@@ -14,6 +15,8 @@ test("registration sheet workflow defaults", () => {
   assert.equal(getInternationalPhone("521 644 123 4567"), "+526441234567")
   assert.equal(getInternationalPhone('=HYPERLINK("https://wa.me/526441234567","+526441234567")'), "+526441234567")
   assert.equal(getWhatsappUrl("6441234567"), "https://wa.me/526441234567")
+  assert.equal(isValidSubmissionId("b7c106c6-4d68-4a3f-a925-61872fc47c32"), true)
+  assert.equal(isValidSubmissionId("not-a-uuid"), false)
   assert.deepEqual(REGISTRATION_FOLLOW_UP_VALUES, [
     "NO REQUIERE",
     "POR CONTACTAR",

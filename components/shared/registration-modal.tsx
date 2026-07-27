@@ -200,6 +200,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
   const turnstileContainerRef = useRef<HTMLDivElement>(null)
   const turnstileWidgetIdRef = useRef<string | null>(null)
   const previousBaptizedRef = useRef<boolean | null>(null)
+  const submissionIdRef = useRef("")
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -245,6 +246,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
     setShowLogisticsHighlight(false)
     setSelectedPhotoIndex(null)
     setTurnstileToken("")
+    submissionIdRef.current = crypto.randomUUID()
     previousBaptizedRef.current = null
     setFormData((prev) => ({
       ...prev,
@@ -441,7 +443,7 @@ export function RegistrationModal({ event, isOpen, onClose, regionPresident }: R
         body: JSON.stringify({
           name: contactData.name,
           phone: contactData.phone,
-          eventId: event.id,
+          submissionId: submissionIdRef.current,
           needsLodging: formData.needsLodging === "unknown" ? "unknown" : Boolean(formData.needsLodging),
           needsTransport: formData.needsTransport === "unknown" ? "unknown" : Boolean(formData.needsTransport),
           attendingAs: getRegistrationAttendingAs({

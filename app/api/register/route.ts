@@ -5,6 +5,7 @@ import {
   getInternationalPhone,
   getRegistrationFollowUp,
   getWhatsappUrl,
+  isValidSubmissionId,
   normalizeMexicanPhone,
 } from "@/lib/registration-sheet"
 import { REGISTRATION_REGIONS, type RegistrationRegion } from "@/lib/types"
@@ -14,9 +15,12 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
 // Configuration
 const RATE_LIMIT_WINDOW = 2 * 60 * 1000 // 2 minutes
-const RATE_LIMIT_MAX = 5 // 5 requests per 2 minutes per IP
+const RATE_LIMIT_MAX = 20 // Allows small groups sharing one public IP
 const MIN_REQUEST_INTERVAL = 10 * 1000 // 10 seconds with the form open
+const GOOGLE_REQUEST_TIMEOUT = 15 * 1000
 const isTurnstileEnabled = false
+// ponytail: instance-local deduplication; use a durable unique constraint if exact-once writes become necessary.
+const inFlightRegistrations = new Map<string, Promise<void>>()
 
 // Simple honeypot field name (bots will fill this)
 const HONEYPOT_FIELD = "website"
@@ -133,6 +137,9 @@ function getGoogleSheetsConfig(): GoogleSheetsConfig | null {
   const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, "\n")
 
   if (!spreadsheetId && !clientEmail && !privateKey) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Missing Google Sheets configuration")
+    }
     return null
   }
 
@@ -142,6 +149,9 @@ function getGoogleSheetsConfig(): GoogleSheetsConfig | null {
 
   return { spreadsheetId, sheetName, clientEmail, privateKey }
 }
+
+const googleFetch = (input: string, init?: RequestInit) =>
+  fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(GOOGLE_REQUEST_TIMEOUT) })
 
 function encodeBase64Url(value: string | ArrayBuffer): string {
   return Buffer.from(value instanceof ArrayBuffer ? new Uint8Array(value) : value).toString("base64url")
@@ -180,7 +190,7 @@ async function getGoogleSheetsAccessToken(config: GoogleSheetsConfig): Promise<s
     new TextEncoder().encode(unsignedToken),
   )
   const assertion = `${unsignedToken}.${encodeBase64Url(signature)}`
-  const response = await fetch("https://oauth2.googleapis.com/token", {
+  const response = await googleFetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -207,7 +217,7 @@ function getGoogleSheetRange(sheetName: string, range: string): string {
 }
 
 async function getGoogleSheetId(config: GoogleSheetsConfig, accessToken: string): Promise<number> {
-  const response = await fetch(
+  const response = await googleFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}?fields=sheets.properties(sheetId,title)`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   )
@@ -226,7 +236,11 @@ async function getGoogleSheetId(config: GoogleSheetsConfig, accessToken: string)
     return sheetId
   }
 
-  const createResponse = await fetch(
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(`Google Sheet tab is not initialized: ${config.sheetName}`)
+  }
+
+  const createResponse = await googleFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
     {
       method: "POST",
@@ -270,7 +284,7 @@ const normalizeSheetPreference = (value: unknown) => {
 
 async function ensureGoogleSheetsHeaders(config: GoogleSheetsConfig, accessToken: string) {
   const range = getGoogleSheetRange(config.sheetName, "A:K")
-  const getResponse = await fetch(
+  const getResponse = await googleFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}?valueRenderOption=FORMULA`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   )
@@ -283,6 +297,10 @@ async function ensureGoogleSheetsHeaders(config: GoogleSheetsConfig, accessToken
   const tableHeaders = rows[TABLE_HEADER_ROW_NUMBER - 1] ?? []
   if (headersMatch(tableHeaders, SHEET_HEADERS)) {
     return { rows: rows.slice(TABLE_DATA_ROW_NUMBER - 1), needsSheetSetup: false }
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(`Google Sheet registration headers are not initialized: ${config.sheetName}`)
   }
 
   const isFormerTable = headersMatch(tableHeaders, FORMER_SHEET_HEADERS)
@@ -361,7 +379,7 @@ async function ensureGoogleSheetsHeaders(config: GoogleSheetsConfig, accessToken
     ...migratedRows,
   ]
   const updateRange = getGoogleSheetRange(config.sheetName, `A1:J${migratedRows.length + TABLE_HEADER_ROW_NUMBER}`)
-  const updateResponse = await fetch(
+  const updateResponse = await googleFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(updateRange)}?valueInputOption=RAW`,
     {
       method: "PUT",
@@ -379,7 +397,7 @@ async function ensureGoogleSheetsHeaders(config: GoogleSheetsConfig, accessToken
 
   if (isPreviousSheet) {
     const staleColumnRange = getGoogleSheetRange(config.sheetName, "K:K")
-    const clearResponse = await fetch(
+    const clearResponse = await googleFetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(staleColumnRange)}:clear`,
       {
         method: "POST",
@@ -395,7 +413,7 @@ async function ensureGoogleSheetsHeaders(config: GoogleSheetsConfig, accessToken
 
   if (isDashboardSheet) {
     const staleRowRange = getGoogleSheetRange(config.sheetName, `A${migratedRows.length + 4}:J${migratedRows.length + 4}`)
-    const clearResponse = await fetch(
+    const clearResponse = await googleFetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(staleRowRange)}:clear`,
       {
         method: "POST",
@@ -417,7 +435,7 @@ async function getRegistrationSheetMetadata(
   accessToken: string,
   sheetId: number,
 ) {
-  const response = await fetch(
+  const response = await googleFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}?fields=sheets(properties(sheetId),conditionalFormats,filterViews(filterViewId,title),protectedRanges(protectedRangeId,description))`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   )
@@ -762,7 +780,7 @@ async function formatRegistrationSheet(
     }
   })
 
-  const response = await fetch(
+  const response = await googleFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
     {
       method: "POST",
@@ -776,8 +794,134 @@ async function formatRegistrationSheet(
   if (!response.ok) console.warn(`[register] Google Sheets format failed: ${await response.text()}`)
 }
 
+async function formatRegistrationRow(
+  config: GoogleSheetsConfig,
+  accessToken: string,
+  sheetId: number,
+  rowNumber: number,
+  phone: string,
+) {
+  const rowIndex = rowNumber - 1
+  const whatsappUrl = getWhatsappUrl(phone)
+  const requests: Array<Record<string, unknown>> = [
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: rowIndex,
+          endRowIndex: rowNumber,
+          startColumnIndex: 0,
+          endColumnIndex: SHEET_HEADERS.length,
+        },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: { red: 1, green: 1, blue: 1 },
+            horizontalAlignment: "CENTER",
+            verticalAlignment: "MIDDLE",
+            wrapStrategy: "WRAP",
+            textFormat: {
+              foregroundColor: { red: 0.12, green: 0.12, blue: 0.12 },
+              fontFamily: "Arial",
+              fontSize: 10,
+              bold: false,
+            },
+          },
+        },
+        fields: "userEnteredFormat",
+      },
+    },
+    {
+      setDataValidation: {
+        range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowNumber, startColumnIndex: 9, endColumnIndex: 10 },
+        filteredRowsIncluded: true,
+      },
+    },
+    {
+      setDataValidation: {
+        range: { sheetId, startRowIndex: rowIndex, endRowIndex: rowNumber, startColumnIndex: 8, endColumnIndex: 9 },
+        filteredRowsIncluded: true,
+        rule: {
+          condition: {
+            type: "ONE_OF_LIST",
+            values: REGISTRATION_FOLLOW_UP_VALUES.map((value) => ({ userEnteredValue: value })),
+          },
+          strict: true,
+          showCustomUi: true,
+        },
+      },
+    },
+    {
+      updateDimensionProperties: {
+        range: { sheetId, dimension: "ROWS", startIndex: rowIndex, endIndex: rowNumber },
+        properties: { pixelSize: 21 },
+        fields: "pixelSize",
+      },
+    },
+    ...[1, 9].map((column) => ({
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: rowIndex,
+          endRowIndex: rowNumber,
+          startColumnIndex: column,
+          endColumnIndex: column + 1,
+        },
+        cell: { userEnteredFormat: { horizontalAlignment: "LEFT" } },
+        fields: "userEnteredFormat.horizontalAlignment",
+      },
+    })),
+    {
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: rowIndex,
+          endRowIndex: rowNumber,
+          startColumnIndex: 0,
+          endColumnIndex: 1,
+        },
+        cell: { userEnteredFormat: { wrapStrategy: "CLIP" } },
+        fields: "userEnteredFormat.wrapStrategy",
+      },
+    },
+  ]
+
+  if (whatsappUrl) {
+    requests.push({
+      updateCells: {
+        range: {
+          sheetId,
+          startRowIndex: rowIndex,
+          endRowIndex: rowNumber,
+          startColumnIndex: 2,
+          endColumnIndex: 3,
+        },
+        rows: [{ values: [{
+          userEnteredValue: { stringValue: getInternationalPhone(phone) },
+          userEnteredFormat: { textFormat: { link: { uri: whatsappUrl } } },
+        }] }],
+        fields: "userEnteredValue,userEnteredFormat.textFormat.link",
+      },
+    })
+  }
+
+  const response = await googleFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ requests }),
+    },
+  )
+
+  if (!response.ok) console.warn(`[register] Google Sheets row format failed: ${await response.text()}`)
+}
+
 async function appendRegistrationToGoogleSheets(
   registrationData: {
+    submissionId: string
     name: string
     phone: string
     needsLodging: boolean | "unknown"
@@ -794,10 +938,12 @@ async function appendRegistrationToGoogleSheets(
   const accessToken = await getGoogleSheetsAccessToken(config)
   const sheetId = await getGoogleSheetId(config, accessToken)
   const { rows: existingRows, needsSheetSetup } = await ensureGoogleSheetsHeaders(config, accessToken)
+  if (existingRows.some((existingRow) => existingRow[0] === registrationData.submissionId)) return
+
   const lodging = yesNo(registrationData.needsLodging)
   const transport = yesNo(registrationData.needsTransport)
   const row = [
-    crypto.randomUUID(),
+    registrationData.submissionId,
     registrationData.name,
     getInternationalPhone(registrationData.phone),
     formatRegistrationDate(new Date(registrationData.registeredAt)),
@@ -809,7 +955,7 @@ async function appendRegistrationToGoogleSheets(
     "",
   ]
   const range = getGoogleSheetRange(config.sheetName, `A${TABLE_HEADER_ROW_NUMBER}:J`)
-  const appendResponse = await fetch(
+  const appendResponse = await googleFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
     {
       method: "POST",
@@ -823,14 +969,31 @@ async function appendRegistrationToGoogleSheets(
 
   if (!appendResponse.ok) throw new Error(`Google Sheets append failed: ${await appendResponse.text()}`)
 
-  const appendData = (await appendResponse.json()) as { updates?: { updatedRange?: string } }
-  const rowNumber = Number(appendData.updates?.updatedRange?.match(/![A-Z]+(\d+):/)?.[1])
+  let rowNumber = 0
+  try {
+    const appendData = (await appendResponse.json()) as { updates?: { updatedRange?: string } }
+    rowNumber = Number(appendData.updates?.updatedRange?.match(/![A-Z]+(\d+):/)?.[1])
+  } catch (error) {
+    console.warn("[register] Registration saved but Google Sheets response was invalid:", error)
+  }
   if (!rowNumber) return
 
-  await formatRegistrationSheet(config, accessToken, sheetId, [
-    ...existingRows.map((values, index) => ({ rowNumber: index + TABLE_DATA_ROW_NUMBER, values })),
-    { rowNumber, values: row },
-  ], needsSheetSetup)
+  if (needsSheetSetup) {
+    try {
+      await formatRegistrationSheet(config, accessToken, sheetId, [
+        ...existingRows.map((values, index) => ({ rowNumber: index + TABLE_DATA_ROW_NUMBER, values })),
+        { rowNumber, values: row },
+      ], true)
+    } catch (error) {
+      console.warn("[register] Registration saved but Google Sheets formatting failed:", error)
+    }
+  } else {
+    try {
+      await formatRegistrationRow(config, accessToken, sheetId, rowNumber, registrationData.phone)
+    } catch (error) {
+      console.warn("[register] Registration saved but its row could not be formatted:", error)
+    }
+  }
 }
 
 function getClientIP(req: NextRequest): string {
@@ -878,6 +1041,7 @@ function sanitizeString(input: unknown): string {
   if (typeof input !== "string") return ""
   return input
     .trim()
+    .replace(/\s+/g, " ")
     .slice(0, 500) // Max length
     .replace(/<[^>]*>/g, "") // Remove HTML tags
     .replace(/[<>'"]/g, "") // Remove potential injection characters
@@ -925,8 +1089,8 @@ function validateRegistration(data: Record<string, unknown>): { valid: boolean; 
     errors.push("Teléfono válido es requerido (10 dígitos)")
   }
 
-  if (!data.eventId || typeof data.eventId !== "string") {
-    errors.push("Evento es requerido")
+  if (!isValidSubmissionId(data.submissionId)) {
+    errors.push("Identificador de registro inválido")
   }
 
   if (![true, false, "unknown"].includes(data.needsLodging as boolean | string)) {
@@ -972,7 +1136,7 @@ export async function POST(req: NextRequest) {
       && ["localhost", "127.0.0.1", "[::1]"].includes(req.nextUrl.hostname)
 
     // Rate limiting
-    const rateLimit = isLocalDevelopment ? { allowed: true } : checkRateLimit(ip)
+    const rateLimit = isLocalDevelopment || ip === "unknown" ? { allowed: true } : checkRateLimit(ip)
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Demasiadas solicitudes. Intenta de nuevo más tarde." },
@@ -986,7 +1150,11 @@ export async function POST(req: NextRequest) {
     // Parse body
     let body: Record<string, unknown>
     try {
-      body = await req.json()
+      const parsedBody: unknown = await req.json()
+      if (!parsedBody || typeof parsedBody !== "object" || Array.isArray(parsedBody)) {
+        throw new Error("Invalid JSON object")
+      }
+      body = parsedBody as Record<string, unknown>
     } catch {
       return NextResponse.json(
         { error: "Formato de solicitud inválido" },
@@ -1035,6 +1203,7 @@ export async function POST(req: NextRequest) {
     const isBaptized = isCoroMGR ? true : Boolean(body.isBaptized)
     const attendingAs = getRegistrationAttendingAs(isBaptized, isCoroMGR)
     const registrationData = {
+      submissionId: String(body.submissionId),
       name: sanitizeString(body.name),
       phone: sanitizePhone(body.phone),
       needsLodging: normalizeLogisticsPreference(body.needsLodging),
@@ -1047,11 +1216,22 @@ export async function POST(req: NextRequest) {
       userAgent: userAgent.slice(0, 500),
     }
 
-    await appendRegistrationToGoogleSheets(registrationData)
+    let registrationPromise = inFlightRegistrations.get(registrationData.submissionId)
+    if (!registrationPromise) {
+      registrationPromise = appendRegistrationToGoogleSheets(registrationData)
+      inFlightRegistrations.set(registrationData.submissionId, registrationPromise)
+    }
+    try {
+      await registrationPromise
+    } finally {
+      if (inFlightRegistrations.get(registrationData.submissionId) === registrationPromise) {
+        inFlightRegistrations.delete(registrationData.submissionId)
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Registro exitoso. El staff ha sido notificado.",
+      message: "Registro guardado correctamente.",
     })
 
   } catch (error) {
