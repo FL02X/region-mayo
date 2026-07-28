@@ -279,7 +279,7 @@ export function RecorridoProductCards({ products, regionTreasurer }: RecorridoPr
                   unoptimized
                 />
                 {hasMultiplePhotos && (
-                  <span className="absolute right-3 bottom-3 inline-flex min-h-9 items-center gap-2 bg-paper px-3 text-xs font-semibold text-ink shadow-sm transition-colors">
+                  <span className="absolute right-3 bottom-3 inline-flex min-h-9 items-center gap-2 bg-paper-highlight px-3 text-xs font-semibold text-ink shadow-sm transition-colors">
                     <Images className="h-4 w-4" aria-hidden="true" />
                     {galleryImages.length} FOTOS
                   </span>
