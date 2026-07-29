@@ -1,5 +1,6 @@
 // Donde: no renderiza UI directo. Viewports: afecta /buscar en desktop y mobile. Funcion: calcula resultados, puntajes y conteos de filtros.
 import { getNestedValue, normalizeText } from "@/lib/search-utils";
+import type { DirectivaGeneration, DirectivaMember } from "@/lib/types";
 import type {
   SearchContentData,
   SearchFilterKey,
@@ -44,7 +45,27 @@ const SEARCH_STOPWORDS = new Set([
   "are",
 ]);
 
-function tokenizeSearchQuery(query: string): string[] {
+export function getLatestDirectivaMembers(
+  generations: DirectivaGeneration[],
+): DirectivaMember[] {
+  const seenNames = new Set<string>();
+
+  return [...generations]
+    .sort((a, b) => {
+      if (a.isCurrent !== b.isCurrent) return Number(b.isCurrent) - Number(a.isCurrent);
+      return (b.startYear ?? 0) - (a.startYear ?? 0);
+    })
+    .flatMap((generation) => generation.members)
+    .filter((member) => {
+      const key = normalizeText(member.fullName);
+      if (seenNames.has(key)) return false;
+
+      seenNames.add(key);
+      return true;
+    });
+}
+
+export function getSearchQueryTokens(query: string): string[] {
   return normalizeText(query)
     .split(/\s+/)
     .map((token) => token.trim())
@@ -135,6 +156,8 @@ function searchMatches<T extends Record<string, any>>({
   return items
     .map((item): SearchResultItem | null => {
       let bestScore = 0;
+      let bestFieldScore = 0;
+      let matchedField: string | undefined;
 
       const combinedText = collectSearchableText(item, fields);
 
@@ -151,6 +174,10 @@ function searchMatches<T extends Record<string, any>>({
           queryTokens,
         });
         bestScore = Math.max(bestScore, score);
+        if (score > bestFieldScore) {
+          bestFieldScore = score;
+          matchedField = field;
+        }
       });
 
       bestScore = Math.max(
@@ -166,7 +193,7 @@ function searchMatches<T extends Record<string, any>>({
 
       if (bestScore <= 0) return null;
 
-      return { item, type, label, pathPrefix, score: bestScore };
+      return { item, type, label, pathPrefix, score: bestScore, matchedField };
     })
     .filter((entry): entry is SearchResultItem => entry !== null);
 }
@@ -175,7 +202,7 @@ export function getSearchResults(data: SearchContentData, query: string) {
   if (!query.trim()) return [] as SearchResultItem[];
 
   const normQuery = normalizeText(query);
-  const queryTokens = tokenizeSearchQuery(query);
+  const queryTokens = getSearchQueryTokens(query);
 
   const pastoresMatches = searchMatches({
     items: data.pastores,

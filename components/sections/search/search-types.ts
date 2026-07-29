@@ -17,6 +17,17 @@ export type SearchResultItem = {
   label: string;
   pathPrefix: string;
   score: number;
+  matchedField?: string;
+};
+
+export type SearchSuggestion = {
+  id: string;
+  type: SearchResultType;
+  path: string;
+  title: string;
+  subtitle?: string;
+  truncateSubtitle?: boolean;
+  image?: string;
 };
 
 export type SearchFilterKey = SearchResultType | "all";

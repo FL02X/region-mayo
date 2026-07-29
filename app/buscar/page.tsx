@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { AppHeader } from "@/components/layout/nav-bar";
 import { SearchContent } from "@/components/sections/search/search-content";
 import Chatbot from "@/components/shared/chatbot";
-import { getRegionConfig, getPastors, getCoros, getDirectiva, getTemplos, getEvents } from "@/lib/api";
+import { getRegionConfig, getPastors, getCoros, getDirectivaGenerations, getTemplos, getEvents } from "@/lib/api";
+import { getLatestDirectivaMembers } from "@/components/sections/search/search-helpers";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const revalidate = false;
@@ -15,14 +16,15 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function BuscarPage() {
-  const [region, pastores, coros, directiva, templos, eventos] = await Promise.all([
+  const [region, pastores, coros, directivaGenerations, templos, eventos] = await Promise.all([
     getRegionConfig("region-mayo"),
     getPastors("region-mayo"),
     getCoros("region-mayo"),
-    getDirectiva("region-mayo"),
+    getDirectivaGenerations("region-mayo"),
     getTemplos("region-mayo"),
     getEvents("region-mayo"),
   ]);
+  const directiva = getLatestDirectivaMembers(directivaGenerations);
 
   return (
     <main className="min-h-screen bg-[#f1f1f1]">
