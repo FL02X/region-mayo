@@ -98,6 +98,13 @@ export function AppHeader({
   };
 
   const clearDesktopHighlight = () => {
+    if (
+      desktopHoveredItemRef.current === null &&
+      desktopHoverState.opacity === 0
+    ) {
+      return;
+    }
+
     desktopHoveredItemRef.current = null;
     setDesktopHoverState((prev) => ({ ...prev, opacity: 0 }));
   };
@@ -131,6 +138,10 @@ export function AppHeader({
     }
 
     if (!hoveredItem) return;
+    if (hoveredItem.dataset.state === "open") {
+      clearDesktopHighlight();
+      return;
+    }
     if (desktopHoveredItemRef.current === hoveredItem) return;
 
     desktopHoveredItemRef.current = hoveredItem;
@@ -172,6 +183,8 @@ export function AppHeader({
                 activePath={activePath}
                 isMounted={isMounted}
                 onItemHover={moveDesktopHighlight}
+                onItemLock={clearDesktopHighlight}
+                dropdownStyle={isRecorridoRoute ? recorridoBrandStyle : undefined}
               />
               <DesktopSearch onSubmit={handleSearchSubmit} />
               <HeaderSocialLinks

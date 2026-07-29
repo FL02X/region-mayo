@@ -6,55 +6,49 @@ import type { MouseEvent } from "react";
 import {
   ChevronDown,
   ChevronUp,
-  Church,
   Facebook,
   Instagram,
   MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  iglesiasMenuItems,
+  type LayoutNavigationGroup,
   type LayoutNavigationItem,
+  type LayoutNavigationRouteItem,
 } from "@/components/layout/nav-bar-items";
 
 interface MainMenuLinkProps {
   item: LayoutNavigationItem;
   activePath: string;
-  touchFeedbackHref: string | null;
-  onActivate: (href: string, element: HTMLElement) => void;
-  onTouchStart: (href: string) => void;
+  touchFeedbackKey: string | null;
+  onActivate: (item: LayoutNavigationItem, element: HTMLElement) => void;
+  onTouchStart: (key: string) => void;
 }
 
 export function MainMenuLink({
   item,
   activePath,
-  touchFeedbackHref,
+  touchFeedbackKey,
   onActivate,
   onTouchStart,
 }: MainMenuLinkProps) {
   const Icon = item.icon;
   const isActive = activePath === item.href && item.href !== "/";
-  const isTouchFeedback = touchFeedbackHref === item.href;
+  const isTouchFeedback = touchFeedbackKey === item.id;
   const showLeftAccent = isActive || isTouchFeedback;
-
-  return (
-    <Link
-      href={item.href}
-      onClick={(event) => onActivate(item.href, event.currentTarget)}
-      onTouchStart={() => onTouchStart(item.href)}
-      className={cn(
-        "relative flex items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] transition-colors duration-150",
-        showLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-brand",
-        isActive
-          ? "bg-gray-200"
-          : isTouchFeedback
-            ? "bg-brand-soft ring-1 ring-inset ring-brand/20"
-            : "hover:bg-gray-100 active:bg-brand-soft"
-      )}
-      aria-current={isActive ? "page" : undefined}
-    >
+  const className = cn(
+    "relative flex w-full items-center gap-3 px-5 py-4 border-b border-[#cfd4db] [border-bottom-style:dotted] text-left transition-colors duration-150",
+    showLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-brand",
+    isActive
+      ? "bg-gray-200"
+      : isTouchFeedback
+        ? "bg-brand-soft ring-1 ring-inset ring-brand/20"
+        : "hover:bg-gray-100 active:bg-brand-soft"
+  );
+  const content = (
+    <>
       <Icon
-        className={cn("h-5 w-5 shrink-0", "text-[#8b929c]")}
+        className="h-5 w-5 shrink-0 text-[#8b929c]"
         aria-hidden="true"
         strokeWidth={1.5}
         absoluteStrokeWidth
@@ -69,44 +63,88 @@ export function MainMenuLink({
           </p>
         )}
       </div>
+    </>
+  );
+
+  if (item.onSelect) {
+    return (
+      <button
+        type="button"
+        onClick={(event) => {
+          onActivate(item, event.currentTarget);
+          item.onSelect();
+        }}
+        onTouchStart={() => onTouchStart(item.id)}
+        className={className}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={item.href}
+      onClick={(event) => onActivate(item, event.currentTarget)}
+      onTouchStart={() => onTouchStart(item.id)}
+      className={className}
+      aria-current={isActive ? "page" : undefined}
+    >
+      {content}
     </Link>
   );
 }
 
-interface IglesiasMenuSectionProps {
+interface MobileMenuGroupProps {
+  group: LayoutNavigationGroup;
   activePath: string;
-  iglesiasOpen: boolean;
+  open: boolean;
+  touchFeedbackKey: string | null;
   onToggle: () => void;
-  onActivate: (href: string, element: HTMLElement) => void;
-  onTouchStart: (href: string) => void;
+  onActivate: (item: LayoutNavigationItem, element: HTMLElement) => void;
+  onTouchStart: (key: string) => void;
 }
 
-export function IglesiasMenuSection({
+export function MobileMenuGroup({
+  group,
   activePath,
-  iglesiasOpen,
+  open,
+  touchFeedbackKey,
   onToggle,
   onActivate,
   onTouchStart,
-}: IglesiasMenuSectionProps) {
-  const ToggleIcon = iglesiasOpen ? ChevronUp : ChevronDown;
+}: MobileMenuGroupProps) {
+  const GroupIcon = group.icon;
+  const ToggleIcon = open ? ChevronUp : ChevronDown;
+  const isActive = group.items.some(
+    (item) => item.href === activePath,
+  );
+  const hasTouchFeedback = touchFeedbackKey === group.id;
+  const showLeftAccent = isActive || hasTouchFeedback;
+  const submenuId = `mobile-${group.id}-submenu`;
 
   return (
     <>
       <button
         type="button"
         onClick={onToggle}
-        onTouchStart={() => onTouchStart("/iglesias")}
+        onTouchStart={() => onTouchStart(group.id)}
         className={cn(
           "relative flex w-full items-center gap-3 border-b border-[#cfd4db] px-5 py-4 pr-16 text-left [border-bottom-style:dotted] transition-colors duration-150",
-          iglesiasOpen ? "bg-[#eeeeea]" : "hover:bg-gray-100 active:bg-brand-soft"
+          showLeftAccent && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-brand",
+          open || isActive
+            ? "bg-[#eeeeea]"
+            : hasTouchFeedback
+              ? "bg-brand-soft ring-1 ring-inset ring-brand/20"
+              : "hover:bg-gray-100 active:bg-brand-soft"
         )}
-        aria-expanded={iglesiasOpen}
-        aria-controls="mobile-iglesias-submenu"
+        aria-expanded={open}
+        aria-controls={submenuId}
       >
-        <Church className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
+        <GroupIcon className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
         <div className="min-w-0 flex-1">
-          <p className="text-[16px] font-normal leading-tight uppercase text-brand">
-            Iglesias
+          <p className={cn("text-[16px] leading-tight uppercase text-brand", isActive ? "font-bold" : "font-normal")}>
+            {group.label}
           </p>
         </div>
         <span className="absolute right-5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center border border-[#d3d7dd] bg-[#f5f5f5] text-[#7d858f] shadow-[0_0_0_1px_rgba(63,109,181,0.08)]">
@@ -115,43 +153,67 @@ export function IglesiasMenuSection({
       </button>
 
       <div
-        id="mobile-iglesias-submenu"
+        id={submenuId}
         className={cn(
           "overflow-hidden bg-[#eeeeea] transition-[max-height,opacity] duration-200 ease-out",
-          iglesiasOpen ? "max-h-56 opacity-100" : "pointer-events-none max-h-0 opacity-0"
+          open ? "max-h-[480px] opacity-100" : "pointer-events-none max-h-0 opacity-0"
         )}
-        aria-hidden={!iglesiasOpen}
+        aria-hidden={!open}
       >
         <div>
-          {iglesiasMenuItems.map((iglesiaItem) => {
-            const IglesiaIcon = iglesiaItem.icon;
-            const iglesiaItemActive = activePath === iglesiaItem.href;
-
-            return (
-              <Link
-                key={iglesiaItem.href}
-                href={iglesiaItem.href}
-                tabIndex={iglesiasOpen ? undefined : -1}
-                onClick={(event) => onActivate(iglesiaItem.href, event.currentTarget)}
-                onTouchStart={() => onTouchStart(iglesiaItem.href)}
-                className={cn(
-                  "relative flex items-center gap-3 border-b border-[#cfd4db] px-9 py-3.5 [border-bottom-style:dotted] transition-colors duration-150",
-                  iglesiaItemActive && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-brand",
-                  iglesiaItemActive ? "bg-[#d8d8d8]" : "hover:bg-gray-100 active:bg-brand-soft"
-                )}
-                aria-current={iglesiaItemActive ? "page" : undefined}
-              >
-                <IglesiaIcon className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
+          {group.items.map((item) => {
+            const ItemIcon = item.icon;
+            const itemIsActive = activePath === item.href;
+            const itemClassName = cn(
+              "relative flex w-full items-center gap-3 border-b border-[#cfd4db] px-9 py-3.5 text-left [border-bottom-style:dotted] transition-colors duration-150",
+              itemIsActive && "before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-[5px] before:bg-brand",
+              itemIsActive ? "bg-[#d8d8d8]" : "hover:bg-gray-100 active:bg-brand-soft"
+            );
+            const content = (
+              <>
+                <ItemIcon className="h-5 w-5 shrink-0 text-[#8b929c]" aria-hidden="true" strokeWidth={1.5} absoluteStrokeWidth />
                 <div className="min-w-0">
-                  <p className={cn("text-[17px] leading-tight text-brand", iglesiaItemActive ? "font-bold" : "font-normal")}>
-                    {iglesiaItem.label}
+                  <p className={cn("text-[17px] leading-tight text-brand", itemIsActive ? "font-bold" : "font-normal")}>
+                    {item.label}
                   </p>
-                  {iglesiaItem.description && (
+                  {item.description && (
                     <p className="mt-1 text-[13px] font-normal leading-tight text-muted-foreground">
-                      {iglesiaItem.description}
+                      {item.description}
                     </p>
                   )}
                 </div>
+              </>
+            );
+
+            if (item.onSelect) {
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  tabIndex={open ? undefined : -1}
+                  onClick={(event) => {
+                    onActivate(item, event.currentTarget);
+                    item.onSelect();
+                  }}
+                  onTouchStart={() => onTouchStart(item.id)}
+                  className={itemClassName}
+                >
+                  {content}
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                tabIndex={open ? undefined : -1}
+                onClick={(event) => onActivate(item, event.currentTarget)}
+                onTouchStart={() => onTouchStart(item.id)}
+                className={itemClassName}
+                aria-current={itemIsActive ? "page" : undefined}
+              >
+                {content}
               </Link>
             );
           })}
@@ -200,7 +262,7 @@ export function HelpMenuButton({
 }
 
 interface PwaMenuLinkProps {
-  item: LayoutNavigationItem;
+  item: LayoutNavigationRouteItem;
   activePath: string;
   onActivate: (event: MouseEvent<HTMLAnchorElement>) => void;
   onTouchStart: () => void;

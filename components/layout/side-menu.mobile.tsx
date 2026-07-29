@@ -22,6 +22,7 @@ import {
   installMenuItem,
   mobileMainMenuItems,
   settingsMenuItem,
+  type LayoutNavigationItem,
 } from "@/components/layout/nav-bar-items";
 import {
   addFlickFeedback,
@@ -33,8 +34,8 @@ import {
 } from "@/components/layout/side-menu-mobile/menu-icons";
 import {
   HelpMenuButton,
-  IglesiasMenuSection,
   MainMenuLink,
+  MobileMenuGroup,
   MobileMenuSocialFooter,
   PwaMenuLink,
 } from "@/components/layout/side-menu-mobile/menu-sections";
@@ -71,14 +72,15 @@ export function MobileMenu({
 }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [touchFeedbackHref, setTouchFeedbackHref] = useState<string | null>(null);
+  const [touchFeedbackKey, setTouchFeedbackKey] = useState<string | null>(null);
   const touchFeedbackTimerRef = useRef<number | null>(null);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [activePath, setActivePath] = useState("");
-  const [iglesiasOpen, setIglesiasOpen] = useState(false);
+  const [openGroupIds, setOpenGroupIds] = useState<string[]>([]);
   const [helpTouchFeedback, setHelpTouchFeedback] = useState(false);
   const isMobile = useIsMobile();
-  const isRecorridoRoute = usePathname() === "/recorrido-mayo-2026";
+  const pathname = usePathname();
+  const isRecorridoRoute = pathname === "/recorrido-mayo-2026";
   const { isInstalled } = useInstallPrompt();
   const openChatbotTimerRef = useRef<number | null>(null);
 
@@ -88,8 +90,6 @@ export function MobileMenu({
 
   useEffect(() => {
     setIsMounted(true);
-    setActivePath(window.location.pathname);
-    setIglesiasOpen(window.location.pathname === "/templos" || window.location.pathname === "/pastores");
 
     return () => {
       if (touchFeedbackTimerRef.current !== null) {
@@ -100,6 +100,20 @@ export function MobileMenu({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const currentPath = pathname || window.location.pathname;
+    setActivePath(currentPath);
+    setOpenGroupIds(
+      mobileMainMenuItems
+        .filter(
+          (entry) =>
+            entry.kind === "group" &&
+            entry.items.some((item) => item.href === currentPath),
+        )
+        .map((entry) => entry.id),
+    );
+  }, [pathname]);
 
   useEffect(() => {
     if (open) {
@@ -113,21 +127,24 @@ export function MobileMenu({
     };
   }, [open]);
 
-  const triggerTouchFeedback = (href: string) => {
-    setTouchFeedbackHref(href);
+  const triggerTouchFeedback = (key: string) => {
+    setTouchFeedbackKey(key);
 
     if (touchFeedbackTimerRef.current !== null) {
       window.clearTimeout(touchFeedbackTimerRef.current);
     }
 
     touchFeedbackTimerRef.current = window.setTimeout(() => {
-      setTouchFeedbackHref(null);
+      setTouchFeedbackKey(null);
       touchFeedbackTimerRef.current = null;
     }, TOUCH_FEEDBACK_MS);
   };
 
-  const activateNavigationLink = (href: string, element: HTMLElement) => {
-    triggerTouchFeedback(href);
+  const activateNavigationItem = (
+    item: LayoutNavigationItem,
+    element: HTMLElement,
+  ) => {
+    triggerTouchFeedback(item.id);
     vibrateForMenuTap();
     addFlickFeedback(element);
 
@@ -136,10 +153,14 @@ export function MobileMenu({
     }, MENU_CLOSE_DELAY_MS);
   };
 
-  const toggleIglesiasMenu = () => {
-    triggerTouchFeedback("/iglesias");
+  const toggleMenuGroup = (groupId: string) => {
+    triggerTouchFeedback(groupId);
     vibrateForMenuTap();
-    setIglesiasOpen((value) => !value);
+    setOpenGroupIds((currentIds) =>
+      currentIds.includes(groupId)
+        ? currentIds.filter((id) => id !== groupId)
+        : [...currentIds, groupId],
+    );
   };
 
   const openHelpChatbot = () => {
@@ -173,7 +194,7 @@ export function MobileMenu({
       event.preventDefault();
     }
 
-    triggerTouchFeedback(pwaItem.href);
+    triggerTouchFeedback(pwaItem.id);
     vibrateForMenuTap();
 
     window.setTimeout(() => {
@@ -245,27 +266,29 @@ export function MobileMenu({
           </div>
 
           <nav className="flex-1 overflow-y-auto" aria-label="Menú principal">
-            {mobileMainMenuItems.map((item) => (
-              <div key={item.href}>
-                <MainMenuLink
-                  item={item}
+            {mobileMainMenuItems.map((entry) =>
+              entry.kind === "group" ? (
+                <MobileMenuGroup
+                  key={entry.id}
+                  group={entry}
                   activePath={activePath}
-                  touchFeedbackHref={touchFeedbackHref}
-                  onActivate={activateNavigationLink}
+                  open={openGroupIds.includes(entry.id)}
+                  touchFeedbackKey={touchFeedbackKey}
+                  onToggle={() => toggleMenuGroup(entry.id)}
+                  onActivate={activateNavigationItem}
                   onTouchStart={triggerTouchFeedback}
                 />
-
-                {item.href === "/" && (
-                  <IglesiasMenuSection
-                    activePath={activePath}
-                    iglesiasOpen={iglesiasOpen}
-                    onToggle={toggleIglesiasMenu}
-                    onActivate={activateNavigationLink}
-                    onTouchStart={triggerTouchFeedback}
-                  />
-                )}
-              </div>
-            ))}
+              ) : (
+                <MainMenuLink
+                  key={entry.id}
+                  item={entry}
+                  activePath={activePath}
+                  touchFeedbackKey={touchFeedbackKey}
+                  onActivate={activateNavigationItem}
+                  onTouchStart={triggerTouchFeedback}
+                />
+              ),
+            )}
 
             <HelpMenuButton
               helpTouchFeedback={helpTouchFeedback}
@@ -278,7 +301,7 @@ export function MobileMenu({
                 item={pwaItem}
                 activePath={activePath}
                 onActivate={handlePwaClick}
-                onTouchStart={() => triggerTouchFeedback(pwaItem.href)}
+                onTouchStart={() => triggerTouchFeedback(pwaItem.id)}
               />
             )}
           </nav>
