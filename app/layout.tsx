@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { TimeProvider } from "@/lib/time-context";
 import { absoluteUrl, SITE_DESCRIPTION, SITE_FULL_NAME, SITE_NAME, getSiteUrl, SITE_OFFICIAL_TITLE } from "@/lib/seo";
 import { VercelAnalytics } from "@/components/analytics/vercel-analytics";
@@ -147,6 +148,7 @@ export default async function RootLayout({
         <OfflineBanner />
         <PwaBootstrap />
         <VercelAnalytics />
+        <SpeedInsights />
       </body>
     </html>
   );
