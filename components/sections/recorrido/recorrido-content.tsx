@@ -245,7 +245,7 @@ export function RecorridoContent({
                 </div>
               </div>
             </div>
-            <div className="mt-5 ml-0.5 italic mr-4 text-[14px] md:text-[16px] font-medium">
+            <div className="mt-5 mb-10 ml-0.5 italic mr-4 text-[14px] md:text-[16px] font-medium">
               Entrada gratuita • El registro es opcional y nos ayuda con la organización.
             </div>
           </>}
