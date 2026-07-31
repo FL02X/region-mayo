@@ -193,7 +193,7 @@ export function RecorridoContent({
       <div className="desktop-content-pane mx-auto min-h-screen w-full max-w-[1150px] overflow-x-hidden border-border bg-paper px-4 py-8 pb-16 md:px-4 pt-[32px] focus:outline-none md:overflow-x-visible md:border-x md:px-0 md:pt-[44px]">
         <div className="-mx-5 -mt-[32px] mb-6 h-[210px] overflow-hidden md:-mx-4 md:-mt-[44px] md:h-[520px]">
           <div className="relative h-full w-full border-b">
-            <Image src="/images/recorrido5.jpg" alt="Recorrido Regional 2026" fill priority quality={82} sizes="(max-width: 767px) 100vw, 1150px" className="object-cover object-center" />
+            <Image src="/images/recorrido5.png" alt="Recorrido Regional 2026" fill priority quality={82} sizes="(max-width: 767px) 100vw, 1150px" className="object-cover object-center" />
           </div>
         </div>
         <div className="max-w mx-auto md:px-12 lg:px-58 md:pt-5">
@@ -224,18 +224,8 @@ export function RecorridoContent({
               )}
             </div>
           )}
-          <div className="mt-0 w-full px-0 pt-3 pb-8.5 md:pb-11">
-            <p className="mt-2 text-[14px] md:text-[18px] font-bold uppercase tracking-[0.16em] text-brand">TEMA</p>
-            <p className={`mt-2 text-[24px] md:text-[28px] font-semibold tracking-tight leading-snug text-ink ${editorialFont.className}`}>Conociendo nuestras raices</p>
-            <p className="mt-5.5 text-[17px] md:text-[18px] italic leading-7 text-foreground/95"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
-            <p className="mt-4.5 md:mt-3 ml-1 text-[17px] md:text-[18px] font-medium text-ink">- Hebreos 13:7</p>
-          </div>
-          <div className="w-full border-t border-brand/35 px-1 pt-6 pb-9.5 md:py-7">
-            {/* <p className="mt-2 text-[15px] md:text-[18px] font-extrabold uppercase tracking-[0.16em] text-brand">¿QUÉ ES EL RECORRIDO?</p> */}
-            <p className={`mt-4 text-[17.5px] leading-7 tracking-wide md:text-[22px] ${editorialFont.className}`}>Durante cuatro días, las iglesias de la Región Mayo nos reuniremos en distintas congregaciones para convivir y alabar a Dios. Cada parada tendrá sus propios cultos y actividades!</p>
-          </div>
           {!countdownIsDisabled && <>
-            <div className="mt-2 w-fit border border-border bg-paper-dark px-2 pr-4 py-4">
+            <div className="mt-10 w-fit border border-border bg-paper-dark px-2 pr-4 py-4 ">
               <div className="flex items-center gap-4">
                 <div className="flex shrink-0 items-center justify-center"><ClipboardEdit className="h-10.5 w-10.5 text-foreground/75" aria-hidden="true" /></div>
                 <div className="flex min-w-0 flex-1 flex-col items-start gap-2 uppercase">
@@ -245,10 +235,20 @@ export function RecorridoContent({
                 </div>
               </div>
             </div>
-            <div className="mt-5 mb-10 ml-0.5 italic mr-4 text-[14px] md:text-[16px] font-medium">
+            <div className="pt-5 pb-7 ml-0.5 italic mr-4 text-[14px] md:text-[16px] font-medium border-b border-brand">
               Entrada gratuita • El registro es opcional y nos ayuda con la organización.
             </div>
           </>}
+          <div className="pt-7 w-full px-0 pb-8.5 md:pb-11">
+            <p className="mt-2 text-[14px] md:text-[18px] font-bold uppercase tracking-[0.16em] text-brand">TEMA</p>
+            <p className={`mt-2 text-[24px] md:text-[28px] font-semibold tracking-tight leading-snug text-ink ${editorialFont.className}`}>Conociendo nuestras raices</p>
+            <p className="mt-5.5 text-[17px] md:text-[18px] italic leading-7 text-foreground/95"><span className="relative top-[0.12em] mr-1 text-2xl leading-[0] text-foreground/35">&ldquo;</span>Acordaos de vuestros pastores, que os hablaron la palabra de Dios; considerad cuál haya sido el resultado de su conducta, e imitad su fe.<span className="relative top-[0.12em] ml-1 text-2xl leading-[0] text-foreground/35">&rdquo;</span></p>
+            <p className="mt-4.5 md:mt-3 ml-1 text-[17px] md:text-[18px] font-medium text-ink">- Hebreos 13:7</p>
+          </div>
+          <div className="w-full border-t border-brand/35 px-1 pt-6 pb-9.5 md:py-7">
+            {/* <p className="mt-2 text-[15px] md:text-[18px] font-extrabold uppercase tracking-[0.16em] text-brand">¿QUÉ ES EL RECORRIDO?</p> */}
+            <p className={`mt-4 text-[17.5px] leading-7 tracking-wide md:text-[22px] ${editorialFont.className}`}>Durante cuatro días, las iglesias de la Región Mayo nos reuniremos en distintas congregaciones para convivir y alabar a Dios. Cada parada tendrá sus propios cultos y actividades!</p>
+          </div>
           {productsEnabled && !countdownIsDisabled && <>
             <div className="mt-8 h-px w-full bg-brand" aria-hidden="true" />
             <div className="w-full px-0 py-8.5">
