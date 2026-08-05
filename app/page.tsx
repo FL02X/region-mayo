@@ -30,7 +30,7 @@ import { buildPageMetadata, SITE_OFFICIAL_TITLE } from "@/lib/seo";
 export const metadata: Metadata = buildPageMetadata({
   title: SITE_OFFICIAL_TITLE,
   description:
-    "Consulta el calendario regional, templos, pastores, coros, directiva y álbumes de la Iglesia Gentil de Cristo A.R. en la Región Mayo.",
+    "Consulta el calendario regional, templos, pastores, coros, directivas y álbumes de la Iglesia Gentil de Cristo A.R. en la Región Mayo.",
   canonicalPath: "/",
   absoluteTitle: true,
 });
@@ -60,11 +60,6 @@ export default async function Home() {
       getAlbums("region-mayo"),
       getCurrentRecorridoHeroAnnouncement(),
     ]);
-
-  const nextUpcomingEvent =
-    events
-      .filter((event) => event.date.getTime() > now)
-      .sort((a, b) => a.date.getTime() - b.date.getTime())[0] ?? null;
 
   return (
     <main id="main-content" className="min-h-screen bg-[#f1f1f1]">

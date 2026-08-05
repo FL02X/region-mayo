@@ -5,7 +5,9 @@
 // Funcion: muestra carousel, spotlight elegido por ranking y CTA hacia calendario.
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Newsreader, Playfair_Display } from "next/font/google";
+import { ChevronRightSmall } from "griddy-icons";
 import {
   ChevronDown,
 } from "lucide-react";
@@ -13,6 +15,7 @@ import { RegistrationModal } from "@/components/shared/registration-modal";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HeroDebugPanel } from "./hero-debug-panel";
 import { buildEventShareText, getEventMapsUrl } from "@/lib/event-share-text";
+import { getNextUpcomingEvent } from "@/lib/countdown-utils";
 import { useTime } from "@/lib/time-context";
 import type {
   Event,
@@ -54,6 +57,76 @@ const heroTitleFont = Playfair_Display({
   preload: false,
 });
 
+function DesktopRecorridoAnnouncement({ year }: { year: string }) {
+  return (
+    <div className="relative w-full bg-[#f1f1f1]">
+      <div className="desktop-content-pane mx-auto max-w-[1150px] border-border bg-paper md:border-x">
+        <section
+          className="relative min-h-[560px] overflow-hidden lg:min-h-[640px] xl:min-h-[680px]"
+          aria-label={`Recorrido Regional Anual ${year}`}
+        >
+          <Image
+            src="/images/recorrido5.png"
+            alt={`Recorrido Regional Anual ${year}`}
+            fill
+            sizes="(min-width: 1150px) 1150px, 100vw"
+            className="pointer-events-none select-none object-cover object-[center_60%]"
+            priority
+            fetchPriority="high"
+            quality={82}
+            draggable={false}
+          />
+
+          <div
+            className="pointer-events-none absolute inset-0 bg-[#101713]/10"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(6,10,8,0.02)_0%,rgba(6,10,8,0.08)_28%,rgba(10,16,12,0.72)_53%,rgba(13,18,15,0.98)_100%)]"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-brand-green/10"
+            aria-hidden="true"
+          />
+
+          <div className={`${editorialFont.className} relative z-10 flex min-h-[560px] items-end justify-center px-8 pb-8 pt-12 lg:min-h-[640px] lg:px-16 lg:pb-10 xl:min-h-[680px]`}>
+            <div className="w-full max-w-[900px] text-center uppercase">
+              <p className="text-[clamp(0.8rem,1.35vw,1.02rem)] font-semibold tracking-[0.28em] text-brand-green-border">
+                Los invitamos a nuestro
+              </p>
+              <h1 className="mt-3 leading-[0.82]">
+                <span className="block text-[clamp(4rem,9vw,7rem)] font-medium tracking-[-0.035em] text-brand-green-soft">
+                  Recorrido
+                </span>
+                <span className="mt-0.5 flex items-baseline justify-center gap-[clamp(0.65rem,2vw,1.5rem)]">
+                  <span className="text-[clamp(1.25rem,2.8vw,2.35rem)] font-medium tracking-[0.12em] text-brand-green-border">
+                    Regional Anual
+                  </span>
+                  <span className="text-[clamp(2.75rem,5.7vw,4.6rem)] font-semibold tracking-[-0.04em] text-brand-green-nav">
+                    {year}
+                  </span>
+                </span>
+              </h1>
+
+              <Link
+                href={`/recorrido-mayo-${year}`}
+                className="mt-5 inline-flex min-h-14 items-center justify-center gap-3 rounded-[2px] border-2 border-brand-green bg-brand-green px-8 py-3.5 text-[clamp(1rem,1.8vw,1.25rem)] font-bold tracking-[0.08em] text-white transition-colors hover:border-brand-green-hover hover:bg-brand-green-hover active:border-brand-green-active active:bg-brand-green-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-soft focus-visible:ring-offset-2 focus-visible:ring-offset-[#101713]"
+              >
+                Quiero asistir
+                <ChevronRightSmall
+                  className="h-[1.05em] w-[1.05em] shrink-0"
+                  aria-hidden="true"
+                />
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 interface HeroSectionProps {
   heroImages?: HeroImage[];
   events: Event[];
@@ -86,6 +159,14 @@ export function HeroSection({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isShareFallbackOpen, setIsShareFallbackOpen] = useState(false);
   const { currentTime } = useTime();
+  const nextUpcomingEvent = useMemo(
+    () => getNextUpcomingEvent(events, currentTime),
+    [events, currentTime],
+  );
+  const recorridoYear =
+    nextUpcomingEvent?.eventType === "recorrido"
+      ? getRegionDateKey(nextUpcomingEvent.date).slice(0, 4)
+      : null;
   const spotlightCandidates = useMemo<HeroCandidate[]>(() => {
     const nowMs = currentTime.getTime();
     const currentDayKey = getRegionDateKey(currentTime);
@@ -297,7 +378,7 @@ export function HeroSection({
   }, []);
 
   useEffect(() => {
-    if (!isDesktop || slides.length <= 1) return;
+    if (!isDesktop || recorridoYear || slides.length <= 1) return;
 
     const intervalId = window.setInterval(() => {
       setIncomingIndex((prevIncoming) => {
@@ -313,7 +394,7 @@ export function HeroSection({
     }, SLIDE_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [currentIndex, isDesktop, slides.length]);
+  }, [currentIndex, isDesktop, recorridoYear, slides.length]);
 
   useEffect(() => {
     if (incomingIndex === null || !isSliding) return;
@@ -417,6 +498,10 @@ export function HeroSection({
 
   if (!isDesktop) {
     return null;
+  }
+
+  if (recorridoYear) {
+    return <DesktopRecorridoAnnouncement year={recorridoYear} />;
   }
 
   return (

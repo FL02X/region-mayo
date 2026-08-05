@@ -8,6 +8,8 @@ const STATIC_ROUTES = [
   "/pastores",
   "/coros",
   "/directiva",
+  "/directiva-dorcas",
+  "/directiva-varones",
   "/album",
   "/album/galerias",
   "/album/grabaciones",

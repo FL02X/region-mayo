@@ -249,14 +249,6 @@ export function DesktopSearch({ onSubmit }: DesktopSearchProps) {
                 coro: Music,
                 directiva: UserCircle,
               }[result.type];
-              const typeLabel = {
-                evento: "EVENTO",
-                templo: "TEMPLO",
-                pastor: "PASTOR",
-                coro: "CORO",
-                directiva: "DIRECTIVA",
-              }[result.type];
-
               return (
                 <button
                   key={`${result.type}-${result.id}`}
@@ -289,7 +281,7 @@ export function DesktopSearch({ onSubmit }: DesktopSearchProps) {
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="mb-1 inline-flex w-fit bg-brand px-1.5 pb-0.5 pt-px text-[9px] font-semibold leading-none tracking-[0.08em] text-white min-[1101px]:text-[10px]">
-                      {typeLabel}
+                      {result.label}
                     </span>
                     <span className="block break-words text-[12px] font-semibold leading-tight min-[1101px]:text-[13px]">
                       <SearchHighlightedText text={result.title} query={query} />

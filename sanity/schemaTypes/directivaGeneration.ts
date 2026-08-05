@@ -1,9 +1,21 @@
 import { defineType, defineField } from 'sanity'
 import { ROLE_LABEL_BY_VALUE, ROLE_OPTIONS } from './directiva'
 
-export default defineType({
-  name: 'directivaGeneration',
-  title: 'Generacion de Directiva',
+type DirectivaGenerationSchemaOptions = {
+  name: string
+  title: string
+  memberName: string
+  directivaLabel: string
+}
+
+export const createDirectivaGenerationSchema = ({
+  name,
+  title,
+  memberName,
+  directivaLabel,
+}: DirectivaGenerationSchemaOptions) => defineType({
+  name,
+  title,
   type: 'document',
   fields: [
     defineField({
@@ -11,7 +23,7 @@ export default defineType({
       title: 'TITULO',
       type: 'string',
       validation: (Rule) => Rule.required(),
-      description: 'Ejemplo: Directiva 2024-2026 o Segunda generacion',
+      description: `Ejemplo: ${directivaLabel} 2024-2026 o Segunda generacion`,
     }),
     defineField({
       name: 'region',
@@ -34,10 +46,10 @@ export default defineType({
     }),
     defineField({
       name: 'isCurrent',
-      title: 'DIRECTIVA ACTUAL',
+      title: `${directivaLabel.toUpperCase()} ACTUAL`,
       type: 'boolean',
       initialValue: false,
-      description: 'La directiva actual se abre primero en la pagina.',
+      description: `La ${directivaLabel.toLowerCase()} actual se abre primero en la pagina.`,
     }),
     defineField({
       name: 'members',
@@ -47,7 +59,7 @@ export default defineType({
       of: [
         {
           type: 'object',
-          name: 'directivaGenerationMember',
+          name: memberName,
           title: 'Miembro',
           fields: [
             defineField({
@@ -139,4 +151,11 @@ export default defineType({
       ],
     },
   ],
+})
+
+export default createDirectivaGenerationSchema({
+  name: 'directivaGeneration',
+  title: 'Generacion de Directiva juvenil',
+  memberName: 'directivaGenerationMember',
+  directivaLabel: 'Directiva juvenil',
 })

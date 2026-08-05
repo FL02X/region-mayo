@@ -368,16 +368,18 @@ function DirectivaCard({
   );
 }
 
-interface DirectivaContentProps {
+export interface DirectivaContentProps {
   generations?: DirectivaGeneration[];
   members?: DirectivaMember[];
   initialViewMode?: ViewMode;
+  title?: string;
 }
 
 export function DirectivaContent({
   generations,
   members = [],
   initialViewMode,
+  title = "Directiva juvenil",
 }: DirectivaContentProps) {
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
@@ -728,7 +730,7 @@ export function DirectivaContent({
               />
               <div className="min-w-0">
                 <h1 className="text-[1.825rem] font-semibold text-brand tracking-tight">
-                  Directiva de jovenes
+                  {title}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-2">
                   Miembros de la directiva regional

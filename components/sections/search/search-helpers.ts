@@ -230,8 +230,30 @@ export function getSearchResults(data: SearchContentData, query: string) {
     items: data.directiva,
     fields: ["fullName", "role", "temploName"],
     type: "directiva",
-    label: "DIRECTIVA",
+    label: "DIRECTIVA JUVENIL",
     pathPrefix: "/directiva",
+    primaryField: "fullName",
+    normQuery,
+    queryTokens,
+  });
+
+  const directivaDorcasMatches = searchMatches({
+    items: data.directivaDorcas,
+    fields: ["fullName", "role", "temploName"],
+    type: "directiva",
+    label: "DIRECTIVA DE DORCAS",
+    pathPrefix: "/directiva-dorcas",
+    primaryField: "fullName",
+    normQuery,
+    queryTokens,
+  });
+
+  const directivaVaronesMatches = searchMatches({
+    items: data.directivaVarones,
+    fields: ["fullName", "role", "temploName"],
+    type: "directiva",
+    label: "DIRECTIVA DE VARONES",
+    pathPrefix: "/directiva-varones",
     primaryField: "fullName",
     normQuery,
     queryTokens,
@@ -272,6 +294,8 @@ export function getSearchResults(data: SearchContentData, query: string) {
     ...pastoresMatches,
     ...corosMatches,
     ...directivaMatches,
+    ...directivaDorcasMatches,
+    ...directivaVaronesMatches,
   ].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     return TYPE_PRIORITY[a.type] - TYPE_PRIORITY[b.type];

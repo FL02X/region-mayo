@@ -1438,19 +1438,22 @@ export async function getRecorrido(regionSlug: string = "mayo"): Promise<Recorri
   );
 }
 
-export async function getDirectivaGenerations(
-  regionSlug: string = "mayo",
+async function getDirectivaGenerationsByType(
+  regionSlug: string,
+  documentType: string,
+  fallback: () => DirectivaGeneration[],
+  getLegacyMembers?: () => Promise<DirectivaMember[]>,
 ): Promise<DirectivaGeneration[]> {
-  if (!SANITY_ENABLED) return getMockDirectivaGenerations(regionSlug);
+  if (!SANITY_ENABLED) return fallback();
 
   return readWithDevSanityFallback(
-    "getDirectivaGenerations",
-    () => getMockDirectivaGenerations(regionSlug),
+    `getDirectivaGenerations:${documentType}`,
+    fallback,
     async () => {
       const client = getSanityClient();
       const generations = await client.fetch(
         `*[
-          _type == "directivaGeneration" &&
+          _type == $documentType &&
           !defined(deletedAt) &&
           (region->slug.current in $regionSlugs || region->name in $regionNames)
         ] | order(isCurrent desc, startYear desc, _createdAt desc){
@@ -1469,13 +1472,15 @@ export async function getDirectivaGenerations(
             templo->{_id, temploName, address, googleMapsUrl}
           }
         }`,
-        getRegionLookupParams(regionSlug),
+        { ...getRegionLookupParams(regionSlug), documentType },
       );
 
-      const mapped = (generations ?? []).map(mapDirectivaGeneration);
-      if (mapped.some((generation) => generation.isCurrent)) return mapped;
+      const mapped: DirectivaGeneration[] = (generations ?? []).map(mapDirectivaGeneration);
+      if (mapped.some((generation) => generation.isCurrent) || !getLegacyMembers) {
+        return mapped;
+      }
 
-      const legacyMembers = await getDirectiva(regionSlug);
+      const legacyMembers = await getLegacyMembers();
       if (legacyMembers.length === 0) return mapped;
 
       return [{
@@ -1485,6 +1490,37 @@ export async function getDirectivaGenerations(
         members: legacyMembers,
       }, ...mapped];
     },
+  );
+}
+
+export function getDirectivaGenerations(
+  regionSlug: string = "mayo",
+): Promise<DirectivaGeneration[]> {
+  return getDirectivaGenerationsByType(
+    regionSlug,
+    "directivaGeneration",
+    () => getMockDirectivaGenerations(regionSlug),
+    () => getDirectiva(regionSlug),
+  );
+}
+
+export function getDirectivaDorcasGenerations(
+  regionSlug: string = "mayo",
+): Promise<DirectivaGeneration[]> {
+  return getDirectivaGenerationsByType(
+    regionSlug,
+    "directivaDorcasGeneration",
+    () => [],
+  );
+}
+
+export function getDirectivaVaronesGenerations(
+  regionSlug: string = "mayo",
+): Promise<DirectivaGeneration[]> {
+  return getDirectivaGenerationsByType(
+    regionSlug,
+    "directivaVaronesGeneration",
+    () => [],
   );
 }
 

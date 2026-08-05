@@ -29,7 +29,9 @@ const siteNavigationItems = [
   { name: "Templos", url: `${siteUrl}/templos` },
   { name: "Pastores", url: `${siteUrl}/pastores` },
   { name: "Coros Locales", url: `${siteUrl}/coros` },
-  { name: "Directiva", url: `${siteUrl}/directiva` },
+  { name: "Directiva juvenil", url: `${siteUrl}/directiva` },
+  { name: "Directiva de Dorcas", url: `${siteUrl}/directiva-dorcas` },
+  { name: "Directiva de Varones", url: `${siteUrl}/directiva-varones` },
   { name: "Álbum", url: `${siteUrl}/album` },
 ];
 

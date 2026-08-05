@@ -4,6 +4,8 @@ export const WARM_CACHE_ROUTES = [
   "/pastores",
   "/coros",
   "/directiva",
+  "/directiva-dorcas",
+  "/directiva-varones",
   "/buscar",
   "/configuracion",
 ];

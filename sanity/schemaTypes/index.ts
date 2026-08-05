@@ -5,6 +5,8 @@ import pastor from './pastor'
 import coro from './coro'
 import directiva from './directiva'
 import directivaGeneration from './directivaGeneration'
+import directivaDorcasGeneration from './directivaDorcasGeneration'
+import directivaVaronesGeneration from './directivaVaronesGeneration'
 import recorrido from './recorrido'
 import product from './product'
 import productVariant from './productVariant'
@@ -25,6 +27,8 @@ export const schemaTypes = [
   coro,
   directiva,
   directivaGeneration,
+  directivaDorcasGeneration,
+  directivaVaronesGeneration,
   recorrido,
   product,
   productVariant,

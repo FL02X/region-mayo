@@ -5,6 +5,8 @@ export interface SearchContentData {
   pastores: Pastor[];
   coros: Coro[];
   directiva: DirectivaMember[];
+  directivaDorcas: DirectivaMember[];
+  directivaVarones: DirectivaMember[];
   templos: Templo[];
   eventos: Event[];
 }
@@ -23,6 +25,7 @@ export type SearchResultItem = {
 export type SearchSuggestion = {
   id: string;
   type: SearchResultType;
+  label: string;
   path: string;
   title: string;
   subtitle?: string;

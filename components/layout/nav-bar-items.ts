@@ -88,11 +88,27 @@ const albumItem: LayoutNavigationRouteItem = {
   icon: Images,
 };
 
-const directivaItem: LayoutNavigationRouteItem = {
+const directivaJuvenilItem: LayoutNavigationRouteItem = {
   kind: "item",
   id: "directiva",
   href: "/directiva",
-  label: "Directiva",
+  label: "Directiva juvenil",
+  icon: UserCircle,
+};
+
+const directivaDorcasItem: LayoutNavigationRouteItem = {
+  kind: "item",
+  id: "directiva-dorcas",
+  href: "/directiva-dorcas",
+  label: "Directiva de Dorcas",
+  icon: UserCircle,
+};
+
+const directivaVaronesItem: LayoutNavigationRouteItem = {
+  kind: "item",
+  id: "directiva-varones",
+  href: "/directiva-varones",
+  label: "Directiva de Varones",
   icon: UserCircle,
 };
 
@@ -104,7 +120,9 @@ const directorioDesktopGroup: LayoutNavigationGroup = {
   items: [
     { ...pastoresItem, description: "Directorio regional" },
     { ...corosItem, description: "Directorio regional" },
-    { ...directivaItem, description: "Directorio regional" },
+    { ...directivaJuvenilItem, description: "Directorio regional" },
+    { ...directivaDorcasItem, description: "Directorio regional" },
+    { ...directivaVaronesItem, description: "Directorio regional" },
   ],
 };
 
@@ -121,7 +139,12 @@ const iglesiasMobileGroup: LayoutNavigationGroup = {
 
 const directorioMobileGroup: LayoutNavigationGroup = {
   ...directorioDesktopGroup,
-  items: [corosItem, directivaItem],
+  items: [
+    corosItem,
+    directivaJuvenilItem,
+    directivaDorcasItem,
+    directivaVaronesItem,
+  ],
 };
 
 // El orden y los grupos se modifican directamente en estas listas.

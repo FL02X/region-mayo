@@ -116,6 +116,8 @@ export default function Chatbot() {
     "/templos",
     "/pastores",
     "/directiva",
+    "/directiva-dorcas",
+    "/directiva-varones",
     "/album",
     "/album/galerias",
     "/album/grabaciones",
@@ -239,7 +241,7 @@ export default function Chatbot() {
       respuesta = {
         rol: "bot",
         texto: "¡Perfecto! ¿Qué información sobre la región estás buscando?",
-        opciones: ["Redes sociales", "Album de fotos","Eventos y recorridos", "Directiva local","Templos","Ubicar una iglesia", "Coros y Pastores", "Volver al inicio"]
+        opciones: ["Redes sociales", "Album de fotos","Eventos y recorridos", "Directivas","Templos","Ubicar una iglesia", "Coros y Pastores", "Volver al inicio"]
       };
     }
     else if (textoMinusculas === "dudas doctrinales") {
@@ -295,11 +297,13 @@ export default function Chatbot() {
       );
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];
     }
-    else if (textoMinusculas.includes("directiva") || textoMinusculas.includes("quien dirige") || textoMinusculas.includes("directiva local")) {
+    else if (textoMinusculas.includes("directiva") || textoMinusculas.includes("dorcas") || textoMinusculas.includes("varones") || textoMinusculas.includes("quien dirige") || textoMinusculas.includes("directiva local")) {
       respuesta.texto = (
         <span>
-          La Directiva de la región se encuentra en nuestra sección de información institucional.<br /><br />
-          <a href="/directiva" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Ir a la sección de Directiva</a>
+          Las directivas de la región se encuentran en nuestras secciones de información institucional.<br /><br />
+          <a href="/directiva" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Directiva juvenil</a><br />
+          <a href="/directiva-dorcas" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Directiva de Dorcas</a><br />
+          <a href="/directiva-varones" style={{ color: "#2b4c7e", fontWeight: "bold", textDecoration: "underline" }}>👉 Directiva de Varones</a>
         </span>
       );
       respuesta.opciones = ["Dudas sobre la página", "Volver al inicio"];

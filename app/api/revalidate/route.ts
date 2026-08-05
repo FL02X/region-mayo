@@ -10,6 +10,8 @@ const ALL_CONTENT_PATHS = [
   "/coros",
   "/templos",
   "/directiva",
+  "/directiva-dorcas",
+  "/directiva-varones",
   "/pastores",
   "/album",
   "/album/galerias",
@@ -179,6 +181,16 @@ export async function POST(request: NextRequest) {
         pathsToRevalidate.push("/directiva");
         pathsToRevalidate.push("/buscar");
         tagsToRevalidate.push("directiva");
+        break;
+      case "directivaDorcasGeneration":
+        pathsToRevalidate.push("/directiva-dorcas");
+        pathsToRevalidate.push("/buscar");
+        tagsToRevalidate.push("directiva-dorcas");
+        break;
+      case "directivaVaronesGeneration":
+        pathsToRevalidate.push("/directiva-varones");
+        pathsToRevalidate.push("/buscar");
+        tagsToRevalidate.push("directiva-varones");
         break;
       case "heroCard":
       case "prayerWall":

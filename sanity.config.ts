@@ -36,6 +36,8 @@ const AUDITABLE_DOCUMENT_TYPES = [
   'coro',
   'directiva',
   'directivaGeneration',
+  'directivaDorcasGeneration',
+  'directivaVaronesGeneration',
   'recorrido',
   'event',
   'album',
@@ -72,12 +74,47 @@ const MANUAL_DOCUMENT_TYPES = new Set([
   'coro',
   'directiva',
   'directivaGeneration',
+  'directivaDorcasGeneration',
+  'directivaVaronesGeneration',
   'recorrido',
   'album',
 ])
 
 const documentTypeItem = (S: any, type: string, title: string) =>
   S.documentTypeListItem(type).title(title)
+
+const directivaSection = (S: any, id: string, title: string, schemaType: string) =>
+  S.listItem()
+    .id(id)
+    .title(title)
+    .child(
+      S.list()
+        .title(title)
+        .items([
+          S.listItem()
+            .title('Actual')
+            .schemaType(schemaType)
+            .child(
+              S.documentTypeList(schemaType)
+                .title(`${title} actual`)
+                .filter('_type == $type && isCurrent == true && !defined(deletedAt)')
+                .params({ type: schemaType })
+                .defaultOrdering([{ field: 'startYear', direction: 'desc' }]),
+            ),
+          S.listItem()
+            .title('Pasada')
+            .schemaType(schemaType)
+            .child(
+              S.documentTypeList(schemaType)
+                .title(`${title}: generaciones pasadas`)
+                .filter('_type == $type && isCurrent != true && !defined(deletedAt)')
+                .params({ type: schemaType })
+                .defaultOrdering([{ field: 'startYear', direction: 'desc' }]),
+            ),
+          S.divider(),
+          documentTypeItem(S, schemaType, 'Todas las generaciones'),
+        ]),
+    )
 
 const remainingDocumentTypes = (S: any) =>
   S.documentTypeListItems().filter((item: any) => {
@@ -104,35 +141,9 @@ const studioStructure = (S: any) =>
               documentTypeItem(S, 'templo', 'Templos'),
               documentTypeItem(S, 'pastor', 'Pastores'),
               documentTypeItem(S, 'coro', 'Coros'),
-              S.listItem()
-                .id('directiva-section')
-                .title('Directiva')
-                .child(
-                  S.list()
-                    .title('Directiva')
-                    .items([
-                      S.listItem()
-                        .title('Actual')
-                        .schemaType('directivaGeneration')
-                        .child(
-                          S.documentTypeList('directivaGeneration')
-                            .title('Directiva actual')
-                            .filter('_type == "directivaGeneration" && isCurrent == true && !defined(deletedAt)')
-                            .defaultOrdering([{ field: 'startYear', direction: 'desc' }]),
-                        ),
-                      S.listItem()
-                        .title('Pasada')
-                        .schemaType('directivaGeneration')
-                        .child(
-                          S.documentTypeList('directivaGeneration')
-                            .title('Directivas pasadas')
-                            .filter('_type == "directivaGeneration" && isCurrent != true && !defined(deletedAt)')
-                            .defaultOrdering([{ field: 'startYear', direction: 'desc' }]),
-                        ),
-                      S.divider(),
-                      documentTypeItem(S, 'directivaGeneration', 'Todas las generaciones'),
-                    ]),
-                ),
+              directivaSection(S, 'directiva-section', 'Directiva juvenil', 'directivaGeneration'),
+              directivaSection(S, 'directiva-dorcas-section', 'Directiva de Dorcas', 'directivaDorcasGeneration'),
+              directivaSection(S, 'directiva-varones-section', 'Directiva de Varones', 'directivaVaronesGeneration'),
               S.listItem()
                 .id('recorrido-section')
                 .title('Recorrido')

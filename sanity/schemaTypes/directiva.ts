@@ -41,7 +41,7 @@ export const ROLE_LABEL_BY_VALUE = Object.fromEntries(ROLE_OPTIONS.map(({ title,
 
 export default defineType({
   name: 'directiva',
-  title: 'Directiva',
+  title: 'Directiva juvenil',
   type: 'document',
   groups: [
     { name: 'basic', title: 'Información Básica', hidden: true },

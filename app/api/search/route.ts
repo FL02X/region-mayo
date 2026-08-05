@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCoros, getDirectivaGenerations, getEvents, getPastors, getTemplos } from "@/lib/api";
+import {
+  getCoros,
+  getDirectivaDorcasGenerations,
+  getDirectivaGenerations,
+  getDirectivaVaronesGenerations,
+  getEvents,
+  getPastors,
+  getTemplos,
+} from "@/lib/api";
 import { getDirectivaRoleLabel } from "@/components/sections/directiva/directiva-helpers";
 import { getLatestDirectivaMembers, getSearchQueryTokens, getSearchResults } from "@/components/sections/search/search-helpers";
 import type { SearchContentData, SearchResultItem, SearchSuggestion } from "@/components/sections/search/search-types";
@@ -35,13 +43,14 @@ function findMatchedText(values: Array<string | undefined>, query: string) {
 }
 
 function toSearchSuggestion(result: SearchResultItem, query: string): SearchSuggestion {
-  const { item, matchedField, pathPrefix, type } = result;
+  const { item, label, matchedField, pathPrefix, type } = result;
 
   if (type === "coro") {
     const coro = item as Coro;
     return {
       id: coro.id,
       type,
+      label,
       path: pathPrefix,
       title: coro.coroName,
       subtitle: matchedField === "presidentName"
@@ -59,6 +68,7 @@ function toSearchSuggestion(result: SearchResultItem, query: string): SearchSugg
     return {
       id: member.id,
       type,
+      label,
       path: pathPrefix,
       title: member.fullName,
       subtitle: matchedField === "role" && role
@@ -75,6 +85,7 @@ function toSearchSuggestion(result: SearchResultItem, query: string): SearchSugg
     return {
       id: pastor.id,
       type,
+      label,
       path: pathPrefix,
       title: pastor.fullName,
       subtitle: matchedField === "temploName" && pastor.temploName
@@ -94,6 +105,7 @@ function toSearchSuggestion(result: SearchResultItem, query: string): SearchSugg
     return {
       id: templo.id,
       type,
+      label,
       path: pathPrefix,
       title: templo.temploName,
       subtitle: matchedField === "address" && templo.address
@@ -124,6 +136,7 @@ function toSearchSuggestion(result: SearchResultItem, query: string): SearchSugg
   return {
     id: event.id,
     type,
+    label,
     path: pathPrefix,
     title: event.title,
     subtitle: matchedField === "location" && event.location
@@ -143,10 +156,20 @@ function toSearchSuggestion(result: SearchResultItem, query: string): SearchSugg
 }
 
 async function getPublicSearchData(): Promise<SearchContentData> {
-  const [pastores, coros, directivaGenerations, templos, eventos] = await Promise.all([
+  const [
+    pastores,
+    coros,
+    directivaGenerations,
+    directivaDorcasGenerations,
+    directivaVaronesGenerations,
+    templos,
+    eventos,
+  ] = await Promise.all([
     getPastors("region-mayo"),
     getCoros("region-mayo"),
     getDirectivaGenerations("region-mayo"),
+    getDirectivaDorcasGenerations("region-mayo"),
+    getDirectivaVaronesGenerations("region-mayo"),
     getTemplos("region-mayo"),
     getEvents("region-mayo"),
   ]);
@@ -155,6 +178,8 @@ async function getPublicSearchData(): Promise<SearchContentData> {
     pastores,
     coros,
     directiva: getLatestDirectivaMembers(directivaGenerations),
+    directivaDorcas: getLatestDirectivaMembers(directivaDorcasGenerations),
+    directivaVarones: getLatestDirectivaMembers(directivaVaronesGenerations),
     templos,
     eventos,
   };

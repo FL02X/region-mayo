@@ -3,24 +3,23 @@ import { readInitialViewMode } from "@/lib/cookie-utils";
 import { AppHeader } from "@/components/layout/nav-bar";
 import { DirectivaContent } from "@/components/sections/directiva/directiva-content";
 import Chatbot from "@/components/shared/chatbot";
-import { getDirectivaGenerations, getRegionConfig } from "@/lib/api";
+import { getDirectivaVaronesGenerations, getRegionConfig } from "@/lib/api";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const revalidate = false;
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Directiva juvenil",
+  title: "Directiva de Varones",
   description:
-    "Conoce a los miembros de la directiva juvenil de la Región Mayo y contacta con ellos.",
-  canonicalPath: "/directiva",
+    "Conoce a los miembros de la directiva de Varones de la Región Mayo y contacta con ellos.",
+  canonicalPath: "/directiva-varones",
 });
 
-export default async function DirectivaPage() {
-  //La cookie que le dice que vista debe renderizar al entrar
+export default async function DirectivaVaronesPage() {
   const initialViewMode = await readInitialViewMode("rm-view-mode-directiva");
   const [region, generations] = await Promise.all([
     getRegionConfig("region-mayo"),
-    getDirectivaGenerations("region-mayo"),
+    getDirectivaVaronesGenerations("region-mayo"),
   ]);
 
   return (
@@ -33,7 +32,7 @@ export default async function DirectivaPage() {
         <DirectivaContent
           generations={generations}
           initialViewMode={initialViewMode}
-          title="Directiva juvenil"
+          title="Directiva de Varones"
         />
       </div>
       <Chatbot />

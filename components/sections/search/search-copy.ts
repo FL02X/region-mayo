@@ -7,7 +7,7 @@ export const SEARCH_FILTERS: Array<{ key: SearchResultType | "all"; label: strin
   { key: "templo", label: "Templos" },
   { key: "pastor", label: "Pastores" },
   { key: "coro", label: "Coros" },
-  { key: "directiva", label: "Directiva" },
+  { key: "directiva", label: "Directivas" },
 ];
 
 export const SEARCH_EMPTY_SUGGESTIONS = [
