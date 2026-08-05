@@ -90,7 +90,7 @@ function DesktopRecorridoAnnouncement({ year }: { year: string }) {
             aria-hidden="true"
           />
 
-          <div className={`${editorialFont.className} relative z-10 flex min-h-[560px] items-end justify-center px-8 pb-8 pt-12 lg:min-h-[640px] lg:px-16 lg:pb-10 xl:min-h-[680px]`}>
+          <div className={`${editorialFont.className} relative z-10 flex min-h-[560px] items-end justify-center px-8 pb-14 pt-12 lg:min-h-[640px] lg:px-16 lg:pb-16 xl:min-h-[680px]`}>
             <div className="w-full max-w-[900px] text-center uppercase">
               <p className="text-[clamp(0.8rem,1.35vw,1.02rem)] font-semibold tracking-[0.28em] text-brand-green-border">
                 Los invitamos a nuestro
@@ -111,7 +111,7 @@ function DesktopRecorridoAnnouncement({ year }: { year: string }) {
 
               <Link
                 href={`/recorrido-mayo-${year}`}
-                className="mt-5 inline-flex min-h-14 items-center justify-center gap-3 rounded-[2px] border-2 border-brand-green bg-brand-green px-8 py-3.5 text-[clamp(1rem,1.8vw,1.25rem)] font-bold tracking-[0.08em] text-white transition-colors hover:border-brand-green-hover hover:bg-brand-green-hover active:border-brand-green-active active:bg-brand-green-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-soft focus-visible:ring-offset-2 focus-visible:ring-offset-[#101713]"
+                className="mt-8 inline-flex min-h-14 items-center justify-center gap-3 rounded-[2px] border-2 border-brand-green bg-brand-green px-8 py-3.5 text-[clamp(1rem,1.8vw,1.25rem)] font-bold tracking-[0.08em] text-white transition-colors hover:border-brand-green-hover hover:bg-brand-green-hover active:border-brand-green-active active:bg-brand-green-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green-soft focus-visible:ring-offset-2 focus-visible:ring-offset-[#101713]"
               >
                 Quiero asistir
                 <ChevronRightSmall
