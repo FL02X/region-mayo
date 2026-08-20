@@ -96,7 +96,7 @@ const directivaJuvenilItem: LayoutNavigationRouteItem = {
   icon: UserCircle,
 };
 
-const directivaDorcasItem: LayoutNavigationRouteItem = {
+/* const directivaDorcasItem: LayoutNavigationRouteItem = {
   kind: "item",
   id: "directiva-dorcas",
   href: "/directiva-dorcas",
@@ -110,7 +110,7 @@ const directivaVaronesItem: LayoutNavigationRouteItem = {
   href: "/directiva-varones",
   label: "Directiva de Varones",
   icon: UserCircle,
-};
+}; */
 
 const directorioDesktopGroup: LayoutNavigationGroup = {
   kind: "group",
@@ -121,8 +121,8 @@ const directorioDesktopGroup: LayoutNavigationGroup = {
     { ...pastoresItem, description: "Directorio regional" },
     { ...corosItem, description: "Directorio regional" },
     { ...directivaJuvenilItem, description: "Directorio regional" },
-    { ...directivaDorcasItem, description: "Directorio regional" },
-    { ...directivaVaronesItem, description: "Directorio regional" },
+/*     { ...directivaDorcasItem, description: "Directorio regional" },
+    { ...directivaVaronesItem, description: "Directorio regional" }, */
   ],
 };
 
@@ -142,8 +142,8 @@ const directorioMobileGroup: LayoutNavigationGroup = {
   items: [
     corosItem,
     directivaJuvenilItem,
-    directivaDorcasItem,
-    directivaVaronesItem,
+/*     directivaDorcasItem,
+    directivaVaronesItem, */
   ],
 };
 

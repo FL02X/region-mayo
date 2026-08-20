@@ -663,7 +663,7 @@ export function EventsFeed({
             <div className="mb-9">
               <h2
                 id="calendar-title"
-                className={`${editorialFont.className} flex flex-row gap-3 items-center type-human-title text-[2.025rem] md:text-[1.925rem] font-semibold tracking-normal mb-1.5`}
+                className={`${editorialFont.className} flex flex-row gap-3 items-center type-human-title text-[2.025rem] md:text-[2.325rem] font-semibold tracking-normal mb-1.5`}
               >
                 <span className="mt-3">
                   Calendario 2026

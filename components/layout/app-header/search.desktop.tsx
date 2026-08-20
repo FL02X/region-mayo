@@ -193,7 +193,7 @@ export function DesktopSearch({ onSubmit }: DesktopSearchProps) {
           ref={inputRef}
           type="search"
           name="q"
-          placeholder="Buscar"
+          placeholder="Buscar: iglesia, evento, pastor..."
           value={query}
           onChange={(event) => handleQueryChange(event.target.value)}
           onPointerDown={openSearch}

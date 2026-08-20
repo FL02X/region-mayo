@@ -631,7 +631,7 @@ export function EventCard({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-[15px] font-semibold">Vestimenta</p>
+                  <p className="text-[15px] font-semibold">Vestimenta para jovenes miembros:</p>
                   <div
                     className={`mt-1 mb-2 flex items-start gap-1.5 text-[18px] leading-snug ${editorialTextClass}`}
                   >
@@ -671,7 +671,7 @@ export function EventCard({
                   aria-hidden="true"
                 />
                 <div className="min-w-0">
-                  <p className="text-[15px] font-semibold">Pastor a cargo</p>
+                  <p className="text-[15px] font-semibold">Pastor a cargo:</p>
                   <div
                     className={`mt-1 text-[15px] leading-snug ${editorialTextClass}`}
                   >
@@ -1471,7 +1471,7 @@ export function EventCard({
                           )}
 
                           {event.address && (
-                            <div className="flex min-w-0 items-start gap-2 text-[15px] leading-snug mt-[-6px] mb-2">
+                            <div className="flex min-w-0 items-start gap-2 text-[16px] leading-snug mt-[-6px] mb-2">
                               <MapPin
                                 className="mt-0.5 h-3.5 w-3.5 shrink-0"
                                 aria-hidden="true"

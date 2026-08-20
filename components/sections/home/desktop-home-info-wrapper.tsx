@@ -51,7 +51,7 @@ function SiteLinkCard({
           <div className="mt-0.5 pt-5">
             <Link
               href={href}
-              className="inline-flex min-h-[34px] w-fit max-w-full items-center justify-start gap-2 border border-brand bg-transparent px-3 py-1 text-left text-[17px] font-normal leading-tight text-brand hover:bg-brand-hover hover:text-white [&>span]:min-w-0"
+              className="inline-flex min-h-[34px] w-fit max-w-full items-center justify-start gap-2 border border-brand bg-paper-highlight px-3 py-1 text-left text-[17px] font-normal leading-tight text-brand hover:bg-brand-hover hover:text-white [&>span]:min-w-0"
             >
               <span>{buttonLabel}</span>
               <ChevronRight className="h-6 w-6 shrink-0 stroke-[1.4]" aria-hidden="true" />

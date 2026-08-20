@@ -1,16 +1,18 @@
 "use client";
 
-// Donde: home, hero superior desktop. 
-// Viewports: desktop. 
+// Donde: home, hero superior desktop.
+// Viewports: desktop.
 // Funcion: muestra carousel, spotlight elegido por ranking y CTA hacia calendario.
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Newsreader, Playfair_Display } from "next/font/google";
-import { ChevronRightSmall } from "griddy-icons";
 import {
-  ChevronDown,
-} from "lucide-react";
+  Instrument_Serif,
+  Newsreader,
+  Playfair_Display,
+} from "next/font/google";
+import { ChevronRightSmall } from "griddy-icons";
+import { ChevronDown } from "lucide-react";
 import { RegistrationModal } from "@/components/shared/registration-modal";
 import { PrayerWallForm } from "@/components/shared/prayer-wall-form";
 import { HeroDebugPanel } from "./hero-debug-panel";
@@ -56,6 +58,12 @@ const heroTitleFont = Playfair_Display({
   display: "swap",
   preload: false,
 });
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  style: ["italic"],
+  subsets: ["latin"],
+  display: "swap",
+});
 
 function DesktopRecorridoAnnouncement({ year }: { year: string }) {
   return (
@@ -90,7 +98,9 @@ function DesktopRecorridoAnnouncement({ year }: { year: string }) {
             aria-hidden="true"
           />
 
-          <div className={`${editorialFont.className} relative z-10 flex min-h-[560px] items-end justify-center px-8 pb-14 pt-12 lg:min-h-[640px] lg:px-16 lg:pb-16 xl:min-h-[680px]`}>
+          <div
+            className={`${editorialFont.className} relative z-10 flex min-h-[560px] items-end justify-center px-8 pb-14 pt-12 lg:min-h-[640px] lg:px-16 lg:pb-16 xl:min-h-[680px]`}
+          >
             <div className="w-full max-w-[900px] text-center uppercase">
               <p className="text-[clamp(0.8rem,1.35vw,1.02rem)] font-semibold tracking-[0.28em] text-brand-green-border">
                 Los invitamos a nuestro
@@ -188,7 +198,7 @@ export function HeroSection({
       });
     }
 
-    if (prayerWall && prayerWall.enabled && prayerWall.phase !== 'paused') {
+    if (prayerWall && prayerWall.enabled && prayerWall.phase !== "paused") {
       candidates.push({
         type: "prayer",
         id: prayerWall._id,
@@ -244,9 +254,9 @@ export function HeroSection({
     if ((socialPosts?.length ?? 0) === 0) {
       const hasMetaKeys = Boolean(
         process.env.META_PAGE_ACCESS_TOKEN ||
-          process.env.META_INSTAGRAM_ACCOUNT_ID ||
-          process.env.META_FACEBOOK_PAGE_ID,
-      )
+        process.env.META_INSTAGRAM_ACCOUNT_ID ||
+        process.env.META_FACEBOOK_PAGE_ID,
+      );
 
       // Only add social fallback links when Meta integration keys are present.
       // This avoids showing an Instagram/Facebook card when the API isn't configured.
@@ -289,7 +299,9 @@ export function HeroSection({
   );
 
   const spotlightHero = spotlight.hero;
-  const spotlightAccent = spotlightHero ? getAccentColor(spotlightHero) : "#2f5e93";
+  const spotlightAccent = spotlightHero
+    ? getAccentColor(spotlightHero)
+    : "#2f5e93";
   const spotlightEvent = useMemo(() => {
     if (!spotlightHero || spotlightHero.type !== "event") return null;
     return events.find((event) => event.id === spotlightHero.id) ?? null;
@@ -304,13 +316,16 @@ export function HeroSection({
   }, [spotlightEvent, spotlightEventUrl]);
   const spotlightSocialPost = useMemo(() => {
     if (!spotlightHero || spotlightHero.type !== "social") return null;
-    return (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null;
+    return (
+      (socialPosts ?? []).find((post) => post._id === spotlightHero.id) ?? null
+    );
   }, [spotlightHero, socialPosts]);
 
   const spotlightEventSchedule = useMemo<CountdownOccurrence[]>(() => {
     if (!spotlightEvent) return [];
     const schedule =
-      Array.isArray(spotlightEvent.schedule) && spotlightEvent.schedule.length > 0
+      Array.isArray(spotlightEvent.schedule) &&
+      spotlightEvent.schedule.length > 0
         ? spotlightEvent.schedule
         : [{ date: spotlightEvent.date, time: spotlightEvent.time }];
 
@@ -410,7 +425,8 @@ export function HeroSection({
 
   const scrollToContent = () => {
     const header = document.querySelector("header");
-    const headerOffset = header instanceof HTMLElement ? header.offsetHeight : 0;
+    const headerOffset =
+      header instanceof HTMLElement ? header.offsetHeight : 0;
 
     const countdownSection = document.querySelector("[data-countdown-section]");
     const isCountdownVisible =
@@ -419,7 +435,9 @@ export function HeroSection({
 
     if (isCountdownVisible) {
       const offsetPosition =
-        countdownSection.getBoundingClientRect().top + window.scrollY - headerOffset;
+        countdownSection.getBoundingClientRect().top +
+        window.scrollY -
+        headerOffset;
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
       return;
     }
@@ -436,7 +454,8 @@ export function HeroSection({
 
       // Compute absolute position and perform a single smooth scroll to the
       // target so the whole interaction is smooth (no instant jumps).
-      const absoluteTop = calendarTitle.getBoundingClientRect().top + window.scrollY;
+      const absoluteTop =
+        calendarTitle.getBoundingClientRect().top + window.scrollY;
       const target = Math.max(0, absoluteTop - headerOffset - DESIRED_SPACING);
       window.scrollTo({ top: target, behavior: "smooth" });
       return;
@@ -446,13 +465,18 @@ export function HeroSection({
     if (calendarSection) {
       const EXTRA_OFFSET = 24; // fallback offset to ensure separator is hidden
       const offsetPosition =
-        calendarSection.getBoundingClientRect().top + window.scrollY - headerOffset + EXTRA_OFFSET;
+        calendarSection.getBoundingClientRect().top +
+        window.scrollY -
+        headerOffset +
+        EXTRA_OFFSET;
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
   };
 
   const countdownIsDisabled = countdownDisplay?.isDisabled ?? false;
-  const spotlightEventMapsUrl = spotlightEvent ? getEventMapsUrl(spotlightEvent) : "";
+  const spotlightEventMapsUrl = spotlightEvent
+    ? getEventMapsUrl(spotlightEvent)
+    : "";
   const handleShareSpotlightEvent = async () => {
     if (!spotlightEvent) return;
 
@@ -505,7 +529,9 @@ export function HeroSection({
   }
 
   return (
-    <div className="w-full relative bg-[#f1f1f1]"> {/* 950px */}
+    <div className="w-full relative bg-[#f1f1f1]">
+      {" "}
+      {/* 950px */}
       <div className="desktop-content-pane max-w-[1150px] mx-auto bg-paper md:border-x border-border">
         <section
           className="relative overflow-hidden h-[min(60vh,480px)] md:h-auto md:min-h-[420px]"
@@ -519,7 +545,9 @@ export function HeroSection({
               fill
               sizes="(min-width: 950px) 950px, 100vw"
               className={`object-cover pointer-events-none select-none transition-transform duration-[650ms] ease-out ${
-                incomingIndex !== null && isSliding ? "-translate-x-[8%]" : "translate-x-0"
+                incomingIndex !== null && isSliding
+                  ? "-translate-x-[8%]"
+                  : "translate-x-0"
               }`}
               priority
               loading="eager"
@@ -567,7 +595,9 @@ export function HeroSection({
                     countdownIsDisabled={countdownIsDisabled}
                     mapsUrl={spotlightEventMapsUrl}
                     canShare={Boolean(spotlightEventShareText)}
-                    onOpenMaps={() => window.open(spotlightEventMapsUrl, "_blank")}
+                    onOpenMaps={() =>
+                      window.open(spotlightEventMapsUrl, "_blank")
+                    }
                     onShare={handleShareSpotlightEvent}
                     onRegister={() => setIsRegisterModalOpen(true)}
                   />
@@ -582,13 +612,15 @@ export function HeroSection({
                   />
                 )}
 
-                {showSocialCard && spotlightHero && spotlightHero.type === "social" && (
-                  <DesktopSocialSpotlightCard
-                    hero={spotlightHero}
-                    post={spotlightSocialPost}
-                    accentColor={spotlightAccent}
-                  />
-                )}
+                {showSocialCard &&
+                  spotlightHero &&
+                  spotlightHero.type === "social" && (
+                    <DesktopSocialSpotlightCard
+                      hero={spotlightHero}
+                      post={spotlightSocialPost}
+                      accentColor={spotlightAccent}
+                    />
+                  )}
 
                 {showPrayerCollectCard && (
                   <HeroPrayerCard
@@ -607,27 +639,43 @@ export function HeroSection({
                 )}
               </div>
 
-              <div className="flex w-full min-w-0 max-w-[390px] flex-col justify-center text-center md:text-left">
-                <p className="mb-2 text-[10px] uppercase tracking-[0.22em] text-white/95 lg:text-[11px] lg:tracking-[0.24em]">
+              <div className="flex w-full min-w-0 max-w-[410px] flex-col justify-center text-center md:text-left">
+                <p className="mb-3 text-[10px] uppercase tracking-[0.22em] text-white/95 lg:text-[12px] lg:tracking-[0.24em]">
                   Iglesia Gentil de Cristo
                 </p>
-                <h1 className={`${heroTitleFont.className} mb-5 text-[clamp(2.25rem,4.1vw,3rem)] leading-[1.08] tracking-[0.01em] text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)] lg:text-[3rem]`}>
-                  <span className="block">Sitio oficial de la</span>
-                  <span className="font-normal">Región Mayo</span>
+
+                <h1
+                  className={`${heroTitleFont.className} mb-5 text-white [text-shadow:0_3px_16px_rgba(0,0,0,0.45)]`}
+                >
+                  <span className="block text-[clamp(2.35rem,4.1vw,3.2rem)] leading-[1.12] tracking-[-0.01em]">
+                    Sitio oficial de la
+                  </span>
+
+                  <span className="block text-[clamp(3rem,5.3vw,4.0rem)] leading-[0.88] tracking-[-0.06em]">
+                    Región Mayo
+                  </span>
                 </h1>
+
                 <button
                   onClick={scrollToContent}
-                  className="group flex w-fit items-center justify-start gap-2 py-3 text-[16px] font-semibold text-white/90 opacity-75 transition-colors hover:text-white lg:text-[18px] hover:bg-brand-hover"
+                  className="group flex w-fit items-center justify-start gap-2 py-3 text-[16px] font-semibold text-white/90 opacity-75 transition-colors hover:bg-brand-hover hover:text-white lg:text-[18px]"
                   aria-label="Explorar calendario y desplazarse hacia abajo"
                 >
                   Explorar Calendario 2026
-                  <ChevronDown className="h-5 w-5 text-white/70 transition-all group-hover:translate-y-1 group-hover:text-white" aria-hidden="true" />
+                  <ChevronDown
+                    className="h-5 w-5 text-white/70 transition-all group-hover:translate-y-1 group-hover:text-white"
+                    aria-hidden="true"
+                  />
                 </button>
 
                 {slides.length > 1 && (
-                  <div className="mt-5 flex items-center justify-center gap-2 opacity-75 md:justify-start" aria-label="Indicador de carrusel">
+                  <div
+                    className="mt-5 flex items-center justify-center gap-2 opacity-75 md:justify-start"
+                    aria-label="Indicador de carrusel"
+                  >
                     {slides.map((_, index) => {
-                      const isActive = index === (incomingIndex ?? currentIndex);
+                      const isActive =
+                        index === (incomingIndex ?? currentIndex);
                       return (
                         <span
                           key={`hero-dot-${index}`}
